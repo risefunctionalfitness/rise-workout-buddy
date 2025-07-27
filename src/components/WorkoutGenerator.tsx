@@ -170,62 +170,65 @@ export const WorkoutGenerator = () => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8">
-      {/* Workout Type Selection */}
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Dumbbell className="h-8 w-8 text-primary" />
-            <h2 className="text-2xl font-bold text-foreground">Trainingsziel wählen</h2>
-          </div>
-          <p className="text-muted-foreground">Wähle deinen bevorzugten Trainingsstil</p>
-        </div>
-        <WorkoutTypeSelector
-          selectedType={workoutType}
-          onTypeSelect={setWorkoutType}
-        />
-      </div>
-
-      {/* Duration Selection */}
-      {workoutType && (
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Left Column - Selections */}
         <div className="space-y-6">
-          <DurationSlider
-            workoutType={workoutType}
-            duration={duration}
-            onDurationChange={setDuration}
-          />
-        </div>
-      )}
-
-      {/* Body Part Selection */}
-      {workoutType && duration > 0 && (
-        <div className="space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Trainingsbereich</h2>
-            <p className="text-muted-foreground">Wähle den gewünschten Körperbereich oder klicke auf die Körperregion</p>
-          </div>
-          <div className="flex justify-center">
-            <BodySelector
-              selectedPart={focus}
-              onPartSelect={setFocus}
+          {/* Workout Type Selection */}
+          <div className="space-y-4">
+            <div className="text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                <Dumbbell className="h-6 w-6 text-primary" />
+                <h2 className="text-xl font-bold text-foreground">Trainingsziel</h2>
+              </div>
+            </div>
+            <WorkoutTypeSelector
+              selectedType={workoutType}
+              onTypeSelect={setWorkoutType}
             />
           </div>
-        </div>
-      )}
 
-      {/* Generate Button */}
-      {workoutType && duration > 0 && focus && (
-        <div className="text-center">
-          <Button
-            onClick={generateWorkout}
-            disabled={isGenerating}
-            size="lg"
-            className="px-16 py-4 text-lg font-semibold"
-          >
-            {isGenerating ? "Workout wird generiert..." : "Workout generieren"}
-          </Button>
+          {/* Duration Selection */}
+          {workoutType && (
+            <div className="space-y-4">
+              <DurationSlider
+                workoutType={workoutType}
+                duration={duration}
+                onDurationChange={setDuration}
+              />
+            </div>
+          )}
+
+          {/* Body Part Selection */}
+          {workoutType && duration > 0 && (
+            <div className="space-y-4">
+              <div className="text-center lg:text-left">
+                <h3 className="text-lg font-semibold text-foreground mb-2">Trainingsbereich</h3>
+              </div>
+              <div className="flex justify-center lg:justify-start">
+                <BodySelector
+                  selectedPart={focus}
+                  onPartSelect={setFocus}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right Column - Generate Button */}
+        <div className="flex items-center justify-center lg:items-end lg:justify-start">
+          {workoutType && duration > 0 && focus && (
+            <Button
+              onClick={generateWorkout}
+              disabled={isGenerating}
+              size="lg"
+              className="px-12 py-6 text-lg font-semibold w-full lg:w-auto"
+            >
+              {isGenerating ? "Workout wird generiert..." : "Workout generieren"}
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
