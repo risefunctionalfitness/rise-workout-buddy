@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { SelectButton } from "@/components/ui/select-button"
-import { Dumbbell, Clock, Target } from "lucide-react"
+import { Dumbbell } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { WorkoutTypeSelector } from "./WorkoutTypeSelector"
+import { DurationSlider } from "./DurationSlider"
+import { BodySelector } from "./BodySelector"
+import { WorkoutDisplay } from "./WorkoutDisplay"
 
 type WorkoutType = "crossfit" | "bodybuilding" | null
-type Duration = 20 | 30 | 45 | null
 type Focus = "ganzkörper" | "oberkörper" | "unterkörper" | null
 
 interface WorkoutData {
@@ -24,7 +25,7 @@ interface WorkoutData {
 
 export const WorkoutGenerator = () => {
   const [workoutType, setWorkoutType] = useState<WorkoutType>(null)
-  const [duration, setDuration] = useState<Duration>(null)
+  const [duration, setDuration] = useState<number>(0)
   const [focus, setFocus] = useState<Focus>(null)
   const [generatedWorkout, setGeneratedWorkout] = useState<WorkoutData | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -147,154 +148,84 @@ export const WorkoutGenerator = () => {
     }
   }
 
+  const newWorkout = () => {
+    setGeneratedWorkout(null)
+  }
+
   const resetSelection = () => {
     setWorkoutType(null)
-    setDuration(null)
+    setDuration(0)
     setFocus(null)
     setGeneratedWorkout(null)
   }
 
   if (generatedWorkout) {
     return (
-      <div className="w-full max-w-4xl mx-auto space-y-6">
-        <Card className="p-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">{generatedWorkout.title}</h2>
-              <Button onClick={resetSelection} variant="outline">
-                Neues Workout
-              </Button>
-            </div>
-            
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                <span>{generatedWorkout.type}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>{generatedWorkout.duration} Minuten</span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Übungen:</h3>
-              <div className="grid gap-3">
-                {generatedWorkout.exercises.map((exercise, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                    <span className="font-medium">{exercise.name}</span>
-                    <div className="text-sm text-muted-foreground space-x-2">
-                      {exercise.reps && <span>{exercise.reps}</span>}
-                      {exercise.weight && <span>• {exercise.weight}</span>}
-                      {exercise.rest && <span>• {exercise.rest} Pause</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {generatedWorkout.notes && (
-              <div className="p-4 bg-primary/10 rounded-lg">
-                <p className="text-sm text-foreground">{generatedWorkout.notes}</p>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
+      <WorkoutDisplay 
+        workout={generatedWorkout}
+        onNewWorkout={newWorkout}
+        onReset={resetSelection}
+      />
     )
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-8">
+    <div className="w-full max-w-6xl mx-auto space-y-8">
       {/* Workout Type Selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Dumbbell className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Trainingsziel wählen</h2>
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Dumbbell className="h-8 w-8 text-primary" />
+            <h2 className="text-2xl font-bold text-foreground">Trainingsziel wählen</h2>
+          </div>
+          <p className="text-muted-foreground">Wähle deinen bevorzugten Trainingsstil</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SelectButton
-            isSelected={workoutType === "crossfit"}
-            onClick={() => setWorkoutType("crossfit")}
-          >
-            CrossFit
-          </SelectButton>
-          <SelectButton
-            isSelected={workoutType === "bodybuilding"}
-            onClick={() => setWorkoutType("bodybuilding")}
-          >
-            Bodybuilding
-          </SelectButton>
-        </div>
+        <WorkoutTypeSelector
+          selectedType={workoutType}
+          onTypeSelect={setWorkoutType}
+        />
       </div>
 
       {/* Duration Selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Clock className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Trainingsdauer</h2>
+      {workoutType && (
+        <div className="space-y-6">
+          <DurationSlider
+            workoutType={workoutType}
+            duration={duration}
+            onDurationChange={setDuration}
+          />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SelectButton
-            isSelected={duration === 20}
-            onClick={() => setDuration(20)}
-          >
-            20 Minuten
-          </SelectButton>
-          <SelectButton
-            isSelected={duration === 30}
-            onClick={() => setDuration(30)}
-          >
-            30 Minuten
-          </SelectButton>
-          <SelectButton
-            isSelected={duration === 45}
-            onClick={() => setDuration(45)}
-          >
-            45 Minuten
-          </SelectButton>
-        </div>
-      </div>
+      )}
 
-      {/* Focus Selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Target className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Trainingsbereich</h2>
+      {/* Body Part Selection */}
+      {workoutType && duration > 0 && (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Trainingsbereich</h2>
+            <p className="text-muted-foreground">Wähle den gewünschten Körperbereich oder klicke auf die Körperregion</p>
+          </div>
+          <div className="flex justify-center">
+            <BodySelector
+              selectedPart={focus}
+              onPartSelect={setFocus}
+            />
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SelectButton
-            isSelected={focus === "ganzkörper"}
-            onClick={() => setFocus("ganzkörper")}
-          >
-            Ganzkörper
-          </SelectButton>
-          <SelectButton
-            isSelected={focus === "oberkörper"}
-            onClick={() => setFocus("oberkörper")}
-          >
-            Oberkörper
-          </SelectButton>
-          <SelectButton
-            isSelected={focus === "unterkörper"}
-            onClick={() => setFocus("unterkörper")}
-          >
-            Unterkörper
-          </SelectButton>
-        </div>
-      </div>
+      )}
 
       {/* Generate Button */}
-      <div className="text-center">
-        <Button
-          onClick={generateWorkout}
-          disabled={!workoutType || !duration || !focus || isGenerating}
-          size="lg"
-          className="px-12 py-4 text-lg"
-        >
-          {isGenerating ? "Workout wird generiert..." : "Workout generieren"}
-        </Button>
-      </div>
+      {workoutType && duration > 0 && focus && (
+        <div className="text-center">
+          <Button
+            onClick={generateWorkout}
+            disabled={isGenerating}
+            size="lg"
+            className="px-16 py-4 text-lg font-semibold"
+          >
+            {isGenerating ? "Workout wird generiert..." : "Workout generieren"}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
