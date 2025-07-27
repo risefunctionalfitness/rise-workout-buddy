@@ -52,6 +52,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				rise: {
+					accent: 'hsl(var(--rise-accent))',
+					'accent-light': 'hsl(var(--rise-accent-light))',
+					'accent-dark': 'hsl(var(--rise-accent-dark))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
