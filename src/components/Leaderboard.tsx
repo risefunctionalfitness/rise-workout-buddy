@@ -27,6 +27,8 @@ export const Leaderboard: React.FC = () => {
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
 
+      console.log('Loading leaderboard for:', currentYear, currentMonth)
+
       // First get leaderboard entries
       const { data: leaderboardData, error: leaderboardError } = await supabase
         .from('leaderboard_entries')
@@ -35,24 +37,30 @@ export const Leaderboard: React.FC = () => {
         .eq('month', currentMonth)
         .order('training_count', { ascending: false })
 
+      console.log('Leaderboard data:', leaderboardData)
+
       if (leaderboardError) {
         console.error('Error loading leaderboard:', leaderboardError)
         return
       }
 
       if (!leaderboardData || leaderboardData.length === 0) {
+        console.log('No leaderboard entries found')
         setLeaderboard([])
         return
       }
 
       // Get all user IDs from leaderboard
       const userIds = leaderboardData.map(entry => entry.user_id)
+      console.log('User IDs to fetch profiles for:', userIds)
 
       // Fetch profiles for these users
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name')
         .in('user_id', userIds)
+
+      console.log('Profiles data:', profilesData)
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError)
@@ -62,6 +70,7 @@ export const Leaderboard: React.FC = () => {
       // Combine leaderboard data with profile names
       const formattedData = leaderboardData.map(entry => {
         const profile = profilesData?.find(p => p.user_id === entry.user_id)
+        console.log(`For user ${entry.user_id}, found profile:`, profile)
         return {
           id: entry.id,
           user_id: entry.user_id,
@@ -72,6 +81,7 @@ export const Leaderboard: React.FC = () => {
         }
       })
 
+      console.log('Final formatted data:', formattedData)
       setLeaderboard(formattedData)
     } catch (error) {
       console.error('Error loading leaderboard:', error)
@@ -155,7 +165,7 @@ export const Leaderboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <Badge variant="secondary" className="text-lg px-3 py-1">
+                        <Badge variant="secondary" className="text-lg px-3 py-1 bg-[#B81243] text-white">
                           {entry.training_count} {entry.training_count === 1 ? 'Training' : 'Trainings'}
                         </Badge>
                       </div>
