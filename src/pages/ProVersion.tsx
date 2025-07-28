@@ -6,69 +6,54 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useNavigate } from "react-router-dom"
 import { Dashboard } from "./Dashboard"
-import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 
 const ProVersion = () => {
   const navigate = useNavigate()
   const [accessCode, setAccessCode] = useState("")
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
+  // Mock authentication - keine echte Supabase Auth für jetzt
   useEffect(() => {
-    // Check for existing session
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false)
+    // Prüfe ob User bereits "eingeloggt" ist (localStorage)
+    const savedUser = localStorage.getItem('mockUser')
+    if (savedUser) {
+      setUser(JSON.parse(savedUser) as any)
     }
-
-    checkAuth()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    )
-
-    return () => subscription.unsubscribe()
   }, [])
 
   const handleLogin = async () => {
     if (!accessCode.trim()) return
 
-    try {
-      // For now, use simple email/password auth
-      const email = `${accessCode}@rise-fitness.com`
-      const password = accessCode
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
-
-      if (error) {
-        // Try to sign up if login fails
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/pro`
-          }
-        })
-        
-        if (signUpError) {
-          console.error('Authentication error:', signUpError)
+    // Mock authentication for testing
+    // Beispiel-Zugangscodes: "admin", "test", "demo"
+    const validCodes = ["admin", "test", "demo", "rise", "123"]
+    
+    if (validCodes.includes(accessCode.toLowerCase())) {
+      // Erstelle einen Mock-User
+      const mockUser = {
+        id: `mock-${accessCode}`,
+        email: `${accessCode}@rise-fitness.com`,
+        user_metadata: {
+          display_name: accessCode === "admin" ? "Max Mustermann" : 
+                       accessCode === "test" ? "Anna Test" :
+                       accessCode === "demo" ? "Demo User" : 
+                       `${accessCode.charAt(0).toUpperCase()}${accessCode.slice(1)} User`
         }
       }
-    } catch (error) {
-      console.error('Auth error:', error)
+      setUser(mockUser as any)
+      // Speichere User in localStorage für Persistenz
+      localStorage.setItem('mockUser', JSON.stringify(mockUser))
+    } else {
+      alert("Ungültiger Zugangscode. Versuche: admin, test, demo, rise oder 123")
     }
   }
 
   const handleBackToLight = () => {
+    // Logout: User aus localStorage entfernen
+    localStorage.removeItem('mockUser')
+    setUser(null)
     navigate("/")
   }
 
@@ -102,6 +87,10 @@ const ProVersion = () => {
                 </div>
                 
                 <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Beispiel-Zugangscodes:</strong> admin, test, demo, rise, 123
+                  </p>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="accessCode">Zugangscode</Label>
                     <Input
@@ -121,15 +110,15 @@ const ProVersion = () => {
                   >
                     Anmelden
                   </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleBackToLight}
+                    className="w-full"
+                  >
+                    Zurück zur Light-Version
+                  </Button>
                 </div>
-                
-                <Button 
-                  variant="ghost" 
-                  onClick={handleBackToLight}
-                  className="w-full"
-                >
-                  Zurück zur Light-Version
-                </Button>
               </div>
             </Card>
           </div>

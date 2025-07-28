@@ -44,7 +44,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   })
 
   const totalDaysInMonth = new Date().getDate()
-  const userName = profile?.display_name || user?.email?.split('@')[0] || 'Nutzer'
+  const userName = user?.user_metadata?.display_name || 
+                   user?.email?.split('@')[0] || 
+                   'Nutzer'
 
   const handleSelectWorkout = (id: string) => {
     console.log('Selected workout:', id)
