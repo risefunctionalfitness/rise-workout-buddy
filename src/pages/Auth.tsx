@@ -163,9 +163,7 @@ export default function Auth() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-1">
-              <TabsTrigger value="login">Anmelden</TabsTrigger>
-            </TabsList>
+            {/* No tabs needed, just direct login */}
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
