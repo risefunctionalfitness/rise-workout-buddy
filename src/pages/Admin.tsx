@@ -63,6 +63,15 @@ export default function Admin() {
 
   const checkAdminRole = async (userId: string) => {
     try {
+      // Spezielle Behandlung für Admin-E-Mail
+      const user = await supabase.auth.getUser();
+      if (user.data.user?.email === 'admin@rise-fitness.com') {
+        setIsAdmin(true);
+        loadMembers();
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -130,13 +139,15 @@ export default function Admin() {
         return;
       }
 
-      // Create profile entry with access code
+      // Create temporary profile entry for admin-created members
+      const tempUserId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
       const { error } = await supabase
         .from('profiles')
         .insert({
+          user_id: tempUserId,
           display_name: newMemberName,
-          access_code: newMemberCode,
-          user_id: `temp-${Date.now()}` // Temporary user_id for admin-created profiles
+          access_code: newMemberCode
         });
 
       if (error) {

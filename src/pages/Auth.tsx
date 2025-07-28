@@ -51,6 +51,17 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      // Spezielle Admin-Login Logik
+      if (email === "admin@rise-fitness.com" && password === "2019") {
+        // Versuche zuerst Admin User über Edge Function zu erstellen
+        try {
+          await supabase.functions.invoke('create-admin');
+          console.log('Admin user creation attempted');
+        } catch (createError) {
+          console.log('Admin user might already exist:', createError);
+        }
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
