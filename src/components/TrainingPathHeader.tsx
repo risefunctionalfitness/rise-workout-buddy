@@ -16,15 +16,14 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
 }) => {
   return (
     <div className="flex items-center justify-between p-4 bg-background border-b">
-      {/* Links: Account */}
-      <div className="flex items-center gap-3 flex-1">
+      {/* Links: Nur Avatar Button */}
+      <div className="flex-1">
         <Avatar className="h-10 w-10">
           <AvatarImage src={userAvatar} />
           <AvatarFallback>
             <User className="h-5 w-5" />
           </AvatarFallback>
         </Avatar>
-        <span className="font-medium text-foreground">{userName}</span>
       </div>
       
       {/* Mitte: RISE Logo */}

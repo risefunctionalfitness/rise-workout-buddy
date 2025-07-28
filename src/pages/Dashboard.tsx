@@ -7,11 +7,12 @@ import { User } from "@supabase/supabase-js"
 
 type TabType = 'home' | 'wod' | 'plans' | 'leaderboard'
 
-interface CalendarDay {
+interface TrainingDay {
   date: Date
   dayNumber: number
   isToday: boolean
   isFuture: boolean
+  isPast: boolean
   trainingSession?: {
     type: 'course' | 'free_training' | 'plan'
     id: string
@@ -24,52 +25,40 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState<TabType>('home')
-  const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([])
+  const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([])
   const [trainingCount, setTrainingCount] = useState(0)
 
-  // Generate calendar days for current month
+  // Generate training days for current month (vertical path style)
   useEffect(() => {
-    const generateCalendarDays = () => {
+    const generateTrainingDays = () => {
       const today = new Date()
       const currentMonth = today.getMonth()
       const currentYear = today.getFullYear()
-      const firstDay = new Date(currentYear, currentMonth, 1)
-      const lastDay = new Date(currentYear, currentMonth + 1, 0)
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
       
-      // Get Monday of the week containing the first day
-      const startDate = new Date(firstDay)
-      const dayOfWeek = firstDay.getDay()
-      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-      startDate.setDate(firstDay.getDate() + mondayOffset)
+      const days: TrainingDay[] = []
       
-      const days: CalendarDay[] = []
-      const currentDate = new Date(startDate)
-      
-      // Generate 6 weeks worth of days
-      for (let week = 0; week < 6; week++) {
-        for (let day = 0; day < 7; day++) {
-          const isCurrentMonth = currentDate.getMonth() === currentMonth
-          const isToday = currentDate.toDateString() === today.toDateString()
-          const isFuture = currentDate > today
-          
-          if (isCurrentMonth) {
-            days.push({
-              date: new Date(currentDate),
-              dayNumber: currentDate.getDate(),
-              isToday,
-              isFuture,
-              trainingSession: undefined // Will be filled from actual data
-            })
-          }
-          
-          currentDate.setDate(currentDate.getDate() + 1)
-        }
+      // Generate all days of the current month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const currentDate = new Date(currentYear, currentMonth, day)
+        const isToday = currentDate.toDateString() === today.toDateString()
+        const isFuture = currentDate > today
+        const isPast = currentDate < today && !isToday
+        
+        days.push({
+          date: currentDate,
+          dayNumber: day,
+          isToday,
+          isFuture,
+          isPast,
+          trainingSession: undefined // Will be filled from actual data
+        })
       }
       
       return days
     }
     
-    setCalendarDays(generateCalendarDays())
+    setTrainingDays(generateTrainingDays())
   }, [])
 
   const userName = user?.user_metadata?.display_name || 
@@ -79,7 +68,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const totalDaysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
 
   const handleAddTraining = (dayNumber: number, type: 'course' | 'free_training' | 'plan') => {
-    setCalendarDays(prev => prev.map(day => 
+    setTrainingDays(prev => prev.map(day => 
       day.dayNumber === dayNumber 
         ? { 
             ...day, 
@@ -96,7 +85,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   }
 
   const handleRemoveTraining = (dayNumber: number) => {
-    setCalendarDays(prev => prev.map(day => 
+    setTrainingDays(prev => prev.map(day => 
       day.dayNumber === dayNumber 
         ? { ...day, trainingSession: undefined }
         : day
@@ -111,7 +100,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       case 'home':
         return (
           <TrainingPath
-            calendarDays={calendarDays}
+            trainingDays={trainingDays}
             onAddTraining={handleAddTraining}
             onRemoveTraining={handleRemoveTraining}
           />
