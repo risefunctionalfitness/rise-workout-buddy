@@ -208,6 +208,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
           clean_and_jerk_1rm: cleanAndJerk1rm ? parseFloat(cleanAndJerk1rm) : null,
           extra_lifts: extraLifts,
           preferred_exercises: preferredExercises
+        }, {
+          onConflict: 'user_id'
         })
 
       if (error) throw error
