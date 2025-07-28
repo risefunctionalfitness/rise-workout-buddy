@@ -1,6 +1,6 @@
 import { TrainingPathNode } from "./TrainingPathNode"
 import { TrainingSessionDialog } from "./TrainingSessionDialog"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 
 interface TrainingDay {
   date: Date
@@ -27,6 +27,28 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
 }) => {
   const [selectedDay, setSelectedDay] = useState<TrainingDay | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const todayRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to today on mount
+  useEffect(() => {
+    if (todayRef.current && containerRef.current) {
+      const container = containerRef.current
+      const todayElement = todayRef.current
+      
+      // Calculate scroll position to center today's element
+      const containerHeight = container.clientHeight
+      const elementTop = todayElement.offsetTop
+      const elementHeight = todayElement.clientHeight
+      
+      const scrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2)
+      
+      container.scrollTo({
+        top: Math.max(0, scrollTop),
+        behavior: 'smooth'
+      })
+    }
+  }, [trainingDays])
 
   const handleDayClick = (day: TrainingDay) => {
     if (day.isFuture) return // Zukünftige Tage nicht klickbar
@@ -53,11 +75,15 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   }
 
   return (
-    <div className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/20">
+    <div ref={containerRef} className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/20">
       {/* Vertikaler Pfad */}
       <div className="flex flex-col items-center py-8 max-w-md mx-auto">
         {trainingDays.map((day, index) => (
-          <div key={day.dayNumber} className="flex flex-col items-center">
+          <div 
+            key={day.dayNumber} 
+            className="flex flex-col items-center"
+            ref={day.isToday ? todayRef : null}
+          >
             <TrainingPathNode
               id={day.dayNumber.toString()}
               date={day.date.toLocaleDateString('de-DE', { 

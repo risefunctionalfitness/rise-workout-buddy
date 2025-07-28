@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { TrainingPathHeader } from "@/components/TrainingPathHeader"
 import { TrainingPath } from "@/components/TrainingPath"
 import { BottomNavigation } from "@/components/BottomNavigation"
+import { UserProfile } from "@/components/UserProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 
@@ -27,6 +28,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState<TabType>('home')
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([])
   const [trainingCount, setTrainingCount] = useState(0)
+  const [showProfile, setShowProfile] = useState(false)
 
   // Generate training days for current month (vertical path style)
   useEffect(() => {
@@ -142,6 +144,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       <TrainingPathHeader
         trainingDaysThisMonth={trainingCount}
         totalDaysInMonth={totalDaysInMonth}
+        onProfileClick={() => setShowProfile(true)}
       />
       
       {renderTabContent()}
@@ -150,6 +153,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
+
+      {showProfile && (
+        <UserProfile onClose={() => setShowProfile(false)} />
+      )}
     </div>
   )
 }
