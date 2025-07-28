@@ -1,20 +1,70 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { RiseHeader } from "@/components/RiseHeader"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useNavigate } from "react-router-dom"
+import { Dashboard } from "./Dashboard"
+import { supabase } from "@/integrations/supabase/client"
+import { User } from "@supabase/supabase-js"
 
 const ProVersion = () => {
   const navigate = useNavigate()
   const [accessCode, setAccessCode] = useState("")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const handleLogin = () => {
-    // Mock authentication - in real app this would validate against Supabase
-    if (accessCode.trim()) {
-      setIsAuthenticated(true)
+  useEffect(() => {
+    // Check for existing session
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+      setLoading(false)
+    }
+
+    checkAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogin = async () => {
+    if (!accessCode.trim()) return
+
+    try {
+      // For now, use simple email/password auth
+      const email = `${accessCode}@rise-fitness.com`
+      const password = accessCode
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (error) {
+        // Try to sign up if login fails
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/pro`
+          }
+        })
+        
+        if (signUpError) {
+          console.error('Authentication error:', signUpError)
+        }
+      }
+    } catch (error) {
+      console.error('Auth error:', error)
     }
   }
 
@@ -22,7 +72,18 @@ const ProVersion = () => {
     navigate("/")
   }
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Lädt...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
     return (
       <div className="min-h-screen bg-background">
         <RiseHeader showProButton={false} />
@@ -49,7 +110,7 @@ const ProVersion = () => {
                       placeholder="Dein Zugangscode"
                       value={accessCode}
                       onChange={(e) => setAccessCode(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                      onKeyPress={(e) => e.key === "Enter" && handleLogin()}
                     />
                   </div>
                   
@@ -77,81 +138,8 @@ const ProVersion = () => {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <RiseHeader showProButton={false} />
-      
-      <main className="container mx-auto px-6 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            RISE Pro Dashboard
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Willkommen in der Pro-Version! Hier werden alle erweiterten Features implementiert.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Profil & Setup</h3>
-            <p className="text-muted-foreground mb-4">
-              Vervollständige dein Profil für personalisierte Workouts
-            </p>
-            <Button className="w-full">Profil bearbeiten</Button>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Trainingspläne</h3>
-            <p className="text-muted-foreground mb-4">
-              Wähle aus verschiedenen 4-12 Wochen Plänen
-            </p>
-            <Button className="w-full">Pläne ansehen</Button>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Fortschritt</h3>
-            <p className="text-muted-foreground mb-4">
-              Verfolge deine Entwicklung und 1RMs
-            </p>
-            <Button className="w-full">Fortschritt ansehen</Button>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Leaderboard</h3>
-            <p className="text-muted-foreground mb-4">
-              Sieh wie aktiv andere Mitglieder sind
-            </p>
-            <Button className="w-full">Ranking ansehen</Button>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Einzelne WODs</h3>
-            <p className="text-muted-foreground mb-4">
-              Schnell ein einzelnes Workout auswählen
-            </p>
-            <Button className="w-full">WOD auswählen</Button>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Training loggen</h3>
-            <p className="text-muted-foreground mb-4">
-              Trage dein heutiges Training ein
-            </p>
-            <Button className="w-full">Training loggen</Button>
-          </Card>
-        </div>
-
-        <div className="mt-8 text-center">
-          <Button 
-            variant="ghost" 
-            onClick={handleBackToLight}
-          >
-            Zurück zur Light-Version
-          </Button>
-        </div>
-      </main>
-    </div>
-  )
+  // Show Dashboard when authenticated
+  return <Dashboard user={user} />
 }
 
 export default ProVersion
