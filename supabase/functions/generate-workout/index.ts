@@ -179,6 +179,7 @@ Antworte in folgendem JSON Format:
 }`;
 
     // 7. OpenAI API Call
+    console.log('Calling OpenAI API...');
     const completion = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -196,14 +197,25 @@ Antworte in folgendem JSON Format:
       }),
     });
 
+    if (!completion.ok) {
+      console.error('OpenAI API Error Status:', completion.status);
+      console.error('OpenAI API Error Text:', await completion.text());
+      throw new Error(`OpenAI API Error: ${completion.status}`);
+    }
+
     const completionData = await completion.json();
-    console.log('OpenAI response received');
+    console.log('OpenAI response received successfully');
+    console.log('OpenAI response:', JSON.stringify(completionData, null, 2));
 
     let workoutData;
     try {
-      workoutData = JSON.parse(completionData.choices[0].message.content);
+      const content = completionData.choices[0].message.content;
+      console.log('Trying to parse OpenAI content:', content);
+      workoutData = JSON.parse(content);
+      console.log('Successfully parsed OpenAI workout');
     } catch (parseError) {
       console.error('JSON parsing error:', parseError);
+      console.error('Raw OpenAI content:', completionData.choices[0]?.message?.content);
       // Fallback workout
       workoutData = {
         name: `${workoutType} Workout`,
