@@ -6,7 +6,7 @@ import { WorkoutTypeSelector } from "./WorkoutTypeSelector"
 import { SessionTypeSelector } from "./SessionTypeSelector"
 import { DurationSlider } from "./DurationSlider"
 import { BodySelector } from "./BodySelector"
-import { WorkoutDisplay } from "./WorkoutDisplay"
+import { WorkoutDisplayWhiteboard } from "./WorkoutDisplayWhiteboard"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 
@@ -38,19 +38,22 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   const [focus, setFocus] = useState<Focus>(null)
   const [generatedWorkout, setGeneratedWorkout] = useState<WorkoutData | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const generateWorkout = async () => {
-    // Für CrossFit: Session Type erforderlich, für Bodybuilding: automatisch full_session
-    const requiredSessionType = workoutType === "crossfit" ? sessionType : "full_session"
-    
-    if (!workoutType || !duration || !focus || (workoutType === "crossfit" && !sessionType)) {
+    if (!workoutType) {
       toast({
         title: "Unvollständige Auswahl",
-        description: "Bitte wählen Sie alle Optionen aus.",
+        description: "Bitte wählen Sie eine Trainingsart aus.",
         variant: "destructive"
       })
       return
     }
+
+    // Defaults setzen wenn nicht ausgewählt
+    const finalSessionType = sessionType || (workoutType === "crossfit" ? "wod_only" : "full_session")
+    const finalDuration = duration || (workoutType === "crossfit" ? 20 : 60)
+    const finalFocus = focus || "ganzkörper"
 
     setIsGenerating(true)
     
@@ -59,9 +62,9 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       const { data, error } = await supabase.functions.invoke('generate-workout', {
         body: {
           workoutType,
-          sessionType: requiredSessionType,
-          duration,
-          focus,
+          sessionType: finalSessionType,
+          duration: finalDuration,
+          focus: finalFocus,
           userId: user.id
         }
       })
@@ -201,11 +204,12 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
     setDuration(0)
     setFocus(null)
     setGeneratedWorkout(null)
+    setShowAdvanced(false)
   }
 
   if (generatedWorkout) {
     return (
-      <WorkoutDisplay 
+      <WorkoutDisplayWhiteboard 
         workout={generatedWorkout}
         onNewWorkout={newWorkout}
         onReset={resetSelection}
@@ -214,33 +218,54 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Left Column - Selections */}
-        <div className="space-y-6">
-          {/* Workout Type Selection */}
-          <div className="space-y-4">
-            <div className="text-center lg:text-left">
-              <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
-                <Dumbbell className="h-6 w-6 text-primary" />
-                <h2 className="text-xl font-bold text-foreground">Trainingsziel</h2>
-              </div>
-            </div>
-            <WorkoutTypeSelector
-              selectedType={workoutType}
-              onTypeSelect={(type) => {
-                setWorkoutType(type)
-                setSessionType(null) // Reset session type when workout type changes
-              }}
-            />
-          </div>
+    <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Main Selection */}
+      <div className="text-center space-y-6">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Dumbbell className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-bold text-foreground">Trainingsziel</h2>
+        </div>
+        <WorkoutTypeSelector
+          selectedType={workoutType}
+          onTypeSelect={(type) => {
+            setWorkoutType(type)
+            setSessionType(null)
+          }}
+        />
+        
+        {/* Generate Button */}
+        {workoutType && (
+          <Button
+            onClick={generateWorkout}
+            disabled={isGenerating}
+            size="lg"
+            className="px-12 py-6 text-lg font-semibold"
+          >
+            {isGenerating ? "Workout wird generiert..." : "Workout generieren"}
+          </Button>
+        )}
+        
+        {/* Advanced Settings Toggle */}
+        {workoutType && (
+          <Button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            variant="outline"
+            size="sm"
+          >
+            {showAdvanced ? "Erweiterte Einstellungen ausblenden" : "Erweiterte Einstellungen"}
+          </Button>
+        )}
+      </div>
 
-          {/* Session Type Selection - nur für CrossFit */}
+      {/* Advanced Settings */}
+      {showAdvanced && workoutType && (
+        <div className="border rounded-lg p-6 space-y-6 bg-muted/50">
+          <h3 className="text-lg font-semibold text-center">Erweiterte Einstellungen</h3>
+          
+          {/* Session Type für CrossFit */}
           {workoutType === "crossfit" && (
             <div className="space-y-4">
-              <div className="text-center lg:text-left">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Session-Typ</h3>
-              </div>
+              <h4 className="text-md font-medium">Session-Typ</h4>
               <SessionTypeSelector
                 selectedType={sessionType}
                 onTypeSelect={setSessionType}
@@ -248,8 +273,8 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
             </div>
           )}
 
-          {/* Duration Selection */}
-          {workoutType && (workoutType === "bodybuilding" || sessionType) && (
+          {/* Duration für Bodybuilding */}
+          {workoutType === "bodybuilding" && (
             <div className="space-y-4">
               <DurationSlider
                 workoutType={workoutType}
@@ -260,35 +285,17 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           )}
 
           {/* Body Part Selection */}
-          {workoutType && duration > 0 && (workoutType === "bodybuilding" || sessionType) && (
-            <div className="space-y-4">
-              <div className="text-center lg:text-left">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Trainingsbereich</h3>
-              </div>
-              <div className="flex justify-center lg:justify-start">
-                <BodySelector
-                  selectedPart={focus}
-                  onPartSelect={setFocus}
-                />
-              </div>
+          <div className="space-y-4">
+            <h4 className="text-md font-medium text-center">Trainingsbereich</h4>
+            <div className="flex justify-center">
+              <BodySelector
+                selectedPart={focus}
+                onPartSelect={setFocus}
+              />
             </div>
-          )}
+          </div>
         </div>
-
-        {/* Right Column - Generate Button */}
-        <div className="flex items-center justify-center lg:items-end lg:justify-start">
-          {workoutType && duration > 0 && focus && (workoutType === "bodybuilding" || sessionType) && (
-            <Button
-              onClick={generateWorkout}
-              disabled={isGenerating}
-              size="lg"
-              className="px-12 py-6 text-lg font-semibold w-full lg:w-auto"
-            >
-              {isGenerating ? "Workout wird generiert..." : "Workout generieren"}
-            </Button>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
