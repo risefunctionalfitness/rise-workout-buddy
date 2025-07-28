@@ -46,7 +46,7 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
     }
   }
 
-  const isClickable = status === 'current'
+  const isClickable = status === 'current' || status === 'pending' || status === 'completed'
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -69,8 +69,8 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
       
       <div className="text-center">
         <div className="text-xs text-muted-foreground">{date}</div>
-        {status === 'current' && (
-          <div className="text-xs text-primary font-medium mt-1">
+        {(status === 'current' || status === 'completed') && workoutType && (
+          <div className="text-xs font-medium mt-1">
             {workoutType === 'course' ? 'Kurs' : 
              workoutType === 'free_training' ? 'Frei' : 'Plan'}
           </div>

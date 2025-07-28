@@ -387,6 +387,10 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      update_leaderboard_entry: {
+        Args: { user_id_param: string; session_date: string }
+        Returns: undefined
+      }
       vector_avg: {
         Args: { "": number[] }
         Returns: string
