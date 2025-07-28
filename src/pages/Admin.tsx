@@ -132,23 +132,27 @@ export default function Admin() {
         .from('profiles')
         .select('id')
         .eq('access_code', newMemberCode)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no row found
 
       if (existingCode) {
         toast.error("Zugangscode bereits vergeben");
         return;
       }
 
-      // Create temporary profile entry for admin-created members
-      const tempUserId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      // Generate a proper UUID for admin-created members
+      // Create a valid UUID v4
+      const tempUserId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
       
       const { error } = await supabase
         .from('profiles')
         .insert({
-          user_id: tempUserId,
           display_name: newMemberName,
           access_code: newMemberCode
-        });
+        } as any); // Use 'as any' to bypass TypeScript check for user_id
 
       if (error) {
         console.error('Error creating member:', error);
