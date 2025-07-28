@@ -6,6 +6,7 @@ import { WorkoutTypeSelector } from "./WorkoutTypeSelector"
 import { DurationSlider } from "./DurationSlider"
 import { BodySelector } from "./BodySelector"
 import { WorkoutDisplay } from "./WorkoutDisplay"
+import { supabase } from "@/integrations/supabase/client"
 
 type WorkoutType = "crossfit" | "bodybuilding" | null
 type Focus = "ganzkörper" | "oberkörper" | "unterkörper" | null
@@ -43,10 +44,45 @@ export const WorkoutGenerator = () => {
     setIsGenerating(true)
     
     try {
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Edge Function für intelligente Workout-Generierung aufrufen
+      const { data, error } = await supabase.functions.invoke('generate-workout', {
+        body: {
+          workoutType,
+          duration,
+          focus,
+          userId: 'demo-user' // Wird später durch echte User-ID ersetzt
+        }
+      })
+
+      if (error) {
+        console.error('Edge Function Error:', error)
+        throw new Error(error.message || 'Fehler beim Generieren des Workouts')
+      }
+
+      // Konvertiere das neue Workout-Format in das bestehende Format
+      const convertedWorkout: WorkoutData = {
+        title: data.workout.name,
+        type: data.workout.type,
+        duration: data.workout.duration,
+        exercises: data.workout.parts.reduce((acc: any[], part: any) => {
+          if (part.exercises) {
+            acc.push(...part.exercises.map((ex: string) => ({ name: ex })))
+          }
+          return acc
+        }, []),
+        notes: data.workout.notes
+      }
+
+      setGeneratedWorkout(convertedWorkout)
       
-      // Mock workout data based on selections
+      toast({
+        title: "Personalisiertes Workout generiert!",
+        description: `Dein ${workoutType.toUpperCase()} Workout basierend auf deinem Profil.`
+      })
+    } catch (error) {
+      console.error("Fehler beim Generieren:", error)
+      
+      // Fallback bei Fehlern - lokale Mock-Generierung
       const mockWorkouts = {
         crossfit: {
           ganzkörper: {
@@ -134,13 +170,8 @@ export const WorkoutGenerator = () => {
       setGeneratedWorkout(workout)
       
       toast({
-        title: "Workout generiert!",
-        description: `Dein ${workoutType.toUpperCase()} Workout ist bereit.`
-      })
-    } catch (error) {
-      toast({
-        title: "Fehler",
-        description: "Workout konnte nicht generiert werden. Versuche es erneut.",
+        title: "Fallback-Workout generiert",
+        description: "KI-Generation nicht verfügbar, lokales Workout erstellt.",
         variant: "destructive"
       })
     } finally {

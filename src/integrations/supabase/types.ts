@@ -329,6 +329,24 @@ export type Database = {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
       }
+      match_workouts: {
+        Args: {
+          query_embedding: string
+          match_threshold?: number
+          match_count?: number
+        }
+        Returns: {
+          workout_id: string
+          full_text: string
+          part_a_description: string
+          part_b_description: string
+          part_c_description: string
+          part_a_type: string
+          part_b_score_type: string
+          part_c_score_type: string
+          similarity: number
+        }[]
+      }
       sparsevec_out: {
         Args: { "": unknown }
         Returns: unknown
