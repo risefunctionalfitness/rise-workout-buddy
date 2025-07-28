@@ -67,7 +67,7 @@ export type Database = {
           snatch_1rm: number | null
           training_frequency_per_week: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           weight_kg: number | null
         }
         Insert: {
@@ -92,7 +92,7 @@ export type Database = {
           snatch_1rm?: number | null
           training_frequency_per_week?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           weight_kg?: number | null
         }
         Update: {
@@ -117,7 +117,7 @@ export type Database = {
           snatch_1rm?: number | null
           training_frequency_per_week?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           weight_kg?: number | null
         }
         Relationships: []

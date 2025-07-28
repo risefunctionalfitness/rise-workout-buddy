@@ -139,20 +139,13 @@ export default function Admin() {
         return;
       }
 
-      // Generate a proper UUID for admin-created members
-      // Create a valid UUID v4
-      const tempUserId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-      
+      // Create profile entry without user_id for admin-created members
       const { error } = await supabase
         .from('profiles')
         .insert({
           display_name: newMemberName,
           access_code: newMemberCode
-        } as any); // Use 'as any' to bypass TypeScript check for user_id
+        });
 
       if (error) {
         console.error('Error creating member:', error);
