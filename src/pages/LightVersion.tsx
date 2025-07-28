@@ -12,24 +12,7 @@ const LightVersion = () => {
 
   return (
     <div className="min-h-screen bg-background relative">
-      <RiseHeader onProClick={handleProClick} />
-      
-      {/* Right Top Corner - Login und Pro-Version Buttons */}
-      <div className="absolute top-4 right-4 space-x-2">
-        <Button 
-          variant="outline"
-          onClick={() => navigate("/auth")}
-          className="bg-white/90 hover:bg-white border-primary"
-        >
-          Anmelden
-        </Button>
-        <Button 
-          onClick={() => navigate("/pro")}
-          className="bg-primary hover:bg-primary/90"
-        >
-          Zur Pro-Version
-        </Button>
-      </div>
+      <RiseHeader onProVersionClick={() => navigate("/auth")} />
       
       <main className="container mx-auto px-6 py-8">
         <div className="text-center mb-8">

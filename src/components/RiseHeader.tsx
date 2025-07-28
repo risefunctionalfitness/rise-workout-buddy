@@ -1,13 +1,11 @@
 import { Button } from "@/components/ui/button"
 
 interface RiseHeaderProps {
-  showProButton?: boolean
-  onProClick?: () => void
+  onProVersionClick?: () => void
 }
 
 export const RiseHeader: React.FC<RiseHeaderProps> = ({ 
-  showProButton = true, 
-  onProClick 
+  onProVersionClick 
 }) => {
   return (
     <header className="flex justify-between items-center w-full p-6 border-b border-border">
@@ -18,16 +16,14 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
           className="h-12"
         />
       </div>
-      {showProButton && (
-        <Button 
-          onClick={onProClick}
-          variant="outline"
-          size="lg"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          Zur Pro-Version
-        </Button>
-      )}
+      <Button 
+        onClick={onProVersionClick}
+        variant="outline"
+        size="lg"
+        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+      >
+        Zur Pro-Version
+      </Button>
     </header>
   )
 }

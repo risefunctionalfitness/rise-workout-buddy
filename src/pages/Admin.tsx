@@ -130,16 +130,6 @@ export default function Admin() {
 
     try {
       // Check if email or access code already exists
-      const { data: existingUser, error: listError } = await supabase.auth.admin.listUsers();
-      if (!listError && existingUser?.users) {
-        const emailExists = existingUser.users.some((user: any) => user.email === newMemberEmail);
-        
-        if (emailExists) {
-          toast.error("E-Mail bereits vergeben");
-          return;
-        }
-      }
-
       const { data: existingCode } = await supabase
         .from('profiles')
         .select('id')
@@ -151,20 +141,21 @@ export default function Admin() {
         return;
       }
 
-      // Create real Supabase user with access_code in metadata
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newMemberEmail,
-        password: newMemberCode, // Use access code as password
-        email_confirm: true, // Skip email verification
-        user_metadata: {
-          display_name: newMemberName,
-          access_code: newMemberCode
+      // Create user via Edge Function with admin privileges
+      const { data: result, error: functionError } = await supabase.functions.invoke('create-member', {
+        body: {
+          email: newMemberEmail,
+          password: newMemberCode,
+          user_metadata: {
+            display_name: newMemberName,
+            access_code: newMemberCode
+          }
         }
       });
 
-      if (authError) {
-        console.error('Error creating auth user:', authError);
-        toast.error("Fehler beim Erstellen des Benutzer-Accounts");
+      if (functionError || !result?.success) {
+        console.error('Error creating member:', functionError || result?.error);
+        toast.error("Fehler beim Erstellen des Mitglieds");
       } else {
         toast.success("Mitglied erfolgreich erstellt - kann sich sofort anmelden!");
         setNewMemberName("");

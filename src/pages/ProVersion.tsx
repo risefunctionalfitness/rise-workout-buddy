@@ -71,7 +71,7 @@ const ProVersion = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <RiseHeader showProButton={false} />
+        <RiseHeader />
         
         <main className="container mx-auto px-6 py-8">
           <div className="max-w-md mx-auto">

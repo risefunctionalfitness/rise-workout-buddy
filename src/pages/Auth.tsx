@@ -163,9 +163,8 @@ export default function Auth() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="login">Anmelden</TabsTrigger>
-              <TabsTrigger value="signup">Registrieren</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -194,36 +193,6 @@ export default function Auth() {
                   disabled={loading}
                 >
                   {loading ? "Anmelden..." : "Anmelden"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Input
-                    type="email"
-                    placeholder="E-Mail"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    type="text"
-                    placeholder="Zugangscode"
-                    value={accessCode}
-                    onChange={(e) => setAccessCode(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={loading}
-                >
-                  {loading ? "Registrieren..." : "Registrieren"}
                 </Button>
               </form>
             </TabsContent>
