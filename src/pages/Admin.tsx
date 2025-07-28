@@ -14,6 +14,7 @@ interface Member {
   id: string;
   display_name: string;
   access_code: string;
+  user_id: string | null;
   email?: string;
   created_at: string;
 }
@@ -25,6 +26,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberCode, setNewMemberCode] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -103,7 +105,7 @@ export default function Admin() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, access_code, created_at')
+        .select('id, display_name, access_code, created_at, user_id')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -121,13 +123,23 @@ export default function Admin() {
   const handleCreateMember = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newMemberName || !newMemberCode) {
+    if (!newMemberName || !newMemberEmail || !newMemberCode) {
       toast.error("Bitte alle Felder ausfüllen");
       return;
     }
 
     try {
-      // Check if access code already exists
+      // Check if email or access code already exists
+      const { data: existingUser, error: listError } = await supabase.auth.admin.listUsers();
+      if (!listError && existingUser?.users) {
+        const emailExists = existingUser.users.some((user: any) => user.email === newMemberEmail);
+        
+        if (emailExists) {
+          toast.error("E-Mail bereits vergeben");
+          return;
+        }
+      }
+
       const { data: existingCode } = await supabase
         .from('profiles')
         .select('id')
@@ -139,12 +151,9 @@ export default function Admin() {
         return;
       }
 
-      // Create a temporary email for the member
-      const memberEmail = `member-${newMemberCode}@rise-fitness.local`;
-      
       // Create real Supabase user with access_code in metadata
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: memberEmail,
+        email: newMemberEmail,
         password: newMemberCode, // Use access code as password
         email_confirm: true, // Skip email verification
         user_metadata: {
@@ -157,8 +166,9 @@ export default function Admin() {
         console.error('Error creating auth user:', authError);
         toast.error("Fehler beim Erstellen des Benutzer-Accounts");
       } else {
-        toast.success("Mitglied erfolgreich erstellt - sofort einsatzbereit!");
+        toast.success("Mitglied erfolgreich erstellt - kann sich sofort anmelden!");
         setNewMemberName("");
+        setNewMemberEmail("");
         setNewMemberCode("");
         setDialogOpen(false);
         loadMembers();
@@ -269,6 +279,15 @@ export default function Admin() {
                     </div>
                     <div className="space-y-2">
                       <Input
+                        type="email"
+                        placeholder="E-Mail des Mitglieds"
+                        value={newMemberEmail}
+                        onChange={(e) => setNewMemberEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Input
                         placeholder="Zugangscode (z.B. 2019)"
                         value={newMemberCode}
                         onChange={(e) => setNewMemberCode(e.target.value)}
@@ -297,6 +316,7 @@ export default function Admin() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>E-Mail</TableHead>
                   <TableHead>Zugangscode</TableHead>
                   <TableHead>Erstellt am</TableHead>
                   <TableHead>Status</TableHead>
@@ -307,6 +327,9 @@ export default function Admin() {
                   <TableRow key={member.id}>
                     <TableCell className="font-medium">
                       {member.display_name || 'Unbekannt'}
+                    </TableCell>
+                    <TableCell>
+                      {member.user_id ? 'Verfügbar' : 'Kein Zugriff'}
                     </TableCell>
                     <TableCell>{member.access_code || '-'}</TableCell>
                     <TableCell>
@@ -321,7 +344,7 @@ export default function Admin() {
                 ))}
                 {members.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       Noch keine Mitglieder erstellt
                     </TableCell>
                   </TableRow>

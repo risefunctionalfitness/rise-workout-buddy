@@ -24,22 +24,46 @@ export default function Auth() {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect authenticated users to main page
+        // Redirect authenticated users based on their role
         if (session?.user) {
-          setTimeout(() => {
-            navigate("/pro");
+          setTimeout(async () => {
+            // Check if user is admin
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .eq('role', 'admin')
+              .maybeSingle();
+
+            if (roleData || session.user.email === 'admin@rise-fitness.com') {
+              navigate("/admin");
+            } else {
+              navigate("/pro");
+            }
           }, 0);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        navigate("/pro");
+        // Check if user is admin
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (roleData || session.user.email === 'admin@rise-fitness.com') {
+          navigate("/admin");
+        } else {
+          navigate("/pro");
+        }
       }
     });
 
@@ -51,51 +75,26 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // Spezielle Admin-Login Logik
-      if (email === "admin@rise-fitness.com" && password === "2019") {
-        // Versuche zuerst Admin User über Edge Function zu erstellen
-        try {
-          await supabase.functions.invoke('create-admin');
-          console.log('Admin user creation attempted');
-        } catch (createError) {
-          console.log('Admin user might already exist:', createError);
-        }
-        
-        // Admin Login mit Email + Passwort
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      // Einheitlicher Login für alle: Email + Code
+      if (!email || !accessCode) {
+        toast.error("Bitte E-Mail und Code eingeben");
+        setLoading(false);
+        return;
+      }
 
-        if (error) {
-          toast.error("Ungültige Admin-Anmeldedaten");
-          return;
-        }
-      } else {
-        // Mitglieder-Login mit Email + Code
-        // Finde User basierend auf access_code
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_id')
-          .eq('access_code', accessCode)
-          .maybeSingle();
+      // Login mit Email und Code als Passwort
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: accessCode,
+      });
 
-        if (!profile?.user_id) {
-          toast.error("Ungültiger Zugangscode");
-          return;
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Ungültige E-Mail oder Code");
+        } else {
+          toast.error(error.message);
         }
-
-        // Login mit der zugehörigen Email und dem Code als Passwort
-        const memberEmail = `member-${accessCode}@rise-fitness.local`;
-        const { error } = await supabase.auth.signInWithPassword({
-          email: memberEmail,
-          password: accessCode,
-        });
-
-        if (error) {
-          toast.error("Anmeldung fehlgeschlagen");
-          return;
-        }
+        return;
       }
 
       toast.success("Erfolgreich angemeldet!");
@@ -116,10 +115,11 @@ export default function Auth() {
       
       const { error } = await supabase.auth.signUp({
         email,
-        password,
+        password: accessCode, // Use access code as password
         options: {
           emailRedirectTo: redirectUrl,
           data: {
+            display_name: email.split('@')[0], // Use email prefix as display name
             access_code: accessCode
           }
         }
@@ -134,7 +134,7 @@ export default function Auth() {
         return;
       }
 
-      toast.success("Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail.");
+      toast.success("Registrierung erfolgreich! Sie können sich jetzt anmelden.");
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("Fehler bei der Registrierung");
@@ -170,35 +170,24 @@ export default function Auth() {
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                {/* Admin Login Fields */}
                 <div className="space-y-2">
                   <Input
                     type="email"
-                    placeholder="E-Mail (nur für Admin)"
+                    placeholder="E-Mail"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Input
-                    type="password"
-                    placeholder="Admin-Passwort"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                
-                {/* Member Login Field */}
-                <div className="border-t pt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Oder als Mitglied:</p>
                   <Input
                     type="text"
                     placeholder="Zugangscode"
                     value={accessCode}
                     onChange={(e) => setAccessCode(e.target.value)}
+                    required
                   />
                 </div>
-                
                 <Button 
                   type="submit" 
                   className="w-full" 
@@ -218,16 +207,6 @@ export default function Auth() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    type="password"
-                    placeholder="Passwort"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
                   />
                 </div>
                 <div className="space-y-2">
