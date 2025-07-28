@@ -4,6 +4,13 @@ import { cn } from "@/lib/utils"
 
 type BodyPart = "ganzkörper" | "oberkörper" | "unterkörper" | null
 
+// Mapping für Backend-Kompatibilität
+const bodyPartMapping = {
+  "ganzkörper": "full",
+  "oberkörper": "upper", 
+  "unterkörper": "lower"
+}
+
 interface BodySelectorProps {
   selectedPart: BodyPart
   onPartSelect: (part: BodyPart) => void

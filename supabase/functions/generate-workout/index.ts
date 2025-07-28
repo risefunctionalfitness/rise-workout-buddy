@@ -19,8 +19,8 @@ serve(async (req) => {
   }
 
   try {
-    const { workoutType, duration, focus, userId } = await req.json();
-    console.log('Generating workout for user:', userId, 'Type:', workoutType, 'Duration:', duration, 'Focus:', focus);
+    const { workoutType, sessionType, duration, focus, userId } = await req.json();
+    console.log('Generating workout for user:', userId, 'Type:', workoutType, 'Session:', sessionType, 'Duration:', duration, 'Focus:', focus);
 
     // 1. Profildaten des Users laden
     const { data: profile, error: profileError } = await supabase
@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log('User profile loaded:', profile);
 
     // 2. Prompt für ähnliche Workouts erstellen
-    const searchPrompt = `${workoutType} workout ${duration} minutes ${focus}`;
+    const searchPrompt = `${workoutType} ${sessionType || ''} workout ${duration} minutes ${focus}`;
 
     // 3. Embedding für die Suche generieren
     const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
@@ -124,7 +124,7 @@ Part B: ${w.part_b_description}
 ${w.part_c_description ? `Part C: ${w.part_c_description}` : ''}
 `).join('\n')}
 
-Erstelle ein ${workoutType} Workout mit ${duration} Minuten Fokus auf ${focus}.
+Erstelle ein ${workoutType} Workout (${sessionType || 'full_session'}) mit ${duration} Minuten Fokus auf ${focus}.
 
 WICHTIGE REGELN:
 1. Verwende NUR Übungen aus den bevorzugten Übungen (falls angegeben)
@@ -164,11 +164,11 @@ Antworte in folgendem JSON Format:
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
+        body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Erstelle ein personalisiertes ${workoutType} Workout mit ${duration} Minuten, Fokus: ${focus}` }
+          { role: 'user', content: `Erstelle ein personalisiertes ${workoutType} Workout (${sessionType || 'full_session'}) mit ${duration} Minuten, Fokus: ${focus}` }
         ],
         temperature: 0.7,
         max_tokens: 1500,
@@ -214,7 +214,7 @@ Antworte in folgendem JSON Format:
       .insert({
         user_id: userId,
         date: new Date().toISOString().split('T')[0],
-        workout_type: workoutType,
+        workout_type: `${workoutType}_${sessionType || 'full_session'}`,
         workout_data: workoutData,
         status: 'pending'
       });

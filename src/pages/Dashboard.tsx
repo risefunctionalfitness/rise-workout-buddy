@@ -4,6 +4,7 @@ import { TrainingPath } from "@/components/TrainingPath"
 import { BottomNavigation } from "@/components/BottomNavigation"
 import { UserProfile } from "@/components/UserProfile"
 import { Leaderboard } from "@/components/Leaderboard"
+import { WorkoutGenerator } from "@/components/WorkoutGenerator"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
@@ -219,11 +220,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         )
       case 'wod':
         return (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-xl font-bold mb-2">WOD Generator</h2>
-              <p className="text-muted-foreground">Generiere dein freies Workout</p>
+          <div className="flex-1 container mx-auto px-6 py-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
+                WOD Generator
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Erstelle dir dein personalisiertes Workout basierend auf deinem Profil.
+              </p>
             </div>
+            <WorkoutGenerator user={user} />
           </div>
         )
       case 'plans':

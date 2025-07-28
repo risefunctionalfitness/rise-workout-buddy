@@ -25,7 +25,7 @@ const LightVersion = () => {
           </p>
         </div>
 
-        <WorkoutGenerator />
+        <WorkoutGenerator user={{ id: 'demo-user' } as any} />
       </main>
     </div>
   )
