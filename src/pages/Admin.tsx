@@ -132,26 +132,32 @@ export default function Admin() {
         .from('profiles')
         .select('id')
         .eq('access_code', newMemberCode)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no row found
+        .maybeSingle();
 
       if (existingCode) {
         toast.error("Zugangscode bereits vergeben");
         return;
       }
 
-      // Create profile entry without user_id for admin-created members
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
+      // Create a temporary email for the member
+      const memberEmail = `member-${newMemberCode}@rise-fitness.local`;
+      
+      // Create real Supabase user with access_code in metadata
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: memberEmail,
+        password: newMemberCode, // Use access code as password
+        email_confirm: true, // Skip email verification
+        user_metadata: {
           display_name: newMemberName,
           access_code: newMemberCode
-        });
+        }
+      });
 
-      if (error) {
-        console.error('Error creating member:', error);
-        toast.error("Fehler beim Erstellen des Mitglieds");
+      if (authError) {
+        console.error('Error creating auth user:', authError);
+        toast.error("Fehler beim Erstellen des Benutzer-Accounts");
       } else {
-        toast.success("Mitglied erfolgreich erstellt");
+        toast.success("Mitglied erfolgreich erstellt - sofort einsatzbereit!");
         setNewMemberName("");
         setNewMemberCode("");
         setDialogOpen(false);

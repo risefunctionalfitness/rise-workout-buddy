@@ -60,20 +60,42 @@ export default function Auth() {
         } catch (createError) {
           console.log('Admin user might already exist:', createError);
         }
-      }
+        
+        // Admin Login mit Email + Passwort
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast.error("Ungültige E-Mail oder Passwort");
-        } else {
-          toast.error(error.message);
+        if (error) {
+          toast.error("Ungültige Admin-Anmeldedaten");
+          return;
         }
-        return;
+      } else {
+        // Mitglieder-Login mit Email + Code
+        // Finde User basierend auf access_code
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('access_code', accessCode)
+          .maybeSingle();
+
+        if (!profile?.user_id) {
+          toast.error("Ungültiger Zugangscode");
+          return;
+        }
+
+        // Login mit der zugehörigen Email und dem Code als Passwort
+        const memberEmail = `member-${accessCode}@rise-fitness.local`;
+        const { error } = await supabase.auth.signInWithPassword({
+          email: memberEmail,
+          password: accessCode,
+        });
+
+        if (error) {
+          toast.error("Anmeldung fehlgeschlagen");
+          return;
+        }
       }
 
       toast.success("Erfolgreich angemeldet!");
@@ -148,24 +170,35 @@ export default function Auth() {
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
+                {/* Admin Login Fields */}
                 <div className="space-y-2">
                   <Input
                     type="email"
-                    placeholder="E-Mail"
+                    placeholder="E-Mail (nur für Admin)"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
                   <Input
                     type="password"
-                    placeholder="Passwort"
+                    placeholder="Admin-Passwort"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required
                   />
                 </div>
+                
+                {/* Member Login Field */}
+                <div className="border-t pt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Oder als Mitglied:</p>
+                  <Input
+                    type="text"
+                    placeholder="Zugangscode"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value)}
+                  />
+                </div>
+                
                 <Button 
                   type="submit" 
                   className="w-full" 
