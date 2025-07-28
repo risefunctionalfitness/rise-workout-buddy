@@ -124,59 +124,109 @@ serve(async (req) => {
       extraLifts: profile.extra_lifts || []
     };
 
-    // 6. OpenAI Prompt erstellen
-    const systemPrompt = `Du bist ein erfahrener CrossFit Coach und erstellst personalisierte Workouts. 
+    // 6. CrossFit/Bodybuilding spezifischer Prompt
+    const systemPrompt = workoutType === 'crossfit' ? 
+      `Du bist ein erfahrener CrossFit Coach und erstellst authentische CrossFit WODs im Stil von CrossFit.com.
 
 BENUTZERPROFIL:
 - Fitnesslevel: ${userContext.fitnessLevel}
 - Gewicht: ${userContext.weight || 'unbekannt'} kg
 - Alter: ${userContext.age || 'unbekannt'} Jahre
-- Geschlecht: ${userContext.gender || 'unbekannt'}
 - 1RM Werte: Front Squat: ${userContext.oneRepMaxes.frontSquat || 'unbekannt'} kg, Back Squat: ${userContext.oneRepMaxes.backSquat || 'unbekannt'} kg, Deadlift: ${userContext.oneRepMaxes.deadlift || 'unbekannt'} kg, Bench Press: ${userContext.oneRepMaxes.benchPress || 'unbekannt'} kg, Snatch: ${userContext.oneRepMaxes.snatch || 'unbekannt'} kg, Clean & Jerk: ${userContext.oneRepMaxes.cleanAndJerk || 'unbekannt'} kg
 
-BEVORZUGTE ÜBUNGEN: 
-${userContext.preferredExercises.length > 0 ? userContext.preferredExercises.join(', ') : 'Alle Übungen erlaubt'}
-
 REFERENZ WORKOUTS (als Inspiration):
-${workoutsForContext.map(w => `
-Workout: ${w.full_text}
-Part A: ${w.part_a_description}
-Part B: ${w.part_b_description}
-${w.part_c_description ? `Part C: ${w.part_c_description}` : ''}
-`).join('\n')}
+${workoutsForContext.map(w => `${w.full_text}`).join('\n')}
 
-Erstelle ein ${workoutType} Workout (${sessionType || 'full_session'}) mit ${duration} Minuten Fokus auf ${focus}.
+CROSSFIT WOD REGELN:
+- Verwende authentische CrossFit Bewegungen: Thrusters, Burpees, Pull-Ups, Double Unders, Wall Balls, etc.
+- Arbeitsgewichte: 60-70% von 1RM für Kraftübungen
+- Format: AMRAP (As Many Rounds As Possible), For Time, EMOM (Every Minute On the Minute), oder Tabata
+- Reps: Klassische CrossFit Zahlen (21-15-9, 5-4-3-2-1, etc.)
+- Kurze, intensive Workouts (10-20 Min)
+- Deutsche Übungsnamen verwenden
 
-WICHTIGE REGELN:
-1. Verwende NUR Übungen aus den bevorzugten Übungen (falls angegeben)
-2. Berechne Arbeitsgewichte basierend auf 1RM-Werten (60-85% je nach Intensität)
-3. Passe Intensität an Fitnesslevel an
-4. Gib konkrete Gewichtsempfehlungen basierend auf den 1RM-Werten
-5. Verwende deutsche Begriffe
+Erstelle ein ${sessionType === 'wod_only' ? 'reines WOD' : 'komplettes CrossFit Training'} mit ${duration} Minuten Fokus auf ${focus}.
 
-Antworte in folgendem JSON Format:
+JSON Format:
 {
-  "name": "Workout Name",
-  "type": "${workoutType}",
+  "name": "Authentischer WOD Name",
+  "type": "crossfit",
+  "duration": ${duration},
+  "focus": "${focus}",
+  "difficulty": "leicht/mittel/schwer",
+  "parts": [
+    ${sessionType === 'full_session' ? `{
+      "name": "Warm-Up",
+      "duration": "5-8 min",
+      "exercises": ["Dynamic Warm-Up Übungen"]
+    },
+    {
+      "name": "Skill/Strength",
+      "duration": "8-12 min", 
+      "exercises": ["Kraftübung mit spezifischem Gewicht basierend auf 1RM"]
+    },` : ''}
+    {
+      "name": "WOD",
+      "format": "AMRAP/For Time/EMOM",
+      "duration": "${sessionType === 'wod_only' ? duration + ' min' : '12-15 min'}",
+      "exercises": ["CrossFit Übungen mit Reps und Gewichten"],
+      "notes": "WOD Anweisungen und Skalierung"
+    }${sessionType === 'full_session' ? `,
+    {
+      "name": "Cool Down",
+      "duration": "5 min",
+      "exercises": ["Stretching und Mobility"]
+    }` : ''}
+  ]
+}`
+      :
+      `Du bist ein erfahrener Bodybuilding Coach und erstellst wissenschaftlich fundierte Trainingspläne.
+
+BENUTZERPROFIL:
+- Fitnesslevel: ${userContext.fitnessLevel}
+- Gewicht: ${userContext.weight || 'unbekannt'} kg
+- Alter: ${userContext.age || 'unbekannt'} Jahre
+- 1RM Werte: Bench Press: ${userContext.oneRepMaxes.benchPress || 'unbekannt'} kg, Back Squat: ${userContext.oneRepMaxes.backSquat || 'unbekannt'} kg, Deadlift: ${userContext.oneRepMaxes.deadlift || 'unbekannt'} kg
+
+BODYBUILDING PRINZIPIEN:
+- Fokus auf Muskelaufbau und Hypertrophie
+- 3-4 Sätze, 8-12 Wiederholungen für Hypertrophie
+- 70-80% von 1RM für Hauptübungen
+- Fokusbereich: ${focus}
+- Progressive Überladung
+- Isolation und Compound Übungen kombinieren
+
+Erstelle ein ${duration}-minütiges ${focus} Bodybuilding Training.
+
+JSON Format:
+{
+  "name": "Bodybuilding ${focus} Training", 
+  "type": "bodybuilding",
   "duration": ${duration},
   "focus": "${focus}",
   "difficulty": "leicht/mittel/schwer",
   "parts": [
     {
       "name": "Warm-Up",
-      "duration": "5-10 min",
-      "exercises": ["Übung 1", "Übung 2"]
+      "duration": "8-10 min",
+      "exercises": ["Allgemeines Aufwärmen und spezifische Mobilisation"]
     },
     {
-      "name": "Hauptteil",
-      "format": "AMRAP/For Time/EMOM",
+      "name": "Hauptübungen",
+      "duration": "35-40 min",
+      "exercises": ["Compound Bewegungen mit Gewicht, Sätzen und Reps"],
+      "notes": "Fokus auf korrekte Form und progressive Überladung"
+    },
+    {
+      "name": "Isolationsübungen", 
       "duration": "15-20 min",
-      "exercises": ["Übung mit Gewichtsempfehlung"],
-      "notes": "Spezifische Anweisungen"
+      "exercises": ["Isolation Übungen für Zielmuskeln"],
+      "notes": "Höhere Wiederholungszahlen für Pump und Definition"
     }
-  ],
-  "notes": "Weitere Hinweise basierend auf Fitnesslevel"
+  ]
 }`;
+
+    console.log('System prompt created for:', workoutType);
 
     // 7. OpenAI API Call
     console.log('Calling OpenAI API...');
