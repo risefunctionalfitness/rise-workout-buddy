@@ -19,22 +19,43 @@ serve(async (req) => {
   }
 
   try {
-    const { workoutType, sessionType, duration, focus, userId } = await req.json();
-    console.log('Generating workout for user:', userId, 'Type:', workoutType, 'Session:', sessionType, 'Duration:', duration, 'Focus:', focus);
+    const { workoutType, sessionType, duration, focus, userId = 'demo-user' } = await req.json();
+    console.log(`Generating workout for user: ${userId} Type: ${workoutType} Session: ${sessionType} Duration: ${duration} Focus: ${focus}`);
 
-    // 1. Profildaten des Users laden
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      throw new Error('Profil nicht gefunden');
+    // Validate userId format for real users
+    if (userId !== 'demo-user') {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(userId)) {
+        throw new Error('Ungültige User-ID Format');
+      }
     }
 
-    console.log('User profile loaded:', profile);
+    // 1. Profildaten des Users laden (skip for demo user)
+    let profile = null;
+    if (userId !== 'demo-user') {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw new Error('Profil nicht gefunden');
+      }
+      profile = profileData;
+      console.log('User profile loaded:', profile);
+    } else {
+      // Demo profile for light version
+      profile = {
+        fitness_level: 'intermediate',
+        weight_kg: 70,
+        birth_year: 1990,
+        gender: 'unspecified',
+        preferred_exercises: []
+      };
+      console.log('Using demo profile for light version');
+    }
 
     // 2. Prompt für ähnliche Workouts erstellen
     const searchPrompt = `${workoutType} ${sessionType || ''} workout ${duration} minutes ${focus}`;
@@ -208,19 +229,25 @@ Antworte in folgendem JSON Format:
       };
     }
 
-    // 8. Workout in training_sessions speichern
-    const { error: sessionError } = await supabase
-      .from('training_sessions')
-      .insert({
-        user_id: userId,
-        date: new Date().toISOString().split('T')[0],
-        workout_type: `${workoutType}_${sessionType || 'full_session'}`,
-        workout_data: workoutData,
-        status: 'pending'
-      });
+    // 8. Workout in training_sessions speichern (nur für echte User)
+    if (userId !== 'demo-user') {
+      const { error: sessionError } = await supabase
+        .from('training_sessions')
+        .insert({
+          user_id: userId,
+          date: new Date().toISOString().split('T')[0],
+          workout_type: `${workoutType}_${sessionType || 'full_session'}`,
+          workout_data: workoutData,
+          status: 'pending'
+        });
 
-    if (sessionError) {
-      console.error('Session save error:', sessionError);
+      if (sessionError) {
+        console.error('Session save error:', sessionError);
+      } else {
+        console.log('Training session saved successfully');
+      }
+    } else {
+      console.log('Skipping session save for demo user');
     }
 
     return new Response(JSON.stringify({ workout: workoutData }), {
