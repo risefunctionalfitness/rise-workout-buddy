@@ -27,33 +27,50 @@ export const Leaderboard: React.FC = () => {
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
 
-      const { data, error } = await supabase
+      // First get leaderboard entries
+      const { data: leaderboardData, error: leaderboardError } = await supabase
         .from('leaderboard_entries')
-        .select(`
-          id,
-          user_id,
-          training_count,
-          year,
-          month,
-          profiles!inner(display_name)
-        `)
+        .select('*')
         .eq('year', currentYear)
         .eq('month', currentMonth)
         .order('training_count', { ascending: false })
 
-      if (error) {
-        console.error('Error loading leaderboard:', error)
+      if (leaderboardError) {
+        console.error('Error loading leaderboard:', leaderboardError)
         return
       }
 
-      const formattedData = data?.map(entry => ({
-        id: entry.id,
-        user_id: entry.user_id,
-        training_count: entry.training_count || 0,
-        display_name: (entry.profiles as any)?.display_name || 'Unbekannt',
-        year: entry.year,
-        month: entry.month
-      })) || []
+      if (!leaderboardData || leaderboardData.length === 0) {
+        setLeaderboard([])
+        return
+      }
+
+      // Get all user IDs from leaderboard
+      const userIds = leaderboardData.map(entry => entry.user_id)
+
+      // Fetch profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds)
+
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError)
+        return
+      }
+
+      // Combine leaderboard data with profile names
+      const formattedData = leaderboardData.map(entry => {
+        const profile = profilesData?.find(p => p.user_id === entry.user_id)
+        return {
+          id: entry.id,
+          user_id: entry.user_id,
+          training_count: entry.training_count || 0,
+          display_name: profile?.display_name || 'Unbekannt',
+          year: entry.year,
+          month: entry.month
+        }
+      })
 
       setLeaderboard(formattedData)
     } catch (error) {
