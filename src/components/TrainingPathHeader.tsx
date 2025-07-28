@@ -1,10 +1,9 @@
-import { Calendar, Flame, User } from "lucide-react"
+import { Flame, User } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface TrainingPathHeaderProps {
   trainingDaysThisMonth: number
   totalDaysInMonth: number
-  currentDate: string
   userName: string
   userAvatar?: string
 }
@@ -12,33 +11,37 @@ interface TrainingPathHeaderProps {
 export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
   trainingDaysThisMonth,
   totalDaysInMonth,
-  currentDate,
   userName,
   userAvatar
 }) => {
   return (
     <div className="flex items-center justify-between p-4 bg-background border-b">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 text-primary">
-          <Flame className="h-6 w-6" />
-          <span className="font-bold text-lg">
-            {trainingDaysThisMonth} / {totalDaysInMonth}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Calendar className="h-5 w-5" />
-          <span className="text-sm">{currentDate}</span>
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-3">
-        <span className="font-medium text-foreground">{userName}</span>
+      {/* Links: Account */}
+      <div className="flex items-center gap-3 flex-1">
         <Avatar className="h-10 w-10">
           <AvatarImage src={userAvatar} />
           <AvatarFallback>
             <User className="h-5 w-5" />
           </AvatarFallback>
         </Avatar>
+        <span className="font-medium text-foreground">{userName}</span>
+      </div>
+      
+      {/* Mitte: RISE Logo */}
+      <div className="flex-1 flex justify-center">
+        <img 
+          src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
+          alt="RISE Functional Fitness Logo" 
+          className="h-8"
+        />
+      </div>
+      
+      {/* Rechts: Trainingstage */}
+      <div className="flex items-center gap-2 text-primary flex-1 justify-end">
+        <Flame className="h-6 w-6" />
+        <span className="font-bold text-lg">
+          {trainingDaysThisMonth} / {totalDaysInMonth}
+        </span>
       </div>
     </div>
   )

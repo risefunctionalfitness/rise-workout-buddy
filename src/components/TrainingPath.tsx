@@ -1,78 +1,94 @@
 import { TrainingPathNode } from "./TrainingPathNode"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { TrainingSessionDialog } from "./TrainingSessionDialog"
+import { useState } from "react"
 
-interface TrainingSession {
-  id: string
-  date: string
-  status: 'completed' | 'current' | 'pending' | 'locked'
-  workoutType?: 'course' | 'free_training' | 'plan'
+interface CalendarDay {
+  date: Date
+  dayNumber: number
+  isToday: boolean
+  isFuture: boolean
+  trainingSession?: {
+    type: 'course' | 'free_training' | 'plan'
+    id: string
+  }
 }
 
 interface TrainingPathProps {
-  sessions: TrainingSession[]
-  onSelectWorkout: (id: string) => void
-  onSelectCurrentWorkout: () => void
+  calendarDays: CalendarDay[]
+  onAddTraining: (dayNumber: number, type: 'course' | 'free_training' | 'plan') => void
+  onRemoveTraining: (dayNumber: number) => void
 }
 
 export const TrainingPath: React.FC<TrainingPathProps> = ({
-  sessions,
-  onSelectWorkout,
-  onSelectCurrentWorkout
+  calendarDays,
+  onAddTraining,
+  onRemoveTraining
 }) => {
-  const currentSession = sessions.find(s => s.status === 'current')
+  const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const handleDayClick = (day: CalendarDay) => {
+    if (day.isFuture) return // Zukünftige Tage nicht klickbar
+    
+    setSelectedDay(day)
+    setDialogOpen(true)
+  }
+
+  const handleSelectType = (type: 'course' | 'free_training' | 'plan' | 'remove') => {
+    if (!selectedDay) return
+    
+    if (type === 'remove') {
+      onRemoveTraining(selectedDay.dayNumber)
+    } else {
+      onAddTraining(selectedDay.dayNumber, type)
+    }
+  }
+
+  const getNodeStatus = (day: CalendarDay) => {
+    if (day.isFuture) return 'locked'
+    if (day.trainingSession) return 'completed'
+    if (day.isToday) return 'current'
+    return 'pending'
+  }
 
   return (
-    <div className="flex-1 overflow-auto p-4">
-      <div className="flex flex-col gap-6 max-w-md mx-auto">
-        {sessions.map((session, index) => (
-          <div key={session.id} className="flex flex-col items-center">
+    <div className="flex-1 flex flex-col p-6 bg-gradient-to-b from-background to-muted/20">
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-3 max-w-2xl mx-auto">
+        {/* Wochentage Header */}
+        {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(day => (
+          <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+            {day}
+          </div>
+        ))}
+        
+        {/* Kalendertage */}
+        {calendarDays.map((day) => (
+          <div key={day.dayNumber} className="flex justify-center">
             <TrainingPathNode
-              id={session.id}
-              date={session.date}
-              status={session.status}
-              workoutType={session.workoutType}
-              dayNumber={index + 1}
-              onSelectWorkout={onSelectWorkout}
+              id={day.dayNumber.toString()}
+              date={day.date.getDate().toString()}
+              status={getNodeStatus(day)}
+              workoutType={day.trainingSession?.type}
+              dayNumber={day.dayNumber}
+              onSelectWorkout={() => handleDayClick(day)}
             />
-            
-            {/* Show workout selection buttons for current session */}
-            {session.status === 'current' && (
-              <div className="mt-4 space-y-2 w-full max-w-xs">
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => onSelectCurrentWorkout()}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Kurs besuchen
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => onSelectCurrentWorkout()}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Freies Training
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => onSelectCurrentWorkout()}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Plan folgen
-                </Button>
-              </div>
-            )}
-            
-            {/* Connection line to next node */}
-            {index < sessions.length - 1 && (
-              <div className="h-8 w-1 bg-border my-2" />
-            )}
           </div>
         ))}
       </div>
+
+      {/* Dialog für Training-Auswahl */}
+      <TrainingSessionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        date={selectedDay ? selectedDay.date.toLocaleDateString('de-DE', { 
+          day: '2-digit', 
+          month: 'short' 
+        }) : ''}
+        dayNumber={selectedDay?.dayNumber || 0}
+        onSelectType={handleSelectType}
+        hasExistingSession={!!selectedDay?.trainingSession}
+      />
     </div>
   )
 }

@@ -36,12 +36,13 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   const getStatusColor = () => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 border-green-500 hover:bg-green-200'
+        return 'bg-green-100 border-green-500 hover:bg-green-200 text-green-700'
       case 'current':
-        return 'bg-primary/10 border-primary hover:bg-primary/20'
-      case 'locked':
+        return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary'
       case 'pending':
-        return 'bg-muted border-muted-foreground/30'
+        return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
+      case 'locked':
+        return 'bg-muted border-muted-foreground/30 text-muted-foreground cursor-not-allowed'
     }
   }
 
