@@ -142,7 +142,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       <TrainingPathHeader
         trainingDaysThisMonth={trainingCount}
         totalDaysInMonth={totalDaysInMonth}
-        userName={userName}
       />
       
       {renderTabContent()}

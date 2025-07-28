@@ -4,14 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 interface TrainingPathHeaderProps {
   trainingDaysThisMonth: number
   totalDaysInMonth: number
-  userName: string
   userAvatar?: string
 }
 
 export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
   trainingDaysThisMonth,
   totalDaysInMonth,
-  userName,
   userAvatar
 }) => {
   return (
