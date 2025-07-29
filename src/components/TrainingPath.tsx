@@ -45,17 +45,20 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       const container = containerRef.current
       const todayElement = todayRef.current
       
-      // Calculate scroll position to center today's element
-      const containerHeight = container.clientHeight
-      const elementTop = todayElement.offsetTop
-      const elementHeight = todayElement.clientHeight
-      
-      const scrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2)
-      
-      container.scrollTo({
-        top: Math.max(0, scrollTop),
-        behavior: 'smooth'
-      })
+      // Small delay to ensure rendering is complete
+      setTimeout(() => {
+        // Calculate scroll position to center today's element
+        const containerHeight = container.clientHeight
+        const elementTop = todayElement.offsetTop
+        const elementHeight = todayElement.clientHeight
+        
+        const scrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2)
+        
+        container.scrollTo({
+          top: Math.max(0, scrollTop),
+          behavior: 'smooth'
+        })
+      }, 100)
     }
   }, [trainingDays])
 

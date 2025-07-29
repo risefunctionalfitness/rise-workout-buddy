@@ -47,21 +47,12 @@ export const GymCodeDisplay = () => {
 
   return (
     <div className="relative">
-      {/* Schlüssel Button */}
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleShowCode}
-        className="rounded-full w-14 h-14 border-2 border-border hover:border-primary"
-        aria-label="Zugangscode anzeigen"
-      >
-        <Key className="h-4 w-4" />
-      </Button>
-
-      {/* Slide-out Code Display */}
+      {/* Ausfahrendes Textfeld */}
       <div 
-        className={`absolute top-0 right-12 bg-background border rounded-lg p-4 shadow-lg z-50 min-w-[200px] transition-transform duration-300 ${
-          isVisible ? 'translate-x-0' : 'translate-x-full opacity-0'
+        className={`absolute bottom-0 right-14 bg-background border-2 border-primary rounded-lg px-4 py-3 shadow-lg z-50 min-w-[200px] transition-all duration-300 origin-bottom-right ${
+          isVisible 
+            ? 'scale-100 opacity-100 translate-x-0' 
+            : 'scale-0 opacity-0 translate-x-4'
         }`}
       >
         <div className="text-center">
@@ -76,6 +67,17 @@ export const GymCodeDisplay = () => {
           </div>
         </div>
       </div>
+
+      {/* Schlüssel Button */}
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleShowCode}
+        className="rounded-full w-14 h-14 border-2 border-border hover:border-primary"
+        aria-label="Zugangscode anzeigen"
+      >
+        <Key className="h-4 w-4" />
+      </Button>
     </div>
   )
 }
