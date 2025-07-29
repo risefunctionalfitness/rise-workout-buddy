@@ -105,20 +105,26 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   const loadParticipants = async (courseId: string) => {
     try {
+      console.log('Loading participants for course:', courseId)
       const { data, error } = await supabase
         .from('course_registrations')
         .select(`
           status,
-          profiles(display_name)
+          profiles!inner(display_name)
         `)
         .eq('course_id', courseId)
         .order('registered_at', { ascending: true })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error loading participants:', error)
+        throw error
+      }
+      console.log('Loaded participants:', data)
       setParticipants(data || [])
     } catch (error) {
       console.error('Error loading participants:', error)
       toast.error('Fehler beim Laden der Teilnehmer')
+      setParticipants([]) // Set empty array on error
     }
   }
 
