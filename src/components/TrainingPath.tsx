@@ -100,7 +100,12 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
           </Button>
         </div>
         <NewsSection />
-        <WhatsAppButton />
+        
+        {/* Button-Stack auch in News-Ansicht */}
+        <div className="fixed bottom-4 right-4 z-30 flex flex-col gap-3">
+          <GymCodeDisplay />
+          <WhatsAppButton />
+        </div>
       </div>
     )
   }
@@ -150,13 +155,9 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         <MonthlyTrainingCalendar user={user} />
       </div>
 
-      {/* Oben rechts: Gym Code Button - fixiert */}
-      <div className="fixed top-4 right-4 z-30">
-        <GymCodeDisplay />
-      </div>
-
-      {/* Rechts: Aktuelles Button - fixiert */}
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-30">
+      {/* Rechts unten: Button-Stack - fixiert */}
+      <div className="fixed bottom-4 right-4 z-30 flex flex-col gap-3">
+        {/* Aktuelles Button */}
         <Button
           variant="outline"
           size="icon"
@@ -166,6 +167,12 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         >
           <Newspaper className="h-4 w-4" />
         </Button>
+        
+        {/* Gym Code Button */}
+        <GymCodeDisplay />
+        
+        {/* WhatsApp Button */}
+        <WhatsAppButton />
       </div>
 
       {/* Dialog für Training-Auswahl */}
@@ -181,7 +188,6 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         hasExistingSession={!!selectedDay?.trainingSession}
       />
 
-      <WhatsAppButton />
     </div>
   )
 }
