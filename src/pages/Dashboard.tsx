@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
 
-type TabType = 'home' | 'wod' | 'courses' | 'news' | 'leaderboard'
+type TabType = 'home' | 'wod' | 'courses' | 'leaderboard'
 
 interface TrainingDay {
   date: Date
@@ -218,6 +218,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             trainingDays={trainingDays}
             onAddTraining={handleAddTraining}
             onRemoveTraining={handleRemoveTraining}
+            user={user}
           />
         )
       case 'wod':
@@ -236,8 +237,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         )
       case 'courses':
         return <CourseBooking user={user} />
-      case 'news':
-        return <NewsSection />
       case 'leaderboard':
         return <Leaderboard />
       default:
@@ -247,13 +246,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <TrainingPathHeader
-        trainingDaysThisMonth={trainingCount}
-        totalDaysInMonth={totalDaysInMonth}
-        onProfileClick={() => setShowProfile(true)}
-      />
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
+        <TrainingPathHeader
+          trainingDaysThisMonth={trainingCount}
+          totalDaysInMonth={totalDaysInMonth}
+          onProfileClick={() => setShowProfile(true)}
+        />
+      </div>
       
-      {renderTabContent()}
+      <div className="pt-16 flex-1">
+        {renderTabContent()}
+      </div>
       
       <BottomNavigation
         activeTab={activeTab}

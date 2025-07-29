@@ -2,7 +2,7 @@ import { Home, Dumbbell, Users, Newspaper, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-type TabType = 'home' | 'wod' | 'courses' | 'news' | 'leaderboard'
+type TabType = 'home' | 'wod' | 'courses' | 'leaderboard'
 
 interface BottomNavigationProps {
   activeTab: TabType
@@ -17,7 +17,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     { id: 'home' as TabType, icon: Home, label: 'Startseite' },
     { id: 'wod' as TabType, icon: Dumbbell, label: 'WOD Gen.' },
     { id: 'courses' as TabType, icon: Users, label: 'Kursanmeldung' },
-    { id: 'news' as TabType, icon: Newspaper, label: 'Aktuelles' },
     { id: 'leaderboard' as TabType, icon: Trophy, label: 'Leaderboard' }
   ]
 

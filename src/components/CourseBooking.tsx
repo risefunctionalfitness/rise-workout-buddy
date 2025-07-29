@@ -371,37 +371,97 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               </div>
 
               {/* Participants */}
-              <div>
-                <h4 className="font-medium mb-2">
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm text-muted-foreground">
                   Teilnehmer ({selectedCourse.registered_count}/{selectedCourse.max_participants})
                 </h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto">
                   {participants.filter(p => p.status === 'registered').length === 0 ? (
-                    <div className="text-sm text-muted-foreground italic">Keine Teilnehmer angemeldet</div>
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <p className="text-muted-foreground">Keine Anmeldungen</p>
+                      </CardContent>
+                    </Card>
                   ) : (
-                    participants
-                      .filter(p => p.status === 'registered')
-                      .map((participant, index) => (
-                        <div key={index} className="text-sm">
-                          {participant.profiles?.display_name || 'Unbekannt'}
-                        </div>
-                      ))
+                    <div className="space-y-3">
+                      {participants
+                        .filter(p => p.status === 'registered')
+                        .map((participant, index) => {
+                          const position = index + 1
+                          return (
+                            <Card key={index} className="transition-all duration-200 bg-card border-border">
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex items-center justify-center w-12 h-12">
+                                      <div className="h-6 w-6 flex items-center justify-center text-muted-foreground font-bold">
+                                        {position}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold text-lg">
+                                        {participant.profiles?.display_name || 'Unbekannt'}
+                                      </h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        Angemeldet
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <Badge variant="secondary" className="text-sm px-2 py-1 bg-[#B81243] text-white">
+                                      Teilnehmer
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
+                    </div>
                   )}
                 </div>
                 
                 {participants.filter(p => p.status === 'waitlist').length > 0 && (
-                  <div className="mt-3">
-                    <h5 className="font-medium text-sm mb-1">
+                  <div className="space-y-3">
+                    <h5 className="font-medium text-sm text-muted-foreground">
                       Warteliste ({selectedCourse.waitlist_count})
                     </h5>
-                    <div className="space-y-1 max-h-24 overflow-y-auto">
-                      {participants
-                        .filter(p => p.status === 'waitlist')
-                        .map((participant, index) => (
-                          <div key={index} className="text-sm text-muted-foreground">
-                            {participant.profiles?.display_name || 'Unbekannt'}
-                          </div>
-                        ))}
+                    <div className="max-h-32 overflow-y-auto">
+                      <div className="space-y-3">
+                        {participants
+                          .filter(p => p.status === 'waitlist')
+                          .map((participant, index) => {
+                            const position = index + 1
+                            return (
+                              <Card key={index} className="transition-all duration-200 bg-yellow-50 border-yellow-200">
+                                <CardContent className="p-4">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                      <div className="flex items-center justify-center w-12 h-12">
+                                        <div className="h-6 w-6 flex items-center justify-center text-muted-foreground font-bold">
+                                          {position}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <h3 className="font-semibold text-lg">
+                                          {participant.profiles?.display_name || 'Unbekannt'}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                          Warteliste
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <Badge variant="secondary" className="text-sm px-2 py-1 bg-yellow-500 text-white">
+                                        Warteliste
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )
+                          })}
+                      </div>
                     </div>
                   </div>
                 )}

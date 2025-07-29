@@ -1,5 +1,10 @@
 import { TrainingPathNode } from "./TrainingPathNode"
 import { TrainingSessionDialog } from "./TrainingSessionDialog"
+import { MonthlyTrainingCalendar } from "./MonthlyTrainingCalendar"
+import { NewsSection } from "./NewsSection"
+import { WhatsAppButton } from "./WhatsAppButton"
+import { Button } from "@/components/ui/button"
+import { Newspaper } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 
 interface TrainingDay {
@@ -18,15 +23,18 @@ interface TrainingPathProps {
   trainingDays: TrainingDay[]
   onAddTraining: (dayNumber: number, type: 'course' | 'free_training' | 'plan') => void
   onRemoveTraining: (dayNumber: number) => void
+  user: any
 }
 
-export const TrainingPath: React.FC<TrainingPathProps> = ({
-  trainingDays,
-  onAddTraining,
-  onRemoveTraining
+export const TrainingPath: React.FC<TrainingPathProps> = ({ 
+  trainingDays, 
+  onAddTraining, 
+  onRemoveTraining,
+  user
 }) => {
   const [selectedDay, setSelectedDay] = useState<TrainingDay | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [showDialog, setShowDialog] = useState(false)
+  const [showNews, setShowNews] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const todayRef = useRef<HTMLDivElement>(null)
 
@@ -50,11 +58,16 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
     }
   }, [trainingDays])
 
+  const currentMonth = new Date().toLocaleDateString('de-DE', { 
+    month: 'long', 
+    year: 'numeric' 
+  })
+
   const handleDayClick = (day: TrainingDay) => {
     if (day.isFuture) return // Zukünftige Tage nicht klickbar
     
     setSelectedDay(day)
-    setDialogOpen(true)
+    setShowDialog(true)
   }
 
   const handleSelectType = (type: 'course' | 'free_training' | 'plan' | 'remove') => {
@@ -74,40 +87,91 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
     return 'pending'
   }
 
-  return (
-    <div ref={containerRef} className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/20">
-      {/* Vertikaler Pfad */}
-      <div className="flex flex-col items-center py-8 max-w-md mx-auto">
-        {trainingDays.map((day, index) => (
-          <div 
-            key={day.dayNumber} 
-            className="flex flex-col items-center"
-            ref={day.isToday ? todayRef : null}
+  if (showNews) {
+    return (
+      <div className="flex-1 relative">
+        <div className="absolute top-4 left-4 z-10">
+          <Button
+            variant="outline"
+            onClick={() => setShowNews(false)}
           >
-            <TrainingPathNode
-              id={day.dayNumber.toString()}
-              date={day.date.toLocaleDateString('de-DE', { 
-                day: '2-digit', 
-                month: 'short' 
-              })}
-              status={getNodeStatus(day)}
-              workoutType={day.trainingSession?.type}
-              dayNumber={day.dayNumber}
-              onSelectWorkout={() => handleDayClick(day)}
-            />
-            
-            {/* Verbindungslinie zum nächsten Tag */}
-            {index < trainingDays.length - 1 && (
-              <div className="w-1 h-12 bg-border my-2" />
-            )}
-          </div>
-        ))}
+            ← Zurück
+          </Button>
+        </div>
+        <NewsSection />
+        <WhatsAppButton />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex-1 overflow-auto p-4 relative">
+      <div className="flex items-start justify-between mb-8">
+        {/* Links: Monatlicher Trainingskalender */}
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">
+            Trainingstage {currentMonth}
+          </h3>
+          <MonthlyTrainingCalendar user={user} />
+        </div>
+
+        {/* Mitte: Überschrift */}
+        <div className="flex-1 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-4">
+            Trainingsplan {currentMonth}
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Füge deine Trainingseinheiten hinzu und verfolge deinen Fortschritt.
+          </p>
+        </div>
+
+        {/* Rechts: Aktuelles Button */}
+        <div className="flex-1 flex justify-end">
+          <Button
+            variant="outline"
+            onClick={() => setShowNews(true)}
+            className="flex items-center gap-2"
+          >
+            <Newspaper className="h-4 w-4" />
+            Aktuelles
+          </Button>
+        </div>
+      </div>
+
+      {/* Vertikaler Pfad */}
+      <div ref={containerRef} className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/20">
+        <div className="flex flex-col items-center py-8 max-w-md mx-auto">
+          {trainingDays.map((day, index) => (
+            <div 
+              key={day.dayNumber} 
+              className="flex flex-col items-center"
+              ref={day.isToday ? todayRef : null}
+            >
+              <TrainingPathNode
+                id={day.dayNumber.toString()}
+                date={day.date.toLocaleDateString('de-DE', { 
+                  day: '2-digit', 
+                  month: 'short' 
+                })}
+                status={getNodeStatus(day)}
+                workoutType={day.trainingSession?.type}
+                dayNumber={day.dayNumber}
+                onSelectWorkout={() => handleDayClick(day)}
+              />
+              
+              {/* Verbindungslinie zum nächsten Tag */}
+              {index < trainingDays.length - 1 && (
+                <div className="w-1 h-12 bg-border my-2" />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Dialog für Training-Auswahl */}
       <TrainingSessionDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={showDialog}
+        onOpenChange={setShowDialog}
         date={selectedDay ? selectedDay.date.toLocaleDateString('de-DE', { 
           day: '2-digit', 
           month: 'short' 
@@ -116,6 +180,8 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         onSelectType={handleSelectType}
         hasExistingSession={!!selectedDay?.trainingSession}
       />
+
+      <WhatsAppButton />
     </div>
   )
 }
