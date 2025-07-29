@@ -106,22 +106,39 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const loadParticipants = async (courseId: string) => {
     try {
       console.log('Loading participants for course:', courseId)
-      const { data, error } = await supabase
+      
+      // First get the registrations
+      const { data: registrations, error: regError } = await supabase
         .from('course_registrations')
-        .select(`
-          status,
-          user_id,
-          profiles!course_registrations_user_id_fkey(display_name)
-        `)
+        .select('status, user_id, registered_at')
         .eq('course_id', courseId)
         .order('registered_at', { ascending: true })
 
-      if (error) {
-        console.error('Error loading participants:', error)
-        throw error
+      if (regError) {
+        console.error('Error loading registrations:', regError)
+        throw regError
       }
-      console.log('Loaded participants:', data)
-      setParticipants(data || [])
+
+      // Then get the profiles for these users
+      const userIds = registrations?.map(r => r.user_id) || []
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds)
+
+      if (profileError) {
+        console.error('Error loading profiles:', profileError)
+        throw profileError
+      }
+
+      // Combine the data
+      const participantsWithNames = registrations?.map(reg => ({
+        ...reg,
+        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: 'Unbekannt' }
+      })) || []
+
+      console.log('Loaded participants:', participantsWithNames)
+      setParticipants(participantsWithNames)
     } catch (error) {
       console.error('Error loading participants:', error)
       toast.error('Fehler beim Laden der Teilnehmer')
