@@ -5,11 +5,13 @@ import { BottomNavigation } from "@/components/BottomNavigation"
 import { UserProfile } from "@/components/UserProfile"
 import { Leaderboard } from "@/components/Leaderboard"
 import { WorkoutGenerator } from "@/components/WorkoutGenerator"
+import { CourseBooking } from "@/components/CourseBooking"
+import { NewsSection } from "@/components/NewsSection"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
 
-type TabType = 'home' | 'wod' | 'plans' | 'leaderboard'
+type TabType = 'home' | 'wod' | 'courses' | 'news' | 'leaderboard'
 
 interface TrainingDay {
   date: Date
@@ -232,15 +234,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <WorkoutGenerator user={user} />
           </div>
         )
-      case 'plans':
-        return (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-xl font-bold mb-2">Trainingspläne</h2>
-              <p className="text-muted-foreground">Deine persönlichen Pläne</p>
-            </div>
-          </div>
-        )
+      case 'courses':
+        return <CourseBooking user={user} />
+      case 'news':
+        return <NewsSection />
       case 'leaderboard':
         return <Leaderboard />
       default:

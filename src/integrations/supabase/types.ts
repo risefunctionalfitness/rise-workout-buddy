@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_registrations: {
+        Row: {
+          course_id: string
+          id: string
+          registered_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          id?: string
+          registered_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          id?: string
+          registered_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_registrations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_templates: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          id: string
+          max_participants: number
+          registration_deadline_minutes: number
+          strength_exercise: string | null
+          title: string
+          trainer: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes: number
+          id?: string
+          max_participants: number
+          registration_deadline_minutes?: number
+          strength_exercise?: string | null
+          title: string
+          trainer: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          max_participants?: number
+          registration_deadline_minutes?: number
+          strength_exercise?: string | null
+          title?: string
+          trainer?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          course_date: string
+          created_at: string
+          duration_minutes: number
+          end_time: string
+          id: string
+          is_cancelled: boolean
+          max_participants: number
+          registration_deadline_minutes: number
+          start_time: string
+          strength_exercise: string | null
+          template_id: string
+          title: string
+          trainer: string
+          updated_at: string
+        }
+        Insert: {
+          course_date: string
+          created_at?: string
+          duration_minutes: number
+          end_time: string
+          id?: string
+          is_cancelled?: boolean
+          max_participants: number
+          registration_deadline_minutes: number
+          start_time: string
+          strength_exercise?: string | null
+          template_id: string
+          title: string
+          trainer: string
+          updated_at?: string
+        }
+        Update: {
+          course_date?: string
+          created_at?: string
+          duration_minutes?: number
+          end_time?: string
+          id?: string
+          is_cancelled?: boolean
+          max_participants?: number
+          registration_deadline_minutes?: number
+          start_time?: string
+          strength_exercise?: string | null
+          template_id?: string
+          title?: string
+          trainer?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "course_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leaderboard_entries: {
         Row: {
           created_at: string
@@ -41,6 +171,39 @@ export type Database = {
           updated_at?: string
           user_id?: string
           year?: number
+        }
+        Relationships: []
+      }
+      news: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          is_published: boolean
+          published_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          published_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          published_at?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -294,9 +457,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_waitlist: {
+        Args: { course_id_param: string }
+        Returns: undefined
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      get_course_stats: {
+        Args: { course_id_param: string }
+        Returns: {
+          registered_count: number
+          waitlist_count: number
+          max_participants: number
+        }[]
       }
       halfvec_avg: {
         Args: { "": number[] }
