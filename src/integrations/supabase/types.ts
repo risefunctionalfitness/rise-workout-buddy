@@ -465,6 +465,19 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      generate_courses_from_template: {
+        Args: {
+          template_id_param: string
+          start_date_param: string
+          end_date_param: string
+        }
+        Returns: {
+          course_id: string
+          course_date: string
+          start_time: string
+          end_time: string
+        }[]
+      }
       get_course_stats: {
         Args: { course_id_param: string }
         Returns: {

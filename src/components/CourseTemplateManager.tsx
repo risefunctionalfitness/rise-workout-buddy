@@ -4,17 +4,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { format, addDays, startOfWeek } from "date-fns"
 import { de } from "date-fns/locale"
-import { CalendarDays, Clock, Users, Trash2, Edit, Plus } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { CalendarDays, CalendarIcon, Clock, Users, Trash2, Edit, Plus } from "lucide-react"
 
 interface CourseTemplate {
   id: string
@@ -69,6 +70,12 @@ export const CourseTemplateManager = () => {
     endDate: '',
     schedule: [] as ScheduleEntry[]
   })
+
+  // Generation state
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<CourseTemplate | null>(null)
+  const [startDate, setStartDate] = useState<Date>()
+  const [endDate, setEndDate] = useState<Date>()
 
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
 
@@ -146,6 +153,38 @@ export const CourseTemplateManager = () => {
       console.error('Error creating template:', error)
       toast.error('Fehler beim Erstellen der Vorlage')
     }
+  }
+
+  const generateCourses = async () => {
+    if (!selectedTemplate || !startDate || !endDate) return
+
+    setLoading(true)
+    try {
+      const { error } = await supabase.rpc('generate_courses_from_template', {
+        template_id_param: selectedTemplate.id,
+        start_date_param: format(startDate, 'yyyy-MM-dd'),
+        end_date_param: format(endDate, 'yyyy-MM-dd')
+      })
+
+      if (error) throw error
+
+      toast.success('Kurse erfolgreich generiert!')
+      setGenerateDialogOpen(false)
+      setSelectedTemplate(null)
+      setStartDate(undefined)
+      setEndDate(undefined)
+      await loadCourses()
+    } catch (error) {
+      console.error('Error generating courses:', error)
+      toast.error('Fehler beim Generieren der Kurse')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const openGenerateDialog = (template: CourseTemplate) => {
+    setSelectedTemplate(template)
+    setGenerateDialogOpen(true)
   }
 
   const handleGenerateCourses = async (e: React.FormEvent) => {
@@ -425,6 +464,7 @@ export const CourseTemplateManager = () => {
                     <TableHead>Kraftübung</TableHead>
                     <TableHead>Max. Teilnehmer</TableHead>
                     <TableHead>Dauer</TableHead>
+                    <TableHead>Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -441,6 +481,16 @@ export const CourseTemplateManager = () => {
                       </TableCell>
                       <TableCell>{template.max_participants}</TableCell>
                       <TableCell>{template.duration_minutes} min</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openGenerateDialog(template)}
+                        >
+                          <CalendarDays className="h-4 w-4 mr-2" />
+                          Kurse erstellen
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -659,6 +709,83 @@ export const CourseTemplateManager = () => {
               </Button>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate Courses Dialog */}
+      <Dialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Kurse generieren</DialogTitle>
+            <DialogDescription>
+              Erstelle Kurse aus der Vorlage "{selectedTemplate?.title}" für den gewählten Zeitraum.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="start-date">Startdatum</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP", { locale: de }) : "Datum wählen"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                    locale={de}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="end-date">Enddatum</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP", { locale: de }) : "Datum wählen"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    locale={de}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGenerateDialogOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={generateCourses} 
+              disabled={loading || !startDate || !endDate}
+            >
+              {loading ? "Generiere..." : "Kurse erstellen"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
