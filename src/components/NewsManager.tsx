@@ -327,3 +327,5 @@ export const NewsManager = () => {
     </div>
   )
 }
+
+export default NewsManager;

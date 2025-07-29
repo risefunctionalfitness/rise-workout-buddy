@@ -664,3 +664,5 @@ export const CourseTemplateManager = () => {
     </div>
   )
 }
+
+export default CourseTemplateManager;

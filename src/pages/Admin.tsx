@@ -10,8 +10,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { UserPlus, LogOut, Users, Calendar, Newspaper } from "lucide-react";
-import { CourseTemplateManager } from "@/components/CourseTemplateManager";
-import { NewsManager } from "@/components/NewsManager";
+import CourseTemplateManager from "@/components/CourseTemplateManager";
+import NewsManager from "@/components/NewsManager";
 
 interface Member {
   id: string;
