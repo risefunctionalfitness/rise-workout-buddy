@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users } from "lucide-react";
+import { UserPlus, LogOut, Users, Calendar, Newspaper } from "lucide-react";
+import { CourseTemplateManager } from "@/components/CourseTemplateManager";
+import { NewsManager } from "@/components/NewsManager";
 
 interface Member {
   id: string;
@@ -29,6 +32,7 @@ export default function Admin() {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberCode, setNewMemberCode] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("members");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -222,128 +226,159 @@ export default function Admin() {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mitglieder gesamt</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{members.length}</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Admin Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="members" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Mitglieder
+            </TabsTrigger>
+            <TabsTrigger value="courses" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Kurse anlegen
+            </TabsTrigger>
+            <TabsTrigger value="news" className="flex items-center gap-2">
+              <Newspaper className="h-4 w-4" />
+              Aktuelles
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Members Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Mitglieder verwalten</CardTitle>
-                <CardDescription>
-                  Erstellen und verwalten Sie Mitgliederaccounts
-                </CardDescription>
-              </div>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Neues Mitglied
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Neues Mitglied erstellen</DialogTitle>
-                    <DialogDescription>
-                      Erstellen Sie einen neuen Mitgliederaccount mit Name und Zugangscode
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateMember} className="space-y-4">
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Name des Mitglieds"
-                        value={newMemberName}
-                        onChange={(e) => setNewMemberName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Input
-                        type="email"
-                        placeholder="E-Mail des Mitglieds"
-                        value={newMemberEmail}
-                        onChange={(e) => setNewMemberEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Zugangscode (z.B. 2019)"
-                        value={newMemberCode}
-                        onChange={(e) => setNewMemberCode(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button type="submit" className="flex-1">
-                        Mitglied erstellen
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setDialogOpen(false)}
-                      >
-                        Abbrechen
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+          {/* Members Tab */}
+          <TabsContent value="members" className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Mitglieder gesamt</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{members.length}</div>
+                </CardContent>
+              </Card>
             </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>E-Mail</TableHead>
-                  <TableHead>Zugangscode</TableHead>
-                  <TableHead>Erstellt am</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">
-                      {member.display_name || 'Unbekannt'}
-                    </TableCell>
-                    <TableCell>
-                      {member.user_id ? 'Verfügbar' : 'Kein Zugriff'}
-                    </TableCell>
-                    <TableCell>{member.access_code || '-'}</TableCell>
-                    <TableCell>
-                      {new Date(member.created_at).toLocaleDateString('de-DE')}
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-800">
-                        Aktiv
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {members.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      Noch keine Mitglieder erstellt
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+
+            {/* Members Table */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Mitglieder verwalten</CardTitle>
+                    <CardDescription>
+                      Erstellen und verwalten Sie Mitgliederaccounts
+                    </CardDescription>
+                  </div>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Neues Mitglied
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Neues Mitglied erstellen</DialogTitle>
+                        <DialogDescription>
+                          Erstellen Sie einen neuen Mitgliederaccount mit Name und Zugangscode
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleCreateMember} className="space-y-4">
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Name des Mitglieds"
+                            value={newMemberName}
+                            onChange={(e) => setNewMemberName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Input
+                            type="email"
+                            placeholder="E-Mail des Mitglieds"
+                            value={newMemberEmail}
+                            onChange={(e) => setNewMemberEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Zugangscode (z.B. 2019)"
+                            value={newMemberCode}
+                            onChange={(e) => setNewMemberCode(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="submit" className="flex-1">
+                            Mitglied erstellen
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setDialogOpen(false)}
+                          >
+                            Abbrechen
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>E-Mail</TableHead>
+                      <TableHead>Zugangscode</TableHead>
+                      <TableHead>Erstellt am</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {members.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell className="font-medium">
+                          {member.display_name || 'Unbekannt'}
+                        </TableCell>
+                        <TableCell>
+                          {member.user_id ? 'Verfügbar' : 'Kein Zugriff'}
+                        </TableCell>
+                        <TableCell>{member.access_code || '-'}</TableCell>
+                        <TableCell>
+                          {new Date(member.created_at).toLocaleDateString('de-DE')}
+                        </TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-800">
+                            Aktiv
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {members.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Noch keine Mitglieder erstellt
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Courses Tab */}
+          <TabsContent value="courses">
+            <CourseTemplateManager />
+          </TabsContent>
+
+          {/* News Tab */}
+          <TabsContent value="news">
+            <NewsManager />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
