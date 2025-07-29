@@ -106,32 +106,11 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
 
   return (
     <div className="flex-1 flex flex-col relative">
-      {/* Fixierte obere Bereiche */}
-      <div className="flex items-start justify-between p-4 bg-background">
-        {/* Links: Monatlicher Trainingskalender */}
-        <div className="flex-1 flex justify-center">
-          <MonthlyTrainingCalendar user={user} />
-        </div>
-
-        {/* Mitte: Überschrift */}
-        <div className="flex-1 text-center">
-          <h2 className="text-xl font-bold text-foreground">
-            Trainingstage {currentMonth}
-          </h2>
-        </div>
-
-        {/* Rechts: Aktuelles Button - fixiert */}
-        <div className="flex-1 flex justify-center">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setShowNews(true)}
-            className="rounded-full"
-            aria-label="Aktuelles anzeigen"
-          >
-            <Newspaper className="h-4 w-4" />
-          </Button>
-        </div>
+      {/* Fixierte Überschrift */}
+      <div className="text-center p-4 bg-background">
+        <h2 className="text-xl font-bold text-foreground">
+          Trainingstage {currentMonth}
+        </h2>
       </div>
 
       {/* Scrollbarer Trainingsbereich */}
@@ -162,6 +141,25 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Fixierte Elemente */}
+      {/* Links: Monatliche Trainingskalender - fixiert */}
+      <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-30">
+        <MonthlyTrainingCalendar user={user} />
+      </div>
+
+      {/* Rechts: Aktuelles Button - fixiert */}
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-30">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowNews(true)}
+          className="rounded-full"
+          aria-label="Aktuelles anzeigen"
+        >
+          <Newspaper className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Dialog für Training-Auswahl */}
