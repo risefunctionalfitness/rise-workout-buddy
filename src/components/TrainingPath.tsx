@@ -3,6 +3,7 @@ import { TrainingSessionDialog } from "./TrainingSessionDialog"
 import { MonthlyTrainingCalendar } from "./MonthlyTrainingCalendar"
 import { NewsSection } from "./NewsSection"
 import { WhatsAppButton } from "./WhatsAppButton"
+import { GymCodeDisplay } from "./GymCodeDisplay"
 import { Button } from "@/components/ui/button"
 import { Newspaper } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
@@ -149,13 +150,18 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         <MonthlyTrainingCalendar user={user} />
       </div>
 
+      {/* Oben rechts: Gym Code Button - fixiert */}
+      <div className="fixed top-4 right-4 z-30">
+        <GymCodeDisplay />
+      </div>
+
       {/* Rechts: Aktuelles Button - fixiert */}
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-30">
         <Button
           variant="outline"
           size="icon"
           onClick={() => setShowNews(true)}
-          className="rounded-full"
+          className="rounded-full w-14 h-14"
           aria-label="Aktuelles anzeigen"
         >
           <Newspaper className="h-4 w-4" />

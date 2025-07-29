@@ -12,6 +12,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { UserPlus, LogOut, Users, Calendar, Newspaper } from "lucide-react";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
+import { GymCodeManager } from "@/components/GymCodeManager";
 
 interface Member {
   id: string;
@@ -228,7 +229,7 @@ export default function Admin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="members" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Mitglieder
@@ -240,6 +241,10 @@ export default function Admin() {
             <TabsTrigger value="news" className="flex items-center gap-2">
               <Newspaper className="h-4 w-4" />
               Aktuelles
+            </TabsTrigger>
+            <TabsTrigger value="gym-codes" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Zugangscodes
             </TabsTrigger>
           </TabsList>
 
@@ -377,6 +382,10 @@ export default function Admin() {
           {/* News Tab */}
           <TabsContent value="news">
             <NewsManager />
+          </TabsContent>
+
+          <TabsContent value="gym-codes">
+            <GymCodeManager />
           </TabsContent>
         </Tabs>
       </div>
