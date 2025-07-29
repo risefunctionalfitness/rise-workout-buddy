@@ -48,6 +48,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 })
       const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
 
+      console.log('Loading courses for week:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'))
+
       // Get courses for the week with registration stats
       const { data: coursesData, error: coursesError } = await supabase
         .from('courses')
@@ -62,6 +64,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         .order('start_time', { ascending: true })
 
       if (coursesError) throw coursesError
+
+      console.log('Found courses:', coursesData?.length || 0, coursesData)
 
       // Get user's registrations for this week
       const { data: userRegistrations, error: registrationError } = await supabase
