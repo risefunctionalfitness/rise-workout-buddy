@@ -110,7 +110,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         .from('course_registrations')
         .select(`
           status,
-          profiles!inner(display_name)
+          user_id,
+          profiles!course_registrations_user_id_fkey(display_name)
         `)
         .eq('course_id', courseId)
         .order('registered_at', { ascending: true })
