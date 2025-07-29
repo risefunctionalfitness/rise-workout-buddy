@@ -39,35 +39,52 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const todayRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to today on mount
+  // Auto-scroll to today on mount and when trainingDays change
   useEffect(() => {
     const scrollToToday = () => {
-      if (todayRef.current && containerRef.current) {
-        const container = containerRef.current
-        const todayElement = todayRef.current
-        
-        // Calculate scroll position to center today's element
-        const containerHeight = container.clientHeight
-        const containerTop = container.getBoundingClientRect().top
-        const elementTop = todayElement.getBoundingClientRect().top
-        const elementHeight = todayElement.clientHeight
-        
-        // Calculate relative position within the scrollable container
-        const relativeTop = todayElement.offsetTop
-        const scrollTop = relativeTop - (containerHeight / 2) + (elementHeight / 2)
-        
-        container.scrollTo({
-          top: Math.max(0, scrollTop),
-          behavior: 'smooth'
-        })
+      const todayElement = todayRef.current
+      const container = containerRef.current
+      
+      if (!todayElement || !container) {
+        console.log('Missing refs for scroll')
+        return
       }
+
+      // Get the position of today's element relative to its container
+      const containerRect = container.getBoundingClientRect()
+      const elementRect = todayElement.getBoundingClientRect()
+      
+      // Calculate the current scroll position
+      const currentScrollTop = container.scrollTop
+      
+      // Calculate where the element currently is relative to the container's viewport
+      const elementTopInContainer = elementRect.top - containerRect.top + currentScrollTop
+      
+      // Calculate the scroll position to center the element
+      const containerHeight = container.clientHeight
+      const elementHeight = todayElement.offsetHeight
+      const targetScrollTop = elementTopInContainer - (containerHeight / 2) + (elementHeight / 2)
+      
+      console.log('Scrolling to today:', {
+        elementTopInContainer,
+        targetScrollTop,
+        containerHeight,
+        elementHeight
+      })
+      
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: 'smooth'
+      })
     }
 
-    // Multiple attempts to ensure scrolling works
-    const timeouts = [100, 300, 500]
-    timeouts.forEach(delay => {
-      setTimeout(scrollToToday, delay)
-    })
+    // Wait for the component to be fully rendered
+    if (trainingDays.length > 0) {
+      const timeouts = [200, 500, 1000] // Multiple attempts with longer delays
+      timeouts.forEach(delay => {
+        setTimeout(scrollToToday, delay)
+      })
+    }
   }, [trainingDays])
 
   const currentMonth = new Date().toLocaleDateString('de-DE', { 
