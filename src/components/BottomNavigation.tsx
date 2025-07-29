@@ -22,8 +22,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   ]
 
   return (
-    <div className="border-t bg-background p-2">
-      <div className="flex justify-around">
+    <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-2 z-50">
+      <div className="flex justify-around max-w-md mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id

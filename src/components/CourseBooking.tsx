@@ -352,13 +352,17 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   Teilnehmer ({selectedCourse.registered_count}/{selectedCourse.max_participants})
                 </h4>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {participants
-                    .filter(p => p.status === 'registered')
-                    .map((participant, index) => (
-                      <div key={index} className="text-sm">
-                        {participant.profiles?.display_name || 'Unbekannt'}
-                      </div>
-                    ))}
+                  {participants.filter(p => p.status === 'registered').length === 0 ? (
+                    <div className="text-sm text-muted-foreground italic">Keine Teilnehmer angemeldet</div>
+                  ) : (
+                    participants
+                      .filter(p => p.status === 'registered')
+                      .map((participant, index) => (
+                        <div key={index} className="text-sm">
+                          {participant.profiles?.display_name || 'Unbekannt'}
+                        </div>
+                      ))
+                  )}
                 </div>
                 
                 {participants.filter(p => p.status === 'waitlist').length > 0 && (

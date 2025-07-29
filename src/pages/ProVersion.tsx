@@ -52,7 +52,11 @@ const ProVersion = () => {
   }
 
   // Show Dashboard when authenticated
-  return <Dashboard user={user} />
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      <Dashboard user={user} />
+    </div>
+  )
 }
 
 export default ProVersion
