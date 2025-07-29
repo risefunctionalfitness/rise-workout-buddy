@@ -105,25 +105,23 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   }
 
   return (
-    <div className="flex-1 overflow-auto p-4 relative">
-      <div className="flex items-start justify-between mb-8">
+    <div className="flex-1 flex flex-col relative">
+      {/* Fixierte obere Bereiche */}
+      <div className="flex items-start justify-between p-4 bg-background">
         {/* Links: Monatlicher Trainingskalender */}
-        <div className="flex-1">
+        <div className="flex-1 flex justify-center">
           <MonthlyTrainingCalendar user={user} />
         </div>
 
         {/* Mitte: Überschrift */}
         <div className="flex-1 text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            Trainingsplan {currentMonth}
+          <h2 className="text-xl font-bold text-foreground">
+            Trainingstage {currentMonth}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Füge deine Trainingseinheiten hinzu und verfolge deinen Fortschritt.
-          </p>
         </div>
 
-        {/* Rechts: Aktuelles Button */}
-        <div className="flex-1 flex justify-center items-start">
+        {/* Rechts: Aktuelles Button - fixiert */}
+        <div className="flex-1 flex justify-center">
           <Button
             variant="outline"
             size="icon"
@@ -136,7 +134,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         </div>
       </div>
 
-      {/* Vertikaler Pfad */}
+      {/* Scrollbarer Trainingsbereich */}
       <div ref={containerRef} className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/20">
         <div className="flex flex-col items-center py-8 max-w-md mx-auto">
           {trainingDays.map((day, index) => (

@@ -62,13 +62,11 @@ export const MonthlyTrainingCalendar = ({ user }: MonthlyTrainingCalendarProps) 
     const currentDay = getCurrentDay()
     
     if (trainingDays.has(day)) {
-      return "bg-primary" // Trainiert - gleiche Farbe wie completed nodes
+      return "bg-green-500" // Trainiert - grün
     } else if (day < currentDay) {
-      return "bg-muted-foreground/30" // Verpasst - gleiche Farbe wie pending nodes
-    } else if (day === currentDay) {
-      return "bg-primary/60" // Heute - ähnlich current node
+      return "bg-red-500" // Verpasst - rot
     } else {
-      return "bg-muted-foreground/10" // Zukünftig - sehr hell
+      return "bg-gray-400" // Zukünftig - grau
     }
   }
 
