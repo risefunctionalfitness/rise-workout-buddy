@@ -53,7 +53,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         .from('courses')
         .select(`
           *,
-          course_registrations!inner(status)
+          course_registrations(status)
         `)
         .gte('course_date', format(weekStart, 'yyyy-MM-dd'))
         .lte('course_date', format(weekEnd, 'yyyy-MM-dd'))
