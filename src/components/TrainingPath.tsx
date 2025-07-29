@@ -109,9 +109,6 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       <div className="flex items-start justify-between mb-8">
         {/* Links: Monatlicher Trainingskalender */}
         <div className="flex-1">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            Trainingstage {currentMonth}
-          </h3>
           <MonthlyTrainingCalendar user={user} />
         </div>
 
@@ -126,14 +123,15 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         </div>
 
         {/* Rechts: Aktuelles Button */}
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-center items-start">
           <Button
             variant="outline"
+            size="icon"
             onClick={() => setShowNews(true)}
-            className="flex items-center gap-2"
+            className="rounded-full"
+            aria-label="Aktuelles anzeigen"
           >
             <Newspaper className="h-4 w-4" />
-            Aktuelles
           </Button>
         </div>
       </div>

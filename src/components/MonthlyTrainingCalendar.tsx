@@ -62,17 +62,19 @@ export const MonthlyTrainingCalendar = ({ user }: MonthlyTrainingCalendarProps) 
     const currentDay = getCurrentDay()
     
     if (trainingDays.has(day)) {
-      return "bg-green-500" // Trainiert
+      return "bg-primary" // Trainiert - gleiche Farbe wie completed nodes
     } else if (day < currentDay) {
-      return "bg-red-500" // Verpasst
+      return "bg-muted-foreground/30" // Verpasst - gleiche Farbe wie pending nodes
+    } else if (day === currentDay) {
+      return "bg-primary/60" // Heute - ähnlich current node
     } else {
-      return "bg-gray-300" // Zukünftig/heute
+      return "bg-muted-foreground/10" // Zukünftig - sehr hell
     }
   }
 
   if (loading) {
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-col gap-1">
         {Array.from({ length: getDaysInMonth() }, (_, i) => (
           <div
             key={i}
@@ -84,7 +86,7 @@ export const MonthlyTrainingCalendar = ({ user }: MonthlyTrainingCalendarProps) 
   }
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-col gap-1">
       {Array.from({ length: getDaysInMonth() }, (_, i) => {
         const day = i + 1
         return (
@@ -96,6 +98,8 @@ export const MonthlyTrainingCalendar = ({ user }: MonthlyTrainingCalendarProps) 
                 ? 'Trainiert' 
                 : day < getCurrentDay() 
                 ? 'Nicht trainiert' 
+                : day === getCurrentDay()
+                ? 'Heute'
                 : 'Noch nicht erreicht'
             }`}
           />
