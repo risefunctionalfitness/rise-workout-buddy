@@ -41,25 +41,33 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
 
   // Auto-scroll to today on mount
   useEffect(() => {
-    if (todayRef.current && containerRef.current) {
-      const container = containerRef.current
-      const todayElement = todayRef.current
-      
-      // Small delay to ensure rendering is complete
-      setTimeout(() => {
+    const scrollToToday = () => {
+      if (todayRef.current && containerRef.current) {
+        const container = containerRef.current
+        const todayElement = todayRef.current
+        
         // Calculate scroll position to center today's element
         const containerHeight = container.clientHeight
-        const elementTop = todayElement.offsetTop
+        const containerTop = container.getBoundingClientRect().top
+        const elementTop = todayElement.getBoundingClientRect().top
         const elementHeight = todayElement.clientHeight
         
-        const scrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2)
+        // Calculate relative position within the scrollable container
+        const relativeTop = todayElement.offsetTop
+        const scrollTop = relativeTop - (containerHeight / 2) + (elementHeight / 2)
         
         container.scrollTo({
           top: Math.max(0, scrollTop),
           behavior: 'smooth'
         })
-      }, 100)
+      }
     }
+
+    // Multiple attempts to ensure scrolling works
+    const timeouts = [100, 300, 500]
+    timeouts.forEach(delay => {
+      setTimeout(scrollToToday, delay)
+    })
   }, [trainingDays])
 
   const currentMonth = new Date().toLocaleDateString('de-DE', { 
@@ -104,8 +112,8 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         </div>
         <NewsSection />
         
-        {/* Button-Stack auch in News-Ansicht */}
-        <div className="fixed bottom-4 right-4 z-30 flex flex-col gap-3">
+        {/* Button-Stack auch in News-Ansicht ÜBER der Navigation */}
+        <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-3">
           <GymCodeDisplay />
           <WhatsAppButton />
         </div>
@@ -158,14 +166,14 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         <MonthlyTrainingCalendar user={user} />
       </div>
 
-      {/* Rechts unten: Button-Stack - fixiert */}
-      <div className="fixed bottom-4 right-4 z-30 flex flex-col gap-3">
+      {/* Rechts unten: Button-Stack - fixiert ÜBER der Navigation */}
+      <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-3">
         {/* Aktuelles Button */}
         <Button
           variant="outline"
           size="icon"
           onClick={() => setShowNews(true)}
-          className="rounded-full w-14 h-14 border-2 border-border hover:border-primary"
+          className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:border-primary shadow-lg"
           aria-label="Aktuelles anzeigen"
         >
           <Newspaper className="h-4 w-4" />

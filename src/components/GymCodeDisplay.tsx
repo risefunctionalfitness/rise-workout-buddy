@@ -46,38 +46,75 @@ export const GymCodeDisplay = () => {
   }
 
   return (
-    <div className="relative">
-      {/* Ausfahrendes Textfeld */}
+    <div className="relative flex items-center">
+      {/* Linker Kreis-Teil */}
       <div 
-        className={`absolute bottom-0 right-14 bg-background border-2 border-primary rounded-lg px-4 py-3 shadow-lg z-50 min-w-[200px] transition-all duration-300 origin-bottom-right ${
-          isVisible 
-            ? 'scale-100 opacity-100 translate-x-0' 
-            : 'scale-0 opacity-0 translate-x-4'
+        className={`transition-all duration-500 ease-in-out ${
+          isVisible ? 'transform -translate-x-24' : 'transform translate-x-0'
         }`}
       >
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-2">Gym Zugangscode:</p>
-          <p className="text-2xl font-mono font-bold text-primary">{gymCode || "----"}</p>
-          <div className="w-full bg-border h-1 rounded-full mt-3 overflow-hidden">
-            <div 
-              className={`h-full bg-primary transition-all duration-5000 ease-linear ${
-                isVisible ? 'w-0' : 'w-full'
-              }`}
-            />
+        <div className={`w-7 h-14 bg-background border-2 border-foreground/20 shadow-lg transition-all duration-500 ${
+          isVisible ? 'rounded-l-full border-r-0' : 'rounded-full'
+        }`}>
+          <div className="w-full h-full flex items-center justify-center">
+            <Key className="h-4 w-4 ml-1" />
           </div>
         </div>
       </div>
 
-      {/* Schlüssel Button */}
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleShowCode}
-        className="rounded-full w-14 h-14 border-2 border-border hover:border-primary"
-        aria-label="Zugangscode anzeigen"
+      {/* Mittleres Textfeld */}
+      <div 
+        className={`absolute left-7 bg-background border-2 border-l-0 border-r-0 border-foreground/20 shadow-lg h-14 flex items-center justify-center transition-all duration-500 overflow-hidden ${
+          isVisible ? 'w-48 opacity-100' : 'w-0 opacity-0'
+        }`}
       >
-        <Key className="h-4 w-4" />
-      </Button>
+        <div className="px-4 text-center whitespace-nowrap">
+          <p className="text-xs text-muted-foreground">Code:</p>
+          <p className="text-lg font-mono font-bold text-primary">{gymCode || "----"}</p>
+        </div>
+      </div>
+
+      {/* Rechter Kreis-Teil */}
+      <div 
+        className={`transition-all duration-500 ease-in-out ${
+          isVisible ? 'transform translate-x-48' : 'transform translate-x-0 -ml-7'
+        }`}
+      >
+        <div className={`w-7 h-14 bg-background border-2 border-foreground/20 shadow-lg transition-all duration-500 ${
+          isVisible ? 'rounded-r-full border-l-0' : 'rounded-full opacity-0'
+        }`}>
+          {/* Leer - nur für die rechte Rundung */}
+        </div>
+      </div>
+
+      {/* Unsichtbarer Klick-Button über dem gesamten Bereich */}
+      <button
+        onClick={handleShowCode}
+        className="absolute inset-0 w-14 h-14 rounded-full hover:bg-primary/10 transition-colors"
+        aria-label="Zugangscode anzeigen"
+      />
+
+      {/* Fortschrittsbalken */}
+      {isVisible && (
+        <div className="absolute bottom-1 left-1 right-1 h-1 bg-border rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-primary w-full transition-all duration-5000 ease-linear"
+            style={{
+              animation: 'shrinkProgress 5s linear forwards'
+            }}
+          />
+        </div>
+      )}
+
+      {/* CSS für die Animation */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes shrinkProgress {
+            from { width: 100%; }
+            to { width: 0%; }
+          }
+        `
+      }} />
     </div>
   )
 }
