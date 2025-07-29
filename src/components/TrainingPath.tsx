@@ -161,7 +161,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
           variant="outline"
           size="icon"
           onClick={() => setShowNews(true)}
-          className="rounded-full w-14 h-14"
+          className="rounded-full w-14 h-14 border-2 border-border hover:border-primary"
           aria-label="Aktuelles anzeigen"
         >
           <Newspaper className="h-4 w-4" />

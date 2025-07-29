@@ -52,7 +52,7 @@ export const GymCodeDisplay = () => {
         variant="outline"
         size="icon"
         onClick={handleShowCode}
-        className="rounded-full"
+        className="rounded-full w-14 h-14 border-2 border-border hover:border-primary"
         aria-label="Zugangscode anzeigen"
       >
         <Key className="h-4 w-4" />
