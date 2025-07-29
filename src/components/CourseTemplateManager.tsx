@@ -210,7 +210,9 @@ export const CourseTemplateManager = () => {
           const courseDate = addDays(weekStart, entry.day)
           
           // Only create courses within the specified range and not in the past
-          if (courseDate >= startDate && courseDate <= endDate && courseDate >= new Date()) {
+          const today = new Date()
+          today.setHours(0, 0, 0, 0) // Reset time to midnight for date comparison
+          if (courseDate >= startDate && courseDate <= endDate && courseDate >= today) {
             const [hours, minutes] = entry.time.split(':').map(Number)
             const startTime = entry.time
             const endTime = format(new Date(0, 0, 0, hours, minutes + template.duration_minutes), 'HH:mm')
