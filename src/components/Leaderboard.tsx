@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Medal, Award, Weight } from "lucide-react"
+import { Trophy, Medal, Award, Weight, Calendar } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 
 interface LeaderboardEntry {
@@ -134,7 +134,8 @@ export const Leaderboard: React.FC = () => {
         <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
           <p className="text-muted-foreground">Trainings für {currentMonth}</p>
-          <div className="absolute top-0 right-0 text-sm text-muted-foreground">
+          <div className="absolute top-0 right-0 flex items-center gap-1 text-sm text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+            <Calendar className="h-3 w-3" />
             {getRemainingDaysInMonth()} Tage übrig
           </div>
         </div>
@@ -166,8 +167,8 @@ export const Leaderboard: React.FC = () => {
                       </div>
                       <div className="text-right flex items-center gap-2">
                         <Badge variant="secondary" className="text-lg px-3 py-1 bg-[#B81243] text-white flex items-center gap-1">
-                          {entry.training_count}
                           <Weight className="h-4 w-4" />
+                          {entry.training_count}
                         </Badge>
                       </div>
                     </div>

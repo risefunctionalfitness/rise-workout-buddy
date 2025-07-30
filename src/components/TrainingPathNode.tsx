@@ -44,12 +44,7 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   }
 
   const getTopIcon = () => {
-    if (status === 'completed') {
-      return <Check className="h-4 w-4 text-green-500" />
-    }
-    if (status === 'pending') {
-      return <X className="h-4 w-4 text-red-500" />
-    }
+    // Icons außerhalb der Kreise entfernt
     return null
   }
 
@@ -75,12 +70,6 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative">
-        {/* Top icon für vergangene/erledigte Tage */}
-        {getTopIcon() && (
-          <div className="absolute -top-2 -right-2 z-10 bg-background rounded-full p-0.5">
-            {getTopIcon()}
-          </div>
-        )}
         
         <Button
           variant="outline"

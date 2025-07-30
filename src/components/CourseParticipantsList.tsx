@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MembershipBadge } from "@/components/MembershipBadge"
-import { Trash2 } from "lucide-react"
+import { Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { AdminParticipantManager } from "@/components/AdminParticipantManager"
 
 interface Course {
   id: string
@@ -41,6 +42,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
 }) => {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAddDialog, setShowAddDialog] = useState(false)
 
   useEffect(() => {
     loadParticipants()
@@ -127,9 +129,21 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Kurs-Teilnehmer verwalten</h2>
-        <Button variant="outline" onClick={onClose}>
-          Schließen
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowAddDialog(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Hinzufügen
+            </Button>
+          )}
+          <Button variant="outline" onClick={onClose}>
+            Schließen
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -155,8 +169,8 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                   <span className="text-xs text-muted-foreground">
                     {new Date(participant.registered_at).toLocaleDateString('de-DE')}
                   </span>
+                  <MembershipBadge type={participant.membership_type as any} />
                 </div>
-                <MembershipBadge type={participant.membership_type as any} />
                 <div className="flex items-center gap-2">
                   {isAdmin && (
                     <Button
@@ -193,9 +207,9 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                   <span className="text-xs text-muted-foreground">
                     {new Date(participant.registered_at).toLocaleDateString('de-DE')}
                   </span>
+                  <MembershipBadge type={participant.membership_type as any} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <MembershipBadge type={participant.membership_type as any} />
                   {isAdmin && (
                     <Button
                       variant="ghost"
@@ -212,6 +226,13 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           </CardContent>
         </Card>
       )}
+
+      <AdminParticipantManager
+        courseId={course.id}
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onParticipantAdded={loadParticipants}
+      />
     </div>
   )
 }

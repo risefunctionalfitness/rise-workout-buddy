@@ -418,9 +418,6 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                 {isTrainer && (
                                   <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                                 )}
-                                <Badge variant="secondary" className="text-sm px-2 py-1 bg-[#B81243] text-white">
-                                  10er Karte
-                                </Badge>
                               </div>
                             </div>
                           )
