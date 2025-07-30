@@ -258,10 +258,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         {renderTabContent()}
       </div>
       
-      <BottomNavigation
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      {/* Dashboard uses different navigation */}
 
       {showProfile && (
         <UserProfile onClose={() => setShowProfile(false)} />

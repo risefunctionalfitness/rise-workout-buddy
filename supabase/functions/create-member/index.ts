@@ -25,7 +25,7 @@ serve(async (req) => {
     const { email, password, user_metadata } = await req.json()
 
     // Create user with admin privileges
-    const { data: user, error: createError } = await supabase.auth.admin.createUser({
+    const { data, error: createError } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -43,8 +43,24 @@ serve(async (req) => {
       )
     }
 
+    // If membership type is "Trainer", add trainer role
+    const membershipType = user_metadata?.membership_type
+    if (membershipType === 'Trainer' && data?.user) {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: data.user.id,
+          role: 'trainer'
+        })
+
+      if (roleError) {
+        console.error('Error adding trainer role:', roleError)
+        // Don't fail the entire process, just log the error
+      }
+    }
+
     return new Response(
-      JSON.stringify({ success: true, user }),
+      JSON.stringify({ success: true, user: data?.user }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

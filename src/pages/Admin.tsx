@@ -41,7 +41,7 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'wod' | 'courses' | 'leaderboard'>('home');
+  const [activeTab, setActiveTab] = useState<'members' | 'participants' | 'courses' | 'news' | 'gym-codes'>('members');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function Admin() {
     }
   };
 
-  const membershipTypes = ["Member", "Open Gym", "Wellpass", "10er Karte"];
+  const membershipTypes = ["Member", "Trainer", "Open Gym", "Wellpass", "10er Karte"];
 
   const loadMembers = async () => {
     try {
@@ -247,13 +247,13 @@ export default function Admin() {
     return null;
   }
 
-  const handleTabChange = (tab: 'home' | 'wod' | 'courses' | 'leaderboard') => {
+  const handleTabChange = (tab: 'members' | 'participants' | 'courses' | 'news' | 'gym-codes') => {
     setActiveTab(tab);
   };
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'home':
+      case 'members':
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -272,59 +272,6 @@ export default function Admin() {
                 <LogOut className="h-4 w-4 mr-2" />
                 Abmelden
               </Button>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Mitglieder gesamt</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{members.length}</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Admin Sections */}
-            <Tabs defaultValue="members" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="members" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Mitglieder
-                </TabsTrigger>
-                <TabsTrigger value="participants" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Kurs-Teilnehmer
-                </TabsTrigger>
-                <TabsTrigger value="courses" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Kurse anlegen
-                </TabsTrigger>
-                <TabsTrigger value="news" className="flex items-center gap-2">
-                  <Newspaper className="h-4 w-4" />
-                  Aktuelles
-                </TabsTrigger>
-                <TabsTrigger value="gym-codes" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Zugangscodes
-                </TabsTrigger>
-              </TabsList>
-
-          {/* Members Tab */}
-          <TabsContent value="members" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Mitglieder gesamt</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{members.length}</div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Members Table */}
@@ -536,26 +483,16 @@ export default function Admin() {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
-
-              <TabsContent value="participants">
-                <CourseParticipants />
-              </TabsContent>
-
-              <TabsContent value="courses">
-                <CourseTemplateManager />
-              </TabsContent>
-
-              <TabsContent value="news">
-                <NewsManager />
-              </TabsContent>
-
-              <TabsContent value="gym-codes">
-                <GymCodeManager />
-              </TabsContent>
-            </Tabs>
           </div>
         );
+      case 'participants':
+        return <CourseParticipants />;
+      case 'courses':
+        return <CourseTemplateManager />;
+      case 'news':
+        return <NewsManager />;
+      case 'gym-codes':
+        return <GymCodeManager />;
       default:
         return <div>Feature coming soon...</div>;
     }
