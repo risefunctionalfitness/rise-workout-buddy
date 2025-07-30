@@ -337,6 +337,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         </div>
       </div>
 
+      {/* Buttons nur auf der Home-Ansicht anzeigen */}
       {activeTab === 'home' && (
         <div className="fixed top-24 right-4 z-50 flex flex-col gap-4">
           <LeaderboardPosition user={user} />
