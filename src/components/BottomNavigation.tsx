@@ -2,7 +2,7 @@ import { Users, Calendar, Newspaper, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-type TabType = 'members' | 'participants' | 'courses' | 'news' | 'gym-codes'
+export type TabType = 'members' | 'participants' | 'courses' | 'news' | 'gym-codes'
 
 interface BottomNavigationProps {
   activeTab: TabType

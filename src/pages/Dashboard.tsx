@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
 import { TrainingPathHeader } from "@/components/TrainingPathHeader"
 import { TrainingPath } from "@/components/TrainingPath"
-import { TrainerBottomNavigation } from "@/components/TrainerBottomNavigation"
+import { BottomNavigation } from "@/components/BottomNavigation"
+import type { TabType as AdminTabType } from "@/components/BottomNavigation"
 import { UserProfile } from "@/components/UserProfile"
 import { Leaderboard } from "@/components/Leaderboard"
 import { WorkoutGenerator } from "@/components/WorkoutGenerator"
@@ -11,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
 
-type TabType = 'home' | 'wod' | 'courses' | 'leaderboard'
+type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
 
 interface TrainingDay {
   date: Date
@@ -30,7 +31,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('home')
+  const [activeTab, setActiveTab] = useState<DashboardTabType>('home')
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([])
   const [trainingCount, setTrainingCount] = useState(0)
   const [showProfile, setShowProfile] = useState(false)
@@ -239,6 +240,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         return <CourseBooking user={user} />
       case 'leaderboard':
         return <Leaderboard />
+      case 'news':
+        return <NewsSection />
       default:
         return null
     }
@@ -258,9 +261,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         {renderTabContent()}
       </div>
       
-      <TrainerBottomNavigation 
-        activeTab={activeTab === 'courses' ? 'courses' : 'courses'} 
-        onTabChange={() => setActiveTab('courses')} 
+      <BottomNavigation 
+        activeTab={'members' as AdminTabType}
+        onTabChange={(tab: AdminTabType) => {
+          // Map admin tabs to dashboard tabs where applicable
+          if (tab === 'courses') setActiveTab('courses')
+          else if (tab === 'news') setActiveTab('news')
+        }}
       />
 
       {showProfile && (

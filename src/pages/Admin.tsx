@@ -114,7 +114,7 @@ export default function Admin() {
     }
   };
 
-  const membershipTypes = ["Member", "Trainer", "Open Gym", "Wellpass", "10er Karte"];
+  const membershipTypes = ["Member", "Trainer", "Administrator", "Open Gym", "Wellpass", "10er Karte"];
 
   const loadMembers = async () => {
     try {

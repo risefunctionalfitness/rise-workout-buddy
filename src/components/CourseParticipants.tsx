@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { supabase } from '@/integrations/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { MembershipBadge } from '@/components/MembershipBadge'
-import { useToast } from '@/hooks/use-toast'
-import { Trash2, Users, Clock } from 'lucide-react'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { useState, useEffect } from "react"
+import { supabase } from "@/integrations/supabase/client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { format, parseISO, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay } from "date-fns"
+import { de } from "date-fns/locale"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { CourseParticipantsList } from "@/components/CourseParticipantsList"
+import { useToast } from "@/hooks/use-toast"
 
 interface Course {
   id: string
@@ -16,39 +17,66 @@ interface Course {
   start_time: string
   end_time: string
   max_participants: number
+  registered_count: number
+  waitlisted_count: number
 }
 
-interface Participant {
-  id: string
-  user_id: string
-  status: 'registered' | 'waitlist'
-  registered_at: string
-  display_name: string
-  membership_type: string
-}
-
-export const CourseParticipants: React.FC = () => {
+export const CourseParticipants = () => {
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-  const [participants, setParticipants] = useState<Participant[]>([])
+  const [currentWeek, setCurrentWeek] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
   useEffect(() => {
     loadCourses()
-  }, [])
+  }, [currentWeek])
 
   const loadCourses = async () => {
     try {
+      setLoading(true)
+      const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 })
+      const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
+
       const { data, error } = await supabase
         .from('courses')
-        .select('*')
-        .gte('course_date', new Date().toISOString().split('T')[0])
+        .select(`
+          id,
+          title,
+          trainer,
+          course_date,
+          start_time,
+          end_time,
+          max_participants
+        `)
+        .gte('course_date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('course_date', format(weekEnd, 'yyyy-MM-dd'))
         .order('course_date', { ascending: true })
         .order('start_time', { ascending: true })
 
       if (error) throw error
-      setCourses(data || [])
+
+      // Get registration counts
+      const coursesWithCounts = await Promise.all(
+        (data || []).map(async (course) => {
+          const { data: registrations } = await supabase
+            .from('course_registrations')
+            .select('status')
+            .eq('course_id', course.id)
+            .in('status', ['registered', 'waitlisted'])
+
+          const registered_count = registrations?.filter(r => r.status === 'registered').length || 0
+          const waitlisted_count = registrations?.filter(r => r.status === 'waitlisted').length || 0
+
+          return {
+            ...course,
+            registered_count,
+            waitlisted_count
+          }
+        })
+      )
+
+      setCourses(coursesWithCounts)
     } catch (error) {
       console.error('Error loading courses:', error)
       toast({
@@ -61,239 +89,118 @@ export const CourseParticipants: React.FC = () => {
     }
   }
 
-  const loadParticipants = async (courseId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('course_registrations')
-        .select(`
-          id,
-          user_id,
-          status,
-          registered_at
-        `)
-        .eq('course_id', courseId)
-        .order('registered_at', { ascending: true })
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentWeek(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1))
+  }
 
-      if (error) throw error
-
-      // Get profile data separately
-      const userIds = data.map(reg => reg.user_id)
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, membership_type')
-        .in('user_id', userIds)
-
-      if (profileError) throw profileError
-
-      const formattedParticipants = data.map(reg => {
-        const profile = profiles?.find(p => p.user_id === reg.user_id)
-        return {
-          id: reg.id,
-          user_id: reg.user_id,
-          status: reg.status as 'registered' | 'waitlist',
-          registered_at: reg.registered_at,
-          display_name: profile?.display_name || 'Unbekannt',
-          membership_type: profile?.membership_type || 'Member'
-        }
-      })
-
-      setParticipants(formattedParticipants)
-    } catch (error) {
-      console.error('Error loading participants:', error)
-      toast({
-        title: "Fehler",
-        description: "Teilnehmer konnten nicht geladen werden",
-        variant: "destructive"
-      })
+  const getWeekDays = () => {
+    const start = startOfWeek(currentWeek, { weekStartsOn: 1 })
+    const days = []
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(start)
+      day.setDate(start.getDate() + i)
+      days.push(day)
     }
+    return days
   }
 
-  const handleCourseSelect = (course: Course) => {
-    setSelectedCourse(course)
-    loadParticipants(course.id)
+  const getCoursesByDay = (date: Date) => {
+    return courses.filter(course => 
+      isSameDay(parseISO(course.course_date), date)
+    )
   }
-
-  const removeParticipant = async (registrationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('course_registrations')
-        .delete()
-        .eq('id', registrationId)
-
-      if (error) throw error
-
-      toast({
-        title: "Erfolg",
-        description: "Teilnehmer wurde entfernt"
-      })
-
-      // Reload participants
-      if (selectedCourse) {
-        loadParticipants(selectedCourse.id)
-      }
-    } catch (error) {
-      console.error('Error removing participant:', error)
-      toast({
-        title: "Fehler",
-        description: "Teilnehmer konnte nicht entfernt werden",
-        variant: "destructive"
-      })
-    }
-  }
-
-  const registeredParticipants = participants.filter(p => p.status === 'registered')
-  const waitlistParticipants = participants.filter(p => p.status === 'waitlist')
 
   if (loading) {
     return <div className="flex justify-center p-8">Lade Kurse...</div>
   }
 
+  if (selectedCourse) {
+    return (
+      <CourseParticipantsList 
+        course={selectedCourse}
+        onClose={() => setSelectedCourse(null)}
+        isAdmin={true}
+      />
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Kurs-Teilnehmer verwalten</h2>
-        
-        <div className="grid gap-4 mb-6">
-          {courses.map((course) => (
-            <Card 
-              key={course.id} 
-              className={`cursor-pointer transition-colors ${
-                selectedCourse?.id === course.id ? 'ring-2 ring-primary' : ''
-              }`}
-              onClick={() => handleCourseSelect(course)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Trainer: {course.trainer}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(course.course_date).toLocaleDateString('de-DE')} • 
-                      {course.start_time} - {course.end_time}
-                    </p>
-                  </div>
-                  <Badge variant="outline">
-                    Max. {course.max_participants}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+    <div className="p-4 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Kurs-Teilnehmer verwalten</h1>
+      </div>
+
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigateWeek('prev')}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="text-center">
+          <h2 className="font-semibold">
+            {format(startOfWeek(currentWeek, { weekStartsOn: 1 }), 'dd.MM', { locale: de })} - {format(endOfWeek(currentWeek, { weekStartsOn: 1 }), 'dd.MM.yyyy', { locale: de })}
+          </h2>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigateWeek('next')}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
 
-        {selectedCourse && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Teilnehmer für "{selectedCourse.title}"
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h4 className="font-semibold mb-3 flex items-center gap-2">
-                  <Badge variant="default" className="bg-green-500">
-                    Angemeldet ({registeredParticipants.length}/{selectedCourse.max_participants})
-                  </Badge>
-                </h4>
-                <div className="space-y-2">
-                  {registeredParticipants.map((participant) => (
-                    <div key={participant.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{participant.display_name}</span>
-                        <MembershipBadge type={participant.membership_type as any} />
-                        <Badge variant="outline" className="text-xs">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {new Date(participant.registered_at).toLocaleDateString('de-DE')}
-                        </Badge>
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Teilnehmer entfernen</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Möchten Sie {participant.display_name} aus diesem Kurs entfernen?
-                              Dies kann nicht rückgängig gemacht werden.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => removeParticipant(participant.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Entfernen
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  ))}
-                  {registeredParticipants.length === 0 && (
-                    <p className="text-muted-foreground text-center py-4">
-                      Keine angemeldeten Teilnehmer
-                    </p>
-                  )}
+      {/* Week View */}
+      <div className="grid grid-cols-1 gap-4">
+        {getWeekDays().map(day => {
+          const dayCourses = getCoursesByDay(day)
+          return (
+            <div key={day.toISOString()} className="space-y-2">
+              <h3 className="font-medium text-sm text-muted-foreground">
+                {format(day, 'EEEE, dd.MM', { locale: de })}
+              </h3>
+              {dayCourses.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground border border-dashed rounded-lg">
+                  Keine Kurse geplant
                 </div>
-              </div>
-
-              {waitlistParticipants.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Badge variant="secondary">
-                      Warteliste ({waitlistParticipants.length})
-                    </Badge>
-                  </h4>
-                  <div className="space-y-2">
-                    {waitlistParticipants.map((participant) => (
-                      <div key={participant.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium">{participant.display_name}</span>
-                          <MembershipBadge type={participant.membership_type as any} />
-                          <Badge variant="outline" className="text-xs">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {new Date(participant.registered_at).toLocaleDateString('de-DE')}
-                          </Badge>
+              ) : (
+                <div className="space-y-2">
+                  {dayCourses.map(course => (
+                    <Card 
+                      key={course.id}
+                      className="cursor-pointer transition-all duration-200 hover:shadow-md"
+                      onClick={() => setSelectedCourse(course)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold">{course.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {course.trainer} • {course.start_time} - {course.end_time}
+                            </p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <Badge variant="secondary" className="bg-green-500 text-white">
+                              {course.registered_count}/{course.max_participants}
+                            </Badge>
+                            {course.waitlisted_count > 0 && (
+                              <Badge variant="outline" className="bg-yellow-500 text-white block">
+                                Warteliste: {course.waitlisted_count}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Von Warteliste entfernen</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Möchten Sie {participant.display_name} von der Warteliste entfernen?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => removeParticipant(participant.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Entfernen
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    ))}
-                  </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
