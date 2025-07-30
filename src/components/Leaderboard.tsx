@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trophy, Medal, Award, Weight, Calendar } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { AvatarUpload } from "@/components/AvatarUpload"
 
 interface LeaderboardEntry {
   id: string
   user_id: string
   training_count: number
   display_name: string
+  avatar_url: string | null
   year: number
   month: number
 }
@@ -48,10 +50,10 @@ export const Leaderboard: React.FC = () => {
       // Get all user IDs from leaderboard
       const userIds = leaderboardData.map(entry => entry.user_id)
 
-      // Fetch profiles for these users
-      const { data: profilesData, error: profilesError } = await supabase
+      // Get user profiles for display names and avatars
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name')
+        .select('user_id, display_name, avatar_url')
         .in('user_id', userIds)
 
       if (profilesError) {
@@ -59,20 +61,17 @@ export const Leaderboard: React.FC = () => {
         return
       }
 
-      // Combine leaderboard data with profile names
-      const formattedData = leaderboardData.map(entry => {
-        const profile = profilesData?.find(p => p.user_id === entry.user_id)
+      // Combine leaderboard data with profile info
+      const leaderboardWithProfiles = leaderboardData.map(entry => {
+        const profile = profiles?.find(p => p.user_id === entry.user_id)
         return {
-          id: entry.id,
-          user_id: entry.user_id,
-          training_count: entry.training_count || 0,
+          ...entry,
           display_name: profile?.display_name || 'Unbekannt',
-          year: entry.year,
-          month: entry.month
+          avatar_url: profile?.avatar_url || null
         }
       })
 
-      setLeaderboard(formattedData)
+      setLeaderboard(leaderboardWithProfiles)
     } catch (error) {
       console.error('Error loading leaderboard:', error)
     } finally {
@@ -158,6 +157,12 @@ export const Leaderboard: React.FC = () => {
                         <div className="flex items-center justify-center w-12 h-12">
                           {getRankIcon(position)}
                         </div>
+                        <AvatarUpload
+                          userId={entry.user_id}
+                          currentAvatarUrl={entry.avatar_url}
+                          size="sm"
+                          showUploadButton={false}
+                        />
                         <div>
                           <h3 className="font-semibold text-lg">{entry.display_name}</h3>
                           <p className="text-sm text-muted-foreground">

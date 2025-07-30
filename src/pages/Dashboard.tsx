@@ -38,6 +38,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([])
   const [trainingCount, setTrainingCount] = useState(0)
   const [showProfile, setShowProfile] = useState(false)
+  const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
   
@@ -46,71 +47,88 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
   // Generate training days for current month and load training sessions
   useEffect(() => {
-    const generateTrainingDays = async () => {
-      const today = new Date()
-      const currentMonth = today.getMonth()
-      const currentYear = today.getFullYear()
-      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+    loadUserProfile()
+    generateTrainingDays()
+  }, [user])
+
+  const loadUserProfile = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('user_id', user.id)
+        .single()
       
-      const days: TrainingDay[] = []
-      
-      // Generate all days of the current month
-      for (let day = 1; day <= daysInMonth; day++) {
-        const currentDate = new Date(currentYear, currentMonth, day)
-        const isToday = currentDate.toDateString() === today.toDateString()
-        const isFuture = currentDate > today
-        const isPast = currentDate < today && !isToday
-        
-        days.push({
-          date: currentDate,
-          dayNumber: day,
-          isToday,
-          isFuture,
-          isPast,
-          trainingSession: undefined // Will be filled from actual data
-        })
+      if (profile) {
+        setUserAvatar(profile.avatar_url)
       }
+    } catch (error) {
+      console.error('Error loading user profile:', error)
+    }
+  }
 
-      // Load existing training sessions
-      try {
-        const { data: sessions, error } = await supabase
-          .from('training_sessions')
-          .select('*')
-          .eq('user_id', user.id)
-          .gte('date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
-          .lt('date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
+  const generateTrainingDays = async () => {
+    const today = new Date()
+    const currentMonth = today.getMonth()
+    const currentYear = today.getFullYear()
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+    
+    const days: TrainingDay[] = []
+    
+    // Generate all days of the current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(currentYear, currentMonth, day)
+      const isToday = currentDate.toDateString() === today.toDateString()
+      const isFuture = currentDate > today
+      const isPast = currentDate < today && !isToday
+      
+      days.push({
+        date: currentDate,
+        dayNumber: day,
+        isToday,
+        isFuture,
+        isPast,
+        trainingSession: undefined // Will be filled from actual data
+      })
+    }
 
-        if (error) {
-          console.error('Error loading training sessions:', error)
-          return days
-        }
+    // Load existing training sessions
+    try {
+      const { data: sessions, error } = await supabase
+        .from('training_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
+        .lt('date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
 
-        // Map sessions to days
-        sessions?.forEach(session => {
-          const sessionDate = new Date(session.date)
-          const dayNumber = sessionDate.getDate()
-          const dayIndex = days.findIndex(d => d.dayNumber === dayNumber)
-          
-          if (dayIndex !== -1) {
-            days[dayIndex].trainingSession = {
-              type: session.workout_type as 'course' | 'free_training' | 'plan',
-              id: session.id
-            }
-          }
-        })
-
-        // Count training sessions for header
-        const completedSessions = sessions?.filter(s => s.status === 'completed').length || 0
-        setTrainingCount(completedSessions)
-      } catch (error) {
+      if (error) {
         console.error('Error loading training sessions:', error)
+        return
       }
-      
-      return days
+
+      // Map sessions to days
+      sessions?.forEach(session => {
+        const sessionDate = new Date(session.date)
+        const dayNumber = sessionDate.getDate()
+        const dayIndex = days.findIndex(d => d.dayNumber === dayNumber)
+        
+        if (dayIndex !== -1) {
+          days[dayIndex].trainingSession = {
+            type: session.workout_type as 'course' | 'free_training' | 'plan',
+            id: session.id
+          }
+        }
+      })
+
+      // Count training sessions for header
+      const completedSessions = sessions?.filter(s => s.status === 'completed').length || 0
+      setTrainingCount(completedSessions)
+    } catch (error) {
+      console.error('Error loading training sessions:', error)
     }
     
-    generateTrainingDays().then(setTrainingDays)
-  }, [user.id])
+    setTrainingDays(days)
+  }
 
   const userName = user?.user_metadata?.display_name || 
                    user?.email?.split('@')[0] || 
@@ -260,6 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         <TrainingPathHeader
           trainingDaysThisMonth={trainingCount}
           totalDaysInMonth={totalDaysInMonth}
+          userAvatar={userAvatar}
           onProfileClick={() => setShowProfile(true)}
         />
       </div>

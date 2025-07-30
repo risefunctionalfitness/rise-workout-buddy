@@ -241,6 +241,7 @@ export type Database = {
         Row: {
           access_code: string | null
           age: number | null
+          avatar_url: string | null
           back_squat_1rm: number | null
           bench_press_1rm: number | null
           birth_year: number | null
@@ -269,6 +270,7 @@ export type Database = {
         Insert: {
           access_code?: string | null
           age?: number | null
+          avatar_url?: string | null
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
           birth_year?: number | null
@@ -297,6 +299,7 @@ export type Database = {
         Update: {
           access_code?: string | null
           age?: number | null
+          avatar_url?: string | null
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
           birth_year?: number | null

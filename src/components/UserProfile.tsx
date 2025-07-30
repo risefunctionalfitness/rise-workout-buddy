@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { AvatarUpload } from "@/components/AvatarUpload"
 
 const EXERCISES = [
   // Langhantel
@@ -131,6 +132,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const [gender, setGender] = useState("")
   const [weightKg, setWeightKg] = useState("")
   const [fitnessLevel, setFitnessLevel] = useState([0])
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string>("")
   
   // Strength values
   const [frontSquat1rm, setFrontSquat1rm] = useState("")
@@ -155,6 +158,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      setUserId(user.id)
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -163,6 +168,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
       if (profile) {
         setDisplayName(profile.display_name || "")
+        setAvatarUrl(profile.avatar_url)
         setBirthYear(profile.birth_year?.toString() || "")
         setGender(profile.gender || "")
         setWeightKg(profile.weight_kg?.toString() || "")
@@ -282,6 +288,24 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent className="space-y-4">
+                {/* Avatar Upload */}
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="text-center">
+                    <Label>Profilbild</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Lade ein Profilbild hoch, das in der App angezeigt wird.
+                    </p>
+                  </div>
+                  {userId && (
+                    <AvatarUpload
+                      userId={userId}
+                      currentAvatarUrl={avatarUrl}
+                      onAvatarUpdate={setAvatarUrl}
+                      size="lg"
+                    />
+                  )}
+                </div>
+
                 <div>
                   <Label htmlFor="name">Name *</Label>
                   <Input
