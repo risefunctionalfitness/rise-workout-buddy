@@ -1,14 +1,5 @@
-import { useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-
+// Index page is now handled by App.tsx routing directly to Auth
 const Index = () => {
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    // Redirect to auth page
-    navigate("/auth")
-  }, [navigate])
-
   return null
 };
 
