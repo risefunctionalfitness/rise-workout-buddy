@@ -6,6 +6,7 @@ import { WhatsAppButton } from "./WhatsAppButton"
 import { GymCodeDisplay } from "./GymCodeDisplay"
 import { Button } from "@/components/ui/button"
 import { Newspaper } from "lucide-react"
+import { useNewsNotification } from "@/hooks/useNewsNotification"
 import { useState, useEffect, useRef } from "react"
 
 interface TrainingDay {
@@ -38,6 +39,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   const [showNews, setShowNews] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const todayRef = useRef<HTMLDivElement>(null)
+  const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
 
   // Auto-scroll to today on mount and when trainingDays change
   useEffect(() => {
@@ -175,11 +177,19 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setShowNews(true)}
-          className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:bg-foreground/10 shadow-lg"
+          onClick={() => {
+            setShowNews(true)
+            markNewsAsRead()
+          }}
+          className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:bg-foreground/10 shadow-lg relative"
           aria-label="Aktuelles anzeigen"
         >
           <Newspaper className="h-4 w-4" />
+          {hasUnreadNews && (
+            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+              1
+            </div>
+          )}
         </Button>
         
         {/* Gym Code Button */}

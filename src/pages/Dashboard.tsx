@@ -267,19 +267,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <div className="flex justify-around max-w-md mx-auto">
           {[
             { id: 'home', icon: 'home', label: 'Übersicht' },
-            { id: 'wod', icon: 'dumbbell', label: 'WOD' },
+            { id: 'wod', icon: 'weightlifter', label: 'WOD' },
             { id: 'courses', icon: 'calendar', label: 'Kurse' },
-            { id: 'leaderboard', icon: 'trophy', label: 'Ranking' },
-            { id: 'news', icon: 'newspaper', label: 'Aktuelles' }
+            { id: 'leaderboard', icon: 'trophy', label: 'Leaderboard' }
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id as DashboardTabType)
-                if (tab.id === 'news') {
-                  markNewsAsRead()
-                }
-              }}
+              onClick={() => setActiveTab(tab.id as DashboardTabType)}
               className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-md transition-colors ${
                 activeTab === tab.id 
                   ? 'text-primary bg-primary/10' 
@@ -288,19 +282,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             >
               <div className="h-5 w-5 relative">
                 {tab.icon === 'home' && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>}
-                {tab.icon === 'dumbbell' && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m-15 0A2.25 2.25 0 0 0 2.25 12v6.75A2.25 2.25 0 0 0 4.5 21h15a2.25 2.25 0 0 0 2.25-2.25V12a2.25 2.25 0 0 0-2.25-2.25H4.5a2.25 2.25 0 0 0-2.25 2.25Zm0 0h20.25" /></svg>}
+                {tab.icon === 'weightlifter' && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 8h12M9 16h6m-8-8v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V8M10 5h4a1 1 0 0 1 1 1v1H9V6a1 1 0 0 1 1-1zM5 8h2v8H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zm12 0h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2V8z"/></svg>}
                 {tab.icon === 'calendar' && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>}
                 {tab.icon === 'trophy' && <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M15.75 4.5V2.25A2.25 2.25 0 0 0 13.5 0h-3a2.25 2.25 0 0 0-2.25 2.25V4.5m11.356 1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.119-1.243l1.263-12A1.125 1.125 0 0 1 5.513 5.25h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>}
-                {tab.icon === 'newspaper' && (
-                  <div className="relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5M5.25 19.5a2.25 2.25 0 0 1-2.25-2.25V6.75A2.25 2.25 0 0 1 5.25 4.5h13.5A2.25 2.25 0 0 1 21 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25H5.25Z" /></svg>
-                    {hasUnreadNews && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                        1
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
               <span className="text-xs">{tab.label}</span>
             </button>
