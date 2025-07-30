@@ -121,77 +121,35 @@ export const StrengthValues = () => {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="frontSquat">Front Squat (kg)</Label>
-                <Input
-                  id="frontSquat"
-                  type="number"
-                  step="0.5"
-                  value={frontSquat1rm}
-                  onChange={(e) => setFrontSquat1rm(e.target.value)}
-                  placeholder="z.B. 100"
-                />
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex gap-2">
+                <Label className="min-w-24 pt-2">Front Squat:</Label>
+                <Input type="number" step="0.5" value={frontSquat1rm} onChange={(e) => setFrontSquat1rm(e.target.value)} placeholder="kg" className="w-20" />
               </div>
               
-              <div>
-                <Label htmlFor="backSquat">Back Squat (kg)</Label>
-                <Input
-                  id="backSquat"
-                  type="number"
-                  step="0.5"
-                  value={backSquat1rm}
-                  onChange={(e) => setBackSquat1rm(e.target.value)}
-                  placeholder="z.B. 120"
-                />
+              <div className="flex gap-2">
+                <Label className="min-w-24 pt-2">Back Squat:</Label>
+                <Input type="number" step="0.5" value={backSquat1rm} onChange={(e) => setBackSquat1rm(e.target.value)} placeholder="kg" className="w-20" />
               </div>
 
-              <div>
-                <Label htmlFor="deadlift">Deadlift (kg)</Label>
-                <Input
-                  id="deadlift"
-                  type="number"
-                  step="0.5"
-                  value={deadlift1rm}
-                  onChange={(e) => setDeadlift1rm(e.target.value)}
-                  placeholder="z.B. 150"
-                />
+              <div className="flex gap-2">
+                <Label className="min-w-24 pt-2">Deadlift:</Label>
+                <Input type="number" step="0.5" value={deadlift1rm} onChange={(e) => setDeadlift1rm(e.target.value)} placeholder="kg" className="w-20" />
               </div>
 
-              <div>
-                <Label htmlFor="benchPress">Bench Press (kg)</Label>
-                <Input
-                  id="benchPress"
-                  type="number"
-                  step="0.5"
-                  value={benchPress1rm}
-                  onChange={(e) => setBenchPress1rm(e.target.value)}
-                  placeholder="z.B. 80"
-                />
+              <div className="flex gap-2">
+                <Label className="min-w-24 pt-2">Bench Press:</Label>
+                <Input type="number" step="0.5" value={benchPress1rm} onChange={(e) => setBenchPress1rm(e.target.value)} placeholder="kg" className="w-20" />
               </div>
 
-              <div>
-                <Label htmlFor="snatch">Snatch (kg)</Label>
-                <Input
-                  id="snatch"
-                  type="number"
-                  step="0.5"
-                  value={snatch1rm}
-                  onChange={(e) => setSnatch1rm(e.target.value)}
-                  placeholder="z.B. 60"
-                />
+              <div className="flex gap-2">
+                <Label className="min-w-24 pt-2">Snatch:</Label>
+                <Input type="number" step="0.5" value={snatch1rm} onChange={(e) => setSnatch1rm(e.target.value)} placeholder="kg" className="w-20" />
               </div>
 
-              <div>
-                <Label htmlFor="cleanJerk">Clean & Jerk (kg)</Label>
-                <Input
-                  id="cleanJerk"
-                  type="number"
-                  step="0.5"
-                  value={cleanAndJerk1rm}
-                  onChange={(e) => setCleanAndJerk1rm(e.target.value)}
-                  placeholder="z.B. 75"
-                />
+              <div className="flex gap-2">
+                <Label className="min-w-24 pt-2">Clean & Jerk:</Label>
+                <Input type="number" step="0.5" value={cleanAndJerk1rm} onChange={(e) => setCleanAndJerk1rm(e.target.value)} placeholder="kg" className="w-20" />
               </div>
             </div>
           </CardContent>
@@ -202,7 +160,7 @@ export const StrengthValues = () => {
           <CardHeader>
             <CardTitle>Weitere Übungen</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Füge beliebige weitere Übungen und deren 1RM hinzu.
+              Füge beliebige weitere Übungen und deren Werte hinzu.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -217,11 +175,10 @@ export const StrengthValues = () => {
                   />
                 </div>
                 <div className="flex-1">
-                  <Label>1RM (kg)</Label>
+                  <Label>Gewicht/Reps</Label>
                   <Input
-                    placeholder="z.B. 60"
-                    type="number"
-                    step="0.5"
+                    placeholder="z.B. 60kg oder 15 reps"
+                    type="text"
                     value={lift.weight}
                     onChange={(e) => updateExtraLift(index, 'weight', e.target.value)}
                   />

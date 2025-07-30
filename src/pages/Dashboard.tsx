@@ -338,7 +338,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       </div>
 
       {activeTab === 'home' && (
-        <div className="fixed top-20 right-4 z-50 flex flex-col gap-4">
+        <div className="fixed top-24 right-4 z-50 flex flex-col gap-4">
           <LeaderboardPosition user={user} />
           <button 
             onClick={() => navigate("/workout-timer")}
