@@ -137,7 +137,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">{course.title}</CardTitle>
             <Badge variant="secondary" className="bg-green-500 text-white">
-              Angemeldet ({registeredParticipants.length}/{course.max_participants})
+              ({registeredParticipants.length}/{course.max_participants})
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -152,21 +152,23 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
               <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{participant.display_name}</span>
-                  <MembershipBadge type={participant.membership_type as any} />
                   <span className="text-xs text-muted-foreground">
                     {new Date(participant.registered_at).toLocaleDateString('de-DE')}
                   </span>
                 </div>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeParticipant(participant.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <MembershipBadge type={participant.membership_type as any} />
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeParticipant(participant.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -188,21 +190,23 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
               <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{participant.display_name}</span>
-                  <MembershipBadge type={participant.membership_type as any} />
                   <span className="text-xs text-muted-foreground">
                     {new Date(participant.registered_at).toLocaleDateString('de-DE')}
                   </span>
                 </div>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeParticipant(participant.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  <MembershipBadge type={participant.membership_type as any} />
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeParticipant(participant.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </CardContent>
