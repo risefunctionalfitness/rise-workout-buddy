@@ -141,7 +141,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const userIds = registrations?.map(r => r.user_id) || []
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, membership_type')
+        .select('user_id, display_name, membership_type, avatar_url')
         .in('user_id', userIds)
 
       if (profileError) {
@@ -409,14 +409,27 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                         .filter(p => p.status === 'registered')
                         .map((participant, index) => {
                           const position = index + 1
-                          return (
-                            <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <span className="font-medium">{participant.profiles?.display_name || 'Unbekannt'}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Angemeldet
-                                </span>
-                              </div>
+                           return (
+                             <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                               <div className="flex items-center gap-3">
+                                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                                   {participant.profiles?.avatar_url ? (
+                                     <img 
+                                       src={participant.profiles.avatar_url} 
+                                       alt="Avatar" 
+                                       className="w-full h-full object-cover"
+                                     />
+                                   ) : (
+                                     <span className="text-xs font-medium">
+                                       {participant.profiles?.display_name?.charAt(0) || '?'}
+                                     </span>
+                                   )}
+                                 </div>
+                                 <span className="font-medium">{participant.profiles?.display_name || 'Unbekannt'}</span>
+                                 <span className="text-xs text-muted-foreground">
+                                   Angemeldet
+                                 </span>
+                               </div>
                               <div className="flex items-center gap-2">
                                 {isTrainer && (
                                   <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
