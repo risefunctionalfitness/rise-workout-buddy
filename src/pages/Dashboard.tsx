@@ -47,9 +47,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
   // Generate training days for current month and load training sessions
   useEffect(() => {
-    loadUserProfile()
-    generateTrainingDays()
-  }, [user])
+    const loadData = async () => {
+      await loadUserProfile()
+      await generateTrainingDays()
+    }
+    loadData()
+  }, [user.id]) // Only re-run when user ID changes
 
   const loadUserProfile = async () => {
     try {
@@ -57,11 +60,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         .from('profiles')
         .select('avatar_url')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
       
-      if (profile) {
-        setUserAvatar(profile.avatar_url)
-      }
+      setUserAvatar(profile?.avatar_url || null)
     } catch (error) {
       console.error('Error loading user profile:', error)
     }
@@ -96,7 +97,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     try {
       const { data: sessions, error } = await supabase
         .from('training_sessions')
-        .select('*')
+        .select('id, date, workout_type, status') // Only select needed fields
         .eq('user_id', user.id)
         .gte('date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
         .lt('date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)

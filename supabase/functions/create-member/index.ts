@@ -23,6 +23,8 @@ serve(async (req) => {
     })
 
     const { email, password, user_metadata } = await req.json()
+    
+    console.log('Received request with:', { email, user_metadata })
 
     // Create user with admin privileges
     const { data, error: createError } = await supabase.auth.admin.createUser({
@@ -45,6 +47,8 @@ serve(async (req) => {
 
     // Add appropriate role based on membership type
     const membershipType = user_metadata?.membership_type
+    console.log('Membership type received:', membershipType)
+    
     let role = 'member' // default role
     
     if (membershipType === 'Trainer') {
@@ -54,6 +58,8 @@ serve(async (req) => {
     } else if (membershipType === 'Open Gym') {
       role = 'open_gym'
     }
+    
+    console.log('Role assigned:', role)
     
     if (data?.user) {
       console.log('Attempting to add role:', role, 'for user:', data.user.id)
