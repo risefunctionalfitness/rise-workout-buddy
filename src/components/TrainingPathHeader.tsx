@@ -1,29 +1,36 @@
-import { Flame, User } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Flame } from "lucide-react"
+import { AvatarUpload } from "@/components/AvatarUpload"
 
 interface TrainingPathHeaderProps {
   trainingDaysThisMonth: number
   totalDaysInMonth: number
-  userAvatar?: string
+  userAvatar?: string | null
+  userId: string
   onProfileClick: () => void
+  onAvatarUpdate?: (newAvatarUrl: string) => void
 }
 
 export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
   trainingDaysThisMonth,
   totalDaysInMonth,
   userAvatar,
-  onProfileClick
+  userId,
+  onProfileClick,
+  onAvatarUpdate
 }) => {
   return (
     <div className="flex items-center justify-between p-4 bg-background border-b">
-      {/* Links: Nur Avatar Button */}
+      {/* Links: Profilbild mit Upload */}
       <div className="flex-1">
-        <Avatar className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary transition-all" onClick={onProfileClick}>
-          <AvatarImage src={userAvatar} />
-          <AvatarFallback>
-            <User className="h-5 w-5" />
-          </AvatarFallback>
-        </Avatar>
+        <div className="cursor-pointer" onClick={onProfileClick}>
+          <AvatarUpload
+            userId={userId}
+            currentAvatarUrl={userAvatar}
+            onAvatarUpdate={onAvatarUpdate}
+            size="md"
+            showUploadButton={true}
+          />
+        </div>
       </div>
       
       {/* Mitte: RISE Logo */}

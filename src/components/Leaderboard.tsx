@@ -20,11 +20,24 @@ export const Leaderboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadLeaderboard()
+    let mounted = true
+    
+    const loadData = async () => {
+      if (mounted) {
+        await loadLeaderboard()
+      }
+    }
+    
+    loadData()
+    
+    return () => {
+      mounted = false
+    }
   }, [])
 
   const loadLeaderboard = async () => {
     try {
+      setLoading(true)
       const currentDate = new Date()
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
@@ -39,6 +52,7 @@ export const Leaderboard: React.FC = () => {
 
       if (leaderboardError) {
         console.error('Error loading leaderboard:', leaderboardError)
+        setLeaderboard([])
         return
       }
 
@@ -58,6 +72,7 @@ export const Leaderboard: React.FC = () => {
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError)
+        setLeaderboard([])
         return
       }
 
@@ -74,6 +89,7 @@ export const Leaderboard: React.FC = () => {
       setLeaderboard(leaderboardWithProfiles)
     } catch (error) {
       console.error('Error loading leaderboard:', error)
+      setLeaderboard([])
     } finally {
       setLoading(false)
     }
