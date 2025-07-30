@@ -137,8 +137,18 @@ export const WorkoutStart: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 p-6">
-        <div className="max-w-md mx-auto h-full flex flex-col justify-center">
+      <div className="p-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/workout-timer")}
+          className="mb-4"
+        >
+          ← Zurück
+        </Button>
+      </div>
+      
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-md w-full">
           {!isCountingDown && !isRunning && workoutTime === 0 && (
             <div className="text-center space-y-12">
               <h1 className="text-8xl font-bold">START</h1>
