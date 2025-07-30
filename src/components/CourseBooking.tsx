@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { MembershipBadge } from "@/components/MembershipBadge"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -37,10 +38,27 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [participants, setParticipants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [isTrainer, setIsTrainer] = useState(false)
 
   useEffect(() => {
     loadCourses()
+    checkTrainerRole()
   }, [currentWeek])
+
+  const checkTrainerRole = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'trainer')
+        .single()
+      
+      setIsTrainer(!!data)
+    } catch (error) {
+      setIsTrainer(false)
+    }
+  }
 
   const loadCourses = async () => {
     try {
@@ -123,7 +141,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const userIds = registrations?.map(r => r.user_id) || []
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, display_name')
+        .select('user_id, display_name, membership_type')
         .in('user_id', userIds)
 
       if (profileError) {
@@ -398,14 +416,17 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                         {position}
                                       </div>
                                     </div>
-                                    <div>
-                                      <h3 className="font-semibold text-lg">
-                                        {participant.profiles?.display_name || 'Unbekannt'}
-                                      </h3>
-                                      <p className="text-sm text-muted-foreground">
-                                        Angemeldet
-                                      </p>
-                                    </div>
+                                     <div>
+                                       <h3 className="font-semibold text-lg flex items-center gap-2">
+                                         {participant.profiles?.display_name || 'Unbekannt'}
+                                         {isTrainer && (
+                                           <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
+                                         )}
+                                       </h3>
+                                       <p className="text-sm text-muted-foreground">
+                                         Angemeldet
+                                       </p>
+                                     </div>
                                   </div>
                                   <div className="text-right">
                                     <Badge variant="secondary" className="text-sm px-2 py-1 bg-[#B81243] text-white">

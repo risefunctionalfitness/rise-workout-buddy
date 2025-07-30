@@ -14,6 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
 import { GymCodeManager } from "@/components/GymCodeManager";
+import { CourseParticipants } from "@/components/CourseParticipants";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import { MembershipBadge } from "@/components/MembershipBadge";
 
 interface Member {
   id: string;
@@ -38,7 +41,7 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [activeTab, setActiveTab] = useState("members");
+  const [activeTab, setActiveTab] = useState<'home' | 'wod' | 'courses' | 'leaderboard'>('home');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -244,48 +247,70 @@ export default function Admin() {
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <img 
-              src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
-              alt="RISE Functional Fitness Logo" 
-              className="h-12"
-            />
-            <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-muted-foreground">RISE Functional Fitness</p>
-            </div>
-          </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Abmelden
-          </Button>
-        </div>
+  const handleTabChange = (tab: 'home' | 'wod' | 'courses' | 'leaderboard') => {
+    setActiveTab(tab);
+  };
 
-        {/* Admin Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="members" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Mitglieder
-            </TabsTrigger>
-            <TabsTrigger value="courses" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Kurse anlegen
-            </TabsTrigger>
-            <TabsTrigger value="news" className="flex items-center gap-2">
-              <Newspaper className="h-4 w-4" />
-              Aktuelles
-            </TabsTrigger>
-            <TabsTrigger value="gym-codes" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Zugangscodes
-            </TabsTrigger>
-          </TabsList>
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <img 
+                  src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
+                  alt="RISE Functional Fitness Logo" 
+                  className="h-12"
+                />
+                <div>
+                  <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+                  <p className="text-muted-foreground">RISE Functional Fitness</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Abmelden
+              </Button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Mitglieder gesamt</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{members.length}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Admin Sections */}
+            <Tabs defaultValue="members" className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="members" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Mitglieder
+                </TabsTrigger>
+                <TabsTrigger value="participants" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Kurs-Teilnehmer
+                </TabsTrigger>
+                <TabsTrigger value="courses" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Kurse anlegen
+                </TabsTrigger>
+                <TabsTrigger value="news" className="flex items-center gap-2">
+                  <Newspaper className="h-4 w-4" />
+                  Aktuelles
+                </TabsTrigger>
+                <TabsTrigger value="gym-codes" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Zugangscodes
+                </TabsTrigger>
+              </TabsList>
 
           {/* Members Tab */}
           <TabsContent value="members" className="space-y-6">
@@ -475,11 +500,9 @@ export default function Admin() {
                           {member.display_name || 'Unbekannt'}
                         </TableCell>
                         <TableCell>{member.access_code || '-'}</TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800">
-                            {member.membership_type || 'Member'}
-                          </span>
-                        </TableCell>
+                         <TableCell>
+                           <MembershipBadge type={member.membership_type as any} />
+                         </TableCell>
                         <TableCell>
                           {new Date(member.created_at).toLocaleDateString('de-DE')}
                         </TableCell>
@@ -515,21 +538,35 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          {/* Courses Tab */}
-          <TabsContent value="courses">
-            <CourseTemplateManager />
-          </TabsContent>
+              <TabsContent value="participants">
+                <CourseParticipants />
+              </TabsContent>
 
-          {/* News Tab */}
-          <TabsContent value="news">
-            <NewsManager />
-          </TabsContent>
+              <TabsContent value="courses">
+                <CourseTemplateManager />
+              </TabsContent>
 
-          <TabsContent value="gym-codes">
-            <GymCodeManager />
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="news">
+                <NewsManager />
+              </TabsContent>
+
+              <TabsContent value="gym-codes">
+                <GymCodeManager />
+              </TabsContent>
+            </Tabs>
+          </div>
+        );
+      default:
+        return <div>Feature coming soon...</div>;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      <div className="max-w-6xl mx-auto p-6">
+        {renderContent()}
       </div>
+      <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 }
