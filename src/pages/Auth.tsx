@@ -18,57 +18,55 @@ export default function Auth() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Redirect authenticated users based on their role
-        if (session?.user) {
-          setTimeout(async () => {
-            // Check if user is admin
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .eq('role', 'admin')
-              .maybeSingle();
-
-            if (roleData || session.user.email === 'admin@rise-fitness.com') {
-              navigate("/admin");
-            } else {
-              navigate("/pro");
-            }
-          }, 0);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    let redirectProcessed = false
+    
+    const handleRedirect = async (session: Session | null) => {
+      if (!session?.user || redirectProcessed) return
       
-      if (session?.user) {
+      redirectProcessed = true
+      
+      try {
         // Check if user is admin
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
           .eq('role', 'admin')
-          .maybeSingle();
+          .maybeSingle()
 
         if (roleData || session.user.email === 'admin@rise-fitness.com') {
-          navigate("/admin");
+          navigate("/admin")
         } else {
-          navigate("/pro");
+          navigate("/pro")
+        }
+      } catch (error) {
+        console.error('Error checking user role:', error)
+        navigate("/pro")
+      }
+    }
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          await handleRedirect(session)
         }
       }
-    });
+    )
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    // Check for existing session only once
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      
+      await handleRedirect(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [navigate])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

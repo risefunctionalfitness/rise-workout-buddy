@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LightVersion from "./pages/LightVersion";
+// LightVersion removed
 import ProVersion from "./pages/ProVersion";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
@@ -19,7 +19,6 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Auth />} />
-          <Route path="/light" element={<LightVersion />} />
           <Route path="/pro" element={<ProVersion />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
