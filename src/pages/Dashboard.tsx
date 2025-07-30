@@ -62,8 +62,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     
     loadData()
     
+    // Listen for custom tab change events
+    const handleTabChange = (event: CustomEvent) => {
+      setActiveTab(event.detail as DashboardTabType)
+    }
+    
+    window.addEventListener('changeTab', handleTabChange as EventListener)
+    
     return () => {
       mounted = false
+      window.removeEventListener('changeTab', handleTabChange as EventListener)
     }
   }, [user.id])
 
@@ -334,7 +342,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           <LeaderboardPosition user={user} />
           <button 
             onClick={() => navigate("/workout-timer")}
-            className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 border border-border shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition-transform"
+            className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-border shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition-transform"
           >
             <Timer className="h-5 w-5" />
           </button>

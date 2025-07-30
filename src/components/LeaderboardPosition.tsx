@@ -56,16 +56,17 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
   }
 
   const handleLeaderboardClick = () => {
-    navigate("/dashboard?tab=leaderboard")
+    // Use window.dispatchEvent to trigger tab change in Dashboard
+    window.dispatchEvent(new CustomEvent('changeTab', { detail: 'leaderboard' }))
   }
 
   return (
     <button 
       onClick={handleLeaderboardClick}
-      className="w-12 h-12 rounded-lg bg-background border border-border shadow-sm flex flex-col items-center justify-center font-bold text-sm hover:scale-105 transition-transform"
+      className="w-12 h-12 rounded-full bg-background border-2 border-yellow-400 shadow-sm flex flex-col items-center justify-center font-bold text-sm hover:scale-105 transition-transform"
     >
       <Trophy className="h-4 w-4 mb-0.5 text-yellow-500" />
-      <span className="text-xs leading-none text-foreground">{position} von {totalUsers}</span>
+      <span className="text-xs leading-none text-red-500">{position} von {totalUsers}</span>
     </button>
   )
 }
