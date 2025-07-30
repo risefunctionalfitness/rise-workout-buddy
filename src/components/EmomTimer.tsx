@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
@@ -9,10 +10,13 @@ export const EmomTimer: React.FC = () => {
   const [interval, setInterval] = useState(150) // 2:30 in seconds
   const [rounds, setRounds] = useState(10)
 
-  const formatTime = (seconds: number) => {
+  // Generate options for every 30 seconds from 0:30 to 10:00
+  const intervalOptions = []
+  for (let seconds = 30; seconds <= 600; seconds += 30) {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    const label = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    intervalOptions.push({ value: seconds, label })
   }
 
   const handleStart = () => {
@@ -47,16 +51,18 @@ export const EmomTimer: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-center gap-6">
                 <span className="text-2xl font-medium">Alle</span>
-                <Input
-                  type="number"
-                  step="30"
-                  value={interval}
-                  onChange={(e) => setInterval(Number(e.target.value))}
-                  className="w-28 h-16 text-center text-2xl border-2 border-primary rounded-xl"
-                  min="30"
-                  max="600"
-                  placeholder={formatTime(interval)}
-                />
+                <Select value={interval.toString()} onValueChange={(value) => setInterval(Number(value))}>
+                  <SelectTrigger className="w-32 h-16 text-center text-2xl border-2 border-primary rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
+                    {intervalOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value.toString()} className="text-lg">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="flex items-center justify-center gap-6">
