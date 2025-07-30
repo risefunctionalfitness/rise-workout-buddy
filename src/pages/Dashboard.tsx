@@ -289,12 +289,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           trainingDaysThisMonth={trainingCount}
           totalDaysInMonth={totalDaysInMonth}
           userAvatar={userAvatar}
-          userId={user.id}
           onProfileClick={() => setShowProfile(true)}
-          onAvatarUpdate={(newAvatarUrl) => {
-            setUserAvatar(newAvatarUrl)
-            loadUserProfile()
-          }}
         />
       </div>
       
