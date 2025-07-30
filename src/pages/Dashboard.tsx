@@ -329,22 +329,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       </div>
 
       {activeTab === 'home' && (
-        <>
+        <div className="fixed top-20 right-4 z-50 flex flex-col gap-4">
           <LeaderboardPosition user={user} />
           <button 
             onClick={() => navigate("/workout-timer")}
-            className="fixed top-36 right-4 z-50 bg-gray-400 border border-gray-300 rounded-lg p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-lg flex items-center justify-center text-white hover:scale-105 transition-transform"
           >
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
-                <Timer className="h-3 w-3 text-white" />
-              </div>
-              <span className="text-xs font-bold text-white">
-                Timer
-              </span>
+            <div className="flex flex-col items-center">
+              <div className="w-6 h-6 border-4 border-white rounded-full border-t-transparent animate-spin mb-1"></div>
+              <span className="text-xs font-bold">WOD</span>
             </div>
           </button>
-        </>
+        </div>
       )}
 
       {showProfile && (

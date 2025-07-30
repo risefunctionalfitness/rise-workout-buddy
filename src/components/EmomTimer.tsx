@@ -38,12 +38,12 @@ export const EmomTimer: React.FC = () => {
       
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h1 className="text-6xl font-bold mb-4">EMOM</h1>
             <p className="text-xl text-muted-foreground">Every Minute on the Minute</p>
           </div>
 
-          <div className="space-y-12">
+            <div className="space-y-6">
             <div className="space-y-8">
               <div className="flex items-center justify-center gap-6">
                 <span className="text-2xl font-medium">Alle</span>
