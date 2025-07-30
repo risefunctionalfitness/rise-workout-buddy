@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit } from "lucide-react";
+import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
@@ -214,6 +214,28 @@ export default function Admin() {
     } catch (error) {
       console.error('Error updating member:', error);
       toast.error("Fehler beim Aktualisieren des Mitglieds");
+    }
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    if (!confirm('Sind Sie sicher, dass Sie dieses Mitglied löschen möchten?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) {
+        console.error('Error deleting member:', error);
+        toast.error("Fehler beim Löschen des Mitglieds");
+      } else {
+        toast.success("Mitglied erfolgreich gelöscht");
+        loadMembers();
+      }
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast.error("Fehler beim Löschen des Mitglieds");
     }
   };
 
@@ -459,16 +481,25 @@ export default function Admin() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setEditingMember(member);
-                              setEditDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingMember(member);
+                                setEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteMember(member.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

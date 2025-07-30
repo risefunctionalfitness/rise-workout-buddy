@@ -235,7 +235,7 @@ export const NewsManager = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Titel</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Veröffentlicht</TableHead>
                 <TableHead>Erstellt</TableHead>
                 <TableHead>Veröffentlicht</TableHead>
                 <TableHead>Aktionen</TableHead>
@@ -248,15 +248,10 @@ export const NewsManager = () => {
                     {item.title}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={item.is_published}
-                        onCheckedChange={() => handleTogglePublished(item.id, item.is_published)}
-                      />
-                      <Badge variant={item.is_published ? "default" : "secondary"}>
-                        {item.is_published ? 'Veröffentlicht' : 'Entwurf'}
-                      </Badge>
-                    </div>
+                    <Switch
+                      checked={item.is_published}
+                      onCheckedChange={() => handleTogglePublished(item.id, item.is_published)}
+                    />
                   </TableCell>
                   <TableCell>
                     {format(new Date(item.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}

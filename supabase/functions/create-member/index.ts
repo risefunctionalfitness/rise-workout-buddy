@@ -43,18 +43,28 @@ serve(async (req) => {
       )
     }
 
-    // If membership type is "Trainer", add trainer role
+    // Add appropriate role based on membership type
     const membershipType = user_metadata?.membership_type
-    if (membershipType === 'Trainer' && data?.user) {
+    let role = 'member' // default role
+    
+    if (membershipType === 'Trainer') {
+      role = 'trainer'
+    } else if (membershipType === 'Administrator') {
+      role = 'admin'
+    } else if (membershipType === 'Open Gym') {
+      role = 'open_gym'
+    }
+    
+    if (data?.user) {
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
           user_id: data.user.id,
-          role: 'trainer'
+          role: role
         })
 
       if (roleError) {
-        console.error('Error adding trainer role:', roleError)
+        console.error('Error adding role:', roleError)
         // Don't fail the entire process, just log the error
       }
     }

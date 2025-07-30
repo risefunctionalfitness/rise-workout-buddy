@@ -86,8 +86,8 @@ export const NewsSection = () => {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <CardTitle className="text-lg">{item.title}</CardTitle>
-                <Badge variant="outline">
-                  <Calendar className="h-3 w-3 mr-1" />
+                <Badge variant="outline" className="text-lg px-3 py-1">
+                  <Calendar className="h-4 w-4 mr-2" />
                   {format(new Date(item.published_at), 'dd.MM.yyyy', { locale: de })}
                 </Badge>
               </div>
