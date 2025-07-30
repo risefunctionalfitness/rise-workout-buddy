@@ -340,7 +340,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                               
                               return (
                                 <Badge className={`text-white ${badgeColor}`}>
-                                  {course.registered_count}
+                                  {course.registered_count}/{course.max_participants}
                                 </Badge>
                               );
                             })()}

@@ -30,15 +30,19 @@ interface TrainingDay {
 
 interface DashboardProps {
   user: User
+  userRole?: string
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [activeTab, setActiveTab] = useState<DashboardTabType>('home')
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([])
   const [trainingCount, setTrainingCount] = useState(0)
   const [showProfile, setShowProfile] = useState(false)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
+  
+  // Check if user is Open Gym (should not see courses)
+  const isOpenGym = userRole === 'open_gym'
 
   // Generate training days for current month and load training sessions
   useEffect(() => {
@@ -269,7 +273,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           {[
             { id: 'home', icon: Home, label: 'Übersicht' },
             { id: 'wod', icon: Weight, label: 'WOD' },
-            { id: 'courses', icon: Calendar, label: 'Kurse' },
+            ...(isOpenGym ? [] : [{ id: 'courses', icon: Calendar, label: 'Kurse' }]),
             { id: 'leaderboard', icon: Trophy, label: 'Leaderboard' }
           ].map((tab) => {
             const Icon = tab.icon

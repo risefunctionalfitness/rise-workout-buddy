@@ -7,6 +7,7 @@ import { User } from "@supabase/supabase-js"
 const ProVersion = () => {
   const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -18,18 +19,36 @@ const ProVersion = () => {
         return
       }
       setUser(session.user)
+      
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single()
+      
+      setUserRole(roleData?.role || null)
       setLoading(false)
     }
 
     checkAuth()
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
         navigate("/auth")
         return
       }
       setUser(session.user)
+      
+      // Fetch user role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single()
+      
+      setUserRole(roleData?.role || null)
       setLoading(false)
     })
 
@@ -54,7 +73,7 @@ const ProVersion = () => {
   // Show Dashboard when authenticated
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Dashboard user={user} />
+      <Dashboard user={user} userRole={userRole} />
     </div>
   )
 }
