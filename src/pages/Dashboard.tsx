@@ -334,9 +334,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           <LeaderboardPosition user={user} />
           <button 
             onClick={() => navigate("/workout-timer")}
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-lg flex items-center justify-center text-white hover:scale-105 transition-transform"
+            className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 border border-border shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition-transform"
           >
-            <Timer className="h-8 w-8" />
+            <Timer className="h-5 w-5" />
           </button>
         </div>
       )}

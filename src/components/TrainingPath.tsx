@@ -190,7 +190,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       {/* Fixierte Überschrift */}
       <div className="text-center p-4 bg-background">
         <h2 className="text-xl font-bold text-foreground">
-          Trainingstage {currentMonth}
+          {currentMonth}
         </h2>
       </div>
 
