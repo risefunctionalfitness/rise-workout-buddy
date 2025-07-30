@@ -46,31 +46,15 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       const container = containerRef.current
       
       if (!todayElement || !container) {
-        console.log('Missing refs for scroll')
         return
       }
 
-      // Get the position of today's element relative to its container
-      const containerRect = container.getBoundingClientRect()
-      const elementRect = todayElement.getBoundingClientRect()
-      
-      // Calculate the current scroll position
-      const currentScrollTop = container.scrollTop
-      
-      // Calculate where the element currently is relative to the container's viewport
-      const elementTopInContainer = elementRect.top - containerRect.top + currentScrollTop
-      
-      // Calculate the scroll position to center the element
+      // Einfache Scroll-Logik: Scroll das Element in die Mitte des Containers
+      const elementOffsetTop = todayElement.offsetTop
       const containerHeight = container.clientHeight
       const elementHeight = todayElement.offsetHeight
-      const targetScrollTop = elementTopInContainer - (containerHeight / 2) + (elementHeight / 2)
       
-      console.log('Scrolling to today:', {
-        elementTopInContainer,
-        targetScrollTop,
-        containerHeight,
-        elementHeight
-      })
+      const targetScrollTop = elementOffsetTop - (containerHeight / 2) + (elementHeight / 2)
       
       container.scrollTo({
         top: Math.max(0, targetScrollTop),
@@ -78,12 +62,14 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       })
     }
 
-    // Wait for the component to be fully rendered
+    // Mehrere Versuche mit zunehmender Verzögerung
     if (trainingDays.length > 0) {
-      const timeouts = [200, 500, 1000] // Multiple attempts with longer delays
-      timeouts.forEach(delay => {
-        setTimeout(scrollToToday, delay)
-      })
+      // Sofort versuchen
+      setTimeout(scrollToToday, 100)
+      // Nach DOM-Update
+      setTimeout(scrollToToday, 300)
+      // Fallback
+      setTimeout(scrollToToday, 800)
     }
   }, [trainingDays])
 
@@ -190,7 +176,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
           variant="outline"
           size="icon"
           onClick={() => setShowNews(true)}
-          className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:border-primary shadow-lg"
+          className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:bg-foreground/10 shadow-lg"
           aria-label="Aktuelles anzeigen"
         >
           <Newspaper className="h-4 w-4" />

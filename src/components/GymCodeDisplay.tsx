@@ -49,22 +49,22 @@ export const GymCodeDisplay = () => {
     <div className="relative">
       {/* Ausfahrendes Textfeld - nach links */}
       <div 
-        className={`absolute top-0 right-14 bg-background border-2 border-foreground/20 rounded-l-lg shadow-lg h-14 flex items-center justify-center transition-all duration-500 overflow-hidden ${
+        className={`absolute top-0 right-14 bg-white border-2 border-[#B81243] rounded-l-lg shadow-lg h-14 flex items-center justify-center transition-all duration-500 overflow-hidden ${
           isVisible ? 'w-48 opacity-100' : 'w-0 opacity-0'
         }`}
       >
         <div className="px-4 text-center whitespace-nowrap">
-          <p className="text-xs text-muted-foreground">Gym Code:</p>
-          <p className="text-lg font-mono font-bold text-primary">{gymCode || "----"}</p>
+          <p className="text-xs text-[#B81243] font-medium">Tür-Code</p>
+          <p className="text-lg font-mono font-bold text-black">{gymCode || "----"}</p>
         </div>
       </div>
 
-      {/* Hauptbutton - bleibt immer rund und in Position */}
+      {/* Hauptbutton - rot mit dunklerem Hover */}
       <Button
         variant="outline"
         size="icon"
         onClick={handleShowCode}
-        className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:border-primary shadow-lg relative z-10"
+        className="rounded-full w-14 h-14 border-2 border-[#B81243] bg-[#B81243] hover:bg-[#901a36] text-white shadow-lg relative z-10"
         aria-label="Zugangscode anzeigen"
       >
         <Key className="h-4 w-4" />
