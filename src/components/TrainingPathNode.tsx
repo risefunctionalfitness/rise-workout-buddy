@@ -1,4 +1,4 @@
-import { CheckCircle, Play, Lock } from "lucide-react"
+import { CheckCircle, Play, Lock, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -11,6 +11,8 @@ interface TrainingPathNodeProps {
   workoutType?: 'course' | 'free_training' | 'plan'
   dayNumber: number
   onSelectWorkout?: (id: string) => void
+  isRegisteredForCourse?: boolean
+  hasCourseToday?: boolean
 }
 
 export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
@@ -19,18 +21,36 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   status,
   workoutType,
   dayNumber,
-  onSelectWorkout
+  onSelectWorkout,
+  isRegisteredForCourse = false,
+  hasCourseToday = false
 }) => {
   const getStatusIcon = () => {
     switch (status) {
       case 'completed':
         return <CheckCircle className="h-8 w-8 text-green-500" />
       case 'current':
+        // Wenn für heute ein Kurs registriert ist, zeige grünen Kreis
+        if (isRegisteredForCourse) {
+          return <CheckCircle className="h-8 w-8 text-green-500" />
+        }
         return <Play className="h-8 w-8 text-primary" />
       case 'locked':
-      case 'pending':
         return <Lock className="h-8 w-8 text-muted-foreground" />
+      case 'pending':
+        // Für vergangene Tage: X für nicht besucht
+        return <X className="h-8 w-8 text-red-500" />
     }
+  }
+
+  const getTopIcon = () => {
+    if (status === 'completed') {
+      return <Check className="h-4 w-4 text-green-500" />
+    }
+    if (status === 'pending') {
+      return <X className="h-4 w-4 text-red-500" />
+    }
+    return null
   }
 
   const getStatusColor = () => {
@@ -38,6 +58,10 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
       case 'completed':
         return 'bg-green-100 border-green-500 hover:bg-green-200 text-green-700'
       case 'current':
+        // Wenn für heute ein Kurs registriert ist, zeige grün
+        if (isRegisteredForCourse) {
+          return 'bg-green-100 border-green-500 hover:bg-green-200 text-green-700'
+        }
         return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary'
       case 'pending':
         return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
@@ -50,22 +74,31 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <Button
-        variant="outline"
-        size="lg"
-        disabled={!isClickable}
-        onClick={() => isClickable && onSelectWorkout?.(id)}
-        className={cn(
-          "h-20 w-20 rounded-full border-2 transition-all duration-200",
-          getStatusColor(),
-          isClickable && "cursor-pointer transform hover:scale-105"
+      <div className="relative">
+        {/* Top icon für vergangene/erledigte Tage */}
+        {getTopIcon() && (
+          <div className="absolute -top-2 -right-2 z-10 bg-background rounded-full p-0.5">
+            {getTopIcon()}
+          </div>
         )}
-      >
-        <div className="flex flex-col items-center gap-1">
-          {getStatusIcon()}
-          <span className="text-xs font-medium">{dayNumber}</span>
-        </div>
-      </Button>
+        
+        <Button
+          variant="outline"
+          size="lg"
+          disabled={!isClickable}
+          onClick={() => isClickable && onSelectWorkout?.(id)}
+          className={cn(
+            "h-20 w-20 rounded-full border-2 transition-all duration-200",
+            getStatusColor(),
+            isClickable && "cursor-pointer transform hover:scale-105"
+          )}
+        >
+          <div className="flex flex-col items-center gap-1">
+            {getStatusIcon()}
+            <span className="text-xs font-medium">{dayNumber}</span>
+          </div>
+        </Button>
+      </div>
       
       <div className="text-center">
         <div className="text-xs text-muted-foreground">{date}</div>

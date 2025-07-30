@@ -39,42 +39,14 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
         <div className="space-y-3 mt-4">
           <Button
             variant="outline"
-            onClick={() => handleSelectType('course')}
-            className="w-full h-16 flex items-center gap-4 justify-start"
-          >
-            <Calendar className="h-6 w-6 text-primary" />
-            <div className="text-left">
-              <div className="font-medium">Kurs besucht</div>
-              <div className="text-sm text-muted-foreground">
-                Ich war in einem Kurs im Studio
-              </div>
-            </div>
-          </Button>
-          
-          <Button
-            variant="outline"
             onClick={() => handleSelectType('free_training')}
             className="w-full h-16 flex items-center gap-4 justify-start"
           >
             <Dumbbell className="h-6 w-6 text-primary" />
             <div className="text-left">
-              <div className="font-medium">Freies Training</div>
+              <div className="font-medium">Open Gym</div>
               <div className="text-sm text-muted-foreground">
                 Ich habe frei trainiert
-              </div>
-            </div>
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={() => handleSelectType('plan')}
-            className="w-full h-16 flex items-center gap-4 justify-start"
-          >
-            <FileText className="h-6 w-6 text-primary" />
-            <div className="text-left">
-              <div className="font-medium">Plan befolgt</div>
-              <div className="text-sm text-muted-foreground">
-                Ich habe meinen Trainingsplan befolgt
               </div>
             </div>
           </Button>

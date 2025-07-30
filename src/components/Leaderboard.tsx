@@ -111,6 +111,13 @@ export const Leaderboard: React.FC = () => {
     year: 'numeric' 
   })
 
+  const getRemainingDaysInMonth = () => {
+    const today = new Date()
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    const remainingDays = lastDayOfMonth.getDate() - today.getDate()
+    return remainingDays
+  }
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -124,9 +131,12 @@ export const Leaderboard: React.FC = () => {
   return (
     <div className="flex-1 overflow-auto p-4">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
           <p className="text-muted-foreground">Trainings für {currentMonth}</p>
+          <div className="absolute top-0 right-0 text-sm text-muted-foreground">
+            {getRemainingDaysInMonth()} Tage übrig
+          </div>
         </div>
 
         <div className="space-y-3">

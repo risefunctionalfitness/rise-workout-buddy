@@ -407,35 +407,22 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                         .map((participant, index) => {
                           const position = index + 1
                           return (
-                            <Card key={index} className="transition-all duration-200 bg-card border-border">
-                              <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-4">
-                                    <div className="flex items-center justify-center w-12 h-12">
-                                      <div className="h-6 w-6 flex items-center justify-center text-muted-foreground font-bold">
-                                        {position}
-                                      </div>
-                                    </div>
-                                     <div>
-                                       <h3 className="font-semibold text-lg flex items-center gap-2">
-                                         {participant.profiles?.display_name || 'Unbekannt'}
-                                         {isTrainer && (
-                                           <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
-                                         )}
-                                       </h3>
-                                       <p className="text-sm text-muted-foreground">
-                                         Angemeldet
-                                       </p>
-                                     </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <Badge variant="secondary" className="text-sm px-2 py-1 bg-[#B81243] text-white">
-                                      Teilnehmer
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
+                            <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium">{participant.profiles?.display_name || 'Unbekannt'}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Angemeldet
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {isTrainer && (
+                                  <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
+                                )}
+                                <Badge variant="secondary" className="text-sm px-2 py-1 bg-[#B81243] text-white">
+                                  10er Karte
+                                </Badge>
+                              </div>
+                            </div>
                           )
                         })}
                     </div>
