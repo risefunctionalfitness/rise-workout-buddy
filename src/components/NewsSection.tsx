@@ -72,7 +72,7 @@ export const NewsSection = () => {
   }
 
   return (
-    <div className="p-4 space-y-4 pt-6">
+    <div className="p-4 space-y-4">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold">Gym News</h1>
         <p className="text-muted-foreground">
