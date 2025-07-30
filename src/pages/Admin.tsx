@@ -26,6 +26,8 @@ interface Member {
   email?: string;
   created_at: string;
   membership_type: string;
+  status: string;
+  last_login_at: string | null;
 }
 
 export default function Admin() {
@@ -118,9 +120,12 @@ export default function Admin() {
 
   const loadMembers = async () => {
     try {
+      // First update member status automatically
+      await supabase.rpc('update_member_status');
+      
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, access_code, created_at, user_id, membership_type')
+        .select('id, display_name, access_code, created_at, user_id, membership_type, status, last_login_at')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -476,8 +481,12 @@ export default function Admin() {
                           {new Date(member.created_at).toLocaleDateString('de-DE')}
                         </TableCell>
                         <TableCell>
-                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-800">
-                            Aktiv
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            member.status === 'active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {member.status === 'active' ? 'Aktiv' : 'Inaktiv'}
                           </span>
                         </TableCell>
                         <TableCell>
