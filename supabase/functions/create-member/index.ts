@@ -56,6 +56,7 @@ serve(async (req) => {
     }
     
     if (data?.user) {
+      console.log('Attempting to add role:', role, 'for user:', data.user.id)
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -65,7 +66,15 @@ serve(async (req) => {
 
       if (roleError) {
         console.error('Error adding role:', roleError)
-        // Don't fail the entire process, just log the error
+        return new Response(
+          JSON.stringify({ error: `Failed to assign role: ${roleError.message}` }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      } else {
+        console.log('Successfully added role:', role)
       }
     }
 
