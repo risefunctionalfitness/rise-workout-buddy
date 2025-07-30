@@ -53,7 +53,7 @@ export const Leaderboard: React.FC = () => {
       // Get user profiles for display names and avatars
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, avatar_url')
+        .select('user_id, display_name, nickname, avatar_url')
         .in('user_id', userIds)
 
       if (profilesError) {
@@ -66,7 +66,7 @@ export const Leaderboard: React.FC = () => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
         return {
           ...entry,
-          display_name: profile?.display_name || 'Unbekannt',
+          display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
           avatar_url: profile?.avatar_url || null
         }
       })

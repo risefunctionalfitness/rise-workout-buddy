@@ -257,6 +257,7 @@ export type Database = {
           last_login_at: string | null
           limitations: Json | null
           membership_type: string | null
+          nickname: string | null
           preferences: Json | null
           preferred_exercises: Json | null
           session_duration_minutes: number | null
@@ -286,6 +287,7 @@ export type Database = {
           last_login_at?: string | null
           limitations?: Json | null
           membership_type?: string | null
+          nickname?: string | null
           preferences?: Json | null
           preferred_exercises?: Json | null
           session_duration_minutes?: number | null
@@ -315,6 +317,7 @@ export type Database = {
           last_login_at?: string | null
           limitations?: Json | null
           membership_type?: string | null
+          nickname?: string | null
           preferences?: Json | null
           preferred_exercises?: Json | null
           session_duration_minutes?: number | null

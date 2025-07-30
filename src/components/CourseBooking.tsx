@@ -39,24 +39,28 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isTrainer, setIsTrainer] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     loadCourses()
-    checkTrainerRole()
+    checkUserRoles()
   }, [currentWeek])
 
-  const checkTrainerRole = async () => {
+  const checkUserRoles = async () => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .eq('role', 'trainer')
-        .single()
       
-      setIsTrainer(!!data)
+      if (data) {
+        const roles = data.map(r => r.role)
+        setIsTrainer(roles.includes('trainer'))
+        setIsAdmin(roles.includes('admin'))
+      }
     } catch (error) {
       setIsTrainer(false)
+      setIsAdmin(false)
     }
   }
 
@@ -141,7 +145,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const userIds = registrations?.map(r => r.user_id) || []
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, membership_type, avatar_url')
+        .select('user_id, display_name, nickname, membership_type, avatar_url')
         .in('user_id', userIds)
 
       if (profileError) {
@@ -425,16 +429,21 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                      </span>
                                    )}
                                  </div>
-                                 <span className="font-medium">{participant.profiles?.display_name || 'Unbekannt'}</span>
+                                  <span className="font-medium">
+                                    {(isTrainer || isAdmin) 
+                                      ? participant.profiles?.display_name || 'Unbekannt'
+                                      : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
+                                    }
+                                  </span>
                                  <span className="text-xs text-muted-foreground">
                                    Angemeldet
                                  </span>
                                </div>
-                              <div className="flex items-center gap-2">
-                                {isTrainer && (
-                                  <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
-                                )}
-                              </div>
+                               <div className="flex items-center gap-2">
+                                 {(isTrainer || isAdmin) && (
+                                   <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
+                                 )}
+                               </div>
                             </div>
                           )
                         })}
@@ -464,9 +473,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                         </div>
                                       </div>
                                       <div>
-                                        <h3 className="font-semibold text-lg">
-                                          {participant.profiles?.display_name || 'Unbekannt'}
-                                        </h3>
+                                         <h3 className="font-semibold text-lg">
+                                           {(isTrainer || isAdmin) 
+                                             ? participant.profiles?.display_name || 'Unbekannt'
+                                             : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
+                                           }
+                                         </h3>
                                         <p className="text-sm text-muted-foreground">
                                           Warteliste
                                         </p>

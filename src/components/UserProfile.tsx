@@ -128,6 +128,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
   // Form states
   const [displayName, setDisplayName] = useState("")
+  const [nickname, setNickname] = useState("")
   const [birthYear, setBirthYear] = useState("")
   const [gender, setGender] = useState("")
   const [weightKg, setWeightKg] = useState("")
@@ -168,6 +169,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
       if (profile) {
         setDisplayName(profile.display_name || "")
+        setNickname(profile.nickname || profile.display_name || "")
         setAvatarUrl(profile.avatar_url)
         setBirthYear(profile.birth_year?.toString() || "")
         setGender(profile.gender || "")
@@ -202,6 +204,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         .upsert({
           user_id: user.id,
           display_name: displayName,
+          nickname: nickname,
           birth_year: birthYear ? parseInt(birthYear) : null,
           gender,
           weight_kg: weightKg ? parseFloat(weightKg) : null,
@@ -307,12 +310,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="name">Name (vergeben vom Admin)</Label>
                   <Input
                     id="name"
                     value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Dein Name"
+                    disabled
+                    className="bg-muted"
+                    placeholder="Name wird vom Admin vergeben"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="nickname">Spitzname (für andere sichtbar) *</Label>
+                  <Input
+                    id="nickname"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder={displayName || "Dein Spitzname"}
                   />
                 </div>
                 

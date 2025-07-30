@@ -47,12 +47,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
   // Generate training days for current month and load training sessions
   useEffect(() => {
+    let mounted = true
+    
     const loadData = async () => {
+      if (!mounted) return
       await loadUserProfile()
+      if (!mounted) return
       await generateTrainingDays()
     }
+    
     loadData()
-  }, [user.id]) // Only re-run when user ID changes
+    
+    return () => {
+      mounted = false
+    }
+  }, [user.id])
 
   const loadUserProfile = async () => {
     try {
