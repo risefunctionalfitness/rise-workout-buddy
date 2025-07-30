@@ -134,9 +134,9 @@ export const Leaderboard: React.FC = () => {
         <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
           <p className="text-muted-foreground">Trainings für {currentMonth}</p>
-          <div className="absolute top-0 right-0 flex items-center gap-1 text-sm text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
-            <Calendar className="h-3 w-3" />
-            {getRemainingDaysInMonth()} Tage übrig
+          <div className="absolute top-0 right-0 flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="font-medium">{getRemainingDaysInMonth()}</span>
+            <Calendar className="h-4 w-4" />
           </div>
         </div>
 

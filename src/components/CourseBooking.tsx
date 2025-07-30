@@ -312,35 +312,38 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium">{course.title}</h4>
-                              {course.strength_exercise && (
-                                <Badge variant="outline" className="text-xs">
-                                  {course.strength_exercise}
-                                </Badge>
-                              )}
+                            <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
+                              <h4 className="font-medium truncate">{course.title}</h4>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {course.start_time} - {course.end_time}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Users className="h-3 w-3" />
-                                {course.registered_count}/{course.max_participants}
+                                {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
                               </div>
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
                                 {course.trainer}
                               </div>
                             </div>
+                            {course.strength_exercise && (
+                              <Badge variant="outline" className="text-xs mt-1 w-fit">
+                                {course.strength_exercise}
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <Badge 
-                              className={`text-white ${getStatusColor(course)}`}
-                            >
-                              {getStatusText(course)}
-                            </Badge>
+                            {(() => {
+                              const percentage = (course.registered_count / course.max_participants) * 100;
+                              let badgeColor = "bg-green-500";
+                              if (percentage >= 100) badgeColor = "bg-red-500";
+                              else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                              
+                              return (
+                                <Badge className={`text-white ${badgeColor}`}>
+                                  {course.registered_count}
+                                </Badge>
+                              );
+                            })()}
                             {course.waitlist_count > 0 && (
                               <span className="text-xs text-muted-foreground">
                                 {course.waitlist_count} Warteliste
