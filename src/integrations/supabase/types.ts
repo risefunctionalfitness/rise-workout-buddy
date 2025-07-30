@@ -253,12 +253,14 @@ export type Database = {
           front_squat_1rm: number | null
           gender: string | null
           id: string
+          last_login_at: string | null
           limitations: Json | null
           membership_type: string | null
           preferences: Json | null
           preferred_exercises: Json | null
           session_duration_minutes: number | null
           snatch_1rm: number | null
+          status: string | null
           training_frequency_per_week: number | null
           updated_at: string
           user_id: string | null
@@ -279,12 +281,14 @@ export type Database = {
           front_squat_1rm?: number | null
           gender?: string | null
           id?: string
+          last_login_at?: string | null
           limitations?: Json | null
           membership_type?: string | null
           preferences?: Json | null
           preferred_exercises?: Json | null
           session_duration_minutes?: number | null
           snatch_1rm?: number | null
+          status?: string | null
           training_frequency_per_week?: number | null
           updated_at?: string
           user_id?: string | null
@@ -305,12 +309,14 @@ export type Database = {
           front_squat_1rm?: number | null
           gender?: string | null
           id?: string
+          last_login_at?: string | null
           limitations?: Json | null
           membership_type?: string | null
           preferences?: Json | null
           preferred_exercises?: Json | null
           session_duration_minutes?: number | null
           snatch_1rm?: number | null
+          status?: string | null
           training_frequency_per_week?: number | null
           updated_at?: string
           user_id?: string | null
@@ -639,6 +645,10 @@ export type Database = {
       }
       update_leaderboard_entry: {
         Args: { user_id_param: string; session_date: string }
+        Returns: undefined
+      }
+      update_member_status: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       vector_avg: {
