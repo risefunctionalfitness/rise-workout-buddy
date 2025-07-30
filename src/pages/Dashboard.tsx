@@ -333,10 +333,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           <LeaderboardPosition user={user} />
           <button 
             onClick={() => navigate("/workout-timer")}
-            className="fixed top-36 right-4 z-50 bg-gray-100 border border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            className="fixed top-36 right-4 z-50 bg-gray-400 border border-gray-300 rounded-lg p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           >
-            <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-              <Timer className="h-4 w-4 text-white" />
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+                <Timer className="h-3 w-3 text-white" />
+              </div>
+              <span className="text-xs font-bold text-white">
+                Timer
+              </span>
             </div>
           </button>
         </>

@@ -170,36 +170,27 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
             </div>
           ) : (
             courses.map((course) => (
-              <div key={course.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-start justify-between">
+              <div key={course.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <Weight className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {course.title}
-                        </h3>
-                        {course.strength_exercise && (
-                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                            {course.strength_exercise}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-gray-900 text-sm">
+                        {course.title}
+                      </h3>
+                      {course.strength_exercise && (
+                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                          {course.strength_exercise}
+                        </span>
+                      )}
                     </div>
-                    
-                    <div className="text-sm text-gray-600 mb-1">
-                      {formatTime(course.start_time)} - {formatTime(course.end_time)}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {course.trainer}
+                    <div className="text-xs text-gray-600">
+                      {formatTime(course.start_time)} - {formatTime(course.end_time)} • {course.trainer}
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <span 
-                      className={`text-sm font-medium px-2 py-1 rounded ${
+                      className={`text-xs font-medium px-2 py-1 rounded ${
                         course.registration_count >= course.max_participants 
                           ? 'bg-red-100 text-red-700' 
                           : 'bg-green-100 text-green-700'
@@ -212,7 +203,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                       <button
                         onClick={() => handleRegistration(course.id, course.user_registered)}
                         disabled={!course.user_registered && course.registration_count >= course.max_participants}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                           course.user_registered 
                             ? 'bg-green-600 hover:bg-green-700' 
                             : course.registration_count >= course.max_participants
@@ -230,24 +221,31 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           )}
 
           {!isOpenGym && (
-            <div className="bg-muted/50 p-3 rounded-lg mt-4">
-              <h4 className="font-medium mb-2 flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Open Gym
-              </h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Ich habe frei trainiert
-              </p>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  // This would trigger the free training logic from TrainingSessionDialog
-                  onOpenChange(false)
-                }}
-              >
-                Freies Training hinzufügen
-              </Button>
+            <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-gray-900 text-sm">
+                      Open Gym
+                    </h3>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Ich habe frei trainiert
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      // This would trigger the free training logic from TrainingSessionDialog
+                      onOpenChange(false)
+                    }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm bg-primary hover:bg-primary/90"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

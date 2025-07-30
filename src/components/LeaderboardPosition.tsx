@@ -62,13 +62,13 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
   return (
     <button 
       onClick={handleLeaderboardClick}
-      className="fixed top-20 right-4 z-50 bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+      className="fixed top-20 right-4 z-50 bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
     >
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center">
-          <Trophy className="h-4 w-4 text-white" />
+      <div className="flex flex-col items-center gap-1">
+        <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center">
+          <Trophy className="h-3 w-3 text-white" />
         </div>
-        <span className="text-sm font-bold text-amber-800">
+        <span className="text-xs font-bold text-amber-800">
           {position} von {totalUsers}
         </span>
       </div>
