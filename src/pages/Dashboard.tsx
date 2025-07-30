@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { TrainingPathHeader } from "@/components/TrainingPathHeader"
 import { TrainingPath } from "@/components/TrainingPath"
-import { BottomNavigation } from "@/components/BottomNavigation"
+import { TrainerBottomNavigation } from "@/components/TrainerBottomNavigation"
 import { UserProfile } from "@/components/UserProfile"
 import { Leaderboard } from "@/components/Leaderboard"
 import { WorkoutGenerator } from "@/components/WorkoutGenerator"
@@ -258,7 +258,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         {renderTabContent()}
       </div>
       
-      {/* Dashboard uses different navigation */}
+      <TrainerBottomNavigation 
+        activeTab={activeTab === 'courses' ? 'courses' : 'courses'} 
+        onTabChange={() => setActiveTab('courses')} 
+      />
 
       {showProfile && (
         <UserProfile onClose={() => setShowProfile(false)} />

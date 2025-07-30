@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-type MembershipType = 'Member' | 'Trainer' | 'Open Gym' | 'Wellpass' | '10er Karte'
+type MembershipType = 'Member' | 'Trainer' | 'Administrator' | 'Open Gym' | 'Wellpass' | '10er Karte'
 
 interface MembershipBadgeProps {
   type: MembershipType
@@ -13,7 +13,9 @@ const getMembershipColor = (type: MembershipType) => {
     case 'Member':
       return 'hsl(334, 87%, 40%)' // #bd114a
     case 'Trainer':
-      return 'hsl(271, 100%, 40%)' // Purple for trainers
+      return 'hsl(212, 100%, 34%)' // #004aad
+    case 'Administrator':
+      return 'hsl(212, 100%, 34%)' // #004aad
     case 'Open Gym':
       return 'hsl(0, 0%, 85%)' // #d9d9d9
     case 'Wellpass':
