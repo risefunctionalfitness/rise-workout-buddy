@@ -11,48 +11,56 @@ const ProVersion = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check authentication status
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+    let mounted = true
+    
+    const handleSessionChange = (session: any) => {
+      if (!mounted) return
+      
       if (!session) {
-        navigate("/auth")
+        navigate("/")
         return
       }
+      
       setUser(session.user)
       
-      // Fetch user role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single()
-      
-      setUserRole(roleData?.role || null)
-      setLoading(false)
+      // Use setTimeout to defer database calls
+      setTimeout(async () => {
+        if (!mounted) return
+        try {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .maybeSingle()
+          
+          if (mounted) {
+            setUserRole(roleData?.role || null)
+            setLoading(false)
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error)
+          if (mounted) {
+            setUserRole(null)
+            setLoading(false)
+          }
+        }
+      }, 0)
     }
 
-    checkAuth()
+    // Set up auth listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => handleSessionChange(session)
+    )
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session) {
-        navigate("/auth")
-        return
-      }
-      setUser(session.user)
-      
-      // Fetch user role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single()
-      
-      setUserRole(roleData?.role || null)
-      setLoading(false)
+    // Then check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleSessionChange(session)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [navigate])
 
   if (loading) {

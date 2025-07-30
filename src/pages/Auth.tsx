@@ -18,54 +18,72 @@ export default function Auth() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let redirectProcessed = false
+    let mounted = true
+    let hasRedirected = false
     
     const handleRedirect = async (session: Session | null) => {
-      if (!session?.user || redirectProcessed) return
+      if (!session?.user || hasRedirected || !mounted) return
       
-      redirectProcessed = true
+      hasRedirected = true
       
-      try {
-        // Check if user is admin
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .maybeSingle()
+      // Use setTimeout to defer navigation and database calls
+      setTimeout(async () => {
+        if (!mounted) return
+        
+        try {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .eq('role', 'admin')
+            .maybeSingle()
 
-        if (roleData || session.user.email === 'admin@rise-fitness.com') {
-          navigate("/admin")
-        } else {
-          navigate("/pro")
+          if (!mounted) return
+
+          if (roleData || session.user.email === 'admin@rise-fitness.com') {
+            navigate("/admin")
+          } else {
+            navigate("/pro")
+          }
+        } catch (error) {
+          console.error('Error checking user role:', error)
+          if (mounted) {
+            navigate("/pro")
+          }
         }
-      } catch (error) {
-        console.error('Error checking user role:', error)
-        navigate("/pro")
-      }
+      }, 100)
     }
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!mounted) return
+        
         setSession(session)
         setUser(session?.user ?? null)
         
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await handleRedirect(session)
+        if (event === 'SIGNED_IN') {
+          handleRedirect(session)
         }
       }
     )
 
-    // Check for existing session only once
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      
       setSession(session)
       setUser(session?.user ?? null)
       
-      await handleRedirect(session)
+      if (session?.user) {
+        handleRedirect(session)
+      }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [navigate])
 
   const handleLogin = async (e: React.FormEvent) => {
