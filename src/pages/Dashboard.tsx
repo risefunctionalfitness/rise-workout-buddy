@@ -8,6 +8,7 @@ import { Leaderboard } from "@/components/Leaderboard"
 import { WorkoutGenerator } from "@/components/WorkoutGenerator"
 import { CourseBooking } from "@/components/CourseBooking"
 import { NewsSection } from "@/components/NewsSection"
+import { LeaderboardPosition } from "@/components/LeaderboardPosition"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
@@ -250,11 +251,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     switch (activeTab) {
       case 'home':
         return (
-          <TrainingPath
-            trainingDays={trainingDays}
+          <TrainingPath 
+            trainingDays={trainingDays} 
             onAddTraining={handleAddTraining}
             onRemoveTraining={handleRemoveTraining}
             user={user}
+            userRole={userRole}
           />
         )
       case 'wod':
@@ -323,6 +325,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           })}
         </div>
       </div>
+
+      {activeTab === 'home' && (
+        <LeaderboardPosition user={user} />
+      )}
 
       {showProfile && (
         <UserProfile onClose={() => setShowProfile(false)} />

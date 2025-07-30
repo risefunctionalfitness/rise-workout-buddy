@@ -1,5 +1,6 @@
 import { TrainingPathNode } from "./TrainingPathNode"
 import { TrainingSessionDialog } from "./TrainingSessionDialog"
+import { DayCourseDialog } from "./DayCourseDialog"
 import { MonthlyTrainingCalendar } from "./MonthlyTrainingCalendar"
 import { NewsSection } from "./NewsSection"
 import { WhatsAppButton } from "./WhatsAppButton"
@@ -27,17 +28,20 @@ interface TrainingPathProps {
   onAddTraining: (dayNumber: number, type: 'course' | 'free_training' | 'plan') => void
   onRemoveTraining: (dayNumber: number) => void
   user: any
+  userRole?: string
 }
 
 export const TrainingPath: React.FC<TrainingPathProps> = ({ 
   trainingDays, 
   onAddTraining, 
   onRemoveTraining,
-  user
+  user,
+  userRole
 }) => {
   const [selectedDay, setSelectedDay] = useState<TrainingDay | null>(null)
   const [showDialog, setShowDialog] = useState(false)
   const [showNews, setShowNews] = useState(false)
+  const [showDayCourses, setShowDayCourses] = useState(false)
   const [courseRegistrations, setCourseRegistrations] = useState<{[key: string]: boolean}>({})
   const containerRef = useRef<HTMLDivElement>(null)
   const todayRef = useRef<HTMLDivElement>(null)
@@ -133,7 +137,13 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
     if (day.isFuture) return // Zukünftige Tage nicht klickbar
     
     setSelectedDay(day)
-    setShowDialog(true)
+    
+    // Zeige Kurse für den heutigen Tag
+    if (day.isToday) {
+      setShowDayCourses(true)
+    } else {
+      setShowDialog(true)
+    }
   }
 
   const handleSelectType = (type: 'course' | 'free_training' | 'plan' | 'remove') => {
@@ -260,6 +270,15 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         dayNumber={selectedDay?.dayNumber || 0}
         onSelectType={handleSelectType}
         hasExistingSession={!!selectedDay?.trainingSession}
+      />
+
+      {/* Dialog für Tages-Kurse */}
+      <DayCourseDialog
+        open={showDayCourses}
+        onOpenChange={setShowDayCourses}
+        date={selectedDay ? selectedDay.date.toISOString().split('T')[0] : ''}
+        user={user}
+        userRole={userRole}
       />
 
     </div>
