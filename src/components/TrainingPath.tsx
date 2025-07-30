@@ -196,7 +196,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
 
       {/* Scrollbarer Trainingsbereich */}
       <div ref={containerRef} className="flex-1 overflow-auto bg-gradient-to-b from-background to-muted/20">
-        <div className="flex flex-col items-center py-8 max-w-md mx-auto">
+        <div className="flex flex-col items-center py-8 pb-24 max-w-md mx-auto">
           {trainingDays.map((day, index) => (
             <div 
               key={day.dayNumber} 

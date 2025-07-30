@@ -31,7 +31,8 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
         <img 
           src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
           alt="RISE Functional Fitness Logo" 
-          className="h-10 mt-1"
+          className="h-10 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => window.location.href = '/pro'}
         />
       </div>
       
