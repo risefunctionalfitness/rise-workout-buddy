@@ -10,6 +10,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { StrengthValues } from "@/components/StrengthValues";
 import { ExerciseSelection } from "@/components/ExerciseSelection";
+import { WorkoutTimer } from "@/components/WorkoutTimer";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/pro" element={<ProVersion />} />
             <Route path="/pro/strength-values" element={<StrengthValues />} />
             <Route path="/pro/exercises" element={<ExerciseSelection />} />
+            <Route path="/workout-timer" element={<WorkoutTimer />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

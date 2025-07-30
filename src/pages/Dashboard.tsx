@@ -13,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
 import { useNewsNotification } from "@/hooks/useNewsNotification"
-import { Home, Weight, Calendar, Trophy } from "lucide-react"
+import { Home, Weight, Calendar, Trophy, Timer } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
 
@@ -35,6 +36,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<DashboardTabType>('home')
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([])
   const [trainingCount, setTrainingCount] = useState(0)
@@ -327,7 +329,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       </div>
 
       {activeTab === 'home' && (
-        <LeaderboardPosition user={user} />
+        <>
+          <LeaderboardPosition user={user} />
+          <button 
+            onClick={() => navigate("/workout-timer")}
+            className="fixed top-36 right-4 z-50 bg-gray-100 border border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          >
+            <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+              <Timer className="h-4 w-4 text-white" />
+            </div>
+          </button>
+        </>
       )}
 
       {showProfile && (

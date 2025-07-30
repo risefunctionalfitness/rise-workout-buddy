@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, Users, User as UserIcon, Check } from "lucide-react"
+import { Clock, Users, User as UserIcon, Check, Weight } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { User } from "@supabase/supabase-js"
@@ -170,59 +170,62 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
             </div>
           ) : (
             courses.map((course) => (
-              <Card key={course.id} className="overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-semibold text-primary mb-1">
-                        {course.title}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{formatTime(course.start_time)} - {formatTime(course.end_time)}</span>
+              <div key={course.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <Weight className="h-4 w-4 text-white" />
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <UserIcon className="h-4 w-4" />
-                        <span>{course.trainer}</span>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">
+                          {course.title}
+                        </h3>
+                        {course.strength_exercise && (
+                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            {course.strength_exercise}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <Badge 
-                      variant={course.registration_count >= course.max_participants ? "destructive" : "secondary"}
-                      className="text-xs"
+                    
+                    <div className="text-sm text-gray-600 mb-1">
+                      {formatTime(course.start_time)} - {formatTime(course.end_time)}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {course.trainer}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className={`text-sm font-medium px-2 py-1 rounded ${
+                        course.registration_count >= course.max_participants 
+                          ? 'bg-red-100 text-red-700' 
+                          : 'bg-green-100 text-green-700'
+                      }`}
                     >
                       {course.registration_count}/{course.max_participants}
-                    </Badge>
+                    </span>
+                    
+                    {!isOpenGym && (
+                      <button
+                        onClick={() => handleRegistration(course.id, course.user_registered)}
+                        disabled={!course.user_registered && course.registration_count >= course.max_participants}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                          course.user_registered 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : course.registration_count >= course.max_participants
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-primary hover:bg-primary/90'
+                        }`}
+                      >
+                        {course.user_registered ? '✓' : '+'}
+                      </button>
+                    )}
                   </div>
-
-                  {course.strength_exercise && (
-                    <div className="mb-3">
-                      <Badge variant="outline" className="text-xs">
-                        {course.strength_exercise}
-                      </Badge>
-                    </div>
-                  )}
-
-                  {!isOpenGym && (
-                    <Button
-                      onClick={() => handleRegistration(course.id, course.user_registered)}
-                      disabled={!course.user_registered && course.registration_count >= course.max_participants}
-                      className={`w-full ${course.user_registered ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                      variant={course.user_registered ? "default" : "outline"}
-                    >
-                      {course.user_registered ? (
-                        <>
-                          <Check className="h-4 w-4 mr-2" />
-                          Angemeldet - Abmelden
-                        </>
-                      ) : course.registration_count >= course.max_participants ? (
-                        "Ausgebucht"
-                      ) : (
-                        "Anmelden"
-                      )}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))
           )}
 

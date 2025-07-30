@@ -2,12 +2,14 @@ import { useState, useEffect } from "react"
 import { Trophy } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
+import { useNavigate } from "react-router-dom"
 
 interface LeaderboardPositionProps {
   user: User
 }
 
 export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }) => {
+  const navigate = useNavigate()
   const [position, setPosition] = useState<number | null>(null)
   const [totalUsers, setTotalUsers] = useState<number>(0)
   const [loading, setLoading] = useState(true)
@@ -53,14 +55,23 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
     return null
   }
 
+  const handleLeaderboardClick = () => {
+    navigate("/dashboard?tab=leaderboard")
+  }
+
   return (
-    <div className="fixed top-16 right-4 z-50 bg-background/95 backdrop-blur border rounded-lg px-3 py-2 shadow-lg">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Trophy className="h-4 w-4 text-yellow-500" />
-        <span className="text-primary">
+    <button 
+      onClick={handleLeaderboardClick}
+      className="fixed top-20 right-4 z-50 bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+    >
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center">
+          <Trophy className="h-4 w-4 text-white" />
+        </div>
+        <span className="text-sm font-bold text-amber-800">
           {position} von {totalUsers}
         </span>
       </div>
-    </div>
+    </button>
   )
 }
