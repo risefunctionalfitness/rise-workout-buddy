@@ -270,8 +270,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         <div className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto">
           <Button 
             onClick={handleLogout} 
-            variant="destructive" 
-            className="w-full"
+            className="w-full bg-[#B81243] hover:bg-[#901a36] text-white"
             size="lg"
           >
             <LogOut className="mr-2 h-4 w-4" />

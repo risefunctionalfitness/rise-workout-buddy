@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useNavigate } from "react-router-dom"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
 
@@ -38,14 +38,18 @@ export const AmrapTimer: React.FC = () => {
 
           <div className="space-y-8">
             <div className="flex items-center justify-center gap-6">
-              <Input
-                type="number"
-                value={minutes}
-                onChange={(e) => setMinutes(Number(e.target.value))}
-                className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl"
-                min="1"
-                max="60"
-              />
+              <Select value={minutes.toString()} onValueChange={(value) => setMinutes(Number(value))}>
+                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
+                  {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()} className="text-lg">
+                      {num}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <span className="text-2xl font-medium">Minuten</span>
             </div>
 

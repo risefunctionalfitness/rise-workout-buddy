@@ -67,14 +67,18 @@ export const EmomTimer: React.FC = () => {
               
               <div className="flex items-center justify-center gap-6">
                 <span className="text-2xl font-medium">für</span>
-                <Input
-                  type="number"
-                  value={rounds}
-                  onChange={(e) => setRounds(Number(e.target.value))}
-                  className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl"
-                  min="1"
-                  max="50"
-                />
+                <Select value={rounds.toString()} onValueChange={(value) => setRounds(Number(value))}>
+                  <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
+                    {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                      <SelectItem key={num} value={num.toString()} className="text-lg">
+                        {num}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
