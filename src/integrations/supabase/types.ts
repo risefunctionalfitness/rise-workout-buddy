@@ -254,6 +254,7 @@ export type Database = {
           gender: string | null
           id: string
           limitations: Json | null
+          membership_type: string | null
           preferences: Json | null
           preferred_exercises: Json | null
           session_duration_minutes: number | null
@@ -279,6 +280,7 @@ export type Database = {
           gender?: string | null
           id?: string
           limitations?: Json | null
+          membership_type?: string | null
           preferences?: Json | null
           preferred_exercises?: Json | null
           session_duration_minutes?: number | null
@@ -304,6 +306,7 @@ export type Database = {
           gender?: string | null
           id?: string
           limitations?: Json | null
+          membership_type?: string | null
           preferences?: Json | null
           preferred_exercises?: Json | null
           session_duration_minutes?: number | null

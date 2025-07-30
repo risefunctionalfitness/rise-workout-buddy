@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper } from "lucide-react";
+import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
 import { GymCodeManager } from "@/components/GymCodeManager";
@@ -21,6 +22,7 @@ interface Member {
   user_id: string | null;
   email?: string;
   created_at: string;
+  membership_type: string;
 }
 
 export default function Admin() {
@@ -32,7 +34,10 @@ export default function Admin() {
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberCode, setNewMemberCode] = useState("");
+  const [newMembershipType, setNewMembershipType] = useState("Member");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [activeTab, setActiveTab] = useState("members");
   const navigate = useNavigate();
 
@@ -106,11 +111,13 @@ export default function Admin() {
     }
   };
 
+  const membershipTypes = ["Member", "Open Gym", "Wellpass", "10er Karte"];
+
   const loadMembers = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, access_code, created_at, user_id')
+        .select('id, display_name, access_code, created_at, user_id, membership_type')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -153,7 +160,8 @@ export default function Admin() {
           password: newMemberCode,
           user_metadata: {
             display_name: newMemberName,
-            access_code: newMemberCode
+            access_code: newMemberCode,
+            membership_type: newMembershipType
           }
         }
       });
@@ -166,12 +174,43 @@ export default function Admin() {
         setNewMemberName("");
         setNewMemberEmail("");
         setNewMemberCode("");
+        setNewMembershipType("Member");
         setDialogOpen(false);
         loadMembers();
       }
     } catch (error) {
       console.error('Error creating member:', error);
       toast.error("Fehler beim Erstellen des Mitglieds");
+    }
+  };
+
+  const handleEditMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingMember) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: editingMember.display_name,
+          access_code: editingMember.access_code,
+          membership_type: editingMember.membership_type
+        })
+        .eq('id', editingMember.id);
+
+      if (error) {
+        console.error('Error updating member:', error);
+        toast.error("Fehler beim Aktualisieren des Mitglieds");
+      } else {
+        toast.success("Mitglied erfolgreich aktualisiert");
+        setEditDialogOpen(false);
+        setEditingMember(null);
+        loadMembers();
+      }
+    } catch (error) {
+      console.error('Error updating member:', error);
+      toast.error("Fehler beim Aktualisieren des Mitglieds");
     }
   };
 
@@ -313,6 +352,20 @@ export default function Admin() {
                             required
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Select value={newMembershipType} onValueChange={setNewMembershipType}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {membershipTypes.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <div className="flex gap-2">
                           <Button type="submit" className="flex-1">
                             Mitglied erstellen
@@ -328,6 +381,79 @@ export default function Admin() {
                       </form>
                     </DialogContent>
                   </Dialog>
+
+                  {/* Edit Member Dialog */}
+                  <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Mitglied bearbeiten</DialogTitle>
+                        <DialogDescription>
+                          Bearbeiten Sie die Mitgliederdaten
+                        </DialogDescription>
+                      </DialogHeader>
+                      {editingMember && (
+                        <form onSubmit={handleEditMember} className="space-y-4">
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Name des Mitglieds"
+                              value={editingMember.display_name}
+                              onChange={(e) => setEditingMember({
+                                ...editingMember,
+                                display_name: e.target.value
+                              })}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Input
+                              placeholder="Zugangscode"
+                              value={editingMember.access_code}
+                              onChange={(e) => setEditingMember({
+                                ...editingMember,
+                                access_code: e.target.value
+                              })}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Select 
+                              value={editingMember.membership_type} 
+                              onValueChange={(value) => setEditingMember({
+                                ...editingMember,
+                                membership_type: value
+                              })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {membershipTypes.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button type="submit" className="flex-1">
+                              Änderungen speichern
+                            </Button>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => {
+                                setEditDialogOpen(false);
+                                setEditingMember(null);
+                              }}
+                            >
+                              Abbrechen
+                            </Button>
+                          </div>
+                        </form>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent>
@@ -335,10 +461,11 @@ export default function Admin() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>E-Mail</TableHead>
                       <TableHead>Zugangscode</TableHead>
+                      <TableHead>Mitgliedschaft</TableHead>
                       <TableHead>Erstellt am</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Aktionen</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -347,10 +474,12 @@ export default function Admin() {
                         <TableCell className="font-medium">
                           {member.display_name || 'Unbekannt'}
                         </TableCell>
-                        <TableCell>
-                          {member.user_id ? 'Verfügbar' : 'Kein Zugriff'}
-                        </TableCell>
                         <TableCell>{member.access_code || '-'}</TableCell>
+                        <TableCell>
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800">
+                            {member.membership_type || 'Member'}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           {new Date(member.created_at).toLocaleDateString('de-DE')}
                         </TableCell>
@@ -359,11 +488,23 @@ export default function Admin() {
                             Aktiv
                           </span>
                         </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setEditingMember(member);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {members.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           Noch keine Mitglieder erstellt
                         </TableCell>
                       </TableRow>
