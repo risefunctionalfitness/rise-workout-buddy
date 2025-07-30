@@ -4,11 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-// LightVersion removed
 import ProVersion from "./pages/ProVersion";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import { StrengthValues } from "@/components/StrengthValues";
+import { ExerciseSelection } from "@/components/ExerciseSelection";
 
 const queryClient = new QueryClient();
 
@@ -22,8 +23,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Auth />} />
             <Route path="/pro" element={<ProVersion />} />
+            <Route path="/pro/strength-values" element={<StrengthValues />} />
+            <Route path="/pro/exercises" element={<ExerciseSelection />} />
             <Route path="/admin" element={<Admin />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
