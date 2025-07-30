@@ -19,14 +19,13 @@ export const GymCodeDisplay = () => {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
 
       if (error) {
         console.error('Error loading gym code:', error)
         return
       }
 
-      setGymCode(data?.code || "")
+      setGymCode(data?.[0]?.code || "")
     } catch (error) {
       console.error('Error loading gym code:', error)
     }

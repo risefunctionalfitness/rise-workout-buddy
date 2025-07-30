@@ -42,8 +42,19 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    loadCourses()
-    checkUserRoles()
+    let mounted = true
+    
+    const loadData = async () => {
+      if (mounted) {
+        await Promise.all([loadCourses(), checkUserRoles()])
+      }
+    }
+    
+    loadData()
+    
+    return () => {
+      mounted = false
+    }
   }, [currentWeek])
 
   const checkUserRoles = async () => {
@@ -72,38 +83,37 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
       console.log('Loading courses for week:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'))
 
-      // Get courses for the week with registration stats
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('courses')
-        .select(`
-          *,
-          course_registrations(status)
-        `)
-        .gte('course_date', format(weekStart, 'yyyy-MM-dd'))
-        .lte('course_date', format(weekEnd, 'yyyy-MM-dd'))
-        .eq('is_cancelled', false)
-        .order('course_date', { ascending: true })
-        .order('start_time', { ascending: true })
+      // Get courses and user registrations in parallel
+      const [coursesResult, userRegistrationsResult] = await Promise.all([
+        supabase
+          .from('courses')
+          .select(`
+            *,
+            course_registrations(status)
+          `)
+          .gte('course_date', format(weekStart, 'yyyy-MM-dd'))
+          .lte('course_date', format(weekEnd, 'yyyy-MM-dd'))
+          .eq('is_cancelled', false)
+          .order('course_date', { ascending: true })
+          .order('start_time', { ascending: true }),
+        supabase
+          .from('course_registrations')
+          .select('course_id, status')
+          .eq('user_id', user.id)
+      ])
 
-      if (coursesError) throw coursesError
+      if (coursesResult.error) throw coursesResult.error
+      if (userRegistrationsResult.error) throw userRegistrationsResult.error
 
-      console.log('Found courses:', coursesData?.length || 0, coursesData)
-
-      // Get user's registrations for this week
-      const { data: userRegistrations, error: registrationError } = await supabase
-        .from('course_registrations')
-        .select('course_id, status')
-        .eq('user_id', user.id)
-
-      if (registrationError) throw registrationError
+      console.log('Found courses:', coursesResult.data?.length || 0)
 
       // Process courses data
-      const processedCourses = (coursesData || []).map(course => {
+      const processedCourses = (coursesResult.data || []).map(course => {
         const registrations = course.course_registrations || []
         const registered_count = registrations.filter(r => r.status === 'registered').length
         const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
         
-        const userReg = userRegistrations?.find(r => r.course_id === course.id)
+        const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
         const is_registered = userReg?.status === 'registered'
         const is_waitlisted = userReg?.status === 'waitlist'
 
