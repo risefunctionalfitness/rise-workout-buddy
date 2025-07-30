@@ -1,9 +1,12 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Camera, Upload } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 
 interface AvatarUploadProps {
   userId: string
@@ -21,7 +24,12 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   showUploadButton = true
 }) => {
   const [uploading, setUploading] = useState(false)
+  const [showCropDialog, setShowCropDialog] = useState(false)
+  const [imageSrc, setImageSrc] = useState<string>("")
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<Crop>()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
   const { toast } = useToast()
 
   const sizeClasses = {
@@ -30,13 +38,63 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     lg: "w-20 h-20"
   }
 
-  const uploadAvatar = async (file: File) => {
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget
+    const crop = centerCrop(
+      makeAspectCrop(
+        {
+          unit: '%',
+          width: 90,
+        },
+        1,
+        width,
+        height,
+      ),
+      width,
+      height,
+    )
+    setCrop(crop)
+  }, [])
+
+  const getCroppedImg = useCallback(async (image: HTMLImageElement, crop: Crop): Promise<Blob> => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')!
+
+    const scaleX = image.naturalWidth / image.width
+    const scaleY = image.naturalHeight / image.height
+
+    canvas.width = crop.width * scaleX
+    canvas.height = crop.height * scaleY
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width * scaleX,
+      crop.height * scaleY,
+    )
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob as Blob)
+      }, 'image/jpeg', 0.9)
+    })
+  }, [])
+
+  const uploadCroppedAvatar = async () => {
+    if (!imageRef.current || !completedCrop) return
+
     try {
       setUploading(true)
-
+      
+      const croppedImageBlob = await getCroppedImg(imageRef.current, completedCrop)
+      
       // Create a unique filename with user ID
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${userId}/avatar.${fileExt}`
+      const fileName = `${userId}/avatar.jpg`
 
       // Delete existing avatar if exists
       if (currentAvatarUrl) {
@@ -49,7 +107,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       // Upload new avatar
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true })
+        .upload(fileName, croppedImageBlob, { upsert: true })
 
       if (uploadError) throw uploadError
 
@@ -67,6 +125,8 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       if (updateError) throw updateError
 
       onAvatarUpdate?.(publicUrl)
+      setShowCropDialog(false)
+      setImageSrc("")
       toast({
         title: "Profilbild hochgeladen",
         description: "Ihr Profilbild wurde erfolgreich aktualisiert."
@@ -106,8 +166,17 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
         return
       }
 
-      uploadAvatar(file)
+      // Create image preview for cropping
+      const reader = new FileReader()
+      reader.onload = () => {
+        setImageSrc(reader.result as string)
+        setShowCropDialog(true)
+      }
+      reader.readAsDataURL(file)
     }
+    
+    // Reset input value
+    event.target.value = ''
   }
 
   return (
@@ -160,6 +229,51 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
           {uploading ? "Hochladen..." : "Bild ändern"}
         </Button>
       )}
+
+      {/* Crop Dialog */}
+      <Dialog open={showCropDialog} onOpenChange={setShowCropDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Profilbild zuschneiden</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {imageSrc && (
+              <div className="flex flex-col items-center space-y-4">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={1}
+                  circularCrop
+                >
+                  <img
+                    ref={imageRef}
+                    alt="Crop me"
+                    src={imageSrc}
+                    style={{ maxHeight: '400px', maxWidth: '100%' }}
+                    onLoad={onImageLoad}
+                  />
+                </ReactCrop>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={uploadCroppedAvatar} 
+                    disabled={!completedCrop || uploading}
+                  >
+                    {uploading ? "Hochladen..." : "Speichern"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowCropDialog(false)}
+                    disabled={uploading}
+                  >
+                    Abbrechen
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

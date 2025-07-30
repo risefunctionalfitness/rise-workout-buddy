@@ -262,6 +262,14 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     )
   }
 
+  const isPastDate = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const courseDate = new Date(date)
+    courseDate.setHours(0, 0, 0, 0)
+    return courseDate < today
+  }
+
   const getStatusColor = (course: Course) => {
     if (course.is_registered) return "bg-green-500"
     if (course.is_waitlisted) return "bg-yellow-500"
@@ -313,7 +321,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       </div>
 
       {/* Week View */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-4 pb-24">
         {getWeekDays().map(day => {
           const dayCourses = getCoursesByDay(day)
           return (
@@ -325,12 +333,20 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                 <p className="text-sm text-muted-foreground italic">Keine Kurse</p>
               ) : (
                 <div className="space-y-2">
-                  {dayCourses.map(course => (
-                    <Card 
-                      key={course.id} 
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => handleCourseClick(course)}
-                    >
+                  {dayCourses.map(course => {
+                    const isPast = isPastDate(parseISO(course.course_date))
+                    const canClick = isPast ? (isTrainer || isAdmin) : true
+                    
+                    return (
+                      <Card 
+                        key={course.id} 
+                        className={`transition-all duration-200 ${
+                          isPast 
+                            ? 'opacity-50' + (canClick ? ' cursor-pointer hover:shadow-md hover:opacity-70' : ' cursor-not-allowed')
+                            : 'cursor-pointer hover:shadow-md'
+                        }`}
+                        onClick={() => canClick && handleCourseClick(course)}
+                      >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -373,9 +389,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                             )}
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
                 </div>
               )}
             </div>
