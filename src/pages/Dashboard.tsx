@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Home, Calendar, Trophy, Weight, Timer } from "lucide-react"
 import { TrainingPathHeader } from "@/components/TrainingPathHeader"
 import { TrainingPath } from "@/components/TrainingPath"
 import { BottomNavigation } from "@/components/BottomNavigation"
@@ -13,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
 import { useNewsNotification } from "@/hooks/useNewsNotification"
-import { Home, Weight, Calendar, Trophy, Timer } from "lucide-react"
+
 import { useNavigate } from "react-router-dom"
 
 type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
@@ -335,10 +336,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
             onClick={() => navigate("/workout-timer")}
             className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-lg flex items-center justify-center text-white hover:scale-105 transition-transform"
           >
-            <div className="flex flex-col items-center">
-              <div className="w-6 h-6 border-4 border-white rounded-full border-t-transparent animate-spin mb-1"></div>
-              <span className="text-xs font-bold">WOD</span>
-            </div>
+            <Timer className="h-8 w-8" />
           </button>
         </div>
       )}

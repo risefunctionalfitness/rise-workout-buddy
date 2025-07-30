@@ -23,9 +23,9 @@ export const WorkoutTimer: React.FC = () => {
         </Button>
       </div>
       
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6 pb-20">
         <div className="max-w-md w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h1 className="text-6xl font-bold mb-4">WOD</h1>
             <h2 className="text-2xl text-muted-foreground">Timer</h2>
           </div>

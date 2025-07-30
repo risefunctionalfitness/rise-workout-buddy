@@ -29,9 +29,9 @@ export const ForTimeTimer: React.FC = () => {
         </Button>
       </div>
       
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6 pb-20">
         <div className="max-w-md w-full">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h1 className="text-6xl font-bold mb-4">For Time</h1>
             <p className="text-xl text-muted-foreground">So schnell wie möglich</p>
           </div>
