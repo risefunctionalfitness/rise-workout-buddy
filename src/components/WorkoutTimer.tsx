@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
+import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
 
 export const WorkoutTimer: React.FC = () => {
   const navigate = useNavigate()
@@ -11,33 +12,29 @@ export const WorkoutTimer: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-md mx-auto">
-        <div className="mb-12">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/pro")}
-            className="mb-8"
-          >
-            ← Zurück
-          </Button>
-          <h1 className="text-4xl font-bold text-center mb-2">WOD</h1>
-          <h2 className="text-xl text-center text-muted-foreground">Timer</h2>
-        </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 p-6">
+        <div className="max-w-md mx-auto h-full flex flex-col justify-center">
+          <div className="text-center mb-16">
+            <h1 className="text-6xl font-bold mb-4">WOD</h1>
+            <h2 className="text-2xl text-muted-foreground">Timer</h2>
+          </div>
 
-        <div className="space-y-4">
-          {timerTypes.map((type) => (
-            <Button
-              key={type.id}
-              variant="outline"
-              onClick={() => navigate(type.route)}
-              className="w-full h-16 text-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg"
-            >
-              {type.title}
-            </Button>
-          ))}
+          <div className="space-y-6">
+            {timerTypes.map((type) => (
+              <Button
+                key={type.id}
+                variant="outline"
+                onClick={() => navigate(type.route)}
+                className="w-full h-20 text-2xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-2xl font-medium"
+              >
+                {type.title}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
+      <TimerBottomNavigation />
     </div>
   )
 }

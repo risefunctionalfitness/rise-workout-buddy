@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
+import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
 
 export const EmomTimer: React.FC = () => {
   const navigate = useNavigate()
@@ -24,67 +25,63 @@ export const EmomTimer: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-md mx-auto">
-        <div className="mb-12">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/workout-timer")}
-            className="mb-8"
-          >
-            ← Zurück
-          </Button>
-          <h1 className="text-4xl font-bold text-center mb-2">EMOM</h1>
-          <p className="text-lg text-center text-muted-foreground">Every Minute on the Minute</p>
-        </div>
-
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-4">
-              <span className="text-xl font-medium">Alle</span>
-              <div className="relative">
-                <Input
-                  type="number"
-                  step="30"
-                  value={interval}
-                  onChange={(e) => setInterval(Number(e.target.value))}
-                  className="w-24 h-12 text-center text-lg border-primary"
-                  min="30"
-                  max="600"
-                />
-                <span className="absolute right-3 top-3 text-primary font-medium">
-                  {formatTime(interval)}
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-center gap-4">
-              <span className="text-xl font-medium">für</span>
-              <div className="relative">
-                <Input
-                  type="number"
-                  value={rounds}
-                  onChange={(e) => setRounds(Number(e.target.value))}
-                  className="w-20 h-12 text-center text-lg border-primary"
-                  min="1"
-                  max="50"
-                />
-                <span className="absolute right-3 top-3 text-primary font-medium">
-                  {rounds}
-                </span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 p-6">
+        <div className="max-w-md mx-auto h-full flex flex-col justify-center">
+          <div className="text-center mb-16">
+            <h1 className="text-6xl font-bold mb-4">EMOM</h1>
+            <p className="text-xl text-muted-foreground">Every Minute on the Minute</p>
           </div>
 
-          <Button
-            onClick={handleStart}
-            variant="outline"
-            className="w-full h-16 text-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg"
-          >
-            Start
-          </Button>
+          <div className="space-y-12">
+            <div className="space-y-8">
+              <div className="flex items-center justify-center gap-6">
+                <span className="text-2xl font-medium">Alle</span>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    step="30"
+                    value={interval}
+                    onChange={(e) => setInterval(Number(e.target.value))}
+                    className="w-28 h-16 text-center text-2xl border-2 border-primary rounded-xl"
+                    min="30"
+                    max="600"
+                  />
+                  <span className="absolute -right-12 top-5 text-primary font-medium text-xl">
+                    {formatTime(interval)}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center gap-6">
+                <span className="text-2xl font-medium">für</span>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    value={rounds}
+                    onChange={(e) => setRounds(Number(e.target.value))}
+                    className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl"
+                    min="1"
+                    max="50"
+                  />
+                  <span className="absolute -right-8 top-5 text-primary font-medium text-xl">
+                    {rounds}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleStart}
+              variant="outline"
+              className="w-full h-20 text-2xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-2xl font-medium"
+            >
+              Start
+            </Button>
+          </div>
         </div>
       </div>
+      <TimerBottomNavigation />
     </div>
   )
 }
