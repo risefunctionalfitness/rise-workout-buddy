@@ -17,6 +17,7 @@ import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { MembershipBadge } from "@/components/MembershipBadge";
+import { AdminStats } from "@/components/AdminStats";
 
 interface Member {
   id: string;
@@ -283,6 +284,9 @@ export default function Admin() {
       case 'members':
         return (
           <div className="space-y-6">
+            {/* Admin Statistics */}
+            <AdminStats />
+            
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <img 

@@ -173,17 +173,18 @@ export const Leaderboard: React.FC = () => {
                         <div className="flex items-center justify-center w-12 h-12">
                           {getRankIcon(position)}
                         </div>
-                        <AvatarUpload
-                          userId={entry.user_id}
-                          currentAvatarUrl={entry.avatar_url}
-                          size="sm"
-                          showUploadButton={false}
-                        />
-                        <div>
-                          <h3 className="font-semibold text-lg">{entry.display_name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Platz {position}
-                          </p>
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src={entry.avatar_url || '/placeholder.svg'}
+                            alt={entry.display_name}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-border"
+                          />
+                          <div>
+                            <h3 className="font-semibold text-lg">{entry.display_name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Platz {position}
+                            </p>
+                          </div>
                         </div>
                       </div>
                       <div className="text-right flex items-center gap-2">

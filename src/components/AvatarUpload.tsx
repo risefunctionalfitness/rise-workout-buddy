@@ -190,8 +190,16 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
           </AvatarFallback>
         </Avatar>
         
-        {/* Icon buttons positioned over avatar */}
-        <div className="absolute -top-2 -right-2 flex gap-1">
+        {uploading && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+      
+      {/* Icon buttons positioned below avatar */}
+      {!showUploadButton && (
+        <div className="flex gap-2">
           <Button
             size="sm"
             variant="secondary"
@@ -243,13 +251,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
             </Button>
           )}
         </div>
-        
-        {uploading && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-      </div>
+      )}
       
       <input
         ref={fileInputRef}

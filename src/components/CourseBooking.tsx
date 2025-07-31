@@ -92,6 +92,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       console.log('Loading courses for week:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'))
 
       // Get courses and user registrations in parallel
+      const now = new Date()
       const [coursesResult, userRegistrationsResult] = await Promise.all([
         supabase
           .from('courses')
@@ -102,6 +103,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           .gte('course_date', format(weekStart, 'yyyy-MM-dd'))
           .lte('course_date', format(weekEnd, 'yyyy-MM-dd'))
           .eq('is_cancelled', false)
+          // Filter out past courses
+          .or(`course_date.gt.${now.toISOString().split('T')[0]},and(course_date.eq.${now.toISOString().split('T')[0]},end_time.gt.${now.toTimeString().slice(0, 8)})`)
           .order('course_date', { ascending: true })
           .order('start_time', { ascending: true }),
         supabase
