@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Users, Zap, Activity } from "lucide-react"
+import { Calendar, Users } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/integrations/supabase/client"
 
@@ -16,9 +16,6 @@ interface LeaderboardStats {
   }
   currentMonthEntries: number
   registrationsByType: {
-    freeTraining: number
-    courses: number
-    openGym: number
     Member: number
     Wellpass: number
     '10er Karte': number
@@ -32,9 +29,6 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     memberStats: {},
     currentMonthEntries: 0,
     registrationsByType: {
-      freeTraining: 0,
-      courses: 0,
-      openGym: 0,
       Member: 0,
       Wellpass: 0,
       '10er Karte': 0,
@@ -70,26 +64,6 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       // Calculate total training sessions from leaderboard
       const totalCurrentMonth = leaderboardData?.reduce((sum, entry) => sum + entry.training_count, 0) || 0
 
-      // Get detailed breakdown by training type from training_sessions
-      const firstDayOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
-      const lastDayOfMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0]
-
-      const { data: trainingSessions } = await supabase
-        .from('training_sessions')
-        .select('user_id, workout_type')
-        .gte('date', firstDayOfMonth)
-        .lte('date', lastDayOfMonth)
-        .eq('status', 'completed')
-
-      // Count by workout type - include all types that could be considered "freies Training"
-      const freeTrainingTypes = ['free_training', 'individual', 'crossfit_wod_only', 'crossfit_full_session', 'plan']
-      const courseTypes = ['course']
-      const openGymTypes = ['open_gym']
-      
-      const freeTrainingCount = trainingSessions?.filter(s => freeTrainingTypes.includes(s.workout_type)).length || 0
-      const courseTrainingCount = trainingSessions?.filter(s => courseTypes.includes(s.workout_type)).length || 0
-      const openGymCount = trainingSessions?.filter(s => openGymTypes.includes(s.workout_type)).length || 0
-
       // Count by membership type from leaderboard entries
       const membershipCounts = {
         'Member': 0,
@@ -117,12 +91,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         totalEntries: totalCurrentMonth,
         memberStats: membershipStats,
         currentMonthEntries: totalCurrentMonth,
-        registrationsByType: {
-          freeTraining: freeTrainingCount,
-          courses: courseTrainingCount,
-          openGym: openGymCount,
-          ...membershipCounts
-        }
+        registrationsByType: membershipCounts
       }
 
       setStats(statsData)
@@ -181,7 +150,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
   return (
     <div className="space-y-6">
       {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
@@ -189,42 +158,6 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Anmeldungen diesen Monat</p>
                 <p className="text-2xl font-bold">{stats.currentMonthEntries}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Zap className="h-8 w-8 text-green-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Freies Training</p>
-                <p className="text-2xl font-bold">{stats.registrationsByType?.freeTraining || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Activity className="h-8 w-8 text-orange-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Kurs Anmeldungen</p>
-                <p className="text-2xl font-bold">{stats.registrationsByType?.courses || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-purple-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Open Gym</p>
-                <p className="text-2xl font-bold">{stats.registrationsByType?.openGym || 0}</p>
               </div>
             </div>
           </CardContent>

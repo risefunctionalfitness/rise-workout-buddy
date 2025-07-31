@@ -13,7 +13,6 @@ export default function Auth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const navigate = useNavigate();
 
@@ -113,7 +112,7 @@ export default function Auth() {
         return;
       }
 
-      toast.success("Erfolgreich angemeldet!");
+      // Removed success toast - navigation is feedback enough
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Fehler beim Anmelden");
@@ -122,42 +121,7 @@ export default function Auth() {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const redirectUrl = `${window.location.origin}/pro`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password: accessCode, // Use access code as password
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            display_name: email.split('@')[0], // Use email prefix as display name
-            access_code: accessCode
-          }
-        }
-      });
-
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          toast.error("Benutzer bereits registriert. Bitte melden Sie sich an.");
-        } else {
-          toast.error(error.message);
-        }
-        return;
-      }
-
-      toast.success("Registrierung erfolgreich! Sie können sich jetzt anmelden.");
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast.error("Fehler bei der Registrierung");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Signup functionality removed - members are created by admin only
 
   if (user) {
     return null; // User will be redirected

@@ -208,7 +208,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
       if (error) throw error
 
-      toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Erfolgreich angemeldet!')
+      toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
       await loadCourses()
       if (selectedCourse?.id === courseId) {
         await loadParticipants(courseId)
