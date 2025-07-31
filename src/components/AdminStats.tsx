@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Users, Calendar, Zap } from "lucide-react"
+import { Calendar, Users, Zap, Activity } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/integrations/supabase/client"
 
 interface AdminStatsProps {
@@ -14,11 +15,7 @@ interface LeaderboardStats {
     [key: string]: number
   }
   currentMonthEntries: number
-  topUser: {
-    name: string
-    count: number
-  } | null
-  registrationsByType?: {
+  registrationsByType: {
     freeTraining: number
     courses: number
     Member: number
@@ -33,7 +30,6 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     totalEntries: 0,
     memberStats: {},
     currentMonthEntries: 0,
-    topUser: null,
     registrationsByType: {
       freeTraining: 0,
       courses: 0,
@@ -56,10 +52,26 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       const currentDate = new Date()
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
+      
+      // Get current month from leaderboard entries (this counts all completed training)
+      const { data: leaderboardData } = await supabase
+        .from('leaderboard_entries')
+        .select('user_id, training_count')
+        .eq('year', currentYear)
+        .eq('month', currentMonth)
+
+      // Get all profiles for membership categorization
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, membership_type')
+
+      // Calculate total training sessions from leaderboard
+      const totalCurrentMonth = leaderboardData?.reduce((sum, entry) => sum + entry.training_count, 0) || 0
+
+      // Get detailed breakdown by training type from training_sessions
       const firstDayOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
       const lastDayOfMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0]
 
-      // Get current month training sessions (freies Training + Kurs)
       const { data: trainingSessions } = await supabase
         .from('training_sessions')
         .select('user_id, workout_type')
@@ -67,29 +79,12 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         .lte('date', lastDayOfMonth)
         .eq('status', 'completed')
 
-      // Get current month course registrations
-      const { data: courseRegistrations } = await supabase
-        .from('course_registrations')
-        .select(`
-          user_id,
-          status,
-          courses!inner(course_date)
-        `)
-        .eq('status', 'registered')
-        .gte('courses.course_date', firstDayOfMonth)
-        .lte('courses.course_date', lastDayOfMonth)
-
-      // Get all profiles for membership categorization
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, membership_type')
-
-      // Calculate statistics
+      // Count by workout type
       const freeTrainingCount = trainingSessions?.filter(s => s.workout_type === 'free_training').length || 0
-      const courseTrainingCount = courseRegistrations?.length || 0
-      const totalRegistrations = freeTrainingCount + courseTrainingCount
+      const courseTrainingCount = trainingSessions?.filter(s => s.workout_type === 'course').length || 0
+      const openGymCount = trainingSessions?.filter(s => s.workout_type === 'open_gym').length || 0
 
-      // Registration counts by membership type
+      // Count by membership type from leaderboard entries
       const membershipCounts = {
         'Member': 0,
         'Wellpass': 0,
@@ -97,21 +92,11 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         'Open Gym': 0
       }
 
-      // Count free training by membership
-      trainingSessions?.forEach(session => {
-        const profile = profiles?.find(p => p.user_id === session.user_id)
+      leaderboardData?.forEach(entry => {
+        const profile = profiles?.find(p => p.user_id === entry.user_id)
         const membershipType = profile?.membership_type || 'Member'
         if (membershipCounts.hasOwnProperty(membershipType)) {
-          membershipCounts[membershipType]++
-        }
-      })
-
-      // Count course registrations by membership
-      courseRegistrations?.forEach(registration => {
-        const profile = profiles?.find(p => p.user_id === registration.user_id)
-        const membershipType = profile?.membership_type || 'Member'
-        if (membershipCounts.hasOwnProperty(membershipType)) {
-          membershipCounts[membershipType]++
+          membershipCounts[membershipType] += entry.training_count
         }
       })
 
@@ -122,34 +107,10 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         membershipStats[membershipType] = (membershipStats[membershipType] || 0) + 1
       })
 
-      // Get top user of current month
-      const { data: topUserData } = await supabase
-        .from('leaderboard_entries')
-        .select('user_id, training_count')
-        .eq('year', currentYear)
-        .eq('month', currentMonth)
-        .order('training_count', { ascending: false })
-        .limit(1)
-
-      let topUser = null
-      if (topUserData?.[0]) {
-        const { data: topUserProfile } = await supabase
-          .from('profiles')
-          .select('display_name, nickname')
-          .eq('user_id', topUserData[0].user_id)
-          .single()
-
-        topUser = {
-          name: topUserProfile?.nickname || topUserProfile?.display_name || 'Unbekannt',
-          count: topUserData[0].training_count
-        }
-      }
-
       const statsData = {
-        totalEntries: totalRegistrations,
+        totalEntries: totalCurrentMonth,
         memberStats: membershipStats,
-        currentMonthEntries: totalRegistrations,
-        topUser,
+        currentMonthEntries: totalCurrentMonth,
         registrationsByType: {
           freeTraining: freeTrainingCount,
           courses: courseTrainingCount,
@@ -157,10 +118,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         }
       }
 
-      setStats({
-        ...stats,
-        ...statsData
-      })
+      setStats(statsData)
       onStatsLoad?.(statsData)
     } catch (error) {
       console.error('Error loading admin stats:', error)
@@ -186,17 +144,24 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     )
   }
 
+  const chartData = [
+    { name: 'Member', value: stats.registrationsByType?.Member || 0, fill: '#3B82F6' },
+    { name: 'Wellpass', value: stats.registrationsByType?.Wellpass || 0, fill: '#10B981' },
+    { name: '10er Karte', value: stats.registrationsByType?.['10er Karte'] || 0, fill: '#F59E0B' },
+    { name: 'Open Gym', value: stats.registrationsByType?.['Open Gym'] || 0, fill: '#8B5CF6' }
+  ]
+
   return (
     <div className="space-y-6">
-      {/* Monthly Registrations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Main Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
               <Calendar className="h-8 w-8 text-blue-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Anmeldungen diesen Monat</p>
-                <p className="text-2xl font-bold">{stats.registrationsByType?.freeTraining + stats.registrationsByType?.courses || 0}</p>
+                <p className="text-2xl font-bold">{stats.currentMonthEntries}</p>
               </div>
             </div>
           </CardContent>
@@ -217,7 +182,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <Users className="h-8 w-8 text-orange-500" />
+              <Activity className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Kurs Anmeldungen</p>
                 <p className="text-2xl font-bold">{stats.registrationsByType?.courses || 0}</p>
@@ -225,60 +190,25 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Trophy className="h-8 w-8 text-yellow-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Top Athlet</p>
-                <p className="text-lg font-bold truncate">
-                  {stats.topUser ? `${stats.topUser.name} (${stats.topUser.count})` : 'Keine Daten'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Membership Type Registrations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-600">Member Anmeldungen</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.registrationsByType?.Member || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-600">Wellpass Anmeldungen</p>
-              <p className="text-2xl font-bold text-green-600">{stats.registrationsByType?.Wellpass || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-600">10er Karte Anmeldungen</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.registrationsByType?.['10er Karte'] || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-600">Open Gym Anmeldungen</p>
-              <p className="text-2xl font-bold text-purple-600">{stats.registrationsByType?.['Open Gym'] || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Anmeldungen nach Mitgliedschaftstyp</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Total Memberships */}
       <Card>

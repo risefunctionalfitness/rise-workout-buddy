@@ -15,7 +15,6 @@ import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
 import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
 
@@ -26,7 +25,7 @@ interface Member {
   user_id: string | null;
   email?: string;
   created_at: string;
-  membership_type: string;
+  membership_type: 'Member' | 'Trainer' | 'Administrator' | 'Open Gym' | 'Wellpass' | '10er Karte';
   status: string;
   last_login_at: string | null;
 }
@@ -133,7 +132,7 @@ export default function Admin() {
         console.error('Error loading members:', error);
         toast.error("Fehler beim Laden der Mitglieder");
       } else {
-        setMembers(data || []);
+        setMembers((data || []) as Member[]);
       }
     } catch (error) {
       console.error('Error loading members:', error);
@@ -275,279 +274,291 @@ export default function Admin() {
     return null;
   }
 
-  const handleTabChange = (tab: 'members' | 'participants' | 'courses' | 'news' | 'gym-codes') => {
-    setActiveTab(tab);
-  };
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'members':
-        return (
-          <div className="space-y-6">
-            {/* Admin Statistics */}
-            <AdminStats />
-            
+  const renderMembersContent = () => {
+    return (
+      <div className="space-y-6">
+        {/* Admin Statistics */}
+        <AdminStats />
+        
+        {/* Members Table */}
+        <Card>
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <img 
-                  src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
-                  alt="RISE Functional Fitness Logo" 
-                  className="h-12"
-                />
-                <div>
-                  <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                  <p className="text-muted-foreground">RISE Functional Fitness</p>
-                </div>
+              <div>
+                <CardTitle>Mitglieder verwalten</CardTitle>
+                <CardDescription>
+                  Erstellen und verwalten Sie Mitgliederaccounts
+                </CardDescription>
               </div>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Abmelden
-              </Button>
-            </div>
-
-            {/* Members Table */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Mitglieder verwalten</CardTitle>
-                    <CardDescription>
-                      Erstellen und verwalten Sie Mitgliederaccounts
-                    </CardDescription>
-                  </div>
-                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Neues Mitglied
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Neues Mitglied
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Neues Mitglied erstellen</DialogTitle>
+                    <DialogDescription>
+                      Erstellen Sie einen neuen Mitgliederaccount mit Name und Zugangscode
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateMember} className="space-y-4">
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Name des Mitglieds"
+                        value={newMemberName}
+                        onChange={(e) => setNewMemberName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Input
+                        type="email"
+                        placeholder="E-Mail des Mitglieds"
+                        value={newMemberEmail}
+                        onChange={(e) => setNewMemberEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Zugangscode (z.B. 2019)"
+                        value={newMemberCode}
+                        onChange={(e) => setNewMemberCode(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Select value={newMembershipType} onValueChange={setNewMembershipType}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {membershipTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1">
+                        Mitglied erstellen
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Neues Mitglied erstellen</DialogTitle>
-                        <DialogDescription>
-                          Erstellen Sie einen neuen Mitgliederaccount mit Name und Zugangscode
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleCreateMember} className="space-y-4">
-                        <div className="space-y-2">
-                          <Input
-                            placeholder="Name des Mitglieds"
-                            value={newMemberName}
-                            onChange={(e) => setNewMemberName(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Input
-                            type="email"
-                            placeholder="E-Mail des Mitglieds"
-                            value={newMemberEmail}
-                            onChange={(e) => setNewMemberEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Input
-                            placeholder="Zugangscode (z.B. 2019)"
-                            value={newMemberCode}
-                            onChange={(e) => setNewMemberCode(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Select value={newMembershipType} onValueChange={setNewMembershipType}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {membershipTypes.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button type="submit" className="flex-1">
-                            Mitglied erstellen
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => setDialogOpen(false)}
-                          >
-                            Abbrechen
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setDialogOpen(false)}
+                      >
+                        Abbrechen
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
 
-                  {/* Edit Member Dialog */}
-                  <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Mitglied bearbeiten</DialogTitle>
-                        <DialogDescription>
-                          Bearbeiten Sie die Mitgliederdaten
-                        </DialogDescription>
-                      </DialogHeader>
-                      {editingMember && (
-                        <form onSubmit={handleEditMember} className="space-y-4">
-                          <div className="space-y-2">
-                            <Input
-                              placeholder="Name des Mitglieds"
-                              value={editingMember.display_name}
-                              onChange={(e) => setEditingMember({
-                                ...editingMember,
-                                display_name: e.target.value
-                              })}
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Input
-                              placeholder="Zugangscode"
-                              value={editingMember.access_code}
-                              onChange={(e) => setEditingMember({
-                                ...editingMember,
-                                access_code: e.target.value
-                              })}
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Select 
-                              value={editingMember.membership_type} 
-                              onValueChange={(value) => setEditingMember({
-                                ...editingMember,
-                                membership_type: value
-                              })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {membershipTypes.map((type) => (
-                                  <SelectItem key={type} value={type}>
-                                    {type}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button type="submit" className="flex-1">
-                              Änderungen speichern
-                            </Button>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              onClick={() => {
-                                setEditDialogOpen(false);
-                                setEditingMember(null);
-                              }}
-                            >
-                              Abbrechen
-                            </Button>
-                          </div>
-                        </form>
-                      )}
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Zugangscode</TableHead>
-                      <TableHead>Mitgliedschaft</TableHead>
-                      <TableHead>Erstellt am</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Aktionen</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {members.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">
-                          {member.display_name || 'Unbekannt'}
-                        </TableCell>
-                        <TableCell>{member.access_code || '-'}</TableCell>
-                         <TableCell>
-                           <MembershipBadge type={member.membership_type as any} />
-                         </TableCell>
-                        <TableCell>
-                          {new Date(member.created_at).toLocaleDateString('de-DE')}
-                        </TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            member.status === 'active' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {member.status === 'active' ? 'Aktiv' : 'Inaktiv'}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setEditingMember(member);
-                                setEditDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteMember(member.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {members.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Noch keine Mitglieder erstellt
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      case 'participants':
-        return <CourseParticipants />;
-      case 'courses':
-        return <CourseTemplateManager />;
-      case 'news':
-        return <NewsManager />;
-      case 'gym-codes':
-        return <GymCodeManager />;
-      default:
-        return <div>Feature coming soon...</div>;
-    }
+              {/* Edit Member Dialog */}
+              <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Mitglied bearbeiten</DialogTitle>
+                    <DialogDescription>
+                      Bearbeiten Sie die Mitgliederdaten
+                    </DialogDescription>
+                  </DialogHeader>
+                  {editingMember && (
+                    <form onSubmit={handleEditMember} className="space-y-4">
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Name des Mitglieds"
+                          value={editingMember.display_name}
+                          onChange={(e) => setEditingMember({
+                            ...editingMember,
+                            display_name: e.target.value
+                          })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Zugangscode"
+                          value={editingMember.access_code}
+                          onChange={(e) => setEditingMember({
+                            ...editingMember,
+                            access_code: e.target.value
+                          })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Select 
+                          value={editingMember.membership_type} 
+                          onValueChange={(value) => setEditingMember({
+                            ...editingMember,
+                            membership_type: value as Member['membership_type']
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {membershipTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit" className="flex-1">
+                          Änderungen speichern
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => {
+                            setEditDialogOpen(false);
+                            setEditingMember(null);
+                          }}
+                        >
+                          Abbrechen
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Zugangscode</TableHead>
+                  <TableHead>Mitgliedschaft</TableHead>
+                  <TableHead>Erstellt am</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Letzter Login</TableHead>
+                  <TableHead>Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="font-medium">{member.display_name}</TableCell>
+                    <TableCell>{member.access_code}</TableCell>
+                    <TableCell>
+                      <MembershipBadge type={member.membership_type} />
+                    </TableCell>
+                    <TableCell>
+                      {new Date(member.created_at).toLocaleDateString('de-DE')}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        member.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {member.status === 'active' ? 'Aktiv' : 'Inaktiv'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {member.last_login_at 
+                        ? new Date(member.last_login_at).toLocaleDateString('de-DE')
+                        : 'Nie'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingMember(member);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteMember(member.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-6xl mx-auto p-6">
-        {renderContent()}
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-white">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img 
+                src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
+                alt="RISE Logo" 
+                className="h-12"
+              />
+              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Abmelden
+            </Button>
+          </div>
+        </div>
       </div>
-      <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+
+      {/* Main Content */}
+      <div className="container mx-auto p-6">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'members' | 'participants' | 'courses' | 'news' | 'gym-codes')}>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="members" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Mitglieder
+            </TabsTrigger>
+            <TabsTrigger value="participants" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Kurse
+            </TabsTrigger>
+            <TabsTrigger value="courses" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Kursvorlagen
+            </TabsTrigger>
+            <TabsTrigger value="news" className="flex items-center gap-2">
+              <Newspaper className="h-4 w-4" />
+              News
+            </TabsTrigger>
+            <TabsTrigger value="gym-codes" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Gym-Codes
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="members" className="mt-6">{renderMembersContent()}</TabsContent>
+          <TabsContent value="participants" className="mt-6"><CourseParticipants /></TabsContent>
+          <TabsContent value="courses" className="mt-6"><CourseTemplateManager /></TabsContent>
+          <TabsContent value="news" className="mt-6"><NewsManager /></TabsContent>
+          <TabsContent value="gym-codes" className="mt-6"><GymCodeManager /></TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
