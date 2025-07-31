@@ -47,6 +47,7 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const membersPerPage = 10;
   const navigate = useNavigate();
 
@@ -314,24 +315,23 @@ export default function Admin() {
                 </CardDescription>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Mitglieder suchen..."
+                    placeholder="Suchen..."
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="pl-10 w-64"
+                    className="pl-10 w-48"
                   />
                 </div>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Neues Mitglied
+                    <Button size="icon" title="Neues Mitglied erstellen">
+                      <UserPlus className="h-4 w-4" />
                     </Button>
                   </DialogTrigger>
                 <DialogContent>
@@ -651,64 +651,89 @@ export default function Admin() {
               />
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             </div>
-            <DropdownMenu>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <DropdownMenuContent 
+                align="end" 
+                className="fixed inset-0 z-50 bg-white w-screen h-screen flex flex-col justify-center items-center p-8"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
+                <div className="grid grid-cols-2 gap-8 max-w-md w-full">
                   <div 
-                    onClick={() => setActivePage('home')}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setActivePage('home');
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                   >
-                    <Home className="h-8 w-8 text-gray-600 mb-2" />
-                    <span className="text-sm font-medium">Home</span>
+                    <Home className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">Home</span>
                   </div>
                   <div 
-                    onClick={() => setActivePage('members')}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setActivePage('members');
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                   >
-                    <Users className="h-8 w-8 text-gray-600 mb-2" />
-                    <span className="text-sm font-medium">Mitglieder</span>
+                    <Users className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">Mitglieder</span>
                   </div>
                   <div 
-                    onClick={() => setActivePage('courses')}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setActivePage('courses');
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                   >
-                    <Calendar className="h-8 w-8 text-gray-600 mb-2" />
-                    <span className="text-sm font-medium">Kurse</span>
+                    <Calendar className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">Kurse</span>
                   </div>
                   <div 
-                    onClick={() => setActivePage('templates')}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setActivePage('templates');
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                   >
-                    <Calendar className="h-8 w-8 text-gray-600 mb-2" />
-                    <span className="text-sm font-medium">Vorlagen</span>
+                    <Calendar className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">Vorlagen</span>
                   </div>
                   <div 
-                    onClick={() => setActivePage('news')}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setActivePage('news');
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                   >
-                    <Newspaper className="h-8 w-8 text-gray-600 mb-2" />
-                    <span className="text-sm font-medium">News</span>
+                    <Newspaper className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">News</span>
                   </div>
                   <div 
-                    onClick={() => setActivePage('codes')}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setActivePage('codes');
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                   >
-                    <Users className="h-8 w-8 text-gray-600 mb-2" />
-                    <span className="text-sm font-medium">Codes</span>
+                    <Users className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">Codes</span>
                   </div>
                 </div>
-                <div className="border-t mt-4 pt-4">
+                <div className="mt-12">
                   <div 
-                    onClick={handleLogout}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      handleLogout();
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
                   >
-                    <LogOut className="h-8 w-8 text-red-600 mb-2" />
-                    <span className="text-sm font-medium text-red-600">Abmelden</span>
+                    <LogOut className="h-12 w-12 text-red-600 mb-3" />
+                    <span className="text-lg font-medium text-red-600">Abmelden</span>
                   </div>
                 </div>
               </DropdownMenuContent>
