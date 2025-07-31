@@ -154,7 +154,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-blue-500" />
+              <Calendar className="h-8 w-8 text-primary" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Anmeldungen diesen Monat</p>
                 <p className="text-2xl font-bold">{stats.currentMonthEntries}</p>
@@ -186,7 +186,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center mb-4">
-            <Users className="h-8 w-8 text-purple-500" />
+            <Users className="h-8 w-8 text-primary" />
             <div className="ml-4">
               <p className="text-lg font-medium text-gray-900">Anzahl Mitgliedschaften je Kategorie</p>
             </div>

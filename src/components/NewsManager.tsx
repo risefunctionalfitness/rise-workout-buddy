@@ -237,7 +237,6 @@ export const NewsManager = () => {
                 <TableHead>Titel</TableHead>
                 <TableHead>Veröffentlicht</TableHead>
                 <TableHead>Erstellt</TableHead>
-                <TableHead>Veröffentlicht</TableHead>
                 <TableHead>Aktionen</TableHead>
               </TableRow>
             </TableHeader>
@@ -255,12 +254,6 @@ export const NewsManager = () => {
                   </TableCell>
                   <TableCell>
                     {format(new Date(item.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}
-                  </TableCell>
-                  <TableCell>
-                    {item.published_at 
-                      ? format(new Date(item.published_at), 'dd.MM.yyyy HH:mm', { locale: de })
-                      : '-'
-                    }
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">

@@ -593,7 +593,8 @@ export default function Admin() {
               <img 
                 src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
                 alt="RISE Logo" 
-                className="h-12"
+                className="h-12 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate('/')}
               />
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             </div>
