@@ -276,28 +276,24 @@ JSON Format:
       };
     }
 
-    // 8. Workout in training_sessions speichern (nur für echte User)
+    // 8. Workout in die neue Datenbankstruktur speichern und ID zurückgeben
+    let workoutId = null;
     if (userId !== 'demo-user') {
-      const { error: sessionError } = await supabase
-        .from('training_sessions')
-        .insert({
-          user_id: userId,
-          date: new Date().toISOString().split('T')[0],
-          workout_type: `${workoutType}_${sessionType || 'full_session'}`,
-          workout_data: workoutData,
-          status: 'pending'
-        });
-
-      if (sessionError) {
-        console.error('Session save error:', sessionError);
-      } else {
-        console.log('Training session saved successfully');
+      try {
+        workoutId = await saveWorkoutToDatabase(workoutData, profile);
+        console.log('Workout saved to database with ID:', workoutId);
+      } catch (saveError) {
+        console.error('Error saving workout to database:', saveError);
+        // Continue without workoutId - fallback to old display
       }
     } else {
-      console.log('Skipping session save for demo user');
+      console.log('Skipping database save for demo user');
     }
 
-    return new Response(JSON.stringify({ workout: workoutData }), {
+    return new Response(JSON.stringify({ 
+      workout: workoutData,
+      workout_id: workoutId
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
@@ -395,5 +391,179 @@ function getPartsStructure(sessionType: string, duration: number): string {
       "exercises": ["Ausgeglichene Übungsauswahl"],
       "notes": "Angepasst an Benutzerprofil"
     }`
+  }
+}
+
+// Funktion zum Speichern des Workouts in der neuen Datenbankstruktur
+async function saveWorkoutToDatabase(workout: any, userProfile: any): Promise<string> {
+  try {
+    // 1. Workout erstellen
+    const { data: workoutData, error: workoutError } = await supabase
+      .from('workouts')
+      .insert({
+        title: workout.name,
+        workout_type: workout.type,
+        session_type: mapSessionType(workout.type),
+        duration_minutes: workout.duration,
+        focus_area: mapFocusArea(workout.focus),
+        difficulty_level: workout.difficulty || 'intermediate',
+        notes: workout.notes,
+        required_exercises: extractRequiredExercises(workout.parts)
+      })
+      .select('id')
+      .single();
+
+    if (workoutError) {
+      console.error('Error creating workout:', workoutError);
+      throw workoutError;
+    }
+
+    const workoutId = workoutData.id;
+    console.log('Created workout with ID:', workoutId);
+
+    // 2. Workout Parts erstellen
+    for (let i = 0; i < workout.parts.length; i++) {
+      const part = workout.parts[i];
+      
+      const { data: partData, error: partError } = await supabase
+        .from('workout_parts')
+        .insert({
+          workout_id: workoutId,
+          part_name: part.name,
+          part_order: i + 1,
+          description: part.description || formatPartDescription(part),
+          duration_minutes: extractDurationMinutes(part.duration),
+          duration_rounds: part.rounds,
+          score_type: part.format || part.type,
+          notes: part.notes
+        })
+        .select('id')
+        .single();
+
+      if (partError) {
+        console.error('Error creating workout part:', partError);
+        continue; // Continue with next part
+      }
+
+      // 3. Exercises für diesen Part erstellen
+      if (part.exercises && Array.isArray(part.exercises)) {
+        for (let j = 0; j < part.exercises.length; j++) {
+          const exercise = part.exercises[j];
+          const exerciseName = typeof exercise === 'string' ? exercise : exercise.name || exercise;
+          
+          const { error: exerciseError } = await supabase
+            .from('workout_exercises')
+            .insert({
+              workout_part_id: partData.id,
+              exercise_name: exerciseName,
+              exercise_order: j + 1,
+              reps: extractReps(exerciseName),
+              weight_kg: extractWeight(exerciseName),
+              notes: typeof exercise === 'object' ? exercise.notes : null
+            });
+
+          if (exerciseError) {
+            console.error('Error creating exercise:', exerciseError);
+          }
+        }
+      }
+    }
+
+    // 4. Training Session erstellen
+    await saveTrainingSession(userProfile.user_id, workout);
+
+    return workoutId;
+  } catch (error) {
+    console.error('Error saving workout to database:', error);
+    throw error;
+  }
+}
+
+// Helper Funktionen für Datenbank-Mapping
+function mapSessionType(workoutType: string): string {
+  if (workoutType === 'crossfit') return 'full_session';
+  if (workoutType === 'bodybuilding') return 'full_session';
+  return 'full_session';
+}
+
+function mapFocusArea(focus: string): string {
+  switch (focus?.toLowerCase()) {
+    case 'ganzkörper':
+    case 'full_body':
+      return 'full_body';
+    case 'oberkörper':
+    case 'upper_body':
+      return 'upper_body';
+    case 'unterkörper':
+    case 'lower_body':
+      return 'lower_body';
+    default:
+      return 'full_body';
+  }
+}
+
+function extractRequiredExercises(parts: any[]): string[] {
+  const exercises: string[] = [];
+  parts.forEach(part => {
+    if (part.exercises && Array.isArray(part.exercises)) {
+      part.exercises.forEach((exercise: any) => {
+        const exerciseName = typeof exercise === 'string' ? exercise : exercise.name || exercise;
+        if (exerciseName && !exercises.includes(exerciseName)) {
+          exercises.push(exerciseName);
+        }
+      });
+    }
+  });
+  return exercises;
+}
+
+function formatPartDescription(part: any): string {
+  if (part.description) return part.description;
+  
+  let desc = '';
+  if (part.format) desc += `${part.format}: `;
+  if (part.duration) desc += `${part.duration} - `;
+  if (part.exercises && Array.isArray(part.exercises)) {
+    desc += part.exercises.join(', ');
+  }
+  return desc.trim().replace(/,$/, '');
+}
+
+function extractDurationMinutes(duration: string): number | null {
+  if (!duration) return null;
+  const match = duration.match(/(\d+)\s*min/i);
+  return match ? parseInt(match[1]) : null;
+}
+
+function extractReps(exerciseText: string): number | null {
+  const match = exerciseText.match(/(\d+)\s*(reps?|wiederholungen?|x)/i);
+  return match ? parseInt(match[1]) : null;
+}
+
+function extractWeight(exerciseText: string): number | null {
+  const match = exerciseText.match(/(\d+(?:\.\d+)?)\s*kg/i);
+  return match ? parseFloat(match[1]) : null;
+}
+
+// Funktion zum Speichern einer Training Session
+async function saveTrainingSession(userId: string, workout: any) {
+  try {
+    const { error } = await supabase
+      .from('training_sessions')
+      .insert({
+        user_id: userId,
+        date: new Date().toISOString().split('T')[0], // Heute
+        workout_type: workout.type,
+        workout_data: workout,
+        status: 'pending'
+      });
+
+    if (error) {
+      console.error('Error saving training session:', error);
+    } else {
+      console.log('Training session saved successfully');
+    }
+  } catch (error) {
+    console.error('Error in saveTrainingSession:', error);
   }
 }
