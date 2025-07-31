@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Camera, Upload, User } from "lucide-react"
+import { Camera, Upload, User, Edit, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop'
@@ -183,63 +183,73 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   return (
     <div className="flex flex-col items-center space-y-3">
       <div className="relative">
-        <Avatar 
-          className={`cursor-pointer transition-opacity hover:opacity-80 ${avatarSize}`}
-          onClick={() => fileInputRef.current?.click()}
-        >
+        <Avatar className={`${avatarSize}`}>
           <AvatarImage src={currentAvatarUrl || ''} alt="Profilbild" />
           <AvatarFallback className="bg-primary text-primary-foreground">
             <User className="h-6 w-6" />
           </AvatarFallback>
         </Avatar>
+        
+        {/* Icon buttons positioned over avatar */}
+        <div className="absolute -top-2 -right-2 flex gap-1">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 w-8 rounded-full p-0 shadow-lg"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            <Edit className="w-3 h-3" />
+          </Button>
+          
+          {currentAvatarUrl && (
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-8 w-8 rounded-full p-0 shadow-lg"
+              onClick={async () => {
+                try {
+                  // Delete from storage
+                  const fileName = currentAvatarUrl.split('/').pop()
+                  if (fileName) {
+                    await supabase.storage
+                      .from('avatars')
+                      .remove([`${userId}/${fileName}`])
+                  }
+                  
+                  // Update profile
+                  await supabase
+                    .from('profiles')
+                    .update({ avatar_url: null })
+                    .eq('user_id', userId)
+                  
+                  onAvatarUpdate?.(null)
+                  toast({
+                    title: "Profilbild gelöscht",
+                    description: "Das Profilbild wurde erfolgreich entfernt."
+                  })
+                } catch (error) {
+                  console.error('Error deleting avatar:', error)
+                  toast({
+                    title: "Fehler beim Löschen",
+                    description: "Das Profilbild konnte nicht gelöscht werden.",
+                    variant: "destructive"
+                  })
+                }
+              }}
+              disabled={uploading}
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          )}
+        </div>
+        
         {uploading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
-      
-      {!showUploadButton && currentAvatarUrl && (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              try {
-                // Delete from storage
-                const fileName = currentAvatarUrl.split('/').pop()
-                if (fileName) {
-                  await supabase.storage
-                    .from('avatars')
-                    .remove([`${userId}/${fileName}`])
-                }
-                
-                // Update profile
-                await supabase
-                  .from('profiles')
-                  .update({ avatar_url: null })
-                  .eq('user_id', userId)
-                
-                onAvatarUpdate?.(null)
-                toast({
-                  title: "Profilbild gelöscht",
-                  description: "Das Profilbild wurde erfolgreich entfernt."
-                })
-              } catch (error) {
-                console.error('Error deleting avatar:', error)
-                toast({
-                  title: "Fehler beim Löschen",
-                  description: "Das Profilbild konnte nicht gelöscht werden.",
-                  variant: "destructive"
-                })
-              }
-            }}
-            disabled={uploading}
-          >
-            Löschen
-          </Button>
-        </div>
-      )}
       
       <input
         ref={fileInputRef}
@@ -248,17 +258,6 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
         onChange={handleFileSelect}
         className="hidden"
       />
-
-      {/* Upload button (alternative) */}
-      {showUploadButton && size === "lg" && (
-        <Button
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-        >
-          {uploading ? "Hochladen..." : "Bild ändern"}
-        </Button>
-      )}
 
       {/* Crop Dialog */}
       <Dialog open={showCropDialog} onOpenChange={setShowCropDialog}>

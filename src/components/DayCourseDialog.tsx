@@ -81,10 +81,11 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         const nowTime = now.toTimeString().slice(0, 8)
         const nowDate = now.toISOString().split('T')[0]
         
+        // Filter for future courses only
         query = query
           .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
-          .order('course_date')
-          .order('start_time')
+          .order('course_date', { ascending: true })
+          .order('start_time', { ascending: true })
           .limit(10)
       }
 

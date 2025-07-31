@@ -62,6 +62,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     
     loadData()
     
+    // Check if we should open profile from navigation state
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('openProfile') === 'true') {
+      setShowProfile(true)
+      // Clean URL without refreshing page
+      window.history.replaceState({}, '', '/pro')
+    }
+    
     // Listen for custom tab change events
     const handleTabChange = (event: CustomEvent) => {
       setActiveTab(event.detail as DashboardTabType)

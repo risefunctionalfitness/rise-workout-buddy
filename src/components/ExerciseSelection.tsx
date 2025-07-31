@@ -105,7 +105,7 @@ export const ExerciseSelection = () => {
   const { toast } = useToast()
   
   const handleBack = () => {
-    navigate('/pro', { state: { openProfile: true } })
+    navigate('/pro?openProfile=true')
   }
   
   // Standardmäßig alle Übungen ausgewählt (grün)

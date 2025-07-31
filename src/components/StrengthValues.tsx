@@ -13,7 +13,7 @@ export const StrengthValues = () => {
   const { toast } = useToast()
   
   const handleBack = () => {
-    navigate('/pro', { state: { openProfile: true } })
+    navigate('/pro?openProfile=true')
   }
   
   // Standard 1RM Werte
