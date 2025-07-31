@@ -18,6 +18,14 @@ interface LeaderboardStats {
     name: string
     count: number
   } | null
+  registrationsByType?: {
+    freeTraining: number
+    courses: number
+    Member: number
+    Wellpass: number
+    '10er Karte': number
+    'Open Gym': number
+  }
 }
 
 export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
@@ -25,7 +33,15 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     totalEntries: 0,
     memberStats: {},
     currentMonthEntries: 0,
-    topUser: null
+    topUser: null,
+    registrationsByType: {
+      freeTraining: 0,
+      courses: 0,
+      Member: 0,
+      Wellpass: 0,
+      '10er Karte': 0,
+      'Open Gym': 0
+    }
   })
   const [loading, setLoading] = useState(true)
 
@@ -37,30 +53,74 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     try {
       setLoading(true)
       
-      // Get total leaderboard entries
-      const { data: totalData, count: totalCount } = await supabase
-        .from('leaderboard_entries')
-        .select('*', { count: 'exact' })
-
-      // Get current month entries
       const currentDate = new Date()
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
+      const firstDayOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
+      const lastDayOfMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0]
 
-      const { data: currentMonthData, count: currentMonthCount } = await supabase
-        .from('leaderboard_entries')
-        .select('*', { count: 'exact' })
-        .eq('year', currentYear)
-        .eq('month', currentMonth)
+      // Get current month training sessions (freies Training + Kurs)
+      const { data: trainingSessions } = await supabase
+        .from('training_sessions')
+        .select('user_id, workout_type')
+        .gte('date', firstDayOfMonth)
+        .lte('date', lastDayOfMonth)
+        .eq('status', 'completed')
 
-      // Get membership statistics with separate queries
+      // Get current month course registrations
+      const { data: courseRegistrations } = await supabase
+        .from('course_registrations')
+        .select(`
+          user_id,
+          status,
+          courses!inner(course_date)
+        `)
+        .eq('status', 'registered')
+        .gte('courses.course_date', firstDayOfMonth)
+        .lte('courses.course_date', lastDayOfMonth)
+
+      // Get all profiles for membership categorization
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, membership_type')
 
-      const { data: membershipData } = await supabase
-        .from('leaderboard_entries')
-        .select('user_id')
+      // Calculate statistics
+      const freeTrainingCount = trainingSessions?.filter(s => s.workout_type === 'free_training').length || 0
+      const courseTrainingCount = courseRegistrations?.length || 0
+      const totalRegistrations = freeTrainingCount + courseTrainingCount
+
+      // Registration counts by membership type
+      const membershipCounts = {
+        'Member': 0,
+        'Wellpass': 0,
+        '10er Karte': 0,
+        'Open Gym': 0
+      }
+
+      // Count free training by membership
+      trainingSessions?.forEach(session => {
+        const profile = profiles?.find(p => p.user_id === session.user_id)
+        const membershipType = profile?.membership_type || 'Member'
+        if (membershipCounts.hasOwnProperty(membershipType)) {
+          membershipCounts[membershipType]++
+        }
+      })
+
+      // Count course registrations by membership
+      courseRegistrations?.forEach(registration => {
+        const profile = profiles?.find(p => p.user_id === registration.user_id)
+        const membershipType = profile?.membership_type || 'Member'
+        if (membershipCounts.hasOwnProperty(membershipType)) {
+          membershipCounts[membershipType]++
+        }
+      })
+
+      // Count total memberships by category
+      const membershipStats: { [key: string]: number } = {}
+      profiles?.forEach(profile => {
+        const membershipType = profile.membership_type || 'Member'
+        membershipStats[membershipType] = (membershipStats[membershipType] || 0) + 1
+      })
 
       // Get top user of current month
       const { data: topUserData } = await supabase
@@ -85,24 +145,22 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         }
       }
 
-      // Process membership stats
-      const memberStats: { [key: string]: number } = {}
-      if (membershipData && profiles) {
-        membershipData.forEach(entry => {
-          const profile = profiles.find(p => p.user_id === entry.user_id)
-          const membershipType = profile?.membership_type || 'Unknown'
-          memberStats[membershipType] = (memberStats[membershipType] || 0) + 1
-        })
-      }
-
       const statsData = {
-        totalEntries: totalCount || 0,
-        memberStats,
-        currentMonthEntries: currentMonthCount || 0,
-        topUser
+        totalEntries: totalRegistrations,
+        memberStats: membershipStats,
+        currentMonthEntries: totalRegistrations,
+        topUser,
+        registrationsByType: {
+          freeTraining: freeTrainingCount,
+          courses: courseTrainingCount,
+          ...membershipCounts
+        }
       }
 
-      setStats(statsData)
+      setStats({
+        ...stats,
+        ...statsData
+      })
       onStatsLoad?.(statsData)
     } catch (error) {
       console.error('Error loading admin stats:', error)
@@ -129,60 +187,115 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center">
-            <Trophy className="h-8 w-8 text-yellow-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Gesamt Einträge</p>
-              <p className="text-2xl font-bold">{stats.totalEntries}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center">
-            <Calendar className="h-8 w-8 text-blue-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Aktueller Monat</p>
-              <p className="text-2xl font-bold">{stats.currentMonthEntries}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center">
-            <Zap className="h-8 w-8 text-green-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Top Athlet</p>
-              <p className="text-lg font-bold truncate">
-                {stats.topUser ? `${stats.topUser.name} (${stats.topUser.count})` : 'Keine Daten'}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center">
-            <Users className="h-8 w-8 text-purple-500" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Mitgliedschaften</p>
-              <div className="space-y-1">
-                {Object.entries(stats.memberStats).map(([type, count]) => (
-                  <div key={type} className="flex justify-between items-center">
-                    <Badge variant="secondary" className="text-xs">{type}</Badge>
-                    <span className="text-sm font-semibold">{count}</span>
-                  </div>
-                ))}
+    <div className="space-y-6">
+      {/* Monthly Registrations */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Calendar className="h-8 w-8 text-blue-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Anmeldungen diesen Monat</p>
+                <p className="text-2xl font-bold">{stats.registrationsByType?.freeTraining + stats.registrationsByType?.courses || 0}</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Zap className="h-8 w-8 text-green-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Freies Training</p>
+                <p className="text-2xl font-bold">{stats.registrationsByType?.freeTraining || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-orange-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Kurs Anmeldungen</p>
+                <p className="text-2xl font-bold">{stats.registrationsByType?.courses || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Trophy className="h-8 w-8 text-yellow-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Top Athlet</p>
+                <p className="text-lg font-bold truncate">
+                  {stats.topUser ? `${stats.topUser.name} (${stats.topUser.count})` : 'Keine Daten'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Membership Type Registrations */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-600">Member Anmeldungen</p>
+              <p className="text-2xl font-bold text-blue-600">{stats.registrationsByType?.Member || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-600">Wellpass Anmeldungen</p>
+              <p className="text-2xl font-bold text-green-600">{stats.registrationsByType?.Wellpass || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-600">10er Karte Anmeldungen</p>
+              <p className="text-2xl font-bold text-orange-600">{stats.registrationsByType?.['10er Karte'] || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-600">Open Gym Anmeldungen</p>
+              <p className="text-2xl font-bold text-purple-600">{stats.registrationsByType?.['Open Gym'] || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Total Memberships */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center mb-4">
+            <Users className="h-8 w-8 text-purple-500" />
+            <div className="ml-4">
+              <p className="text-lg font-medium text-gray-900">Anzahl Mitgliedschaften je Kategorie</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(stats.memberStats).map(([type, count]) => (
+              <div key={type} className="text-center">
+                <Badge variant="secondary" className="text-sm mb-2">{type}</Badge>
+                <p className="text-xl font-bold">{count}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

@@ -86,13 +86,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const loadCourses = async () => {
     try {
       setLoading(true)
-      const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 })
-      const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
 
-      console.log('Loading courses for week:', format(weekStart, 'yyyy-MM-dd'), 'to', format(weekEnd, 'yyyy-MM-dd'))
-
-      // Get courses and user registrations in parallel
+      // Get next 10 upcoming courses only
       const now = new Date()
+      const nowDate = now.toISOString().split('T')[0]
+      const nowTime = now.toTimeString().slice(0, 8)
+
       const [coursesResult, userRegistrationsResult] = await Promise.all([
         supabase
           .from('courses')
@@ -100,13 +99,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
             *,
             course_registrations(status)
           `)
-          .gte('course_date', format(weekStart, 'yyyy-MM-dd'))
-          .lte('course_date', format(weekEnd, 'yyyy-MM-dd'))
           .eq('is_cancelled', false)
-          // Filter out past courses
-          .or(`course_date.gt.${now.toISOString().split('T')[0]},and(course_date.eq.${now.toISOString().split('T')[0]},end_time.gt.${now.toTimeString().slice(0, 8)})`)
+          // Only future courses by date and time
+          .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .order('course_date', { ascending: true })
-          .order('start_time', { ascending: true }),
+          .order('start_time', { ascending: true })
+          .limit(10),
         supabase
           .from('course_registrations')
           .select('course_id, status')
@@ -115,8 +113,6 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
       if (coursesResult.error) throw coursesResult.error
       if (userRegistrationsResult.error) throw userRegistrationsResult.error
-
-      console.log('Found courses:', coursesResult.data?.length || 0)
 
       // Process courses data
       const processedCourses = (coursesResult.data || []).map(course => {
@@ -244,26 +240,17 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     }
   }
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    setCurrentWeek(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1))
-  }
+  // Remove week navigation - we only show next 10 courses
 
-  const getWeekDays = () => {
-    const start = startOfWeek(currentWeek, { weekStartsOn: 1 })
-    const days = []
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(start)
-      day.setDate(start.getDate() + i)
-      days.push(day)
+  // Group courses by date for display
+  const groupedCourses = courses.reduce((acc, course) => {
+    const date = course.course_date
+    if (!acc[date]) {
+      acc[date] = []
     }
-    return days
-  }
-
-  const getCoursesByDay = (date: Date) => {
-    return courses.filter(course => 
-      isSameDay(parseISO(course.course_date), date)
-    )
-  }
+    acc[date].push(course)
+    return acc
+  }, {} as Record<string, Course[]>)
 
   const isPastDate = (date: Date) => {
     const today = new Date()
@@ -300,107 +287,78 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   return (
     <div className="p-4 space-y-4">
-      {/* Week Navigation */}
-      <div className="flex items-center justify-between">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => navigateWeek('prev')}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="text-center">
-          <h2 className="font-semibold">
-            {format(startOfWeek(currentWeek, { weekStartsOn: 1 }), 'dd.MM', { locale: de })} - {format(endOfWeek(currentWeek, { weekStartsOn: 1 }), 'dd.MM.yyyy', { locale: de })}
-          </h2>
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => navigateWeek('next')}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="font-semibold">Nächste 10 Kurse</h2>
       </div>
 
-      {/* Week View */}
+      {/* Courses List */}
       <div className="grid grid-cols-1 gap-4 pb-24">
-        {getWeekDays().map(day => {
-          const dayCourses = getCoursesByDay(day)
-          return (
-            <div key={day.toISOString()} className="space-y-2">
-              <h3 className="font-medium text-sm text-muted-foreground">
-                {format(day, 'EEEE, dd.MM', { locale: de })}
-              </h3>
-              {dayCourses.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">Keine Kurse</p>
-              ) : (
-                <div className="space-y-2">
-                  {dayCourses.map(course => {
-                    const isPast = isPastDate(parseISO(course.course_date))
-                    const canClick = isPast ? (isTrainer || isAdmin) : true
-                    
-                    return (
-                      <Card 
-                        key={course.id} 
-                        className={`transition-all duration-200 ${
-                          isPast 
-                            ? 'opacity-50' + (canClick ? ' cursor-pointer hover:shadow-md hover:opacity-70' : ' cursor-not-allowed')
-                            : 'cursor-pointer hover:shadow-md'
-                        }`}
-                        onClick={() => canClick && handleCourseClick(course)}
-                      >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
-                              <h4 className="font-medium truncate">{course.title}</h4>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {course.trainer}
-                              </div>
-                            </div>
-                            {course.strength_exercise && (
-                              <Badge variant="outline" className="text-xs mt-1 w-fit">
-                                {course.strength_exercise}
-                              </Badge>
-                            )}
+        {Object.entries(groupedCourses).map(([date, dayCourses]) => (
+          <div key={date} className="space-y-2">
+            <h3 className="font-medium text-sm text-muted-foreground">
+              {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
+            </h3>
+            <div className="space-y-2">
+              {dayCourses.map(course => (
+                <Card 
+                  key={course.id} 
+                  className="cursor-pointer hover:shadow-md transition-all duration-200"
+                  onClick={() => handleCourseClick(course)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
+                          <h4 className="font-medium truncate">{course.title}</h4>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
                           </div>
-                          <div className="flex flex-col items-end gap-1">
-                            {(() => {
-                              const percentage = (course.registered_count / course.max_participants) * 100;
-                              let badgeColor = "bg-green-500";
-                              if (percentage >= 100) badgeColor = "bg-red-500";
-                              else if (percentage >= 75) badgeColor = "bg-[#edb408]";
-                              
-                              return (
-                                <Badge className={`text-white ${badgeColor}`}>
-                                  {course.registered_count}/{course.max_participants}
-                                </Badge>
-                              );
-                            })()}
-                            {course.waitlist_count > 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                {course.waitlist_count} Warteliste
-                              </span>
-                            )}
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {course.trainer}
                           </div>
                         </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                </div>
-              )}
+                        {course.strength_exercise && (
+                          <Badge variant="outline" className="text-xs mt-1 w-fit">
+                            {course.strength_exercise}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {(() => {
+                          const percentage = (course.registered_count / course.max_participants) * 100;
+                          let badgeColor = "bg-green-500";
+                          if (percentage >= 100) badgeColor = "bg-red-500";
+                          else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                          
+                          return (
+                            <Badge className={`text-white ${badgeColor}`}>
+                              {course.registered_count}/{course.max_participants}
+                            </Badge>
+                          );
+                        })()}
+                        {course.waitlist_count > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {course.waitlist_count} Warteliste
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          )
-        })}
+          </div>
+        ))}
+        {courses.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            Keine kommenden Kurse verfügbar
+          </div>
+        )}
       </div>
 
       {/* Course Detail Dialog */}
