@@ -472,69 +472,122 @@ export default function Admin() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Zugangscode</TableHead>
-                  <TableHead>Mitgliedschaft</TableHead>
-                  <TableHead>Erstellt am</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Letzter Login</TableHead>
-                  <TableHead>Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.display_name}</TableCell>
-                    <TableCell>{member.access_code}</TableCell>
-                    <TableCell>
-                      <MembershipBadge type={member.membership_type} />
-                    </TableCell>
-                    <TableCell>
-                      {new Date(member.created_at).toLocaleDateString('de-DE')}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        member.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {member.status === 'active' ? 'Aktiv' : 'Inaktiv'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {member.last_login_at 
-                        ? new Date(member.last_login_at).toLocaleDateString('de-DE')
-                        : 'Nie'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
+            {/* Mobile View - Cards */}
+            <div className="block md:hidden space-y-4">
+              {members.map((member) => (
+                <Card key={member.id} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-sm">{member.display_name}</h3>
+                        <p className="text-xs text-gray-500">{member.access_code}</p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(member.created_at).toLocaleDateString('de-DE')}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
                           size="sm"
+                          className="text-xs px-2 py-1 h-8"
                           onClick={() => {
                             setEditingMember(member);
                             setEditDialogOpen(true);
                           }}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3" />
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="destructive"
                           size="sm"
+                          className="text-xs px-2 py-1 h-8"
                           onClick={() => handleDeleteMember(member.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
-                    </TableCell>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <MembershipBadge type={member.membership_type} />
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        member.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {member.status === 'active' ? 'Aktiv' : 'Inaktiv'}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Desktop View - Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Zugangscode</TableHead>
+                    <TableHead>Mitgliedschaft</TableHead>
+                    <TableHead>Erstellt am</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Letzter Login</TableHead>
+                    <TableHead>Aktionen</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
+                </TableHeader>
+                <TableBody>
+                  {members.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">{member.display_name}</TableCell>
+                      <TableCell>{member.access_code}</TableCell>
+                      <TableCell>
+                        <MembershipBadge type={member.membership_type} />
+                      </TableCell>
+                      <TableCell>
+                        {new Date(member.created_at).toLocaleDateString('de-DE')}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          member.status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {member.status === 'active' ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {member.last_login_at 
+                          ? new Date(member.last_login_at).toLocaleDateString('de-DE')
+                          : 'Nie'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setEditingMember(member);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDeleteMember(member.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
               </Table>
+            </div>
             </CardContent>
           </Card>
 
@@ -604,56 +657,60 @@ export default function Admin() {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-screen md:w-56 min-h-screen md:min-h-0 flex md:block flex-col justify-center md:justify-start">
-                <DropdownMenuItem 
-                  onClick={() => setActivePage('home')}
-                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
-                >
-                  <Home className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
-                  Home
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setActivePage('members')}
-                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
-                >
-                  <Users className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
-                  Mitglieder
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setActivePage('courses')}
-                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
-                >
-                  <Calendar className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
-                  Kurse
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setActivePage('templates')}
-                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
-                >
-                  <Calendar className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
-                  Vorlagen
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setActivePage('news')}
-                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
-                >
-                  <Newspaper className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
-                  News
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setActivePage('codes')}
-                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
-                >
-                  <Users className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
-                  Codes
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start mt-4 md:mt-0 border-t md:border-t-0"
-                >
-                  <LogOut className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
-                  Abmelden
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-80 p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div 
+                    onClick={() => setActivePage('home')}
+                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <Home className="h-8 w-8 text-gray-600 mb-2" />
+                    <span className="text-sm font-medium">Home</span>
+                  </div>
+                  <div 
+                    onClick={() => setActivePage('members')}
+                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <Users className="h-8 w-8 text-gray-600 mb-2" />
+                    <span className="text-sm font-medium">Mitglieder</span>
+                  </div>
+                  <div 
+                    onClick={() => setActivePage('courses')}
+                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <Calendar className="h-8 w-8 text-gray-600 mb-2" />
+                    <span className="text-sm font-medium">Kurse</span>
+                  </div>
+                  <div 
+                    onClick={() => setActivePage('templates')}
+                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <Calendar className="h-8 w-8 text-gray-600 mb-2" />
+                    <span className="text-sm font-medium">Vorlagen</span>
+                  </div>
+                  <div 
+                    onClick={() => setActivePage('news')}
+                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <Newspaper className="h-8 w-8 text-gray-600 mb-2" />
+                    <span className="text-sm font-medium">News</span>
+                  </div>
+                  <div 
+                    onClick={() => setActivePage('codes')}
+                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <Users className="h-8 w-8 text-gray-600 mb-2" />
+                    <span className="text-sm font-medium">Codes</span>
+                  </div>
+                </div>
+                <div className="border-t mt-4 pt-4">
+                  <div 
+                    onClick={handleLogout}
+                    className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
+                  >
+                    <LogOut className="h-8 w-8 text-red-600 mb-2" />
+                    <span className="text-sm font-medium text-red-600">Abmelden</span>
+                  </div>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

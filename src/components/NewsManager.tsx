@@ -6,8 +6,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -34,8 +32,7 @@ export const NewsManager = () => {
   // Form state
   const [newsForm, setNewsForm] = useState({
     title: '',
-    content: '',
-    is_published: true
+    content: ''
   })
 
   useEffect(() => {
@@ -72,8 +69,8 @@ export const NewsManager = () => {
           title: newsForm.title,
           content: newsForm.content,
           author_id: user.id,
-          is_published: newsForm.is_published,
-          published_at: newsForm.is_published ? new Date().toISOString() : null
+          is_published: true,
+          published_at: new Date().toISOString()
         })
 
       if (error) throw error
@@ -81,8 +78,7 @@ export const NewsManager = () => {
       toast.success('Nachricht erfolgreich erstellt')
       setNewsForm({
         title: '',
-        content: '',
-        is_published: true
+        content: ''
       })
       setCreateDialogOpen(false)
       await loadNews()
@@ -101,10 +97,8 @@ export const NewsManager = () => {
       const updates = {
         title: formData.get('title') as string,
         content: formData.get('content') as string,
-        is_published: formData.get('is_published') === 'on',
-        published_at: formData.get('is_published') === 'on' 
-          ? (editingNews.published_at || new Date().toISOString())
-          : null
+        is_published: true,
+        published_at: new Date().toISOString()
       }
 
       const { error } = await supabase
@@ -142,27 +136,6 @@ export const NewsManager = () => {
     }
   }
 
-  const handleTogglePublished = async (newsId: string, currentStatus: boolean) => {
-    try {
-      const updates = {
-        is_published: !currentStatus,
-        published_at: !currentStatus ? new Date().toISOString() : null
-      }
-
-      const { error } = await supabase
-        .from('news')
-        .update(updates)
-        .eq('id', newsId)
-
-      if (error) throw error
-
-      toast.success(`Nachricht ${!currentStatus ? 'veröffentlicht' : 'versteckt'}`)
-      await loadNews()
-    } catch (error) {
-      console.error('Error toggling news status:', error)
-      toast.error('Fehler beim Ändern des Status')
-    }
-  }
 
   if (loading) {
     return (
@@ -215,13 +188,6 @@ export const NewsManager = () => {
                       required
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={newsForm.is_published}
-                      onCheckedChange={(checked) => setNewsForm(prev => ({ ...prev, is_published: checked }))}
-                    />
-                    <Label>Sofort veröffentlichen</Label>
-                  </div>
                   <Button type="submit" className="w-full">
                     Nachricht erstellen
                   </Button>
@@ -235,7 +201,6 @@ export const NewsManager = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Titel</TableHead>
-                <TableHead>Veröffentlicht</TableHead>
                 <TableHead>Erstellt</TableHead>
                 <TableHead>Aktionen</TableHead>
               </TableRow>
@@ -245,12 +210,6 @@ export const NewsManager = () => {
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
                     {item.title}
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={item.is_published}
-                      onCheckedChange={() => handleTogglePublished(item.id, item.is_published)}
-                    />
                   </TableCell>
                   <TableCell>
                     {format(new Date(item.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}
@@ -295,15 +254,6 @@ export const NewsManager = () => {
               <div>
                 <Label htmlFor="content">Inhalt</Label>
                 <Textarea name="content" defaultValue={editingNews.content} rows={6} required />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="is_published"
-                  defaultChecked={editingNews.is_published}
-                  className="rounded"
-                />
-                <Label>Veröffentlicht</Label>
               </div>
               <Button type="submit" className="w-full">
                 Nachricht aktualisieren
