@@ -5,12 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2 } from "lucide-react";
+import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
 import { GymCodeManager } from "@/components/GymCodeManager";
@@ -43,7 +43,11 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [activeTab, setActiveTab] = useState<'members' | 'participants' | 'courses' | 'news' | 'gym-codes'>('members');
+  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes'>('home');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalMembers, setTotalMembers] = useState(0);
+  const membersPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -77,6 +81,12 @@ export default function Admin() {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  useEffect(() => {
+    if (activePage === 'members' && isAdmin) {
+      loadMembers();
+    }
+  }, [activePage, isAdmin, currentPage, searchTerm]);
 
   const checkAdminRole = async (userId: string) => {
     try {
@@ -123,16 +133,28 @@ export default function Admin() {
       // First update member status automatically
       await supabase.rpc('update_member_status');
       
-      const { data, error } = await supabase
+      // Calculate offset for pagination
+      const offset = (currentPage - 1) * membersPerPage;
+      
+      // Build query with search filter
+      let query = supabase
         .from('profiles')
-        .select('id, display_name, access_code, created_at, user_id, membership_type, status, last_login_at')
-        .order('created_at', { ascending: false });
+        .select('id, display_name, access_code, created_at, user_id, membership_type, status, last_login_at', { count: 'exact' });
+      
+      if (searchTerm) {
+        query = query.or(`display_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
+      }
+      
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(offset, offset + membersPerPage - 1);
 
       if (error) {
         console.error('Error loading members:', error);
         toast.error("Fehler beim Laden der Mitglieder");
       } else {
         setMembers((data || []) as Member[]);
+        setTotalMembers(count || 0);
       }
     } catch (error) {
       console.error('Error loading members:', error);
@@ -184,6 +206,7 @@ export default function Admin() {
         setNewMemberCode("");
         setNewMembershipType("Member");
         setDialogOpen(false);
+        setCurrentPage(1);
         loadMembers();
       }
     } catch (error) {
@@ -236,6 +259,7 @@ export default function Admin() {
         toast.error("Fehler beim Löschen des Mitglieds");
       } else {
         toast.success("Mitglied erfolgreich gelöscht");
+        setCurrentPage(1);
         loadMembers();
       }
     } catch (error) {
@@ -275,11 +299,10 @@ export default function Admin() {
   }
 
   const renderMembersContent = () => {
+    const totalPages = Math.ceil(totalMembers / membersPerPage);
+    
     return (
       <div className="space-y-6">
-        {/* Admin Statistics */}
-        <AdminStats />
-        
         {/* Members Table */}
         <Card>
           <CardHeader>
@@ -287,16 +310,30 @@ export default function Admin() {
               <div>
                 <CardTitle>Mitglieder verwalten</CardTitle>
                 <CardDescription>
-                  Erstellen und verwalten Sie Mitgliederaccounts
+                  Erstellen und verwalten Sie Mitgliederaccounts ({totalMembers} insgesamt)
                 </CardDescription>
+                </div>
               </div>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Neues Mitglied
-                  </Button>
-                </DialogTrigger>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Mitglieder suchen..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Neues Mitglied
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Neues Mitglied erstellen</DialogTitle>
@@ -497,11 +534,53 @@ export default function Admin() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-    );
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Zurück
+              </Button>
+              <span className="flex items-center px-4">
+                Seite {currentPage} von {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Weiter
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+  const renderPageContent = () => {
+    switch (activePage) {
+      case 'home':
+        return <AdminStats />;
+      case 'members':
+        return renderMembersContent();
+      case 'courses':
+        return <CourseParticipants />;
+      case 'templates':
+        return <CourseTemplateManager />;
+      case 'news':
+        return <NewsManager />;
+      case 'codes':
+        return <GymCodeManager />;
+      default:
+        return <AdminStats />;
+    }
   };
 
   return (
@@ -518,46 +597,50 @@ export default function Admin() {
               />
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Abmelden
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setActivePage('home')}>
+                  <Home className="h-4 w-4 mr-2" />
+                  Home
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage('members')}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Mitglieder
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage('courses')}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Kurse
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage('templates')}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Vorlagen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage('news')}>
+                  <Newspaper className="h-4 w-4 mr-2" />
+                  News
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActivePage('codes')}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Codes
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Abmelden
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="container mx-auto p-6">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'members' | 'participants' | 'courses' | 'news' | 'gym-codes')}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="members" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Mitglieder
-            </TabsTrigger>
-            <TabsTrigger value="participants" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Kurse
-            </TabsTrigger>
-            <TabsTrigger value="courses" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Kursvorlagen
-            </TabsTrigger>
-            <TabsTrigger value="news" className="flex items-center gap-2">
-              <Newspaper className="h-4 w-4" />
-              News
-            </TabsTrigger>
-            <TabsTrigger value="gym-codes" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Gym-Codes
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="members" className="mt-6">{renderMembersContent()}</TabsContent>
-          <TabsContent value="participants" className="mt-6"><CourseParticipants /></TabsContent>
-          <TabsContent value="courses" className="mt-6"><CourseTemplateManager /></TabsContent>
-          <TabsContent value="news" className="mt-6"><NewsManager /></TabsContent>
-          <TabsContent value="gym-codes" className="mt-6"><GymCodeManager /></TabsContent>
-        </Tabs>
+        {renderPageContent()}
       </div>
     </div>
   );

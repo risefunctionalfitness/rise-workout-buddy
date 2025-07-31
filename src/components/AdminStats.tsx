@@ -80,7 +80,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         .eq('status', 'completed')
 
       // Count by workout type
-      const freeTrainingCount = trainingSessions?.filter(s => s.workout_type === 'free_training').length || 0
+      const freeTrainingCount = trainingSessions?.filter(s => s.workout_type === 'free_training' || s.workout_type === 'individual').length || 0
       const courseTrainingCount = trainingSessions?.filter(s => s.workout_type === 'course').length || 0
       const openGymCount = trainingSessions?.filter(s => s.workout_type === 'open_gym').length || 0
 
@@ -144,11 +144,27 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     )
   }
 
+  // Get colors from MembershipBadge component
+  const getMembershipColor = (type: string) => {
+    switch (type) {
+      case 'Member':
+        return 'hsl(334, 87%, 40%)' // #bd114a
+      case 'Wellpass':
+        return 'hsl(185, 100%, 33%)' // #00a8b5
+      case '10er Karte':
+        return 'hsl(0, 0%, 0%)' // #000000
+      case 'Open Gym':
+        return 'hsl(0, 0%, 85%)' // #d9d9d9
+      default:
+        return 'hsl(334, 87%, 40%)'
+    }
+  }
+
   const chartData = [
-    { name: 'Member', value: stats.registrationsByType?.Member || 0, fill: '#3B82F6' },
-    { name: 'Wellpass', value: stats.registrationsByType?.Wellpass || 0, fill: '#10B981' },
-    { name: '10er Karte', value: stats.registrationsByType?.['10er Karte'] || 0, fill: '#F59E0B' },
-    { name: 'Open Gym', value: stats.registrationsByType?.['Open Gym'] || 0, fill: '#8B5CF6' }
+    { name: 'Member', value: stats.registrationsByType?.Member || 0, fill: getMembershipColor('Member') },
+    { name: 'Wellpass', value: stats.registrationsByType?.Wellpass || 0, fill: getMembershipColor('Wellpass') },
+    { name: '10er Karte', value: stats.registrationsByType?.['10er Karte'] || 0, fill: getMembershipColor('10er Karte') },
+    { name: 'Open Gym', value: stats.registrationsByType?.['Open Gym'] || 0, fill: getMembershipColor('Open Gym') }
   ]
 
   return (
@@ -198,13 +214,13 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           <CardTitle>Anmeldungen nach Mitgliedschaftstyp</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
-              <YAxis />
+              <YAxis domain={[0, 350]} />
               <Tooltip />
-              <Bar dataKey="value" fill="#8884d8" />
+              <Bar dataKey="value" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
