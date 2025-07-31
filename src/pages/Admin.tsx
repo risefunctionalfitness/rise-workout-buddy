@@ -651,17 +651,17 @@ export default function Admin() {
               />
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             </div>
-            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                className="fixed inset-0 z-50 bg-white w-screen h-screen flex flex-col justify-center items-center p-8"
-                onCloseAutoFocus={(e) => e.preventDefault()}
-              >
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setDropdownOpen(true)}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+            
+            {/* Navigation Overlay */}
+            {dropdownOpen && (
+              <div className="fixed inset-0 z-50 bg-white flex flex-col justify-center items-center p-8">
                 <div className="grid grid-cols-2 gap-8 max-w-md w-full">
                   <div 
                     onClick={() => {
@@ -736,8 +736,19 @@ export default function Admin() {
                     <span className="text-lg font-medium text-red-600">Abmelden</span>
                   </div>
                 </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                
+                {/* Close button */}
+                <div className="absolute top-6 right-6">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <span className="text-xl">×</span>
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
