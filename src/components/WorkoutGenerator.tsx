@@ -7,6 +7,7 @@ import { SessionTypeSelector, type SessionType } from "./SessionTypeSelector"
 import { DurationSlider } from "./DurationSlider"
 import { BodySelector } from "./BodySelector"
 import { WorkoutDisplayWhiteboard } from "./WorkoutDisplayWhiteboard"
+import { WorkoutDisplayDatabase } from "./WorkoutDisplayDatabase"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 
@@ -36,6 +37,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   const [duration, setDuration] = useState<number>(0)
   const [focus, setFocus] = useState<Focus>(null)
   const [generatedWorkout, setGeneratedWorkout] = useState<WorkoutData | null>(null)
+  const [generatedWorkoutId, setGeneratedWorkoutId] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -88,21 +90,27 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
         throw new Error(error.message || 'Fehler beim Generieren des Workouts')
       }
 
-      // Konvertiere das neue Workout-Format in das bestehende Format
-      const convertedWorkout: WorkoutData = {
-        title: data.workout.name,
-        type: data.workout.type,
-        duration: data.workout.duration,
-        exercises: data.workout.parts.reduce((acc: any[], part: any) => {
-          if (part.exercises) {
-            acc.push(...part.exercises.map((ex: string) => ({ name: ex })))
-          }
-          return acc
-        }, []),
-        notes: data.workout.notes
+      // Wenn wir eine workout_id vom Server bekommen, nutzen wir die neue Database-Komponente
+      if (data.workout_id) {
+        setGeneratedWorkoutId(data.workout_id)
+        setGeneratedWorkout(null)
+      } else {
+        // Fallback: Konvertiere das neue Workout-Format in das bestehende Format
+        const convertedWorkout: WorkoutData = {
+          title: data.workout.name,
+          type: data.workout.type,
+          duration: data.workout.duration,
+          exercises: data.workout.parts.reduce((acc: any[], part: any) => {
+            if (part.exercises) {
+              acc.push(...part.exercises.map((ex: string) => ({ name: ex })))
+            }
+            return acc
+          }, []),
+          notes: data.workout.notes
+        }
+        setGeneratedWorkout(convertedWorkout)
+        setGeneratedWorkoutId(null)
       }
-
-      setGeneratedWorkout(convertedWorkout)
       
       toast({
         title: "Personalisiertes Workout generiert!",
@@ -210,6 +218,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
 
   const newWorkout = () => {
     setGeneratedWorkout(null)
+    setGeneratedWorkoutId(null)
   }
 
   const resetSelection = () => {
@@ -218,9 +227,22 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
     setDuration(0)
     setFocus(null)
     setGeneratedWorkout(null)
+    setGeneratedWorkoutId(null)
     setShowAdvanced(false)
   }
 
+  // Nutze die neue Database-Komponente wenn wir eine workout_id haben
+  if (generatedWorkoutId) {
+    return (
+      <WorkoutDisplayDatabase 
+        workoutId={generatedWorkoutId}
+        onNewWorkout={newWorkout}
+        onReset={resetSelection}
+      />
+    )
+  }
+
+  // Fallback für alte Workout-Daten
   if (generatedWorkout) {
     return (
       <WorkoutDisplayWhiteboard 
