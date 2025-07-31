@@ -147,11 +147,11 @@ export const WorkoutStart: React.FC = () => {
         </Button>
       </div>
       
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="max-w-md w-full">
+      <div className="flex-1 flex items-center justify-center p-6" style={{ marginTop: '-1cm' }}>
+        <div className="max-w-md w-full" style={{ marginTop: '-1cm' }}>
           {!isCountingDown && !isRunning && workoutTime === 0 && (
-            <div className="text-center space-y-12">
-              <h1 className="text-8xl font-bold">START</h1>
+            <div className="text-center space-y-12" style={{ marginTop: '-1cm' }}>
+              <h1 className="text-8xl font-bold" style={{ marginTop: '-1cm' }}>START</h1>
               
               <div className="flex justify-center">
                 <Button
@@ -170,18 +170,18 @@ export const WorkoutStart: React.FC = () => {
           )}
 
           {isCountingDown && (
-            <div className="text-center space-y-12">
-              <h1 className={`text-9xl font-bold ${countdown <= 3 ? 'text-primary animate-pulse' : ''}`}>
+            <div className="text-center space-y-12" style={{ marginTop: '-1cm' }}>
+              <h1 className={`text-9xl font-bold ${countdown <= 3 ? 'text-primary animate-pulse' : ''}`} style={{ marginTop: '-1cm' }}>
                 {countdown}
               </h1>
-              <p className="text-2xl">Bereit machen...</p>
+              <p className="text-2xl" style={{ marginTop: '-1cm' }}>Bereit machen...</p>
             </div>
           )}
 
           {isRunning && (
-            <div className="text-center space-y-12">
+            <div className="text-center space-y-12" style={{ marginTop: '-1cm' }}>
               <div>
-                <h1 className="text-8xl font-bold">{formatTime(workoutTime)}</h1>
+                <h1 className="text-8xl font-bold" style={{ marginTop: '-1cm' }}>{formatTime(workoutTime)}</h1>
                 {type === 'emom' && (
                   <div className="mt-6">
                     <p className="text-2xl">Runde {currentRound} von {settings.rounds}</p>
@@ -215,9 +215,9 @@ export const WorkoutStart: React.FC = () => {
           )}
 
           {!isRunning && workoutTime > 0 && (
-            <div className="text-center space-y-12">
-              <h1 className="text-6xl font-bold">FERTIG!</h1>
-              <p className="text-3xl">Zeit: {formatTime(workoutTime)}</p>
+            <div className="text-center space-y-12" style={{ marginTop: '-1cm' }}>
+              <h1 className="text-6xl font-bold" style={{ marginTop: '-1cm' }}>FERTIG!</h1>
+              <p className="text-3xl" style={{ marginTop: '-1cm' }}>Zeit: {formatTime(workoutTime)}</p>
               {type === 'emom' && (
                 <p className="text-2xl">Runden: {currentRound - 1} von {settings.rounds}</p>
               )}

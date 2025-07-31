@@ -134,7 +134,8 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
     // Alle Tage (auch vergangene) sind klickbar für Kurs An-/Abmeldung, außer für Open Gym
     if (!isOpenGym) {
       const selectedDate = new Date(currentYear, currentMonth, day)
-      setSelectedDate(selectedDate.toISOString().split('T')[0])
+      const formattedDate = selectedDate.toISOString().split('T')[0]
+      setSelectedDate(formattedDate)
       setShowCourseDialog(true)
     }
   }

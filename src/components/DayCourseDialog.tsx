@@ -62,12 +62,15 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         .eq('is_cancelled', false)
 
       if (date) {
-        // Load courses for specific date
-        query = query.eq('course_date', date)
+        // Load courses for specific date - only future courses
+        const dateString = date
+        query = query
+          .eq('course_date', dateString)
+          .or(`end_time.gt.${now.toTimeString().slice(0, 8)}`)
       } else {
         // Load next 10 upcoming courses (based on date and time)
         query = query
-          .or(`course_date.gt.${date},and(course_date.eq.${date},end_time.gt.${now.toTimeString().slice(0, 8)})`)
+          .or(`course_date.gt.${new Date().toISOString().split('T')[0]},and(course_date.eq.${new Date().toISOString().split('T')[0]},end_time.gt.${now.toTimeString().slice(0, 8)})`)
           .order('course_date')
           .order('start_time')
           .limit(10)
