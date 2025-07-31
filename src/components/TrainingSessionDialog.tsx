@@ -1,6 +1,8 @@
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Calendar, Dumbbell, FileText } from "lucide-react"
+import { OpenGymCheckin } from "./OpenGymCheckin"
 
 interface TrainingSessionDialogProps {
   open: boolean
@@ -19,9 +21,23 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
   onSelectType,
   hasExistingSession
 }) => {
+  const [showQRScanner, setShowQRScanner] = useState(false)
+
   const handleSelectType = (type: 'course' | 'free_training' | 'plan') => {
-    onSelectType(type)
-    onOpenChange(false)
+    if (type === 'free_training') {
+      // Für Open Gym direkt QR-Scanner öffnen
+      onOpenChange(false)
+      setShowQRScanner(true)
+    } else {
+      onSelectType(type)
+      onOpenChange(false)
+    }
+  }
+
+  const handleQRCheckinComplete = () => {
+    // Nach erfolgreichem QR-Scan das Training speichern
+    onSelectType('free_training')
+    setShowQRScanner(false)
   }
 
   return (
@@ -65,6 +81,12 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
           )}
         </div>
       </DialogContent>
+      
+      <OpenGymCheckin
+        open={showQRScanner}
+        onOpenChange={setShowQRScanner}
+        onCheckinComplete={handleQRCheckinComplete}
+      />
     </Dialog>
   )
 }

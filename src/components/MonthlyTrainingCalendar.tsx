@@ -1,14 +1,20 @@
 import { useState, useEffect } from "react"
 import { User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
+import { DayCourseDialog } from "./DayCourseDialog"
 
 interface MonthlyTrainingCalendarProps {
   user: User
+  userRole?: string
 }
 
-export const MonthlyTrainingCalendar = ({ user }: MonthlyTrainingCalendarProps) => {
+export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalendarProps) => {
   const [trainingDays, setTrainingDays] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [selectedDate, setSelectedDate] = useState<string>('')
+  const [showCourseDialog, setShowCourseDialog] = useState(false)
+
+  const isOpenGym = userRole === 'open_gym'
 
   useEffect(() => {
     loadTrainingDays()
@@ -70,6 +76,20 @@ export const MonthlyTrainingCalendar = ({ user }: MonthlyTrainingCalendarProps) 
     }
   }
 
+  const handleDayClick = (day: number) => {
+    const currentDay = getCurrentDay()
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    const currentMonth = currentDate.getMonth()
+    
+    // Nur zukünftige Tage (inklusive heute) sind klickbar für Kursanmeldung
+    if (day >= currentDay && !isOpenGym) {
+      const selectedDate = new Date(currentYear, currentMonth, day)
+      setSelectedDate(selectedDate.toISOString().split('T')[0])
+      setShowCourseDialog(true)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col gap-1">
@@ -84,25 +104,43 @@ export const MonthlyTrainingCalendar = ({ user }: MonthlyTrainingCalendarProps) 
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      {Array.from({ length: getDaysInMonth() }, (_, i) => {
-        const day = i + 1
-        return (
-          <div
-            key={day}
-            className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors`}
-            title={`Tag ${day}: ${
-              trainingDays.has(day) 
-                ? 'Trainiert' 
-                : day < getCurrentDay() 
-                ? 'Nicht trainiert' 
-                : day === getCurrentDay()
-                ? 'Heute'
-                : 'Noch nicht erreicht'
-            }`}
-          />
-        )
-      })}
-    </div>
+    <>
+      <div className="flex flex-col gap-1">
+        {Array.from({ length: getDaysInMonth() }, (_, i) => {
+          const day = i + 1
+          const currentDay = getCurrentDay()
+          const canClick = day >= currentDay && !isOpenGym
+          
+          return (
+            <div
+              key={day}
+              onClick={() => handleDayClick(day)}
+              className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors ${
+                canClick ? 'cursor-pointer hover:scale-110' : ''
+              }`}
+              title={`Tag ${day}: ${
+                trainingDays.has(day) 
+                  ? 'Trainiert' 
+                  : day < getCurrentDay() 
+                  ? 'Nicht trainiert' 
+                  : day === getCurrentDay()
+                  ? 'Heute - Klicken für Kurse'
+                  : canClick
+                  ? 'Klicken für Kurse'
+                  : 'Zukünftig'
+              }`}
+            />
+          )
+        })}
+      </div>
+      
+      <DayCourseDialog
+        open={showCourseDialog}
+        onOpenChange={setShowCourseDialog}
+        date={selectedDate}
+        user={user}
+        userRole={userRole}
+      />
+    </>
   )
 }

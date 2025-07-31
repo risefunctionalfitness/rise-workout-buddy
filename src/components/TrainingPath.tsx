@@ -138,8 +138,11 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
     
     setSelectedDay(day)
     
-    // Zeige Kurse für den heutigen Tag
-    if (day.isToday) {
+    // Open Gym Mitglieder sehen keine Kurse
+    const isOpenGym = userRole === 'open_gym'
+    
+    // Zeige Kurse für den heutigen Tag (außer für Open Gym Mitglieder)
+    if (day.isToday && !isOpenGym) {
       setShowDayCourses(true)
     } else {
       setShowDialog(true)
@@ -228,7 +231,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       {/* Fixierte Elemente */}
       {/* Links: Monatliche Trainingskalender - fixiert */}
       <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-30">
-        <MonthlyTrainingCalendar user={user} />
+        <MonthlyTrainingCalendar user={user} userRole={userRole} />
       </div>
 
       {/* Rechts unten: Button-Stack - fixiert ÜBER der Navigation */}
