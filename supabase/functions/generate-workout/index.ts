@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { workoutType, sessionType, duration, focus, userId = 'demo-user' } = await req.json();
+    const { workoutType, sessionType, duration, focus, userId = 'demo-user', preferredExercises = [] } = await req.json();
     console.log(`Generating workout for user: ${userId} Type: ${workoutType} Session: ${sessionType} Duration: ${duration} Focus: ${focus}`);
 
     // Validate userId format for real users
@@ -76,11 +76,16 @@ serve(async (req) => {
     const embeddingData = await embeddingResponse.json();
     const queryEmbedding = embeddingData.data[0].embedding;
 
-    // 4. Ähnliche Workouts suchen (Vector similarity search)
-    const { data: similarWorkouts, error: searchError } = await supabase.rpc('match_workouts', {
+    // 4. Ähnliche Workouts suchen mit der neuen erweiterten Funktion
+    const { data: similarWorkouts, error: searchError } = await supabase.rpc('match_workouts_v2', {
       query_embedding: queryEmbedding,
-      match_threshold: 0.7,
-      match_count: 5
+      workout_type_param: workoutType,
+      session_type_param: sessionType,
+      duration_minutes_param: duration,
+      focus_area_param: focus === 'ganzkörper' ? 'full_body' : focus === 'oberkörper' ? 'upper_body' : focus === 'unterkörper' ? 'lower_body' : focus,
+      user_preferred_exercises: preferredExercises,
+      match_threshold: 0.5,
+      match_count: 3
     });
 
     if (searchError) {
@@ -124,7 +129,7 @@ serve(async (req) => {
       extraLifts: profile.extra_lifts || []
     };
 
-    // 6. CrossFit/Bodybuilding spezifischer Prompt
+    // 6. CrossFit/Bodybuilding spezifischer Prompt mit Session-Type Unterstützung
     const systemPrompt = workoutType === 'crossfit' ? 
       `Du bist ein erfahrener CrossFit Coach und erstellst authentische CrossFit WODs im Stil von CrossFit.com.
 
@@ -133,50 +138,35 @@ BENUTZERPROFIL:
 - Gewicht: ${userContext.weight || 'unbekannt'} kg
 - Alter: ${userContext.age || 'unbekannt'} Jahre
 - 1RM Werte: Front Squat: ${userContext.oneRepMaxes.frontSquat || 'unbekannt'} kg, Back Squat: ${userContext.oneRepMaxes.backSquat || 'unbekannt'} kg, Deadlift: ${userContext.oneRepMaxes.deadlift || 'unbekannt'} kg, Bench Press: ${userContext.oneRepMaxes.benchPress || 'unbekannt'} kg, Snatch: ${userContext.oneRepMaxes.snatch || 'unbekannt'} kg, Clean & Jerk: ${userContext.oneRepMaxes.cleanAndJerk || 'unbekannt'} kg
+- Bevorzugte Übungen: ${preferredExercises.length > 0 ? preferredExercises.join(', ') : 'Keine spezifischen Vorlieben'}
 
 REFERENZ WORKOUTS (als Inspiration):
-${workoutsForContext.map(w => `${w.full_text}`).join('\n')}
+${workoutsForContext.map(w => `${w.title || 'Workout'}: ${w.workout_type} ${w.session_type} - ${w.focus_area}`).join('\n')}
+
+SESSION TYPE: ${sessionType} - ${getSessionTypeDescription(sessionType)}
 
 CROSSFIT WOD REGELN:
 - Verwende authentische CrossFit Bewegungen: Thrusters, Burpees, Pull-Ups, Double Unders, Wall Balls, etc.
+- ${preferredExercises.length > 0 ? `PRIORITÄT: Verwende möglichst Übungen aus der Präferenzliste: ${preferredExercises.join(', ')}` : ''}
 - Arbeitsgewichte: 60-70% von 1RM für Kraftübungen
 - Format: AMRAP (As Many Rounds As Possible), For Time, EMOM (Every Minute On the Minute), oder Tabata
 - Reps: Klassische CrossFit Zahlen (21-15-9, 5-4-3-2-1, etc.)
 - Kurze, intensive Workouts (10-20 Min)
 - Deutsche Übungsnamen verwenden
 
-Erstelle ein ${sessionType === 'wod_only' ? 'reines WOD' : 'komplettes CrossFit Training'} mit ${duration} Minuten Fokus auf ${focus}.
+${getSessionTypeInstructions(sessionType)}
+
+Erstelle ein ${sessionType === 'wod_only' ? 'reines WOD' : sessionType === 'strength_only' ? 'reines Krafttraining' : sessionType === 'weightlifting_only' ? 'reines Olympic Weightlifting' : 'komplettes CrossFit Training'} mit ${duration} Minuten Fokus auf ${focus}.
 
 JSON Format:
 {
-  "name": "Authentischer WOD Name",
+  "name": "Authentischer ${sessionType} Name",
   "type": "crossfit",
   "duration": ${duration},
   "focus": "${focus}",
   "difficulty": "leicht/mittel/schwer",
   "parts": [
-    ${sessionType === 'full_session' ? `{
-      "name": "Warm-Up",
-      "duration": "5-8 min",
-      "exercises": ["Dynamic Warm-Up Übungen"]
-    },
-    {
-      "name": "Skill/Strength",
-      "duration": "8-12 min", 
-      "exercises": ["Kraftübung mit spezifischem Gewicht basierend auf 1RM"]
-    },` : ''}
-    {
-      "name": "WOD",
-      "format": "AMRAP/For Time/EMOM",
-      "duration": "${sessionType === 'wod_only' ? duration + ' min' : '12-15 min'}",
-      "exercises": ["CrossFit Übungen mit Reps und Gewichten"],
-      "notes": "WOD Anweisungen und Skalierung"
-    }${sessionType === 'full_session' ? `,
-    {
-      "name": "Cool Down",
-      "duration": "5 min",
-      "exercises": ["Stretching und Mobility"]
-    }` : ''}
+    ${getPartsStructure(sessionType, duration)}
   ]
 }`
       :
@@ -187,9 +177,11 @@ BENUTZERPROFIL:
 - Gewicht: ${userContext.weight || 'unbekannt'} kg
 - Alter: ${userContext.age || 'unbekannt'} Jahre
 - 1RM Werte: Bench Press: ${userContext.oneRepMaxes.benchPress || 'unbekannt'} kg, Back Squat: ${userContext.oneRepMaxes.backSquat || 'unbekannt'} kg, Deadlift: ${userContext.oneRepMaxes.deadlift || 'unbekannt'} kg
+- Bevorzugte Übungen: ${preferredExercises.length > 0 ? preferredExercises.join(', ') : 'Keine spezifischen Vorlieben'}
 
 BODYBUILDING PRINZIPIEN:
 - Fokus auf Muskelaufbau und Hypertrophie
+- ${preferredExercises.length > 0 ? `PRIORITÄT: Verwende möglichst Übungen aus der Präferenzliste: ${preferredExercises.join(', ')}` : ''}
 - 3-4 Sätze, 8-12 Wiederholungen für Hypertrophie
 - 70-80% von 1RM für Hauptübungen
 - Fokusbereich: ${focus}
@@ -226,7 +218,7 @@ JSON Format:
   ]
 }`;
 
-    console.log('System prompt created for:', workoutType);
+    console.log('System prompt created for:', workoutType, sessionType);
 
     // 7. OpenAI API Call
     console.log('Calling OpenAI API...');
@@ -240,7 +232,7 @@ JSON Format:
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Erstelle ein personalisiertes ${workoutType} Workout (${sessionType || 'full_session'}) mit ${duration} Minuten, Fokus: ${focus}` }
+          { role: 'user', content: `Erstelle ein personalisiertes ${workoutType} Workout (${sessionType || 'full_session'}) mit ${duration} Minuten, Fokus: ${focus}. ${preferredExercises.length > 0 ? `Bevorzuge diese Übungen: ${preferredExercises.join(', ')}` : ''}` }
         ],
         temperature: 0.7,
         max_tokens: 1500,
@@ -255,7 +247,6 @@ JSON Format:
 
     const completionData = await completion.json();
     console.log('OpenAI response received successfully');
-    console.log('OpenAI response:', JSON.stringify(completionData, null, 2));
 
     let workoutData;
     try {
@@ -268,26 +259,20 @@ JSON Format:
       console.error('Raw OpenAI content:', completionData.choices[0]?.message?.content);
       // Fallback workout
       workoutData = {
-        name: `${workoutType} Workout`,
+        name: `${workoutType} ${sessionType || 'full_session'} Workout`,
         type: workoutType,
         duration: duration,
         focus: focus,
         difficulty: "mittel",
         parts: [
           {
-            name: "Warm-Up",
-            duration: "5-10 min",
-            exercises: ["Leichtes Cardio", "Dynamisches Stretching"]
-          },
-          {
-            name: "Hauptteil",
-            format: "AMRAP",
-            duration: `${duration - 10} min`,
-            exercises: ["Angepasste Übungen basierend auf Profil"],
-            notes: "Personalisiert für dein Fitnesslevel"
+            name: getSessionTypeDescription(sessionType),
+            duration: `${duration} min`,
+            exercises: ["Angepasste Übungen basierend auf Profil und Präferenzen"],
+            notes: `Personalisiert für dein Fitnesslevel und bevorzugte Übungen ${preferredExercises.length > 0 ? `(${preferredExercises.join(', ')})` : ''}`
           }
         ],
-        notes: "Workout basierend auf deinem Profil erstellt"
+        notes: `Workout basierend auf deinem Profil erstellt${preferredExercises.length > 0 ? ` mit Fokus auf deine bevorzugten Übungen` : ''}`
       };
     }
 
@@ -324,3 +309,91 @@ JSON Format:
     });
   }
 });
+
+// Helper functions for session type handling
+function getSessionTypeDescription(sessionType: string): string {
+  switch (sessionType) {
+    case 'wod_only':
+      return 'WOD (Workout of the Day)'
+    case 'strength_only':
+      return 'Strength Training'
+    case 'weightlifting_only':
+      return 'Olympic Weightlifting'
+    case 'full_session':
+      return 'Complete Training Session'
+    default:
+      return 'Standard Workout'
+  }
+}
+
+function getSessionTypeInstructions(sessionType: string): string {
+  switch (sessionType) {
+    case 'wod_only':
+      return 'Erstelle NUR den Hauptworkout-Teil. Kein Warm-up oder Strength-Teil. Fokus auf intensive metabolische Konditionierung (AMRAP, For Time, EMOM).'
+    case 'strength_only':
+      return 'Erstelle NUR Krafttraining. Fokus auf schwere Compound-Bewegungen, Kraftaufbau und Power-Entwicklung. Schließe angemessene Pausen ein. Keine Konditionierung.'
+    case 'weightlifting_only':
+      return 'Erstelle NUR Olympic Weightlifting Session. Fokus auf Snatch, Clean & Jerk und deren Variationen. Schließe Technikarbeit und schweres Heben ein. Keine Konditionierung.'
+    case 'full_session':
+      return 'Erstelle eine komplette Session mit: 1) Warm-up (5-10 min), 2) Strength/Skill work (15-20 min), 3) Hauptworkout/Konditionierung (10-20 min), 4) Cool-down (5 min).'
+    default:
+      return 'Erstelle ein ausgewogenes Workout.'
+  }
+}
+
+function getPartsStructure(sessionType: string, duration: number): string {
+  switch (sessionType) {
+    case 'wod_only':
+      return `{
+      "name": "WOD",
+      "format": "AMRAP/For Time/EMOM",
+      "duration": "${duration} min",
+      "exercises": ["CrossFit Übungen mit Reps und Gewichten"],
+      "notes": "WOD Anweisungen und Skalierung"
+    }`
+    case 'strength_only':
+      return `{
+      "name": "Strength Training",
+      "duration": "${duration} min",
+      "exercises": ["Schwere Compound-Bewegungen mit spezifischen Gewichten"],
+      "notes": "Kraftaufbau fokussiert, basierend auf 1RM Werten"
+    }`
+    case 'weightlifting_only':
+      return `{
+      "name": "Olympic Weightlifting",
+      "duration": "${duration} min",
+      "exercises": ["Snatch, Clean & Jerk Variationen"],
+      "notes": "Technik und schweres Heben kombiniert"
+    }`
+    case 'full_session':
+      return `{
+      "name": "Warm-Up",
+      "duration": "5-8 min",
+      "exercises": ["Dynamic Warm-Up Übungen"]
+    },
+    {
+      "name": "Skill/Strength",
+      "duration": "8-12 min", 
+      "exercises": ["Kraftübung mit spezifischem Gewicht basierend auf 1RM"]
+    },
+    {
+      "name": "WOD",
+      "format": "AMRAP/For Time/EMOM",
+      "duration": "12-15 min",
+      "exercises": ["CrossFit Übungen mit Reps und Gewichten"],
+      "notes": "WOD Anweisungen und Skalierung"
+    },
+    {
+      "name": "Cool Down",
+      "duration": "5 min",
+      "exercises": ["Stretching und Mobility"]
+    }`
+    default:
+      return `{
+      "name": "Standard Workout",
+      "duration": "${duration} min",
+      "exercises": ["Ausgeglichene Übungsauswahl"],
+      "notes": "Angepasst an Benutzerprofil"
+    }`
+  }
+}

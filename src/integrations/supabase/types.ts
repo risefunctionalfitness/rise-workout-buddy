@@ -466,6 +466,192 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_exercises: {
+        Row: {
+          created_at: string
+          distance_meters: number | null
+          duration_seconds: number | null
+          exercise_name: string
+          exercise_order: number
+          id: string
+          notes: string | null
+          percentage_1rm: number | null
+          reps: number | null
+          rest_seconds: number | null
+          weight_kg: number | null
+          workout_part_id: string
+        }
+        Insert: {
+          created_at?: string
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          exercise_name: string
+          exercise_order: number
+          id?: string
+          notes?: string | null
+          percentage_1rm?: number | null
+          reps?: number | null
+          rest_seconds?: number | null
+          weight_kg?: number | null
+          workout_part_id: string
+        }
+        Update: {
+          created_at?: string
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          exercise_name?: string
+          exercise_order?: number
+          id?: string
+          notes?: string | null
+          percentage_1rm?: number | null
+          reps?: number | null
+          rest_seconds?: number | null
+          weight_kg?: number | null
+          workout_part_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_exercises_workout_part_id_fkey"
+            columns: ["workout_part_id"]
+            isOneToOne: false
+            referencedRelation: "workout_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_parts: {
+        Row: {
+          created_at: string
+          description: string
+          duration_minutes: number | null
+          duration_rounds: number | null
+          id: string
+          notes: string | null
+          part_name: string
+          part_order: number
+          score_type: string | null
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          duration_minutes?: number | null
+          duration_rounds?: number | null
+          id?: string
+          notes?: string | null
+          part_name: string
+          part_order: number
+          score_type?: string | null
+          workout_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          duration_minutes?: number | null
+          duration_rounds?: number | null
+          id?: string
+          notes?: string | null
+          part_name?: string
+          part_order?: number
+          score_type?: string | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_parts_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_scalings: {
+        Row: {
+          created_at: string
+          exercise_substitute: string | null
+          id: string
+          notes: string | null
+          reps: number | null
+          scaling_type: string
+          weight_kg: number | null
+          workout_exercise_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_substitute?: string | null
+          id?: string
+          notes?: string | null
+          reps?: number | null
+          scaling_type: string
+          weight_kg?: number | null
+          workout_exercise_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_substitute?: string | null
+          id?: string
+          notes?: string | null
+          reps?: number | null
+          scaling_type?: string
+          weight_kg?: number | null
+          workout_exercise_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_scalings_workout_exercise_id_fkey"
+            columns: ["workout_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "workout_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workouts: {
+        Row: {
+          created_at: string
+          difficulty_level: string
+          duration_minutes: number
+          focus_area: string
+          id: string
+          notes: string | null
+          required_equipment: string[] | null
+          required_exercises: string[] | null
+          session_type: string
+          title: string
+          updated_at: string
+          workout_type: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty_level: string
+          duration_minutes: number
+          focus_area: string
+          id?: string
+          notes?: string | null
+          required_equipment?: string[] | null
+          required_exercises?: string[] | null
+          session_type: string
+          title: string
+          updated_at?: string
+          workout_type: string
+        }
+        Update: {
+          created_at?: string
+          difficulty_level?: string
+          duration_minutes?: number
+          focus_area?: string
+          id?: string
+          notes?: string | null
+          required_equipment?: string[] | null
+          required_exercises?: string[] | null
+          session_type?: string
+          title?: string
+          updated_at?: string
+          workout_type?: string
+        }
+        Relationships: []
+      }
       workouts_rag: {
         Row: {
           created_at: string | null
@@ -634,6 +820,28 @@ export type Database = {
           part_a_type: string
           part_b_score_type: string
           part_c_score_type: string
+          similarity: number
+        }[]
+      }
+      match_workouts_v2: {
+        Args: {
+          query_embedding: string
+          workout_type_param?: string
+          session_type_param?: string
+          duration_minutes_param?: number
+          focus_area_param?: string
+          user_preferred_exercises?: string[]
+          match_threshold?: number
+          match_count?: number
+        }
+        Returns: {
+          workout_id: string
+          title: string
+          workout_type: string
+          session_type: string
+          duration_minutes: number
+          focus_area: string
+          difficulty_level: string
           similarity: number
         }[]
       }

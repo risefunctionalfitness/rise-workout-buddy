@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Dumbbell } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { WorkoutTypeSelector } from "./WorkoutTypeSelector"
-import { SessionTypeSelector } from "./SessionTypeSelector"
+import { SessionTypeSelector, type SessionType } from "./SessionTypeSelector"
 import { DurationSlider } from "./DurationSlider"
 import { BodySelector } from "./BodySelector"
 import { WorkoutDisplayWhiteboard } from "./WorkoutDisplayWhiteboard"
@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 
 type WorkoutType = "crossfit" | "bodybuilding" | null
-type SessionType = "wod_only" | "full_session" | null
 type Focus = "ganzkörper" | "oberkörper" | "unterkörper" | null
 
 interface WorkoutData {
@@ -58,6 +57,20 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
     setIsGenerating(true)
     
     try {
+      // Lade bevorzugte Übungen des Users
+      let preferredExercises: string[] = []
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('preferred_exercises')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (profile?.preferred_exercises) {
+        preferredExercises = Array.isArray(profile.preferred_exercises) 
+          ? profile.preferred_exercises.filter((ex): ex is string => typeof ex === 'string')
+          : []
+      }
+
       // Edge Function für intelligente Workout-Generierung aufrufen
       const { data, error } = await supabase.functions.invoke('generate-workout', {
         body: {
@@ -65,7 +78,8 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           sessionType: finalSessionType,
           duration: finalDuration,
           focus: finalFocus,
-          userId: user.id
+          userId: user.id,
+          preferredExercises
         }
       })
 
@@ -92,7 +106,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       
       toast({
         title: "Personalisiertes Workout generiert!",
-        description: `Dein ${workoutType.toUpperCase()} Workout basierend auf deinem Profil.`
+        description: `Dein ${workoutType.toUpperCase()} Workout basierend auf deinem Profil und bevorzugten Übungen.`
       })
     } catch (error) {
       console.error("Fehler beim Generieren:", error)
@@ -103,7 +117,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           ganzkörper: {
             title: "CrossFit AMRAP Challenge",
             type: "AMRAP",
-            duration: duration,
+            duration: finalDuration,
             exercises: [
               { name: "Burpees", reps: "10" },
               { name: "Pull-ups", reps: "8" },
@@ -111,12 +125,12 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
               { name: "Push-ups", reps: "12" },
               { name: "Kettlebell Swings", reps: "20" }
             ],
-            notes: `${duration} Minuten AMRAP - so viele Runden wie möglich!`
+            notes: `${finalDuration} Minuten AMRAP - so viele Runden wie möglich!`
           },
           oberkörper: {
             title: "Upper Body CrossFit WOD",
             type: "For Time",
-            duration: duration,
+            duration: finalDuration,
             exercises: [
               { name: "Push-ups", reps: "50" },
               { name: "Pull-ups", reps: "30" },
@@ -128,21 +142,21 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           unterkörper: {
             title: "Lower Body Power WOD",
             type: "EMOM",
-            duration: duration,
+            duration: finalDuration,
             exercises: [
               { name: "Air Squats", reps: "15" },
               { name: "Lunges", reps: "10 pro Seite" },
               { name: "Jump Squats", reps: "12" },
               { name: "Single Leg Deadlifts", reps: "8 pro Seite" }
             ],
-            notes: `${duration} Minuten EMOM - jede Minute eine Übung!`
+            notes: `${finalDuration} Minuten EMOM - jede Minute eine Übung!`
           }
         },
         bodybuilding: {
           ganzkörper: {
             title: "Full Body Strength Circuit",
             type: "Krafttraining",
-            duration: duration,
+            duration: finalDuration,
             exercises: [
               { name: "Squats", reps: "4x12", weight: "Körpergewicht" },
               { name: "Push-ups", reps: "3x15", rest: "60s" },
@@ -155,7 +169,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           oberkörper: {
             title: "Upper Body Mass Builder",
             type: "Hypertrophie",
-            duration: duration,
+            duration: finalDuration,
             exercises: [
               { name: "Bench Press", reps: "4x8-10", weight: "80% 1RM", rest: "90s" },
               { name: "Lat Pulldowns", reps: "4x10-12", weight: "Schwer", rest: "75s" },
@@ -168,7 +182,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           unterkörper: {
             title: "Leg Day Power Session",
             type: "Kraftaufbau",
-            duration: duration,
+            duration: finalDuration,
             exercises: [
               { name: "Squats", reps: "5x5", weight: "Schwer", rest: "2-3min" },
               { name: "Romanian Deadlifts", reps: "4x8", weight: "Moderat", rest: "90s" },
@@ -181,7 +195,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
         }
       }
 
-      const workout = mockWorkouts[workoutType][focus]
+      const workout = mockWorkouts[workoutType][finalFocus]
       setGeneratedWorkout(workout)
       
       toast({
