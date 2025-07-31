@@ -10,6 +10,7 @@ import { Newspaper } from "lucide-react"
 import { useNewsNotification } from "@/hooks/useNewsNotification"
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/integrations/supabase/client"
+import { useNavigate } from "react-router-dom"
 
 interface TrainingDay {
   date: Date
@@ -46,6 +47,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const todayRef = useRef<HTMLDivElement>(null)
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
+  const navigate = useNavigate()
 
   // Auto-scroll to today on mount and when trainingDays change
   useEffect(() => {
@@ -236,18 +238,18 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
 
       {/* Rechts unten: Button-Stack - fixiert ÜBER der Navigation */}
       <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-3">
-        {/* Aktuelles Button */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => {
-            setShowNews(true)
-            markNewsAsRead()
-          }}
-          className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:bg-foreground/10 shadow-lg relative"
-          aria-label="Aktuelles anzeigen"
-        >
-          <Newspaper className="h-4 w-4" />
+         {/* Aktuelles Button */}
+         <Button
+           variant="outline"
+           size="icon"
+           onClick={() => {
+             navigate('/news')
+             markNewsAsRead()
+           }}
+           className="rounded-full w-14 h-14 border-2 border-foreground/20 bg-background/90 backdrop-blur-sm hover:bg-foreground/10 shadow-lg relative"
+           aria-label="Aktuelles anzeigen"
+         >
+           <Newspaper className="h-4 w-4" />
           {hasUnreadNews && (
             <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
               1

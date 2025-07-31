@@ -62,15 +62,27 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         .eq('is_cancelled', false)
 
       if (date) {
-        // Load courses for specific date - only future courses
+        // Load courses for specific date - only future courses by time
         const dateString = date
-        query = query
-          .eq('course_date', dateString)
-          .or(`end_time.gt.${now.toTimeString().slice(0, 8)}`)
+        const nowTime = now.toTimeString().slice(0, 8)
+        const nowDate = now.toISOString().split('T')[0]
+        
+        if (dateString === nowDate) {
+          // Today: only show courses that haven't ended yet
+          query = query
+            .eq('course_date', dateString)
+            .gt('end_time', nowTime)
+        } else {
+          // Other days: show all courses
+          query = query.eq('course_date', dateString)
+        }
       } else {
         // Load next 10 upcoming courses (based on date and time)
+        const nowTime = now.toTimeString().slice(0, 8)
+        const nowDate = now.toISOString().split('T')[0]
+        
         query = query
-          .or(`course_date.gt.${new Date().toISOString().split('T')[0]},and(course_date.eq.${new Date().toISOString().split('T')[0]},end_time.gt.${now.toTimeString().slice(0, 8)})`)
+          .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .order('course_date')
           .order('start_time')
           .limit(10)

@@ -138,25 +138,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         <Card className="mb-4">
           <CardHeader>
             <CardTitle>Basisdaten</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Diese Daten nützen der individuellen Workout-Erstellung.
-            </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Avatar Upload */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="text-center">
-                <Label>Profilbild</Label>
-                <p className="text-sm text-muted-foreground">
-                  Lade ein Profilbild hoch, das in der App angezeigt wird.
-                </p>
-              </div>
+            <div className="flex justify-center mb-4">
               {userId && (
                 <AvatarUpload
                   userId={userId}
                   currentAvatarUrl={avatarUrl}
                   onAvatarUpdate={setAvatarUrl}
                   size="lg"
+                  showUploadButton={false}
                 />
               )}
             </div>

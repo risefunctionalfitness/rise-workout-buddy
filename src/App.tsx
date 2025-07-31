@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ProVersion from "./pages/ProVersion";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import News from "./pages/News";
 import NotFound from "./pages/NotFound";
 import { StrengthValues } from "@/components/StrengthValues";
 import { ExerciseSelection } from "@/components/ExerciseSelection";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/pro" element={<ProVersion />} />
             <Route path="/pro/strength-values" element={<StrengthValues />} />
             <Route path="/pro/exercises" element={<ExerciseSelection />} />
+            <Route path="/news" element={<News />} />
             <Route path="/workout-timer" element={<WorkoutTimer />} />
             <Route path="/workout-timer/fortime" element={<ForTimeTimer />} />
             <Route path="/workout-timer/amrap" element={<AmrapTimer />} />

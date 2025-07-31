@@ -2,7 +2,8 @@ import { useState, useRef, useCallback } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Camera, Upload } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Camera, Upload, User } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop'
@@ -32,11 +33,11 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const imageRef = useRef<HTMLImageElement>(null)
   const { toast } = useToast()
 
-  const sizeClasses = {
+  const avatarSize = {
     sm: "w-8 h-8",
-    md: "w-12 h-12",
+    md: "w-12 h-12", 
     lg: "w-20 h-20"
-  }
+  }[size]
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget
@@ -180,37 +181,66 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   }
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Avatar Display */}
-      <div className={cn("relative", sizeClasses[size])}>
-        {currentAvatarUrl ? (
-          <img
-            src={currentAvatarUrl}
-            alt="Profilbild"
-            className="w-full h-full rounded-full object-cover border-2 border-border"
-          />
-        ) : (
-          <div className="w-full h-full rounded-full bg-muted border-2 border-border flex items-center justify-center">
-            <Camera className={cn("text-muted-foreground", 
-              size === "sm" ? "w-3 h-3" : size === "md" ? "w-4 h-4" : "w-6 h-6"
-            )} />
+    <div className="flex flex-col items-center space-y-3">
+      <div className="relative">
+        <Avatar 
+          className={`cursor-pointer transition-opacity hover:opacity-80 ${avatarSize}`}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <AvatarImage src={currentAvatarUrl || ''} alt="Profilbild" />
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            <User className="h-6 w-6" />
+          </AvatarFallback>
+        </Avatar>
+        {uploading && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        
-        {showUploadButton && (
+      </div>
+      
+      {!showUploadButton && currentAvatarUrl && (
+        <div className="flex gap-2">
           <Button
+            variant="outline"
             size="sm"
-            variant="secondary"
-            className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={async () => {
+              try {
+                // Delete from storage
+                const fileName = currentAvatarUrl.split('/').pop()
+                if (fileName) {
+                  await supabase.storage
+                    .from('avatars')
+                    .remove([`${userId}/${fileName}`])
+                }
+                
+                // Update profile
+                await supabase
+                  .from('profiles')
+                  .update({ avatar_url: null })
+                  .eq('user_id', userId)
+                
+                onAvatarUpdate?.(null)
+                toast({
+                  title: "Profilbild gelöscht",
+                  description: "Das Profilbild wurde erfolgreich entfernt."
+                })
+              } catch (error) {
+                console.error('Error deleting avatar:', error)
+                toast({
+                  title: "Fehler beim Löschen",
+                  description: "Das Profilbild konnte nicht gelöscht werden.",
+                  variant: "destructive"
+                })
+              }
+            }}
             disabled={uploading}
           >
-            <Upload className="w-3 h-3" />
+            Löschen
           </Button>
-        )}
-      </div>
-
-      {/* Hidden file input */}
+        </div>
+      )}
+      
       <input
         ref={fileInputRef}
         type="file"

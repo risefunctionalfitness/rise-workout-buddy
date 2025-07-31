@@ -1,4 +1,4 @@
-import { Flame, User } from "lucide-react"
+import { Flame, User, Zap, Award, Crown } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface TrainingPathHeaderProps {
@@ -38,7 +38,15 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
       
       {/* Rechts: Trainingstage */}
       <div className="flex items-center gap-2 text-primary flex-1 justify-end">
-        <Flame className="h-6 w-6" />
+        {trainingDaysThisMonth >= 20 ? (
+          <Crown className="h-6 w-6 text-yellow-500 animate-bounce" />
+        ) : trainingDaysThisMonth >= 10 ? (
+          <Award className="h-6 w-6 text-orange-500 animate-pulse" />
+        ) : trainingDaysThisMonth >= 5 ? (
+          <Zap className="h-6 w-6 text-blue-500" />
+        ) : (
+          <Flame className="h-6 w-6" />
+        )}
         <span className="font-bold text-lg">
           {trainingDaysThisMonth} / {totalDaysInMonth}
         </span>
