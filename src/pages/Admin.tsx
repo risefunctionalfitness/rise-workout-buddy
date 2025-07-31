@@ -603,33 +603,54 @@ export default function Admin() {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setActivePage('home')}>
-                  <Home className="h-4 w-4 mr-2" />
+              <DropdownMenuContent align="end" className="w-screen md:w-56 min-h-screen md:min-h-0 flex md:block flex-col justify-center md:justify-start">
+                <DropdownMenuItem 
+                  onClick={() => setActivePage('home')}
+                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
+                >
+                  <Home className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
                   Home
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage('members')}>
-                  <Users className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={() => setActivePage('members')}
+                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
+                >
+                  <Users className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
                   Mitglieder
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage('courses')}>
-                  <Calendar className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={() => setActivePage('courses')}
+                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
+                >
+                  <Calendar className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
                   Kurse
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage('templates')}>
-                  <Calendar className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={() => setActivePage('templates')}
+                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
+                >
+                  <Calendar className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
                   Vorlagen
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage('news')}>
-                  <Newspaper className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={() => setActivePage('news')}
+                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
+                >
+                  <Newspaper className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
                   News
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActivePage('codes')}>
-                  <Users className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={() => setActivePage('codes')}
+                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start"
+                >
+                  <Users className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
                   Codes
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="py-4 md:py-2 text-lg md:text-sm justify-center md:justify-start mt-4 md:mt-0 border-t md:border-t-0"
+                >
+                  <LogOut className="h-6 w-6 md:h-4 md:w-4 mr-3 md:mr-2" />
                   Abmelden
                 </DropdownMenuItem>
               </DropdownMenuContent>

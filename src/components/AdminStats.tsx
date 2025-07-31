@@ -18,6 +18,7 @@ interface LeaderboardStats {
   registrationsByType: {
     freeTraining: number
     courses: number
+    openGym: number
     Member: number
     Wellpass: number
     '10er Karte': number
@@ -33,6 +34,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     registrationsByType: {
       freeTraining: 0,
       courses: 0,
+      openGym: 0,
       Member: 0,
       Wellpass: 0,
       '10er Karte': 0,
@@ -79,10 +81,14 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         .lte('date', lastDayOfMonth)
         .eq('status', 'completed')
 
-      // Count by workout type
-      const freeTrainingCount = trainingSessions?.filter(s => s.workout_type === 'free_training' || s.workout_type === 'individual').length || 0
-      const courseTrainingCount = trainingSessions?.filter(s => s.workout_type === 'course').length || 0
-      const openGymCount = trainingSessions?.filter(s => s.workout_type === 'open_gym').length || 0
+      // Count by workout type - include all types that could be considered "freies Training"
+      const freeTrainingTypes = ['free_training', 'individual', 'crossfit_wod_only', 'crossfit_full_session', 'plan']
+      const courseTypes = ['course']
+      const openGymTypes = ['open_gym']
+      
+      const freeTrainingCount = trainingSessions?.filter(s => freeTrainingTypes.includes(s.workout_type)).length || 0
+      const courseTrainingCount = trainingSessions?.filter(s => courseTypes.includes(s.workout_type)).length || 0
+      const openGymCount = trainingSessions?.filter(s => openGymTypes.includes(s.workout_type)).length || 0
 
       // Count by membership type from leaderboard entries
       const membershipCounts = {
@@ -114,6 +120,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         registrationsByType: {
           freeTraining: freeTrainingCount,
           courses: courseTrainingCount,
+          openGym: openGymCount,
           ...membershipCounts
         }
       }
@@ -167,10 +174,14 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     { name: 'Open Gym', value: stats.registrationsByType?.['Open Gym'] || 0, fill: getMembershipColor('Open Gym') }
   ]
 
+  // Calculate dynamic scale based on data
+  const maxValue = Math.max(...chartData.map(item => item.value))
+  const scaleMax = Math.max(maxValue * 1.2, 50) // At least 50, or 20% above max value
+
   return (
     <div className="space-y-6">
       {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
@@ -206,6 +217,18 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-purple-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Open Gym</p>
+                <p className="text-2xl font-bold">{stats.registrationsByType?.openGym || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Chart */}
@@ -218,7 +241,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
-              <YAxis domain={[0, 350]} />
+              <YAxis domain={[0, scaleMax]} />
               <Tooltip />
               <Bar dataKey="value" />
             </BarChart>
