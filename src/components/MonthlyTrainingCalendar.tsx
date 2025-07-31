@@ -26,6 +26,7 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth()
       
+      // Load training sessions
       const { data: sessions, error } = await supabase
         .from('training_sessions')
         .select('date')
@@ -44,6 +45,54 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
         const sessionDate = new Date(session.date)
         days.add(sessionDate.getDate())
       })
+
+      // Load course registrations and check for auto-completion
+      const { data: registrations, error: regError } = await supabase
+        .from('course_registrations')
+        .select(`
+          course_id,
+          courses(course_date, end_time)
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'registered')
+        .gte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
+        .lte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-31`)
+
+      if (!regError && registrations) {
+        for (const reg of registrations) {
+          if (reg.courses?.course_date && reg.courses?.end_time) {
+            const courseDate = new Date(reg.courses.course_date)
+            const courseEndTime = new Date(`${reg.courses.course_date}T${reg.courses.end_time}`)
+            const now = new Date()
+
+            // If course has ended and user didn't manually unregister, mark as completed
+            if (now > courseEndTime) {
+              const day = courseDate.getDate()
+              days.add(day)
+
+              // Create training session if not exists
+              const { data: existingSession } = await supabase
+                .from('training_sessions')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('date', reg.courses.course_date)
+                .eq('workout_type', 'course')
+                .single()
+
+              if (!existingSession) {
+                await supabase
+                  .from('training_sessions')
+                  .insert({
+                    user_id: user.id,
+                    date: reg.courses.course_date,
+                    workout_type: 'course',
+                    status: 'completed'
+                  })
+              }
+            }
+          }
+        }
+      }
 
       setTrainingDays(days)
     } catch (error) {
@@ -82,8 +131,8 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
     const currentYear = currentDate.getFullYear()
     const currentMonth = currentDate.getMonth()
     
-    // Nur zukünftige Tage (inklusive heute) sind klickbar für Kursanmeldung
-    if (day >= currentDay && !isOpenGym) {
+    // Alle Tage (auch vergangene) sind klickbar für Kurs An-/Abmeldung, außer für Open Gym
+    if (!isOpenGym) {
       const selectedDate = new Date(currentYear, currentMonth, day)
       setSelectedDate(selectedDate.toISOString().split('T')[0])
       setShowCourseDialog(true)
@@ -116,16 +165,14 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
               key={day}
               onClick={() => handleDayClick(day)}
               className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors ${
-                canClick ? 'cursor-pointer hover:scale-110' : ''
+                !isOpenGym ? 'cursor-pointer hover:scale-110' : ''
               }`}
               title={`Tag ${day}: ${
                 trainingDays.has(day) 
                   ? 'Trainiert' 
                   : day < getCurrentDay() 
                   ? 'Nicht trainiert' 
-                  : day === getCurrentDay()
-                  ? 'Heute - Klicken für Kurse'
-                  : canClick
+                  : !isOpenGym
                   ? 'Klicken für Kurse'
                   : 'Zukünftig'
               }`}

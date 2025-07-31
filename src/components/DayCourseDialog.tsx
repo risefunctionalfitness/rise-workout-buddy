@@ -52,19 +52,40 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const loadCoursesForDay = async () => {
     setLoading(true)
     try {
-      // Get courses for the specific date
-      const { data: coursesData, error: coursesError } = await supabase
+      const now = new Date()
+      const currentDateTime = now.toISOString()
+
+      // Get courses for the specific date or next 10 upcoming courses
+      let query = supabase
         .from('courses')
         .select('*')
-        .eq('course_date', date)
         .eq('is_cancelled', false)
-        .order('start_time')
+
+      if (date) {
+        // Load courses for specific date
+        query = query.eq('course_date', date)
+      } else {
+        // Load next 10 upcoming courses (based on date and time)
+        query = query
+          .or(`course_date.gt.${date},and(course_date.eq.${date},end_time.gt.${now.toTimeString().slice(0, 8)})`)
+          .order('course_date')
+          .order('start_time')
+          .limit(10)
+      }
+
+      const { data: coursesData, error: coursesError } = await query
 
       if (coursesError) throw coursesError
 
+      // Filter future courses only (considering both date and time)
+      const filteredCourses = (coursesData || []).filter(course => {
+        const courseDateTime = new Date(`${course.course_date}T${course.end_time}`)
+        return courseDateTime > now
+      }).slice(0, 10)
+
       // Get registration counts and user registrations
       const coursesWithCounts = await Promise.all(
-        (coursesData || []).map(async (course) => {
+        filteredCourses.map(async (course) => {
           const { data: registrations } = await supabase
             .from('course_registrations')
             .select('user_id')
@@ -205,13 +226,13 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                         disabled={!course.user_registered && course.registration_count >= course.max_participants}
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                           course.user_registered 
-                            ? 'bg-green-600 hover:bg-green-700' 
+                            ? 'bg-red-600 hover:bg-red-700' 
                             : course.registration_count >= course.max_participants
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-primary hover:bg-primary/90'
                         }`}
                       >
-                        {course.user_registered ? '✓' : '+'}
+                        {course.user_registered ? '−' : '+'}
                       </button>
                     )}
                   </div>
