@@ -164,137 +164,65 @@ export const WorkoutDisplayDatabase = ({ workoutId, onNewWorkout, onReset }: Wor
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <Card className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
-                <Dumbbell className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">{workout.title}</h1>
-                <p className="text-muted-foreground capitalize">
-                  {workout.workout_type} • {workout.session_type?.replace('_', ' ')}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>{workout.duration_minutes} Min</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Target className="h-4 w-4" />
-                <span className="capitalize">{workout.focus_area?.replace('_', ' ')}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Badge variant="secondary" className="capitalize">
-              {workout.difficulty_level}
-            </Badge>
-            <Badge variant="outline" className="capitalize">
-              {workout.focus_area?.replace('_', ' ')}
-            </Badge>
-          </div>
-        </div>
-      </Card>
-
-      {/* Workout Parts */}
-      <div className="space-y-6">
-        {workoutParts.map((part, index) => (
-          <Card key={part.id} className="p-6">
-            <div className="space-y-4">
-              {/* Part Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">{part.part_name}</h3>
-                    {part.score_type && (
-                      <Badge className={cn("mt-1", getScoreTypeColor(part.score_type))}>
-                        {part.score_type}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-4 text-sm text-muted-foreground">
-                  {part.duration_minutes && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{part.duration_minutes} Min</span>
-                    </div>
-                  )}
-                  {part.duration_rounds && (
-                    <span>{part.duration_rounds} Runden</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Part Description */}
-              {part.description && (
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-foreground font-medium">{part.description}</p>
-                </div>
-              )}
-
-              {/* Exercises */}
-              {part.exercises.length > 0 && (
-                <div className="space-y-3">
-                  <Separator />
-                  <div className="grid gap-2">
-                    {part.exercises.map((exercise, exIndex) => (
-                      <div key={exercise.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-medium">
-                            {exIndex + 1}
-                          </span>
-                          <span className="font-medium">{exercise.exercise_name}</span>
-                        </div>
-                        {formatExerciseDetails(exercise) && (
-                          <span className="text-muted-foreground text-sm">
-                            {formatExerciseDetails(exercise)}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Part Notes */}
-              {part.notes && (
-                <div className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-lg">
-                  {part.notes}
-                </div>
-              )}
-            </div>
-          </Card>
-        ))}
+    <div className="w-full max-w-4xl mx-auto space-y-6 p-4">
+      {/* Titel */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-foreground mb-2">{workout.title}</h1>
       </div>
 
-      {/* Notes */}
-      {workout.notes && (
-        <Card className="p-6 bg-muted/50">
-          <h4 className="font-semibold mb-2">Hinweise</h4>
-          <p className="text-muted-foreground">{workout.notes}</p>
-        </Card>
-      )}
+      {/* Workout Parts */}
+      {workoutParts.map((part, partIndex) => (
+        <div key={part.id} className="space-y-4">
+          {/* Part Name als Überschrift */}
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-3">{part.part_name}:</h2>
+            
+            {part.description && (
+              <p className="text-foreground mb-4">{part.description}</p>
+            )}
 
-      {/* Action Buttons */}
-      <div className="flex gap-4 justify-center pt-6">
-        <Button onClick={onNewWorkout} size="lg" className="px-8">
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Neues Workout
-        </Button>
-        <Button onClick={onReset} variant="outline" size="lg" className="px-8">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Zurück
+            {/* Exercises simple Liste */}
+            <div className="space-y-2">
+              {part.exercises.map((exercise, exerciseIndex) => (
+                <div key={exercise.id} className="text-foreground">
+                  {formatExerciseDetails(exercise) ? (
+                    <p>{formatExerciseDetails(exercise)}</p>
+                  ) : (
+                    <p>{exercise.exercise_name}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Notes */}
+            {part.notes && (
+              <div className="mt-4">
+                <div className="flex">
+                  <div className="w-1/2">
+                    <h3 className="font-bold text-foreground mb-2">Notes:</h3>
+                    <p className="text-foreground whitespace-pre-line">{part.notes}</p>
+                  </div>
+                  <div className="w-1/2 pl-8">
+                    <h3 className="font-bold text-foreground mb-2">Scaling:</h3>
+                    <p className="text-foreground">L1:</p>
+                    <p className="text-foreground">L2:</p>
+                    <p className="text-foreground">L3:</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* Action Button */}
+      <div className="flex justify-center pt-6">
+        <Button 
+          onClick={onNewWorkout} 
+          variant="outline" 
+          className="px-8 py-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+        >
+          Nächstes
         </Button>
       </div>
     </div>

@@ -76,7 +76,7 @@ serve(async (req) => {
       .eq('focus_area', focusAreaMapped)
       .gte('duration_minutes', Math.max(5, duration - 10))
       .lte('duration_minutes', duration + 10)
-      .order('duration_minutes');
+      .order('created_at', { ascending: false });
 
     if (searchError) {
       console.error('Search error:', searchError);
@@ -106,12 +106,14 @@ serve(async (req) => {
       throw new Error('Keine passenden Workouts in der Datenbank gefunden');
     }
 
-    // 3. Bestes Workout auswählen (nächste Dauer zum gewünschten Wert)
-    const selectedWorkout = matchingWorkouts.reduce((best, current) => {
-      const bestDiff = Math.abs(best.duration_minutes - duration);
-      const currentDiff = Math.abs(current.duration_minutes - duration);
-      return currentDiff < bestDiff ? current : best;
-    });
+    // 3. Zufälliges Workout aus den passenden auswählen oder bestes nach Dauer
+    const selectedWorkout = matchingWorkouts.length > 1 
+      ? matchingWorkouts[Math.floor(Math.random() * matchingWorkouts.length)]
+      : matchingWorkouts.reduce((best, current) => {
+          const bestDiff = Math.abs(best.duration_minutes - duration);
+          const currentDiff = Math.abs(current.duration_minutes - duration);
+          return currentDiff < bestDiff ? current : best;
+        });
 
     console.log('Selected workout:', selectedWorkout.title, 'Duration:', selectedWorkout.duration_minutes);
 
