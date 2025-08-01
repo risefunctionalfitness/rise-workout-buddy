@@ -84,49 +84,49 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   }, [trainingDays])
 
   // Lade Kursanmeldungen für den aktuellen Monat
-  useEffect(() => {
-    const loadCourseRegistrations = async () => {
-      if (!user?.id) return
+  const loadCourseRegistrations = async () => {
+    if (!user?.id) return
 
-      try {
-        const currentDate = new Date()
-        const currentYear = currentDate.getFullYear()
-        const currentMonth = currentDate.getMonth()
-        const startOfMonth = new Date(currentYear, currentMonth, 1)
-        const endOfMonth = new Date(currentYear, currentMonth + 1, 0)
+    try {
+      const currentDate = new Date()
+      const currentYear = currentDate.getFullYear()
+      const currentMonth = currentDate.getMonth()
+      const startOfMonth = new Date(currentYear, currentMonth, 1)
+      const endOfMonth = new Date(currentYear, currentMonth + 1, 0)
 
-        const { data: registrations, error } = await supabase
-          .from('course_registrations')
-          .select(`
-            course_id,
-            status,
-            courses(course_date)
-          `)
-          .eq('user_id', user.id)
-          .eq('status', 'registered')
-          .gte('courses.course_date', startOfMonth.toISOString().split('T')[0])
-          .lte('courses.course_date', endOfMonth.toISOString().split('T')[0])
+      const { data: registrations, error } = await supabase
+        .from('course_registrations')
+        .select(`
+          course_id,
+          status,
+          courses(course_date)
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'registered')
+        .gte('courses.course_date', startOfMonth.toISOString().split('T')[0])
+        .lte('courses.course_date', endOfMonth.toISOString().split('T')[0])
 
-        if (error) {
-          console.error('Error loading course registrations:', error)
-          return
-        }
-
-        const registrationsByDate: {[key: string]: boolean} = {}
-        registrations?.forEach(reg => {
-          if (reg.courses?.course_date) {
-            const courseDate = new Date(reg.courses.course_date)
-            const dayNumber = courseDate.getDate()
-            registrationsByDate[dayNumber.toString()] = true
-          }
-        })
-
-        setCourseRegistrations(registrationsByDate)
-      } catch (error) {
+      if (error) {
         console.error('Error loading course registrations:', error)
+        return
       }
-    }
 
+      const registrationsByDate: {[key: string]: boolean} = {}
+      registrations?.forEach(reg => {
+        if (reg.courses?.course_date) {
+          const courseDate = new Date(reg.courses.course_date)
+          const dayNumber = courseDate.getDate()
+          registrationsByDate[dayNumber.toString()] = true
+        }
+      })
+
+      setCourseRegistrations(registrationsByDate)
+    } catch (error) {
+      console.error('Error loading course registrations:', error)
+    }
+  }
+
+  useEffect(() => {
     loadCourseRegistrations()
   }, [user?.id])
 
@@ -278,7 +278,13 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       {/* Dialog für Tages-Kurse */}
       <DayCourseDialog
         open={showDayCourses}
-        onOpenChange={setShowDayCourses}
+        onOpenChange={(open) => {
+          setShowDayCourses(open)
+          if (!open) {
+            // Reload course registrations when dialog closes
+            loadCourseRegistrations()
+          }
+        }}
         date={selectedDay ? `${selectedDay.date.getFullYear()}-${String(selectedDay.date.getMonth() + 1).padStart(2, '0')}-${String(selectedDay.date.getDate()).padStart(2, '0')}` : ''}
         user={user}
         userRole={userRole}
