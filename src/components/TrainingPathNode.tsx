@@ -30,13 +30,13 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
       case 'completed':
         return <CheckCircle className="h-8 w-8 text-green-500" />
       case 'current':
-        // Wenn für heute ein Kurs registriert ist, zeige grünen Kreis
+        // Wenn für heute ein Kurs registriert ist, zeige grünes Häkchen
         if (isRegisteredForCourse) {
           return <CheckCircle className="h-8 w-8 text-green-500" />
         }
         return <Play className="h-8 w-8 text-primary" />
       case 'locked':
-        // Zukünftige Tage: grau, aber wenn für Kurs angemeldet dann grün
+        // Zukünftige Tage: wenn angemeldet grünes Häkchen, sonst graues Play
         if (isRegisteredForCourse) {
           return <CheckCircle className="h-8 w-8 text-green-500" />
         }
@@ -55,22 +55,19 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   const getStatusColor = () => {
     switch (status) {
       case 'completed':
-        // Vergangene Tage mit Training/Anmeldung: dunkelgrün mit weißem Text
-        return 'bg-green-500 border-green-600 hover:bg-green-600 text-white'
+        // Vergangene Tage mit Training: altes hellgrün
+        return 'bg-green-100 border-green-500 hover:bg-green-200 text-green-700'
       case 'current':
-        // Heute: wenn für Kurs angemeldet hellgrün mit dunklem Text, sonst primary
+        // Heute: wenn für Kurs angemeldet grau bleiben, sonst primary
         if (isRegisteredForCourse) {
-          return 'bg-green-300 border-green-500 hover:bg-green-400 text-green-900'
+          return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600'
         }
         return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary'
       case 'pending':
         // Vergangene Tage ohne Training: rot
         return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
       case 'locked':
-        // Zukünftige Tage: wenn angemeldet hellgrün mit dunklem Text, sonst grau
-        if (isRegisteredForCourse) {
-          return 'bg-green-300 border-green-500 hover:bg-green-400 text-green-900'
-        }
+        // Zukünftige Tage: grau (auch wenn angemeldet)
         return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600 cursor-pointer'
     }
   }
