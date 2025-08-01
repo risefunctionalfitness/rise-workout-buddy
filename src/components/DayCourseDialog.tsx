@@ -148,6 +148,32 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           description: "Du wurdest erfolgreich vom Kurs abgemeldet."
         })
       } else {
+        // Check registration deadline before registering
+        const course = courses.find(c => c.id === courseId)
+        if (course) {
+          // Get course template to check registration deadline
+          const { data: courseData, error: courseError } = await supabase
+            .from('courses')
+            .select('registration_deadline_minutes, course_date, start_time')
+            .eq('id', courseId)
+            .single()
+
+          if (courseError) throw courseError
+
+          const now = new Date()
+          const courseStart = new Date(`${courseData.course_date}T${courseData.start_time}`)
+          const deadlineTime = new Date(courseStart.getTime() - (courseData.registration_deadline_minutes * 60 * 1000))
+
+          if (now > deadlineTime) {
+            toast({
+              title: "Anmeldung nicht möglich",
+              description: `Die Anmeldefrist ist bereits ${courseData.registration_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`,
+              variant: "destructive"
+            })
+            return
+          }
+        }
+
         // Register
         const { error } = await supabase
           .from('course_registrations')
