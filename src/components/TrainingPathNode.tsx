@@ -55,21 +55,21 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   const getStatusColor = () => {
     switch (status) {
       case 'completed':
-        // Vergangene Tage mit Training/Anmeldung: dunkelgrün
-        return 'bg-green-600 border-green-700 hover:bg-green-700 text-white'
+        // Vergangene Tage mit Training/Anmeldung: dunkelgrün mit weißem Text
+        return 'bg-green-500 border-green-600 hover:bg-green-600 text-white'
       case 'current':
-        // Heute: wenn für Kurs angemeldet hellgrün, sonst primary
+        // Heute: wenn für Kurs angemeldet hellgrün mit dunklem Text, sonst primary
         if (isRegisteredForCourse) {
-          return 'bg-green-200 border-green-400 hover:bg-green-300 text-green-800'
+          return 'bg-green-300 border-green-500 hover:bg-green-400 text-green-900'
         }
         return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary'
       case 'pending':
         // Vergangene Tage ohne Training: rot
         return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
       case 'locked':
-        // Zukünftige Tage: wenn angemeldet hellgrün, sonst grau
+        // Zukünftige Tage: wenn angemeldet hellgrün mit dunklem Text, sonst grau
         if (isRegisteredForCourse) {
-          return 'bg-green-200 border-green-400 hover:bg-green-300 text-green-800'
+          return 'bg-green-300 border-green-500 hover:bg-green-400 text-green-900'
         }
         return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600 cursor-pointer'
     }

@@ -137,9 +137,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         // Unregister
         const { error } = await supabase
           .from('course_registrations')
-          .delete()
+          .update({ status: 'cancelled' })
           .eq('course_id', courseId)
           .eq('user_id', user.id)
+          .eq('status', 'registered')
 
         if (error) throw error
 
@@ -179,7 +180,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           .from('course_registrations')
           .insert({
             course_id: courseId,
-            user_id: user.id
+            user_id: user.id,
+            status: 'registered'
           })
 
         if (error) throw error
@@ -192,6 +194,14 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
       // Reload courses to update counts
       loadCoursesForDay()
+      
+      // Trigger parent component to reload registrations
+      if (onOpenChange) {
+        setTimeout(() => {
+          onOpenChange(false)
+          setTimeout(() => onOpenChange(true), 100)
+        }, 500)
+      }
     } catch (error) {
       console.error('Error with registration:', error)
       toast({
