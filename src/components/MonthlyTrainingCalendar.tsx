@@ -140,12 +140,10 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
     const currentMonth = currentDate.getMonth()
     
     // Alle Tage sind klickbar für Kurs An-/Abmeldung, außer für Open Gym
-    if (!isOpenGym) {
-      const selectedDate = new Date(currentYear, currentMonth, day)
-      const formattedDate = selectedDate.toISOString().split('T')[0]
-      setSelectedDate(formattedDate)
-      setShowCourseDialog(true)
-    }
+    const selectedDate = new Date(currentYear, currentMonth, day)
+    const formattedDate = selectedDate.toISOString().split('T')[0]
+    setSelectedDate(formattedDate)
+    setShowCourseDialog(true)
   }
 
   if (loading) {
@@ -172,10 +170,8 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
           return (
             <div
               key={day}
-              onClick={() => !isOpenGym ? handleDayClick(day) : undefined}
-              className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors ${
-                !isOpenGym ? 'cursor-pointer hover:scale-110' : ''
-              } relative flex items-center justify-center`}
+              onClick={() => handleDayClick(day)}
+              className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors cursor-pointer hover:scale-110 relative flex items-center justify-center`}
               title={`Tag ${day}: ${
                 trainingDays.has(day) 
                   ? 'Trainiert' 
@@ -183,9 +179,7 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
                   ? 'Angemeldet für Kurs'
                   : day < getCurrentDay() 
                   ? 'Nicht trainiert' 
-                  : !isOpenGym
-                  ? 'Klicken für Kurse'
-                  : 'Zukünftig'
+                  : 'Klicken für Kurse'
               }`}
             >
               {isRegistered && (
