@@ -5,12 +5,14 @@ import { Play, Pause, RotateCcw } from "lucide-react"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
 
 interface LocationState {
-  type: 'fortime' | 'amrap' | 'emom'
+  type: 'fortime' | 'amrap' | 'emom' | 'tabata'
   settings: {
     timeCap?: number
     minutes?: number
     interval?: number
     rounds?: number
+    workSeconds?: number
+    restSeconds?: number
   }
 }
 
@@ -26,6 +28,7 @@ export const WorkoutStart: React.FC = () => {
   const [workoutTime, setWorkoutTime] = useState(0)
   const [currentRound, setCurrentRound] = useState(1)
   const [roundTime, setRoundTime] = useState(0)
+  const [isWorkPhase, setIsWorkPhase] = useState(true)
 
   // Create beep sound using Web Audio API
   const playBeep = (frequency: number = 800, duration: number = 200) => {
@@ -96,6 +99,31 @@ export const WorkoutStart: React.FC = () => {
             setIsRunning(false)
             playBeep(600, 1000) // End sound
           }
+        } else if (type === 'tabata') {
+          setRoundTime(prev => {
+            const newRoundTime = prev + 1
+            const currentInterval = isWorkPhase ? settings.workSeconds! : settings.restSeconds!
+            
+            if (newRoundTime >= currentInterval) {
+              if (isWorkPhase) {
+                // Work phase ends, start rest
+                setIsWorkPhase(false)
+                playBeep(800, 200) // Phase change sound
+              } else {
+                // Rest phase ends, start next work round
+                setIsWorkPhase(true)
+                setCurrentRound(r => r + 1)
+                playBeep(1000, 200) // Phase change sound
+              }
+              return 0
+            }
+            return newRoundTime
+          })
+          
+          if (currentRound > settings.rounds!) {
+            setIsRunning(false)
+            playBeep(600, 1000) // End sound
+          }
         } else if (type === 'fortime' && settings.timeCap && workoutTime >= settings.timeCap * 60) {
           setIsRunning(false)
           playBeep(600, 1000) // End sound
@@ -125,6 +153,7 @@ export const WorkoutStart: React.FC = () => {
     setWorkoutTime(0)
     setCurrentRound(1)
     setRoundTime(0)
+    setIsWorkPhase(true)
   }
 
   const formatTime = (seconds: number) => {
@@ -170,11 +199,11 @@ export const WorkoutStart: React.FC = () => {
           )}
 
           {isCountingDown && (
-            <div className="text-center space-y-12" style={{ marginTop: '-1cm' }}>
-              <h1 className={`text-9xl font-bold ${countdown <= 3 ? 'text-primary animate-pulse' : ''}`} style={{ marginTop: '-1cm' }}>
+            <div className="text-center space-y-8" style={{ marginTop: '-1cm' }}>
+              <h1 className={`text-8xl font-bold ${countdown <= 3 ? 'text-primary animate-pulse' : ''}`} style={{ marginTop: '-1cm' }}>
                 {countdown}
               </h1>
-              <p className="text-2xl" style={{ marginTop: '-1cm' }}>Bereit machen...</p>
+              <p className="text-xl text-muted-foreground">Bereit machen...</p>
             </div>
           )}
 
@@ -187,6 +216,17 @@ export const WorkoutStart: React.FC = () => {
                     <p className="text-2xl">Runde {currentRound} von {settings.rounds}</p>
                     <p className="text-xl text-muted-foreground">
                       Rundenzeit: {formatTime(roundTime)}
+                    </p>
+                  </div>
+                )}
+                {type === 'tabata' && (
+                  <div className="mt-6">
+                    <p className="text-2xl">Runde {currentRound} von {settings.rounds}</p>
+                    <p className={`text-3xl font-bold ${isWorkPhase ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {isWorkPhase ? 'WORK' : 'REST'}
+                    </p>
+                    <p className="text-xl text-muted-foreground">
+                      {formatTime((isWorkPhase ? settings.workSeconds! : settings.restSeconds!) - roundTime)}
                     </p>
                   </div>
                 )}
@@ -219,6 +259,9 @@ export const WorkoutStart: React.FC = () => {
               <h1 className="text-6xl font-bold" style={{ marginTop: '-1cm' }}>FERTIG!</h1>
               <p className="text-3xl" style={{ marginTop: '-1cm' }}>Zeit: {formatTime(workoutTime)}</p>
               {type === 'emom' && (
+                <p className="text-2xl">Runden: {currentRound - 1} von {settings.rounds}</p>
+              )}
+              {type === 'tabata' && (
                 <p className="text-2xl">Runden: {currentRound - 1} von {settings.rounds}</p>
               )}
               

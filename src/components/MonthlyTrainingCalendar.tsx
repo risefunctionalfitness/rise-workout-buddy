@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
 import { DayCourseDialog } from "./DayCourseDialog"
+import { Calendar } from "lucide-react"
 
 interface MonthlyTrainingCalendarProps {
   user: User
@@ -10,6 +11,7 @@ interface MonthlyTrainingCalendarProps {
 
 export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalendarProps) => {
   const [trainingDays, setTrainingDays] = useState<Set<number>>(new Set())
+  const [registeredDays, setRegisteredDays] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [showCourseDialog, setShowCourseDialog] = useState(false)
@@ -58,16 +60,22 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
         .gte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
         .lte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-31`)
 
+      const regDays = new Set<number>()
       if (!regError && registrations) {
         for (const reg of registrations) {
           if (reg.courses?.course_date && reg.courses?.end_time) {
             const courseDate = new Date(reg.courses.course_date)
             const courseEndTime = new Date(`${reg.courses.course_date}T${reg.courses.end_time}`)
             const now = new Date()
+            const day = courseDate.getDate()
+
+            // Mark as registered for future courses
+            if (now <= courseEndTime) {
+              regDays.add(day)
+            }
 
             // If course has ended and user didn't manually unregister, mark as completed
             if (now > courseEndTime) {
-              const day = courseDate.getDate()
               days.add(day)
 
               // Create training session if not exists
@@ -95,6 +103,7 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
       }
 
       setTrainingDays(days)
+      setRegisteredDays(regDays)
     } catch (error) {
       console.error('Error loading training days:', error)
     } finally {
@@ -126,12 +135,11 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
   }
 
   const handleDayClick = (day: number) => {
-    const currentDay = getCurrentDay()
     const currentDate = new Date()
     const currentYear = currentDate.getFullYear()
     const currentMonth = currentDate.getMonth()
     
-    // Alle Tage (auch vergangene) sind klickbar für Kurs An-/Abmeldung, außer für Open Gym
+    // Alle Tage sind klickbar für Kurs An-/Abmeldung, außer für Open Gym
     if (!isOpenGym) {
       const selectedDate = new Date(currentYear, currentMonth, day)
       const formattedDate = selectedDate.toISOString().split('T')[0]
@@ -159,7 +167,7 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
         {Array.from({ length: getDaysInMonth() }, (_, i) => {
           const day = i + 1
           const currentDay = getCurrentDay()
-          const canClick = day >= currentDay && !isOpenGym
+          const isRegistered = registeredDays.has(day)
           
           return (
             <div
@@ -167,17 +175,23 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
               onClick={() => handleDayClick(day)}
               className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors ${
                 !isOpenGym ? 'cursor-pointer hover:scale-110' : ''
-              }`}
+              } relative flex items-center justify-center`}
               title={`Tag ${day}: ${
                 trainingDays.has(day) 
                   ? 'Trainiert' 
+                  : isRegistered
+                  ? 'Angemeldet für Kurs'
                   : day < getCurrentDay() 
                   ? 'Nicht trainiert' 
                   : !isOpenGym
                   ? 'Klicken für Kurse'
                   : 'Zukünftig'
               }`}
-            />
+            >
+              {isRegistered && (
+                <Calendar className="h-2 w-2 text-white" />
+              )}
+            </div>
           )
         })}
       </div>
