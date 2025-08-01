@@ -172,7 +172,7 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
           return (
             <div
               key={day}
-              onClick={() => handleDayClick(day)}
+              onClick={() => !isOpenGym ? handleDayClick(day) : undefined}
               className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors ${
                 !isOpenGym ? 'cursor-pointer hover:scale-110' : ''
               } relative flex items-center justify-center`}

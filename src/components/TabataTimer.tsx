@@ -64,7 +64,7 @@ export const TabataTimer: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
-                  {[10, 15, 20, 30, 40, 45, 60, 90, 120, 180, 240, 300, 360, 420, 480, 540, 600].map((num) => (
+                  {[10, 15, 20, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600].map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num >= 60 ? `${Math.floor(num / 60)}:${(num % 60).toString().padStart(2, '0')}` : `${num}s`}
                     </SelectItem>
@@ -81,7 +81,7 @@ export const TabataTimer: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
-                  {[5, 10, 15, 20, 30, 60, 90, 120, 180, 240, 300, 360, 420, 480].map((num) => (
+                  {[5, 10, 15, 20, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600].map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num >= 60 ? `${Math.floor(num / 60)}:${(num % 60).toString().padStart(2, '0')}` : `${num}s`}
                     </SelectItem>
