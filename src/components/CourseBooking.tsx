@@ -196,6 +196,24 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const course = courses.find(c => c.id === courseId)
       if (!course) return
 
+      // Check registration deadline before registering
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('registration_deadline_minutes, course_date, start_time')
+        .eq('id', courseId)
+        .single()
+
+      if (courseError) throw courseError
+
+      const now = new Date()
+      const courseStart = new Date(`${courseData.course_date}T${courseData.start_time}`)
+      const deadlineTime = new Date(courseStart.getTime() - (courseData.registration_deadline_minutes * 60 * 1000))
+
+      if (now > deadlineTime) {
+        toast.error(`Die Anmeldefrist ist bereits ${courseData.registration_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+        return
+      }
+
       const isWaitlist = course.registered_count >= course.max_participants
 
       const { error } = await supabase

@@ -58,16 +58,19 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
         // Vergangene Tage mit Training: altes hellgrün
         return 'bg-green-100 border-green-500 hover:bg-green-200 text-green-700'
       case 'current':
-        // Heute: wenn für Kurs angemeldet grau bleiben, sonst primary
+        // Heute: wenn für Kurs angemeldet grau mit grünem Rand und grüner Schrift, sonst primary
         if (isRegisteredForCourse) {
-          return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600'
+          return 'bg-gray-100 border-green-500 hover:bg-gray-200 text-green-600'
         }
         return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary'
       case 'pending':
         // Vergangene Tage ohne Training: rot
         return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
       case 'locked':
-        // Zukünftige Tage: grau (auch wenn angemeldet)
+        // Zukünftige Tage: wenn angemeldet grau mit grünem Rand und grüner Schrift, sonst normal grau
+        if (isRegisteredForCourse) {
+          return 'bg-gray-100 border-green-500 hover:bg-gray-200 text-green-600 cursor-pointer'
+        }
         return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600 cursor-pointer'
     }
   }
