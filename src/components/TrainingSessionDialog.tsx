@@ -9,7 +9,7 @@ interface TrainingSessionDialogProps {
   onOpenChange: (open: boolean) => void
   date: string
   dayNumber: number
-  onSelectType: (type: 'course' | 'free_training' | 'plan') => void
+  onSelectType: (type: 'course' | 'free_training' | 'plan' | 'remove') => void
   hasExistingSession?: boolean
 }
 
@@ -23,7 +23,7 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
 }) => {
   const [showQRScanner, setShowQRScanner] = useState(false)
 
-  const handleSelectType = (type: 'course' | 'free_training' | 'plan') => {
+  const handleSelectType = (type: 'course' | 'free_training' | 'plan' | 'remove') => {
     if (type === 'free_training') {
       // Für Open Gym direkt QR-Scanner öffnen
       onOpenChange(false)
@@ -70,10 +70,7 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
           {hasExistingSession && (
             <Button
               variant="ghost"
-              onClick={() => {
-                onSelectType('remove' as any)
-                onOpenChange(false)
-              }}
+              onClick={() => handleSelectType('remove')}
               className="w-full text-destructive hover:text-destructive"
             >
               Training entfernen
