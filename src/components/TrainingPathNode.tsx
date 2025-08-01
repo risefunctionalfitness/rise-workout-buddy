@@ -62,8 +62,8 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
       case 'pending':
         return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
       case 'locked':
-        // Zukünftige Tage sehen jetzt aus wie aktuelle Tage
-        return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary cursor-pointer'
+        // Zukünftige Tage sind grau
+        return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600 cursor-pointer'
     }
   }
 

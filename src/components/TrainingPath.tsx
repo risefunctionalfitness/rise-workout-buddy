@@ -162,7 +162,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   const getNodeStatus = (day: TrainingDay) => {
     if (day.trainingSession) return 'completed'
     if (day.isToday) return 'current'
-    if (day.isFuture) return 'current' // Zukünftige Tage auch klickbar machen
+    if (day.isFuture) return 'locked' // Zukünftige Tage sind grau
     return 'pending'
   }
 
@@ -279,7 +279,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       <DayCourseDialog
         open={showDayCourses}
         onOpenChange={setShowDayCourses}
-        date={selectedDay ? selectedDay.date.toISOString().split('T')[0] : ''}
+        date={selectedDay ? `${selectedDay.date.getFullYear()}-${String(selectedDay.date.getMonth() + 1).padStart(2, '0')}-${String(selectedDay.date.getDate()).padStart(2, '0')}` : ''}
         user={user}
         userRole={userRole}
       />
