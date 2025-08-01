@@ -136,15 +136,13 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   })
 
   const handleDayClick = (day: TrainingDay) => {
-    if (day.isFuture) return // Zukünftige Tage nicht klickbar
-    
     setSelectedDay(day)
     
     // Open Gym Mitglieder sehen keine Kurse
     const isOpenGym = userRole === 'open_gym'
     
-    // Zeige Kurse für den heutigen Tag (außer für Open Gym Mitglieder)
-    if (day.isToday && !isOpenGym) {
+    // Zeige Kurse für alle Tage (außer für Open Gym Mitglieder)
+    if (!isOpenGym) {
       setShowDayCourses(true)
     } else {
       setShowDialog(true)
@@ -162,9 +160,9 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   }
 
   const getNodeStatus = (day: TrainingDay) => {
-    if (day.isFuture) return 'locked'
     if (day.trainingSession) return 'completed'
     if (day.isToday) return 'current'
+    if (day.isFuture) return 'current' // Zukünftige Tage auch klickbar machen
     return 'pending'
   }
 

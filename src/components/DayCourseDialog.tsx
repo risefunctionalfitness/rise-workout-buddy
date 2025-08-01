@@ -203,7 +203,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   }
 
   const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5) // HH:MM format
+    return timeString.slice(0, 5) // HH:MM format ohne Sekunden
   }
 
   const formatDate = (dateString: string) => {

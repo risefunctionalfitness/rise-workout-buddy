@@ -36,7 +36,8 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
         }
         return <Play className="h-8 w-8 text-primary" />
       case 'locked':
-        return <Lock className="h-8 w-8 text-muted-foreground" />
+        // Kein Schloss mehr - zeige Play-Symbol für klickbare zukünftige Tage
+        return <Play className="h-8 w-8 text-primary" />
       case 'pending':
         // Für vergangene Tage: X für nicht besucht
         return <X className="h-8 w-8 text-red-500" />
@@ -61,11 +62,12 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
       case 'pending':
         return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
       case 'locked':
-        return 'bg-muted border-muted-foreground/30 text-muted-foreground cursor-not-allowed'
+        // Zukünftige Tage sehen jetzt aus wie aktuelle Tage
+        return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary cursor-pointer'
     }
   }
 
-  const isClickable = status === 'current' || status === 'pending' || status === 'completed'
+  const isClickable = true // Alle Tage klickbar machen
 
   return (
     <div className="flex flex-col items-center gap-2">
