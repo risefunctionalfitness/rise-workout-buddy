@@ -69,7 +69,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
 
       if (error) throw error
       setUserProfile(data)
-      console.log('User profile loaded:', data)
     } catch (error) {
       console.error('Error loading user profile:', error)
     }
@@ -183,7 +182,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   }
 
   const isAuthor = userProfile?.authors === true
-  console.log('User profile:', userProfile, 'Is author:', isAuthor)
 
   // Show creation form
   if (showCreationForm && isAuthor) {
