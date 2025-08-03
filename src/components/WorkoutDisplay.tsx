@@ -1,8 +1,10 @@
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, RotateCcw } from "lucide-react"
+import { ArrowLeft, RotateCcw, Bot } from "lucide-react"
+import { WorkoutChatInterface } from "./WorkoutChatInterface"
 
 interface CrossfitWorkout {
   id: string
@@ -34,7 +36,18 @@ interface WorkoutDisplayProps {
 }
 
 export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, isGenerating }: WorkoutDisplayProps) => {
+  const [showAIChat, setShowAIChat] = useState(false)
   const isCrossfitWorkout = (w: any): w is CrossfitWorkout => workoutType === 'crossfit'
+
+  if (showAIChat) {
+    return (
+      <WorkoutChatInterface
+        workout={workout}
+        workoutType={workoutType}
+        onClose={() => setShowAIChat(false)}
+      />
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -107,10 +120,14 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
 
           <Separator />
 
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-wrap">
             <Button onClick={onNewWorkout} variant="default" disabled={isGenerating}>
               <RotateCcw className="h-4 w-4 mr-2" />
               {isGenerating ? "Generiere..." : "Neues Workout"}
+            </Button>
+            <Button onClick={() => setShowAIChat(true)} variant="secondary">
+              <Bot className="h-4 w-4 mr-2" />
+              AI Erklärung
             </Button>
             <Button onClick={onReset} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />

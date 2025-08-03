@@ -2,10 +2,10 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Users, BarChart3 } from "lucide-react"
+import { Calendar, Users, ChevronDown, ChevronUp, Trophy, TrendingUp } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/integrations/supabase/client"
-import { ExtendedStatsDialog } from "./ExtendedStatsDialog"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 interface AdminStatsProps {
   onStatsLoad?: (stats: any) => void
@@ -38,6 +38,10 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     }
   })
   const [loading, setLoading] = useState(true)
+  const [extendedStatsOpen, setExtendedStatsOpen] = useState(false)
+  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<any[]>([])
+  const [thisYearLeaderboard, setThisYearLeaderboard] = useState<any[]>([])
+  const [extendedStatsLoading, setExtendedStatsLoading] = useState(false)
 
   useEffect(() => {
     loadStats()
@@ -102,6 +106,81 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       console.error('Error loading admin stats:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadExtendedStats = async () => {
+    setExtendedStatsLoading(true)
+    try {
+      const currentYear = new Date().getFullYear()
+
+      // All time leaderboard - aggregated by user
+      const { data: allTimeData } = await supabase
+        .from('leaderboard_entries')
+        .select(`
+          user_id,
+          training_count,
+          profiles!inner(display_name)
+        `)
+
+      // This year leaderboard - aggregated by user for current year
+      const { data: thisYearData } = await supabase
+        .from('leaderboard_entries')
+        .select(`
+          user_id,
+          training_count,
+          profiles!inner(display_name)
+        `)
+        .eq('year', currentYear)
+
+      // Aggregate all time data by user
+      const allTimeAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
+      allTimeData?.forEach(entry => {
+        if (!allTimeAggregated[entry.user_id]) {
+          allTimeAggregated[entry.user_id] = {
+            user_id: entry.user_id,
+            total: 0,
+            display_name: (entry.profiles as any)?.display_name || 'Unbekannt'
+          }
+        }
+        allTimeAggregated[entry.user_id].total += entry.training_count
+      })
+
+      // Aggregate this year data by user
+      const thisYearAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
+      thisYearData?.forEach(entry => {
+        if (!thisYearAggregated[entry.user_id]) {
+          thisYearAggregated[entry.user_id] = {
+            user_id: entry.user_id,
+            total: 0,
+            display_name: (entry.profiles as any)?.display_name || 'Unbekannt'
+          }
+        }
+        thisYearAggregated[entry.user_id].total += entry.training_count
+      })
+
+      // Convert to arrays and sort
+      const allTimeSorted = Object.values(allTimeAggregated)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 20) // Top 20
+
+      const thisYearSorted = Object.values(thisYearAggregated)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 20) // Top 20
+
+      setAllTimeLeaderboard(allTimeSorted)
+      setThisYearLeaderboard(thisYearSorted)
+    } catch (error) {
+      console.error('Error loading extended stats:', error)
+    } finally {
+      setExtendedStatsLoading(false)
+    }
+  }
+
+  const toggleExtendedStats = () => {
+    setExtendedStatsOpen(!extendedStatsOpen)
+    if (!extendedStatsOpen && allTimeLeaderboard.length === 0) {
+      loadExtendedStats()
     }
   }
 
@@ -204,17 +283,106 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         </CardContent>
       </Card>
 
-      {/* Extended Stats Button */}
-      <div className="flex justify-center">
-        <ExtendedStatsDialog 
-          trigger={
-            <Button variant="outline" size="lg">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Weitere Statistiken
-            </Button>
-          }
-        />
-      </div>
+      {/* Extended Stats */}
+      <Collapsible open={extendedStatsOpen} onOpenChange={setExtendedStatsOpen}>
+        <CollapsibleTrigger asChild>
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  <span className="font-medium">Weitere Statistiken</span>
+                </div>
+                {extendedStatsOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent className="space-y-4">
+          {extendedStatsLoading ? (
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="animate-pulse h-12 bg-gray-200 rounded"></div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* All Time Leaderboard */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-yellow-600" />
+                    All Time Leaderboard
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {allTimeLeaderboard.map((entry, index) => (
+                      <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            index === 0 ? 'bg-yellow-500 text-white' :
+                            index === 1 ? 'bg-gray-400 text-white' :
+                            index === 2 ? 'bg-amber-600 text-white' :
+                            'bg-gray-200 text-gray-700'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="font-medium">{entry.display_name}</span>
+                        </div>
+                        <Badge variant="secondary" className="text-sm">
+                          {entry.total} Sessions
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* This Year Leaderboard */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                    This Year Leaderboard
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {thisYearLeaderboard.map((entry, index) => (
+                      <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            index === 0 ? 'bg-yellow-500 text-white' :
+                            index === 1 ? 'bg-gray-400 text-white' :
+                            index === 2 ? 'bg-amber-600 text-white' :
+                            'bg-gray-200 text-gray-700'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="font-medium">{entry.display_name}</span>
+                        </div>
+                        <Badge variant="secondary" className="text-sm">
+                          {entry.total} Sessions
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   )
 }

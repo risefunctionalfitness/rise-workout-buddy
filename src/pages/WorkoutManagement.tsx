@@ -11,6 +11,8 @@ import { Plus, Edit, Trash2, Search } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { RiseHeader } from "@/components/RiseHeader"
+import { BottomNavigation, TabType } from "@/components/BottomNavigation"
+import { useNavigate } from "react-router-dom"
 import { WorkoutEditDialog } from "@/components/WorkoutEditDialog"
 
 interface CrossfitWorkout {
@@ -38,12 +40,14 @@ interface BodybuildingWorkout {
 }
 
 const WorkoutManagement = () => {
+  const navigate = useNavigate()
   const [crossfitWorkouts, setCrossfitWorkouts] = useState<CrossfitWorkout[]>([])
   const [bodybuildingWorkouts, setBodybuildingWorkouts] = useState<BodybuildingWorkout[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [activeTab, setActiveTab] = useState("crossfit")
+  const [adminActiveTab, setAdminActiveTab] = useState<TabType>('workouts')
 
   // Form states for creating new workouts
   const [newWorkout, setNewWorkout] = useState({
@@ -193,9 +197,37 @@ const WorkoutManagement = () => {
     workout.focus_area.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const handleAdminTabChange = (tab: TabType) => {
+    setAdminActiveTab(tab)
+    switch (tab) {
+      case 'members':
+        navigate('/admin')
+        break
+      case 'participants':
+        navigate('/admin')
+        break
+      case 'courses':
+        navigate('/admin')
+        break
+      case 'news':
+        navigate('/admin')
+        break
+      case 'gym-codes':
+        navigate('/admin')
+        break
+      case 'workouts':
+        // Stay on current page
+        break
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <RiseHeader />
+      <BottomNavigation 
+        activeTab={adminActiveTab}
+        onTabChange={handleAdminTabChange}
+      />
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
