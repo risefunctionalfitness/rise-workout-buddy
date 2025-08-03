@@ -28,6 +28,7 @@ interface Member {
   membership_type: 'Member' | 'Trainer' | 'Administrator' | 'Open Gym' | 'Wellpass' | '10er Karte';
   status: string;
   last_login_at: string | null;
+  authors?: boolean;
 }
 
 export default function Admin() {
@@ -141,7 +142,7 @@ export default function Admin() {
       // Build query with search filter
       let query = supabase
         .from('profiles')
-        .select('id, display_name, access_code, created_at, user_id, membership_type, status, last_login_at', { count: 'exact' });
+        .select('id, display_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors', { count: 'exact' });
       
       if (searchTerm) {
         query = query.or(`display_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
@@ -230,7 +231,8 @@ export default function Admin() {
         .update({
           display_name: editingMember.display_name,
           access_code: editingMember.access_code,
-          membership_type: editingMember.membership_type
+          membership_type: editingMember.membership_type,
+          authors: editingMember.authors
         })
         .eq('id', editingMember.id);
 
@@ -464,7 +466,22 @@ export default function Admin() {
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
+                       </div>
+                       <div className="flex items-center space-x-2">
+                         <input
+                           type="checkbox"
+                           id="edit-author-checkbox"
+                           checked={editingMember.authors || false}
+                           onChange={(e) => setEditingMember({
+                             ...editingMember,
+                             authors: e.target.checked
+                           })}
+                           className="rounded"
+                         />
+                         <label htmlFor="edit-author-checkbox" className="text-sm">
+                           Autor (kann WODs erstellen)
+                         </label>
+                       </div>
                       <div className="flex gap-2">
                         <Button type="submit" className="flex-1">
                           Änderungen speichern

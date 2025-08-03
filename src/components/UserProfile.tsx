@@ -257,8 +257,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
           </Card>
         </div>
 
-        {/* Abmelde Button */}
-        <div className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto">
+        {/* Abmelde Button - am Ende der Seite */}
+        <div className="mt-8 mb-8">
           <Button 
             onClick={handleLogout} 
             className="w-full bg-[#B81243] hover:bg-[#901a36] text-white"
