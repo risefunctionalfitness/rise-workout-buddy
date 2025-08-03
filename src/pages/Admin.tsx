@@ -558,7 +558,14 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <MembershipBadge type={member.membership_type} />
+                      <div className="flex items-center gap-2">
+                        <MembershipBadge type={member.membership_type} />
+                        {member.authors && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
+                            Autor
+                          </span>
+                        )}
+                      </div>
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         member.status === 'active' 
                           ? 'bg-green-100 text-green-800' 
@@ -592,7 +599,14 @@ export default function Admin() {
                       <TableCell className="font-medium">{member.display_name}</TableCell>
                       <TableCell>{member.access_code}</TableCell>
                       <TableCell>
-                        <MembershipBadge type={member.membership_type} />
+                        <div className="flex items-center gap-2">
+                          <MembershipBadge type={member.membership_type} />
+                          {member.authors && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
+                              Autor
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {new Date(member.created_at).toLocaleDateString('de-DE')}

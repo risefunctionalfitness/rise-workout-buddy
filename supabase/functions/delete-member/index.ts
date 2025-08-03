@@ -59,7 +59,62 @@ serve(async (req) => {
 
     console.log(`Attempting to delete user: ${userId}`)
 
-    // First, delete from profiles table (due to foreign key constraints)
+    // First, delete related data (user_roles, leaderboard_entries, training_sessions, etc.)
+    const { error: userRolesError } = await supabaseClient
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+
+    if (userRolesError) {
+      console.error('Error deleting user roles:', userRolesError)
+    }
+
+    const { error: leaderboardError } = await supabaseClient
+      .from('leaderboard_entries')
+      .delete()
+      .eq('user_id', userId)
+
+    if (leaderboardError) {
+      console.error('Error deleting leaderboard entries:', leaderboardError)
+    }
+
+    const { error: sessionsError } = await supabaseClient
+      .from('training_sessions')
+      .delete()
+      .eq('user_id', userId)
+
+    if (sessionsError) {
+      console.error('Error deleting training sessions:', sessionsError)
+    }
+
+    const { error: plansError } = await supabaseClient
+      .from('training_plans')
+      .delete()
+      .eq('user_id', userId)
+
+    if (plansError) {
+      console.error('Error deleting training plans:', plansError)
+    }
+
+    const { error: readNewsError } = await supabaseClient
+      .from('user_read_news')
+      .delete()
+      .eq('user_id', userId)
+
+    if (readNewsError) {
+      console.error('Error deleting read news:', readNewsError)
+    }
+
+    const { error: registrationsError } = await supabaseClient
+      .from('course_registrations')
+      .delete()
+      .eq('user_id', userId)
+
+    if (registrationsError) {
+      console.error('Error deleting course registrations:', registrationsError)
+    }
+
+    // Then delete from profiles table
     const { error: profileError } = await supabaseClient
       .from('profiles')
       .delete()
@@ -70,9 +125,9 @@ serve(async (req) => {
       throw new Error(`Failed to delete profile: ${profileError.message}`)
     }
 
-    console.log('Profile deleted successfully')
+    console.log('Profile and related data deleted successfully')
 
-    // Then delete from auth.users using admin API
+    // Finally delete from auth.users using admin API
     const { error: authDeleteError } = await supabaseClient.auth.admin.deleteUser(
       userId
     )
