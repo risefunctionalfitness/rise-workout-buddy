@@ -120,22 +120,24 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       console.log('Loading extended stats...')
       const currentYear = new Date().getFullYear()
 
-      // Get all leaderboard entries separately
+      // Get all leaderboard entries with training_count > 0
       const { data: allTimeData, error: allTimeError } = await supabase
         .from('leaderboard_entries')
         .select('user_id, training_count, year, month')
+        .gt('training_count', 0) // Only get entries with actual training sessions
 
       if (allTimeError) {
         console.error('All time error:', allTimeError)
         throw allTimeError
       }
 
-      console.log('All time data:', allTimeData)
+      console.log('All time data (filtered):', allTimeData)
 
-      // Get all profiles separately
+      // Get all profiles that have user_id (not null)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
+        .not('user_id', 'is', null)
 
       if (profilesError) {
         console.error('Profiles error:', profilesError)
@@ -144,28 +146,60 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       console.log('Profiles data:', profilesData)
 
+      // Validate we have data
+      if (!allTimeData || allTimeData.length === 0) {
+        console.log('No leaderboard data found')
+        setExtendedStats({
+          allTimeLeaderboard: [],
+          yearLeaderboard: []
+        })
+        return
+      }
+
+      if (!profilesData || profilesData.length === 0) {
+        console.log('No profiles data found')
+        setExtendedStats({
+          allTimeLeaderboard: [],
+          yearLeaderboard: []
+        })
+        return
+      }
+
       // Create a profiles lookup map
       const profilesMap = profilesData.reduce((acc, profile) => {
-        acc[profile.user_id] = profile
+        if (profile.user_id) {
+          acc[profile.user_id] = profile
+        }
         return acc
       }, {} as Record<string, any>)
 
-      // Aggregate all time data by user
+      console.log('Profiles map created:', Object.keys(profilesMap).length, 'profiles')
+
+      // Aggregate all time data by user (only entries with training_count > 0)
       const allTimeAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
-      allTimeData?.forEach(entry => {
+      allTimeData.forEach(entry => {
+        // Skip entries with 0 training count (already filtered by query, but double-check)
+        if (entry.training_count <= 0) return
+        
         if (!allTimeAggregated[entry.user_id]) {
           const profile = profilesMap[entry.user_id]
           allTimeAggregated[entry.user_id] = {
             user_id: entry.user_id,
             total: 0,
-            display_name: profile?.display_name || 'Unbekannt'
+            display_name: profile?.display_name || `User ${entry.user_id.slice(0, 8)}`
           }
         }
         allTimeAggregated[entry.user_id].total += entry.training_count
       })
 
+      console.log('All time aggregated:', allTimeAggregated)
+
       // Filter this year data and aggregate by user
-      const thisYearData = allTimeData?.filter(entry => entry.year === currentYear) || []
+      const thisYearData = allTimeData.filter(entry => 
+        entry.year === currentYear && entry.training_count > 0
+      )
+      console.log('This year filtered data:', thisYearData)
+
       const thisYearAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
       thisYearData.forEach(entry => {
         if (!thisYearAggregated[entry.user_id]) {
@@ -173,23 +207,27 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           thisYearAggregated[entry.user_id] = {
             user_id: entry.user_id,
             total: 0,
-            display_name: profile?.display_name || 'Unbekannt'
+            display_name: profile?.display_name || `User ${entry.user_id.slice(0, 8)}`
           }
         }
         thisYearAggregated[entry.user_id].total += entry.training_count
       })
 
-      // Convert to arrays and sort
+      console.log('This year aggregated:', thisYearAggregated)
+
+      // Convert to arrays and sort by total (descending)
       const allTimeSorted = Object.values(allTimeAggregated)
+        .filter(entry => entry.total > 0) // Extra safety check
         .sort((a, b) => b.total - a.total)
         .slice(0, 20) // Top 20
 
       const thisYearSorted = Object.values(thisYearAggregated)
+        .filter(entry => entry.total > 0) // Extra safety check
         .sort((a, b) => b.total - a.total)
         .slice(0, 20) // Top 20
 
-      console.log('All time leaderboard:', allTimeSorted)
-      console.log('This year leaderboard:', thisYearSorted)
+      console.log('Final all time leaderboard:', allTimeSorted)
+      console.log('Final this year leaderboard:', thisYearSorted)
 
       setExtendedStats({
         allTimeLeaderboard: allTimeSorted,
@@ -197,6 +235,11 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       })
     } catch (error) {
       console.error('Error loading extended stats:', error)
+      // Set empty arrays on error
+      setExtendedStats({
+        allTimeLeaderboard: [],
+        yearLeaderboard: []
+      })
     } finally {
       setExtendedStatsLoading(false)
     }
