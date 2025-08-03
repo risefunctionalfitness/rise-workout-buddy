@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { RiseHeader } from "@/components/RiseHeader"
 import { WorkoutEditDialog } from "@/components/WorkoutEditDialog"
+import { useNavigate } from "react-router-dom"
 
 interface CrossfitWorkout {
   id: string
@@ -38,6 +39,7 @@ interface BodybuildingWorkout {
 }
 
 const WorkoutManagement = () => {
+  const navigate = useNavigate()
   const [crossfitWorkouts, setCrossfitWorkouts] = useState<CrossfitWorkout[]>([])
   const [bodybuildingWorkouts, setBodybuildingWorkouts] = useState<BodybuildingWorkout[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -193,10 +195,14 @@ const WorkoutManagement = () => {
     workout.focus_area.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/auth')
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <RiseHeader />
+      <RiseHeader showNavigation={true} onLogout={handleLogout} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">

@@ -281,14 +281,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       case 'wod':
         return (
           <div className="flex-1 container mx-auto px-6 py-8">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-4">
-                WOD Generator
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Erstelle dir dein personalisiertes Workout basierend auf deinem Profil.
-              </p>
-            </div>
             <WorkoutGenerator user={user} />
           </div>
         )
