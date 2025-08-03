@@ -17,6 +17,7 @@ import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
 import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 interface Member {
   id: string;
@@ -52,6 +53,9 @@ export default function Admin() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const membersPerPage = 10;
   const navigate = useNavigate();
+  
+  // Scroll to top when navigating admin pages
+  useScrollToTop([]);
 
   useEffect(() => {
     // Set up auth state listener

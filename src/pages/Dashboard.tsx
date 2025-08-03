@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
 import { useNewsNotification } from "@/hooks/useNewsNotification"
-
+import { useScrollToTop } from "@/hooks/useScrollToTop"
 import { useNavigate } from "react-router-dom"
 
 type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
@@ -45,6 +45,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
+  
+  // Scroll to top when changing tabs (except home which has the overview)
+  useScrollToTop(['/pro']) // Exclude the overview page from scroll to top
   
   // Check if user is Open Gym (should not see courses)
   const isOpenGym = userRole === 'open_gym'
@@ -99,22 +102,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
   const generateTrainingDays = async () => {
     const today = new Date()
-    const currentMonth = today.getMonth()
-    const currentYear = today.getFullYear()
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+    const currentDate = new Date(today)
     
+    // Generate next 10 training days starting from today
     const days: TrainingDay[] = []
     
-    // Generate all days of the current month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const currentDate = new Date(currentYear, currentMonth, day)
-      const isToday = currentDate.toDateString() === today.toDateString()
-      const isFuture = currentDate > today
-      const isPast = currentDate < today && !isToday
+    for (let i = 0; i < 10; i++) {
+      const date = new Date(currentDate)
+      date.setDate(currentDate.getDate() + i)
+      
+      const isToday = date.toDateString() === today.toDateString()
+      const isFuture = date > today
+      const isPast = date < today && !isToday
       
       days.push({
-        date: currentDate,
-        dayNumber: day,
+        date: date,
+        dayNumber: date.getDate(),
         isToday,
         isFuture,
         isPast,
@@ -122,14 +125,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       })
     }
 
-    // Load existing training sessions
+    // Load existing training sessions for the next 10 days
     try {
+      const startDate = new Date(today)
+      const endDate = new Date(today)
+      endDate.setDate(today.getDate() + 10)
+      
       const { data: sessions, error } = await supabase
         .from('training_sessions')
-        .select('id, date, workout_type, status') // Only select needed fields
+        .select('id, date, workout_type, status')
         .eq('user_id', user.id)
-        .gte('date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
-        .lt('date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
+        .gte('date', startDate.toISOString().split('T')[0])
+        .lt('date', endDate.toISOString().split('T')[0])
 
       if (error) {
         console.error('Error loading training sessions:', error)
@@ -139,8 +146,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       // Map sessions to days
       sessions?.forEach(session => {
         const sessionDate = new Date(session.date)
-        const dayNumber = sessionDate.getDate()
-        const dayIndex = days.findIndex(d => d.dayNumber === dayNumber)
+        const dayIndex = days.findIndex(d => 
+          d.date.toDateString() === sessionDate.toDateString()
+        )
         
         if (dayIndex !== -1) {
           days[dayIndex].trainingSession = {
@@ -164,12 +172,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
                    user?.email?.split('@')[0] || 
                    'Nutzer'
 
-  const totalDaysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
+  const totalDaysShown = 10 // Changed from monthly view to next 10 days
 
   const handleAddTraining = async (dayNumber: number, type: 'course' | 'free_training' | 'plan') => {
     try {
-      const currentDate = new Date()
-      const sessionDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayNumber)
+      // Find the correct date from our training days
+      const selectedDay = trainingDays.find(day => day.dayNumber === dayNumber)
+      if (!selectedDay) return
+      
+      const sessionDate = selectedDay.date
       
       const { data, error } = await supabase
         .from('training_sessions')
@@ -300,7 +311,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
         <TrainingPathHeader
           trainingDaysThisMonth={trainingCount}
-          totalDaysInMonth={totalDaysInMonth}
+          totalDaysInMonth={totalDaysShown}
           userAvatar={userAvatar}
           onProfileClick={() => setShowProfile(true)}
         />
