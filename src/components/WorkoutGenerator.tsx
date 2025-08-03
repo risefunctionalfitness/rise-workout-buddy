@@ -206,9 +206,14 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
     setStep(3)
   }
 
-  const handleBodybuildingComplete = (focus: BodybuildingFocus, difficulty: BodybuildingDifficulty) => {
-    setBodybuilding({ focus, difficulty })
+  const handleBodybuildingFocusSelect = (focus: BodybuildingFocus) => {
+    setBodybuilding(prev => ({ ...prev, focus }))
     setStep(3)
+  }
+
+  const handleBodybuildingDifficultySelect = (difficulty: BodybuildingDifficulty) => {
+    setBodybuilding(prev => ({ ...prev, difficulty }))
+    setStep(4)
   }
 
   const goBack = () => {
@@ -221,9 +226,12 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       setStep(2)
       if (workoutType === "crossfit") {
         setCrossfitType(null)
-      } else {
-        setBodybuilding({ focus: null, difficulty: null })
+      } else if (workoutType === "bodybuilding") {
+        setBodybuilding(prev => ({ ...prev, focus: null }))
       }
+    } else if (step === 4) {
+      setStep(3)
+      setBodybuilding(prev => ({ ...prev, difficulty: null }))
     }
   }
 
@@ -274,7 +282,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader className="text-center">
-            {isAuthor && (
+            {isAuthor && workoutType === "crossfit" && (
               <Button 
                 onClick={() => setShowCreationForm(true)}
                 className="mx-auto"
@@ -314,7 +322,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
               </div>
             )}
 
-            {/* Step 2: Bodybuilding Selection */}
+            {/* Step 2: Bodybuilding Focus Selection */}
             {step === 2 && workoutType === "bodybuilding" && (
               <div className="text-center space-y-6">
                 <div className="flex items-center gap-4 mb-6">
@@ -322,24 +330,38 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Zurück
                   </Button>
-                  <h3 className="text-xl font-semibold flex-1">Bodybuilding wählen</h3>
+                  <h3 className="text-xl font-semibold flex-1">Fokus wählen</h3>
                 </div>
                 <BodybuildingSelector
                   selectedFocus={bodybuilding.focus}
-                  selectedDifficulty={bodybuilding.difficulty}
-                  onFocusSelect={(focus) => setBodybuilding(prev => ({ ...prev, focus }))}
-                  onDifficultySelect={(difficulty) => {
-                    setBodybuilding(prev => ({ ...prev, difficulty }))
-                    if (bodybuilding.focus && difficulty) {
-                      handleBodybuildingComplete(bodybuilding.focus, difficulty)
-                    }
-                  }}
+                  selectedDifficulty={null}
+                  onFocusSelect={handleBodybuildingFocusSelect}
+                  onDifficultySelect={() => {}}
                 />
               </div>
             )}
 
-            {/* Step 3: Generate Workout */}
-            {step === 3 && (
+            {/* Step 3: Bodybuilding Difficulty Selection */}
+            {step === 3 && workoutType === "bodybuilding" && (
+              <div className="text-center space-y-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <Button variant="ghost" onClick={goBack} size="sm">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Zurück
+                  </Button>
+                  <h3 className="text-xl font-semibold flex-1">Schwierigkeit wählen</h3>
+                </div>
+                <BodybuildingSelector
+                  selectedFocus={bodybuilding.focus}
+                  selectedDifficulty={bodybuilding.difficulty}
+                  onFocusSelect={() => {}}
+                  onDifficultySelect={handleBodybuildingDifficultySelect}
+                />
+              </div>
+            )}
+
+            {/* Step 3: CrossFit Generate Workout */}
+            {step === 3 && workoutType === "crossfit" && (
               <div className="text-center space-y-6">
                 <div className="flex items-center gap-4 mb-6">
                   <Button variant="ghost" onClick={goBack} size="sm">
@@ -351,12 +373,34 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
                 
                 <div className="bg-muted/50 p-6 rounded-lg">
                   <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
-                  <p className="text-muted-foreground">
-                    {workoutType === "crossfit" 
-                      ? `CrossFit - ${crossfitType}`
-                      : `Bodybuilding - ${bodybuilding.focus} (${bodybuilding.difficulty})`
-                    }
-                  </p>
+                  <p className="text-muted-foreground">CrossFit - {crossfitType}</p>
+                </div>
+
+                <Button 
+                  onClick={generateWorkout}
+                  disabled={isGenerating}
+                  size="lg"
+                  className="px-8"
+                >
+                  {isGenerating ? "Generiere..." : "Workout generieren"}
+                </Button>
+              </div>
+            )}
+
+            {/* Step 4: Bodybuilding Generate Workout */}
+            {step === 4 && workoutType === "bodybuilding" && (
+              <div className="text-center space-y-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <Button variant="ghost" onClick={goBack} size="sm">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Zurück
+                  </Button>
+                  <h3 className="text-xl font-semibold flex-1">Workout generieren</h3>
+                </div>
+                
+                <div className="bg-muted/50 p-6 rounded-lg">
+                  <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
+                  <p className="text-muted-foreground">Bodybuilding - {bodybuilding.focus} ({bodybuilding.difficulty})</p>
                 </div>
 
                 <Button 
