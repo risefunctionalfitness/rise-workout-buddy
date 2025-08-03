@@ -187,7 +187,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   if (showCreationForm && isAuthor) {
     return (
       <WorkoutCreationForm 
-        userNickname={userProfile?.nickname || 'Unbekannt'}
+        userNickname={userProfile?.display_name || userProfile?.nickname || 'Unbekannt'}
         onBack={() => setShowCreationForm(false)}
         onWorkoutCreated={() => {
           setShowCreationForm(false)
