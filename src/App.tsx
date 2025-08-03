@@ -17,6 +17,7 @@ import { AmrapTimer } from "@/components/AmrapTimer";
 import { EmomTimer } from "@/components/EmomTimer";
 import { TabataTimer } from "@/components/TabataTimer";
 import { WorkoutStart } from "@/components/WorkoutStart";
+import WorkoutManagement from "./pages/WorkoutManagement";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/workout-timer/tabata" element={<TabataTimer />} />
             <Route path="/workout-timer/start" element={<WorkoutStart />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/workouts" element={<WorkoutManagement />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

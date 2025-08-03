@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search } from "lucide-react";
+import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search, Dumbbell } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
@@ -776,6 +776,15 @@ export default function Admin() {
                   >
                     <Newspaper className="h-12 w-12 text-gray-600 mb-3" />
                     <span className="text-lg font-medium">News</span>
+                  </div>
+                  <div 
+                    onClick={() => {
+                      navigate('/admin/workouts');
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <Dumbbell className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">Workouts</span>
                   </div>
                   <div 
                     onClick={() => {

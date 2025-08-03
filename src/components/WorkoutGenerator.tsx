@@ -170,11 +170,19 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
     }
   }
 
-  const newWorkout = () => {
-    if (workoutType === "crossfit" && crossfitType) {
-      generateCrossfitWorkout()
-    } else if (workoutType === "bodybuilding" && bodybuilding.focus && bodybuilding.difficulty) {
-      generateBodybuildingWorkout()
+  const newWorkout = async () => {
+    setIsGenerating(true)
+    try {
+      if (workoutType === "crossfit" && crossfitType) {
+        await generateCrossfitWorkout()
+      } else if (workoutType === "bodybuilding" && bodybuilding.focus && bodybuilding.difficulty) {
+        await generateBodybuildingWorkout()
+      }
+    } catch (error) {
+      console.error('Error generating new workout:', error)
+      toast.error("Fehler beim Generieren des neuen Workouts")
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -220,6 +228,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
         workoutType={workoutType!}
         onNewWorkout={newWorkout}
         onReset={resetSelection}
+        isGenerating={isGenerating}
       />
     )
   }

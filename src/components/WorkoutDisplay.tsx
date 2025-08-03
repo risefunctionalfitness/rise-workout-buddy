@@ -30,9 +30,10 @@ interface WorkoutDisplayProps {
   workoutType: 'crossfit' | 'bodybuilding'
   onNewWorkout: () => void
   onReset: () => void
+  isGenerating?: boolean
 }
 
-export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset }: WorkoutDisplayProps) => {
+export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, isGenerating }: WorkoutDisplayProps) => {
   const isCrossfitWorkout = (w: any): w is CrossfitWorkout => workoutType === 'crossfit'
 
   return (
@@ -107,9 +108,9 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset }: 
           <Separator />
 
           <div className="flex gap-4 justify-center">
-            <Button onClick={onNewWorkout} variant="default">
+            <Button onClick={onNewWorkout} variant="default" disabled={isGenerating}>
               <RotateCcw className="h-4 w-4 mr-2" />
-              Neues Workout
+              {isGenerating ? "Generiere..." : "Neues Workout"}
             </Button>
             <Button onClick={onReset} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />

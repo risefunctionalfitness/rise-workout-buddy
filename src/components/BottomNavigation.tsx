@@ -1,8 +1,8 @@
-import { Users, Calendar, Newspaper, Settings } from "lucide-react"
+import { Users, Calendar, Newspaper, Settings, Dumbbell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-export type TabType = 'members' | 'participants' | 'courses' | 'news' | 'gym-codes'
+export type TabType = 'members' | 'participants' | 'courses' | 'news' | 'gym-codes' | 'workouts'
 
 interface BottomNavigationProps {
   activeTab: TabType
@@ -18,6 +18,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     { id: 'participants' as TabType, icon: Users, label: 'Kurs-Teilnehmer' },
     { id: 'courses' as TabType, icon: Calendar, label: 'Kurse anlegen' },
     { id: 'news' as TabType, icon: Newspaper, label: 'Aktuelles' },
+    { id: 'workouts' as TabType, icon: Dumbbell, label: 'Workouts' },
     { id: 'gym-codes' as TabType, icon: Settings, label: 'Zugangscodes' }
   ]
 

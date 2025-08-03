@@ -43,6 +43,8 @@ const EXERCISES = [
   { category: "Gymnastics – Push", name: "Handstand Push-Up" },
   { category: "Gymnastics – Push", name: "Handstand Walk" },
   { category: "Gymnastics – Push", name: "Ring Dip" },
+  { category: "Gymnastics – Push", name: "Wall Walks" },
+  { category: "Gymnastics – Push", name: "Push Ups" },
 
   // Gymnastics – Core
   { category: "Gymnastics – Core", name: "Toes-to-Bar" },
@@ -52,6 +54,7 @@ const EXERCISES = [
   { category: "Gymnastics – Core", name: "Hollow Rock" },
   { category: "Gymnastics – Core", name: "L-Sit" },
   { category: "Gymnastics – Core", name: "Plank" },
+  { category: "Gymnastics – Core", name: "Sit Ups" },
 
   // Lower Body
   { category: "Lower Body", name: "Pistol Squat" },
@@ -59,6 +62,7 @@ const EXERCISES = [
   { category: "Lower Body", name: "Overhead Lunges" },
   { category: "Lower Body", name: "Box Step-Ups" },
   { category: "Lower Body", name: "Bulgarian Split Squat" },
+  { category: "Lower Body", name: "Air Squats" },
 
   // Cardio
   { category: "Cardio", name: "Run" },
@@ -72,6 +76,7 @@ const EXERCISES = [
   { category: "Cardio", name: "Box Jump Over" },
   { category: "Cardio", name: "Burpee" },
   { category: "Cardio", name: "Burpee Box Jump Over" },
+  { category: "Cardio", name: "Burpee Box Jump Overs" },
 
   // Dumbbell Movements
   { category: "Dumbbell Movements", name: "DB Snatch" },
