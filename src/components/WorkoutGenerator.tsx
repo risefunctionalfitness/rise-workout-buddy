@@ -238,14 +238,10 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-              <Dumbbell className="h-8 w-8 text-primary" />
-              Workout Generator
-            </CardTitle>
             {isAuthor && (
               <Button 
                 onClick={() => setShowCreationForm(true)}
-                className="mx-auto mt-4"
+                className="mx-auto"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Neues WOD hinzufügen

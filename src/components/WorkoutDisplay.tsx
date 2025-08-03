@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, RotateCcw, Bot } from "lucide-react"
+import { ArrowLeft, RotateCcw, Lightbulb } from "lucide-react"
 import { WorkoutChatInterface } from "./WorkoutChatInterface"
 
 interface CrossfitWorkout {
@@ -126,8 +126,8 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
               {isGenerating ? "Generiere..." : "Neues Workout"}
             </Button>
             <Button onClick={() => setShowAIChat(true)} variant="secondary">
-              <Bot className="h-4 w-4 mr-2" />
-              AI Erklärung
+              <Lightbulb className="h-4 w-4 mr-2" />
+              AI WOD Guide
             </Button>
             <Button onClick={onReset} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
