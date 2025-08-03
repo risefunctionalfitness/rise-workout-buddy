@@ -112,48 +112,63 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
   const loadExtendedStats = async () => {
     setExtendedStatsLoading(true)
     try {
+      console.log('Loading extended stats...')
       const currentYear = new Date().getFullYear()
 
-      // All time leaderboard - aggregated by user
-      const { data: allTimeData } = await supabase
+      // Get all leaderboard entries separately
+      const { data: allTimeData, error: allTimeError } = await supabase
         .from('leaderboard_entries')
-        .select(`
-          user_id,
-          training_count,
-          profiles!inner(display_name)
-        `)
+        .select('user_id, training_count, year, month')
 
-      // This year leaderboard - aggregated by user for current year
-      const { data: thisYearData } = await supabase
-        .from('leaderboard_entries')
-        .select(`
-          user_id,
-          training_count,
-          profiles!inner(display_name)
-        `)
-        .eq('year', currentYear)
+      if (allTimeError) {
+        console.error('All time error:', allTimeError)
+        throw allTimeError
+      }
+
+      console.log('All time data:', allTimeData)
+
+      // Get all profiles separately
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+
+      if (profilesError) {
+        console.error('Profiles error:', profilesError)
+        throw profilesError
+      }
+
+      console.log('Profiles data:', profilesData)
+
+      // Create a profiles lookup map
+      const profilesMap = profilesData.reduce((acc, profile) => {
+        acc[profile.user_id] = profile
+        return acc
+      }, {} as Record<string, any>)
 
       // Aggregate all time data by user
       const allTimeAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
       allTimeData?.forEach(entry => {
         if (!allTimeAggregated[entry.user_id]) {
+          const profile = profilesMap[entry.user_id]
           allTimeAggregated[entry.user_id] = {
             user_id: entry.user_id,
             total: 0,
-            display_name: (entry.profiles as any)?.display_name || 'Unbekannt'
+            display_name: profile?.display_name || 'Unbekannt'
           }
         }
         allTimeAggregated[entry.user_id].total += entry.training_count
       })
 
-      // Aggregate this year data by user
+      // Filter this year data and aggregate by user
+      const thisYearData = allTimeData?.filter(entry => entry.year === currentYear) || []
       const thisYearAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
-      thisYearData?.forEach(entry => {
+      thisYearData.forEach(entry => {
         if (!thisYearAggregated[entry.user_id]) {
+          const profile = profilesMap[entry.user_id]
           thisYearAggregated[entry.user_id] = {
             user_id: entry.user_id,
             total: 0,
-            display_name: (entry.profiles as any)?.display_name || 'Unbekannt'
+            display_name: profile?.display_name || 'Unbekannt'
           }
         }
         thisYearAggregated[entry.user_id].total += entry.training_count
@@ -167,6 +182,9 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       const thisYearSorted = Object.values(thisYearAggregated)
         .sort((a, b) => b.total - a.total)
         .slice(0, 20) // Top 20
+
+      console.log('All time leaderboard:', allTimeSorted)
+      console.log('This year leaderboard:', thisYearSorted)
 
       setAllTimeLeaderboard(allTimeSorted)
       setThisYearLeaderboard(thisYearSorted)

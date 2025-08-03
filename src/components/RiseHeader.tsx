@@ -71,7 +71,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
                 </div>
                 <div 
                   onClick={() => {
-                    navigate('/admin');
+                    navigate('/admin?tab=courses');
                     setDropdownOpen(false);
                   }}
                   className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
@@ -81,7 +81,17 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
                 </div>
                 <div 
                   onClick={() => {
-                    navigate('/admin');
+                    navigate('/admin?tab=templates');
+                    setDropdownOpen(false);
+                  }}
+                  className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                >
+                  <Calendar className="h-12 w-12 text-gray-600 mb-3" />
+                  <span className="text-lg font-medium">Vorlagen</span>
+                </div>
+                <div 
+                  onClick={() => {
+                    navigate('/admin?tab=news');
                     setDropdownOpen(false);
                   }}
                   className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
@@ -91,7 +101,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
                 </div>
                 <div 
                   onClick={() => {
-                    navigate('/admin/workouts');
+                    navigate('/workout-management');
                     setDropdownOpen(false);
                   }}
                   className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
@@ -101,7 +111,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
                 </div>
                 <div 
                   onClick={() => {
-                    navigate('/admin');
+                    navigate('/admin?tab=codes');
                     setDropdownOpen(false);
                   }}
                   className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
