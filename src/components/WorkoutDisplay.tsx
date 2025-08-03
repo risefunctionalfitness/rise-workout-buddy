@@ -67,6 +67,13 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pt-20 px-4">
+      {/* Workout Type Heading */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-black mb-6">
+          {workoutType === 'crossfit' ? 'CrossFit' : 'Bodybuilding'}
+        </h1>
+      </div>
+      
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">{workout.title}</CardTitle>

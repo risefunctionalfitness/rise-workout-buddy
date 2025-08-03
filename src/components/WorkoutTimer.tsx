@@ -14,11 +14,10 @@ export const WorkoutTimer: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      
       <div className="flex-1 flex items-center justify-center p-6 pb-20">
         <div className="max-w-md w-full">
-          <div className="text-center mb-12">
-            <h1 className="text-6xl font-bold mb-4">WOD</h1>
+          <div className="text-center mb-8">
+            <h1 className="text-6xl font-bold mb-2">WOD</h1>
             <h2 className="text-2xl text-muted-foreground">Timer</h2>
           </div>
 

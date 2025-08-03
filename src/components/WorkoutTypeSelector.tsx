@@ -14,34 +14,33 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
     <div className="space-y-4 px-4">
       <Card 
         className={cn(
-          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
+          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary h-32",
           selectedType === "crossfit" 
             ? "bg-primary/5 shadow-md" 
             : "hover:border-primary"
         )}
         onClick={() => onTypeSelect("crossfit")}
       >
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3 flex flex-col justify-center h-full">
           <h3 className="text-xl font-bold">CrossFit</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Hochintensive,<br />
             funktionelle Workouts<br />
-            sowie olympisches<br />
-            Gewichtheben
+            und Gewichtheben
           </p>
         </div>
       </Card>
 
       <Card 
         className={cn(
-          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
+          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary h-32",
           selectedType === "bodybuilding" 
             ? "bg-primary/5 shadow-md" 
             : "hover:border-primary"
         )}
         onClick={() => onTypeSelect("bodybuilding")}
       >
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3 flex flex-col justify-center h-full">
           <h3 className="text-xl font-bold">Bodybuilding</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Gezielter Muskelaufbau<br />
