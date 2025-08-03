@@ -3,20 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
 import { LogOut, Dumbbell, Target } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
 import { AvatarUpload } from "@/components/AvatarUpload"
-
-const FITNESS_LEVELS = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-  { value: 'elite', label: 'Elite' }
-]
 
 interface UserProfileProps {
   onClose: () => void
@@ -29,10 +20,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   // Form states
   const [displayName, setDisplayName] = useState("")
   const [nickname, setNickname] = useState("")
-  const [birthYear, setBirthYear] = useState("")
-  const [gender, setGender] = useState("")
-  const [weightKg, setWeightKg] = useState("")
-  const [fitnessLevel, setFitnessLevel] = useState([0])
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [userId, setUserId] = useState<string>("")
 
@@ -57,12 +44,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         setDisplayName(profile.display_name || "")
         setNickname(profile.nickname || profile.display_name || "")
         setAvatarUrl(profile.avatar_url)
-        setBirthYear(profile.birth_year?.toString() || "")
-        setGender(profile.gender || "")
-        setWeightKg(profile.weight_kg?.toString() || "")
-        
-        const levelMap = { 'beginner': 0, 'intermediate': 1, 'advanced': 2, 'elite': 3 }
-        setFitnessLevel([levelMap[profile.fitness_level as keyof typeof levelMap] || 0])
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -73,19 +54,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
-      const levelLabels = ['beginner', 'intermediate', 'advanced', 'elite']
       
       const { error } = await supabase
         .from('profiles')
         .upsert({
           user_id: user.id,
           display_name: displayName,
-          nickname: nickname,
-          birth_year: birthYear ? parseInt(birthYear) : null,
-          gender,
-          weight_kg: weightKg ? parseFloat(weightKg) : null,
-          fitness_level: levelLabels[fitnessLevel[0]]
+          nickname: nickname
         }, {
           onConflict: 'user_id'
         })
@@ -173,67 +148,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
               />
             </div>
             
-            <div>
-              <Label htmlFor="birthYear">Geburtsjahr *</Label>
-              <Input
-                id="birthYear"
-                type="number"
-                value={birthYear}
-                onChange={(e) => setBirthYear(e.target.value)}
-                placeholder="z.B. 1990"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="gender">Geschlecht *</Label>
-              <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Geschlecht wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Männlich</SelectItem>
-                  <SelectItem value="female">Weiblich</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="weight">Körpergewicht (kg) *</Label>
-              <Input
-                id="weight"
-                type="number"
-                step="0.5"
-                value={weightKg}
-                onChange={(e) => setWeightKg(e.target.value)}
-                placeholder="z.B. 75.5"
-              />
-            </div>
-
-            <div>
-              <Label>Fitnesslevel *</Label>
-              <div className="mt-2 mb-4">
-                <Slider
-                  value={fitnessLevel}
-                  onValueChange={setFitnessLevel}
-                  max={3}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Beginner</span>
-                  <span>Intermediate</span>
-                  <span>Advanced</span>
-                  <span>Elite</span>
-                </div>
-                <p className="text-sm font-medium mt-2">
-                  Aktuell: {FITNESS_LEVELS[fitnessLevel[0]]?.label}
-                </p>
-              </div>
-            </div>
-
             <Button onClick={saveProfile} className="w-full">
-              Basisdaten speichern
+              Profil speichern
             </Button>
           </CardContent>
         </Card>

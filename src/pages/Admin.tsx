@@ -251,20 +251,38 @@ export default function Admin() {
     }
   };
 
-  const handleDeleteMember = async (memberId: string) => {
-    if (!confirm('Sind Sie sicher, dass Sie dieses Mitglied löschen möchten?')) return;
+  const handleDeleteMember = async (memberId: string, memberName: string, userId?: string) => {
+    if (!confirm(`Sind Sie sicher, dass Sie das Mitglied "${memberName}" komplett löschen möchten? Dies entfernt sowohl das Profil als auch den Account unwiderruflich.`)) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', memberId);
+      if (!userId) {
+        // Fallback: only delete from profiles if no user_id
+        const { error } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', memberId);
 
-      if (error) {
-        console.error('Error deleting member:', error);
+        if (error) {
+          console.error('Error deleting member:', error);
+          toast.error("Fehler beim Löschen des Mitglieds");
+        } else {
+          toast.success("Mitglied erfolgreich gelöscht");
+          setCurrentPage(1);
+          loadMembers();
+        }
+        return;
+      }
+
+      // Use edge function to delete completely
+      const { data: result, error: functionError } = await supabase.functions.invoke('delete-member', {
+        body: { userId }
+      });
+
+      if (functionError || !result?.success) {
+        console.error('Error deleting member:', functionError || result?.error);
         toast.error("Fehler beim Löschen des Mitglieds");
       } else {
-        toast.success("Mitglied erfolgreich gelöscht");
+        toast.success("Mitglied und Account erfolgreich gelöscht");
         setCurrentPage(1);
         loadMembers();
       }
@@ -533,7 +551,7 @@ export default function Admin() {
                           variant="destructive"
                           size="sm"
                           className="text-xs px-2 py-1 h-8"
-                          onClick={() => handleDeleteMember(member.id)}
+                          onClick={() => handleDeleteMember(member.id, member.display_name, member.user_id || undefined)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -609,7 +627,7 @@ export default function Admin() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => handleDeleteMember(member.id)}
+                            onClick={() => handleDeleteMember(member.id, member.display_name, member.user_id || undefined)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
