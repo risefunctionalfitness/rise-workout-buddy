@@ -2,7 +2,11 @@ import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
 
-export const WorkoutTimer: React.FC = () => {
+interface WorkoutTimerProps {
+  embedded?: boolean
+}
+
+export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) => {
   const navigate = useNavigate()
 
   const timerTypes = [
@@ -11,6 +15,34 @@ export const WorkoutTimer: React.FC = () => {
     { id: 'emom', title: 'EMOM', route: '/workout-timer/emom' },
     { id: 'tabata', title: 'Tabata', route: '/workout-timer/tabata' }
   ]
+
+  if (embedded) {
+    return (
+      <div className="bg-background">
+        <div className="p-6">
+          <div className="max-w-md w-full mx-auto">
+            <div className="text-center mb-4">
+              <h1 className="text-6xl font-bold mb-1">WOD</h1>
+              <h2 className="text-2xl text-muted-foreground">Timer</h2>
+            </div>
+
+            <div className="space-y-6">
+              {timerTypes.map((type) => (
+                <Button
+                  key={type.id}
+                  variant="outline"
+                  onClick={() => navigate(type.route)}
+                  className="w-full h-20 text-2xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-2xl font-medium"
+                >
+                  {type.title}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
