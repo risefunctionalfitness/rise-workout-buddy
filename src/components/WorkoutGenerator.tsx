@@ -276,6 +276,16 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Back button for all steps except step 1 */}
+      {step !== 1 && (
+        <div className="px-4 pt-4 pb-2">
+          <Button variant="ghost" onClick={goBack} size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Zurück
+          </Button>
+        </div>
+      )}
+      
       <div className="text-center py-6">
         <h1 className="text-3xl font-bold text-black">
           {workoutType === "crossfit" ? "CrossFit" : 
@@ -297,13 +307,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           {/* Step 2: CrossFit Type Selection */}
           {step === 2 && workoutType === "crossfit" && (
             <div className="space-y-6">
-              <div className="flex items-center gap-4 mb-6 px-4">
-                <Button variant="ghost" onClick={goBack} size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück
-                </Button>
-                <div className="w-12"></div>
-              </div>
               <CrossfitTypeSelector
                 selectedType={crossfitType}
                 onTypeSelect={handleCrossfitTypeSelect}
@@ -328,13 +331,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           {/* Step 2: Bodybuilding Focus Selection */}
           {step === 2 && workoutType === "bodybuilding" && (
             <div className="space-y-6">
-              <div className="flex items-center gap-4 mb-6 px-4">
-                <Button variant="ghost" onClick={goBack} size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück
-                </Button>
-                <div className="w-12"></div>
-              </div>
               <BodybuildingSelector
                 selectedFocus={bodybuilding.focus}
                 selectedDifficulty={null}
@@ -347,13 +343,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           {/* Step 3: Bodybuilding Difficulty Selection */}
           {step === 3 && workoutType === "bodybuilding" && (
             <div className="space-y-6">
-              <div className="flex items-center gap-4 mb-6 px-4">
-                <Button variant="ghost" onClick={goBack} size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück
-                </Button>
-                <div className="w-12"></div>
-              </div>
               <BodybuildingSelector
                 selectedFocus={bodybuilding.focus}
                 selectedDifficulty={bodybuilding.difficulty}
@@ -366,14 +355,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           {/* Step 3: CrossFit Generate Workout */}
           {step === 3 && workoutType === "crossfit" && (
             <div className="space-y-6">
-              <div className="flex items-center gap-4 mb-6 px-4">
-                <Button variant="ghost" onClick={goBack} size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück
-                </Button>
-                <div className="w-12"></div>
-              </div>
-              
               <div className="bg-muted/50 p-6 rounded-lg mx-4">
                 <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
                 <p className="text-muted-foreground">CrossFit - {crossfitType}</p>
@@ -384,8 +365,9 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
                   onClick={generateWorkout}
                   disabled={isGenerating}
                   size="lg"
-                  className="w-full"
+                  className="w-full h-16 text-lg font-semibold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                 >
+                  <Dumbbell className="h-6 w-6 mr-3" />
                   {isGenerating ? "Generiere..." : "Workout generieren"}
                 </Button>
               </div>
@@ -395,14 +377,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           {/* Step 4: Bodybuilding Generate Workout */}
           {step === 4 && workoutType === "bodybuilding" && (
             <div className="space-y-6">
-              <div className="flex items-center gap-4 mb-6 px-4">
-                <Button variant="ghost" onClick={goBack} size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück
-                </Button>
-                <div className="w-12"></div>
-              </div>
-              
               <div className="bg-muted/50 p-6 rounded-lg mx-4">
                 <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
                 <p className="text-muted-foreground">Bodybuilding - {bodybuilding.focus} ({bodybuilding.difficulty})</p>
@@ -413,8 +387,9 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
                   onClick={generateWorkout}
                   disabled={isGenerating}
                   size="lg"
-                  className="w-full"
+                  className="w-full h-16 text-lg font-semibold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                 >
+                  <Dumbbell className="h-6 w-6 mr-3" />
                   {isGenerating ? "Generiere..." : "Workout generieren"}
                 </Button>
               </div>

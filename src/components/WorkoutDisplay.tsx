@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, RotateCcw, Brain, Timer } from "lucide-react"
+import { ArrowLeft, RotateCcw, Lightbulb, Timer } from "lucide-react"
 import { WorkoutChatInterface } from "./WorkoutChatInterface"
 import { WorkoutTimer } from "./WorkoutTimer"
 
@@ -54,18 +54,13 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
   if (showTimer) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="text-center py-6">
-          <h1 className="text-3xl font-bold text-primary">WOD Timer</h1>
+        <div className="px-4 pt-4 pb-2">
+          <Button variant="ghost" onClick={() => setShowTimer(false)} size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Zurück
+          </Button>
         </div>
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="mb-4">
-            <Button variant="ghost" onClick={() => setShowTimer(false)} size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück zum Workout
-            </Button>
-          </div>
-          <WorkoutTimer />
-        </div>
+        <WorkoutTimer />
       </div>
     )
   }
@@ -168,7 +163,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
               size="lg"
               className="flex flex-col items-center p-4 h-auto"
             >
-              <Brain className="h-6 w-6" />
+              <Lightbulb className="h-6 w-6" />
             </Button>
           </div>
           
