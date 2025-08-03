@@ -114,9 +114,9 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       if (crossfitType === "WOD" && userProfile?.preferred_exercises && userProfile.preferred_exercises.length > 0) {
         filteredWorkouts = data.filter(workout => {
           const requiredExercises = workout.required_exercises
-          // Check if required_exercises is an array and contains any preferred exercise
+          // Check if ALL required exercises are in user's preferred exercises
           if (Array.isArray(requiredExercises)) {
-            return requiredExercises.some((exercise: any) => 
+            return requiredExercises.every((exercise: any) => 
               typeof exercise === 'string' && userProfile.preferred_exercises.includes(exercise)
             )
           }

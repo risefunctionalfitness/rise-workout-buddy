@@ -98,7 +98,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset }: 
           {workout.notes && (
             <div>
               <h3 className="text-lg font-semibold mb-3">Notizen</h3>
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+              <div className="bg-muted p-4 rounded-lg">
                 <pre className="whitespace-pre-wrap text-sm">{workout.notes}</pre>
               </div>
             </div>
