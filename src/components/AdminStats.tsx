@@ -85,17 +85,38 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       leaderboardData?.forEach(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
-        const membershipType = profile?.membership_type || 'Member'
+        let membershipType = profile?.membership_type || 'Member'
+        
+        // Map "Trainer" to "Open Gym" for public stats
+        if (membershipType === 'Trainer') {
+          membershipType = 'Open Gym'
+        }
+        
         if (membershipCounts.hasOwnProperty(membershipType)) {
           membershipCounts[membershipType] += entry.training_count
         }
       })
 
-      // Count total memberships by category
-      const membershipStats: { [key: string]: number } = {}
+      // Count total memberships by category (filter out Trainer, replace with Open Gym)
+      const membershipStats: { [key: string]: number } = {
+        'Member': 0,
+        'Wellpass': 0,
+        '10er Karte': 0,
+        'Open Gym': 0
+      }
+      
       profiles?.forEach(profile => {
-        const membershipType = profile.membership_type || 'Member'
-        membershipStats[membershipType] = (membershipStats[membershipType] || 0) + 1
+        let membershipType = profile.membership_type || 'Member'
+        
+        // Map "Trainer" to "Open Gym" for membership count display
+        if (membershipType === 'Trainer') {
+          membershipType = 'Open Gym'
+        }
+        
+        // Only count the 4 main categories we want to display
+        if (membershipStats.hasOwnProperty(membershipType)) {
+          membershipStats[membershipType] = (membershipStats[membershipType] || 0) + 1
+        }
       })
 
       const statsData = {
@@ -116,24 +137,29 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   const loadExtendedStats = async () => {
     setExtendedStatsLoading(true)
+    // Direct to manual aggregation - this is more reliable
+    await loadExtendedStatsManual()
+    setExtendedStatsLoading(false)
+  }
+
+  const loadExtendedStatsManual = async () => {
     try {
-      console.log('Loading extended stats...')
+      console.log('Using manual aggregation method...')
       const currentYear = new Date().getFullYear()
 
-      // Get all leaderboard entries with training_count > 0
+      // Get ALL leaderboard entries (including 0 counts)
       const { data: allTimeData, error: allTimeError } = await supabase
         .from('leaderboard_entries')
         .select('user_id, training_count, year, month')
-        .gt('training_count', 0) // Only get entries with actual training sessions
 
       if (allTimeError) {
         console.error('All time error:', allTimeError)
         throw allTimeError
       }
 
-      console.log('All time data (filtered):', allTimeData)
+      console.log('All leaderboard entries:', allTimeData?.length)
 
-      // Get all profiles that have user_id (not null)
+      // Get all profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
@@ -144,9 +170,8 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         throw profilesError
       }
 
-      console.log('Profiles data:', profilesData)
+      console.log('Profiles found:', profilesData?.length)
 
-      // Validate we have data
       if (!allTimeData || allTimeData.length === 0) {
         console.log('No leaderboard data found')
         setExtendedStats({
@@ -156,92 +181,63 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         return
       }
 
-      if (!profilesData || profilesData.length === 0) {
-        console.log('No profiles data found')
-        setExtendedStats({
-          allTimeLeaderboard: [],
-          yearLeaderboard: []
-        })
-        return
-      }
-
-      // Create a profiles lookup map
-      const profilesMap = profilesData.reduce((acc, profile) => {
+      // Create profiles lookup
+      const profilesMap = (profilesData || []).reduce((acc, profile) => {
         if (profile.user_id) {
           acc[profile.user_id] = profile
         }
         return acc
       }, {} as Record<string, any>)
 
-      console.log('Profiles map created:', Object.keys(profilesMap).length, 'profiles')
-
-      // Aggregate all time data by user (only entries with training_count > 0)
-      const allTimeAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
+      // Aggregate all time data by user
+      const allTimeAggregated: { [key: string]: number } = {}
       allTimeData.forEach(entry => {
-        // Skip entries with 0 training count (already filtered by query, but double-check)
-        if (entry.training_count <= 0) return
-        
-        if (!allTimeAggregated[entry.user_id]) {
-          const profile = profilesMap[entry.user_id]
-          allTimeAggregated[entry.user_id] = {
-            user_id: entry.user_id,
-            total: 0,
-            display_name: profile?.display_name || `User ${entry.user_id.slice(0, 8)}`
-          }
+        if (entry.training_count > 0) { // Only count actual training sessions
+          allTimeAggregated[entry.user_id] = (allTimeAggregated[entry.user_id] || 0) + entry.training_count
         }
-        allTimeAggregated[entry.user_id].total += entry.training_count
       })
 
-      console.log('All time aggregated:', allTimeAggregated)
+      // Aggregate this year data
+      const thisYearAggregated: { [key: string]: number } = {}
+      allTimeData
+        .filter(entry => entry.year === currentYear && entry.training_count > 0)
+        .forEach(entry => {
+          thisYearAggregated[entry.user_id] = (thisYearAggregated[entry.user_id] || 0) + entry.training_count
+        })
 
-      // Filter this year data and aggregate by user
-      const thisYearData = allTimeData.filter(entry => 
-        entry.year === currentYear && entry.training_count > 0
-      )
-      console.log('This year filtered data:', thisYearData)
-
-      const thisYearAggregated: { [key: string]: { user_id: string, total: number, display_name: string } } = {}
-      thisYearData.forEach(entry => {
-        if (!thisYearAggregated[entry.user_id]) {
-          const profile = profilesMap[entry.user_id]
-          thisYearAggregated[entry.user_id] = {
-            user_id: entry.user_id,
-            total: 0,
-            display_name: profile?.display_name || `User ${entry.user_id.slice(0, 8)}`
-          }
-        }
-        thisYearAggregated[entry.user_id].total += entry.training_count
-      })
-
-      console.log('This year aggregated:', thisYearAggregated)
-
-      // Convert to arrays and sort by total (descending)
-      const allTimeSorted = Object.values(allTimeAggregated)
-        .filter(entry => entry.total > 0) // Extra safety check
+      // Convert to sorted arrays with profile info
+      const allTimeSorted = Object.entries(allTimeAggregated)
+        .map(([user_id, total]) => ({
+          user_id,
+          total,
+          display_name: profilesMap[user_id]?.display_name || `User ${user_id.slice(0, 8)}`
+        }))
         .sort((a, b) => b.total - a.total)
-        .slice(0, 20) // Top 20
+        .slice(0, 20)
 
-      const thisYearSorted = Object.values(thisYearAggregated)
-        .filter(entry => entry.total > 0) // Extra safety check
+      const thisYearSorted = Object.entries(thisYearAggregated)
+        .map(([user_id, total]) => ({
+          user_id,
+          total,
+          display_name: profilesMap[user_id]?.display_name || `User ${user_id.slice(0, 8)}`
+        }))
         .sort((a, b) => b.total - a.total)
-        .slice(0, 20) // Top 20
+        .slice(0, 20)
 
-      console.log('Final all time leaderboard:', allTimeSorted)
-      console.log('Final this year leaderboard:', thisYearSorted)
+      console.log('Manual aggregation results:')
+      console.log('All time top users:', allTimeSorted.length)
+      console.log('This year top users:', thisYearSorted.length)
 
       setExtendedStats({
         allTimeLeaderboard: allTimeSorted,
         yearLeaderboard: thisYearSorted,
       })
     } catch (error) {
-      console.error('Error loading extended stats:', error)
-      // Set empty arrays on error
+      console.error('Error in manual aggregation:', error)
       setExtendedStats({
         allTimeLeaderboard: [],
         yearLeaderboard: []
       })
-    } finally {
-      setExtendedStatsLoading(false)
     }
   }
 
@@ -319,15 +315,31 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           <CardTitle>Anmeldungen nach Mitgliedschaftstyp</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis domain={[0, scaleMax]} />
-              <Tooltip />
-              <Bar dataKey="value" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full overflow-x-auto">
+            <ResponsiveContainer width="100%" height={300} minWidth={300}>
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
+                  height={70}
+                />
+                <YAxis 
+                  domain={[0, scaleMax]} 
+                  tick={{ fontSize: 12 }}
+                />
+                <Tooltip />
+                <Bar 
+                  dataKey="value" 
+                  minPointSize={2}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
@@ -393,8 +405,13 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {extendedStats.allTimeLeaderboard.map((entry, index) => (
+                   <div className="space-y-2 max-h-96 overflow-y-auto">
+                     {extendedStats.allTimeLeaderboard.length === 0 ? (
+                       <div className="text-center py-8 text-muted-foreground">
+                         Keine Daten verfügbar
+                       </div>
+                     ) : (
+                       extendedStats.allTimeLeaderboard.map((entry, index) => (
                       <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -409,10 +426,11 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                         </div>
                         <Badge variant="secondary" className="text-sm">
                           {entry.total} Sessions
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
+                         </Badge>
+                       </div>
+                       ))
+                     )}
+                   </div>
                 </CardContent>
               </Card>
               
@@ -425,8 +443,13 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {extendedStats.yearLeaderboard.map((entry, index) => (
+                   <div className="space-y-2 max-h-96 overflow-y-auto">
+                     {extendedStats.yearLeaderboard.length === 0 ? (
+                       <div className="text-center py-8 text-muted-foreground">
+                         Keine Daten verfügbar
+                       </div>
+                     ) : (
+                       extendedStats.yearLeaderboard.map((entry, index) => (
                       <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -441,10 +464,11 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                         </div>
                         <Badge variant="secondary" className="text-sm">
                           {entry.total} Sessions
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
+                         </Badge>
+                       </div>
+                       ))
+                     )}
+                   </div>
                 </CardContent>
               </Card>
             </div>
