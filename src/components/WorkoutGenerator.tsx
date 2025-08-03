@@ -100,13 +100,6 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
         .select('*')
         .eq('workout_type', crossfitType)
 
-      // Filter by user's preferred exercises if it's a WOD
-      if (crossfitType === "WOD" && userProfile?.preferred_exercises && userProfile.preferred_exercises.length > 0) {
-        // Use JSONB ?| operator to check if any preferred exercise is in required_exercises array
-        const preferredExercisesFilter = `{${userProfile.preferred_exercises.map((ex: string) => `"${ex}"`).join(',')}}`
-        query = query.filter('required_exercises', '?|', preferredExercisesFilter)
-      }
-
       const { data, error } = await query
 
       if (error) throw error
@@ -116,8 +109,29 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
         return
       }
 
-      // Select random workout
-      const randomWorkout = data[Math.floor(Math.random() * data.length)]
+      // Filter by user's preferred exercises if it's a WOD (done in JavaScript to avoid JSONB issues)
+      let filteredWorkouts = data
+      if (crossfitType === "WOD" && userProfile?.preferred_exercises && userProfile.preferred_exercises.length > 0) {
+        filteredWorkouts = data.filter(workout => {
+          const requiredExercises = workout.required_exercises
+          // Check if required_exercises is an array and contains any preferred exercise
+          if (Array.isArray(requiredExercises)) {
+            return requiredExercises.some((exercise: any) => 
+              typeof exercise === 'string' && userProfile.preferred_exercises.includes(exercise)
+            )
+          }
+          return false
+        })
+        
+        // If no workouts match preferences, use all available workouts
+        if (filteredWorkouts.length === 0) {
+          filteredWorkouts = data
+          toast.info("Keine Workouts mit deinen bevorzugten Übungen gefunden. Zeige alle verfügbaren WODs.")
+        }
+      }
+
+      // Select random workout from filtered results
+      const randomWorkout = filteredWorkouts[Math.floor(Math.random() * filteredWorkouts.length)]
       // Convert the database result to our interface
       const convertedWorkout: CrossfitWorkout = {
         ...randomWorkout,
