@@ -40,16 +40,16 @@ export const BodybuildingSelector = ({
           <Card 
             key={type}
             className={cn(
-              "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl",
+              "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
               selectedFocus === type 
-                ? "border-primary bg-primary/5 shadow-md" 
-                : "border-primary hover:border-primary"
+                ? "bg-primary/5 shadow-md" 
+                : "hover:border-primary"
             )}
             onClick={() => onFocusSelect(type)}
           >
             <div className="text-center space-y-3">
-              <h4 className="text-2xl font-bold">{title}</h4>
-              <p className="text-sm text-muted-foreground">
+              <h4 className="text-xl font-bold">{title}</h4>
+              <p className="text-xs text-muted-foreground">
                 {description}
               </p>
             </div>
@@ -66,16 +66,16 @@ export const BodybuildingSelector = ({
         <Card 
           key={type}
           className={cn(
-            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl",
+            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
             selectedDifficulty === type 
-              ? "border-primary bg-primary/5 shadow-md" 
-              : "border-primary hover:border-primary"
+              ? "bg-primary/5 shadow-md" 
+              : "hover:border-primary"
           )}
           onClick={() => onDifficultySelect(type)}
         >
           <div className="text-center space-y-3">
-            <h4 className="text-2xl font-bold">{title}</h4>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <h4 className="text-xl font-bold">{title}</h4>
+            <p className="text-xs text-muted-foreground">{description}</p>
           </div>
         </Card>
       ))}

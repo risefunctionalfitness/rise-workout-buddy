@@ -14,16 +14,16 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
     <div className="space-y-4 px-4">
       <Card 
         className={cn(
-          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl",
+          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
           selectedType === "crossfit" 
-            ? "border-primary bg-primary/5 shadow-md" 
-            : "border-primary hover:border-primary"
+            ? "bg-primary/5 shadow-md" 
+            : "hover:border-primary"
         )}
         onClick={() => onTypeSelect("crossfit")}
       >
         <div className="text-center space-y-3">
-          <h3 className="text-2xl font-bold">CrossFit</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <h3 className="text-xl font-bold">CrossFit</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Hochintensive,<br />
             funktionelle Workouts<br />
             sowie olympisches<br />
@@ -34,16 +34,16 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
 
       <Card 
         className={cn(
-          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl",
+          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
           selectedType === "bodybuilding" 
-            ? "border-primary bg-primary/5 shadow-md" 
-            : "border-primary hover:border-primary"
+            ? "bg-primary/5 shadow-md" 
+            : "hover:border-primary"
         )}
         onClick={() => onTypeSelect("bodybuilding")}
       >
         <div className="text-center space-y-3">
-          <h3 className="text-2xl font-bold">Bodybuilding</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <h3 className="text-xl font-bold">Bodybuilding</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Gezielter Muskelaufbau<br />
             und Kraftsteigerung vor<br />
             allem mit Maschinen

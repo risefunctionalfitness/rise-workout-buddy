@@ -277,153 +277,150 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   return (
     <div className="min-h-screen bg-background">
       <div className="text-center py-6">
-        <h1 className="text-3xl font-bold text-primary">WOD Generator</h1>
+        <h1 className="text-3xl font-bold text-black">
+          {workoutType === "crossfit" ? "CrossFit" : 
+           workoutType === "bodybuilding" ? "Bodybuilding" : "WOD Creator"}
+        </h1>
       </div>      
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Card>
-          <CardHeader className="text-center">
-            {/* Authors can add workouts button is now inside CrossFit step */}
-          </CardHeader>
-          
-          <CardContent className="space-y-8">
-            {/* Step 1: Workout Type Selection */}
-            {step === 1 && (
-              <div className="text-center">
-                <h3 className="text-xl font-semibold mb-4">Training wählen</h3>
-                <WorkoutTypeSelector 
-                  selectedType={workoutType}
-                  onTypeSelect={handleWorkoutTypeSelect}
-                />
+        <div className="space-y-8">
+          {/* Step 1: Workout Type Selection */}
+          {step === 1 && (
+            <div>
+              <WorkoutTypeSelector 
+                selectedType={workoutType}
+                onTypeSelect={handleWorkoutTypeSelect}
+              />
+            </div>
+          )}
+
+          {/* Step 2: CrossFit Type Selection */}
+          {step === 2 && workoutType === "crossfit" && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 mb-6 px-4">
+                <Button variant="ghost" onClick={goBack} size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Zurück
+                </Button>
+                <div className="w-12"></div>
               </div>
-            )}
-
-            {/* Step 2: CrossFit Type Selection */}
-            {step === 2 && workoutType === "crossfit" && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-4 mb-6 px-4">
-                  <Button variant="ghost" onClick={goBack} size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Zurück
+              <CrossfitTypeSelector
+                selectedType={crossfitType}
+                onTypeSelect={handleCrossfitTypeSelect}
+              />
+              
+              {/* "Workout hinzufügen" Button for Authors */}
+              {isAuthor && (
+                <div className="px-4 pt-4">
+                  <Button 
+                    onClick={() => setShowCreationForm(true)}
+                    variant="outline"
+                    className="w-full rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Workout hinzufügen
                   </Button>
-                  <h3 className="text-xl font-semibold flex-1 text-center">CrossFit</h3>
-                  <div className="w-12"></div>
                 </div>
-                <CrossfitTypeSelector
-                  selectedType={crossfitType}
-                  onTypeSelect={handleCrossfitTypeSelect}
-                />
-                
-                {/* "Workout hinzufügen" Button for Authors */}
-                {isAuthor && (
-                  <div className="px-4 pt-4">
-                    <Button 
-                      onClick={() => setShowCreationForm(true)}
-                      variant="outline"
-                      className="w-full rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Workout hinzufügen
-                    </Button>
-                  </div>
-                )}
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Bodybuilding Focus Selection */}
+          {step === 2 && workoutType === "bodybuilding" && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 mb-6 px-4">
+                <Button variant="ghost" onClick={goBack} size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Zurück
+                </Button>
+                <div className="w-12"></div>
               </div>
-            )}
+              <BodybuildingSelector
+                selectedFocus={bodybuilding.focus}
+                selectedDifficulty={null}
+                onFocusSelect={handleBodybuildingFocusSelect}
+                onDifficultySelect={() => {}}
+              />
+            </div>
+          )}
 
-            {/* Step 2: Bodybuilding Focus Selection */}
-            {step === 2 && workoutType === "bodybuilding" && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-4 mb-6 px-4">
-                  <Button variant="ghost" onClick={goBack} size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Zurück
-                  </Button>
-                  <h3 className="text-xl font-semibold flex-1 text-center">Bodybuilding</h3>
-                  <div className="w-12"></div>
-                </div>
-                <BodybuildingSelector
-                  selectedFocus={bodybuilding.focus}
-                  selectedDifficulty={null}
-                  onFocusSelect={handleBodybuildingFocusSelect}
-                  onDifficultySelect={() => {}}
-                />
+          {/* Step 3: Bodybuilding Difficulty Selection */}
+          {step === 3 && workoutType === "bodybuilding" && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 mb-6 px-4">
+                <Button variant="ghost" onClick={goBack} size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Zurück
+                </Button>
+                <div className="w-12"></div>
               </div>
-            )}
+              <BodybuildingSelector
+                selectedFocus={bodybuilding.focus}
+                selectedDifficulty={bodybuilding.difficulty}
+                onFocusSelect={() => {}}
+                onDifficultySelect={handleBodybuildingDifficultySelect}
+              />
+            </div>
+          )}
 
-            {/* Step 3: Bodybuilding Difficulty Selection */}
-            {step === 3 && workoutType === "bodybuilding" && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-4 mb-6 px-4">
-                  <Button variant="ghost" onClick={goBack} size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Zurück
-                  </Button>
-                  <h3 className="text-xl font-semibold flex-1 text-center">Bodybuilding</h3>
-                  <div className="w-12"></div>
-                </div>
-                <BodybuildingSelector
-                  selectedFocus={bodybuilding.focus}
-                  selectedDifficulty={bodybuilding.difficulty}
-                  onFocusSelect={() => {}}
-                  onDifficultySelect={handleBodybuildingDifficultySelect}
-                />
+          {/* Step 3: CrossFit Generate Workout */}
+          {step === 3 && workoutType === "crossfit" && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 mb-6 px-4">
+                <Button variant="ghost" onClick={goBack} size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Zurück
+                </Button>
+                <div className="w-12"></div>
               </div>
-            )}
+              
+              <div className="bg-muted/50 p-6 rounded-lg mx-4">
+                <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
+                <p className="text-muted-foreground">CrossFit - {crossfitType}</p>
+              </div>
 
-            {/* Step 3: CrossFit Generate Workout */}
-            {step === 3 && workoutType === "crossfit" && (
-              <div className="text-center space-y-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <Button variant="ghost" onClick={goBack} size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Zurück
-                  </Button>
-                  <h3 className="text-xl font-semibold flex-1">Workout generieren</h3>
-                </div>
-                
-                <div className="bg-muted/50 p-6 rounded-lg">
-                  <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
-                  <p className="text-muted-foreground">CrossFit - {crossfitType}</p>
-                </div>
-
+              <div className="px-4">
                 <Button 
                   onClick={generateWorkout}
                   disabled={isGenerating}
                   size="lg"
-                  className="px-8"
+                  className="w-full"
                 >
                   {isGenerating ? "Generiere..." : "Workout generieren"}
                 </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Step 4: Bodybuilding Generate Workout */}
-            {step === 4 && workoutType === "bodybuilding" && (
-              <div className="text-center space-y-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <Button variant="ghost" onClick={goBack} size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Zurück
-                  </Button>
-                  <h3 className="text-xl font-semibold flex-1">Workout generieren</h3>
-                </div>
-                
-                <div className="bg-muted/50 p-6 rounded-lg">
-                  <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
-                  <p className="text-muted-foreground">Bodybuilding - {bodybuilding.focus} ({bodybuilding.difficulty})</p>
-                </div>
+          {/* Step 4: Bodybuilding Generate Workout */}
+          {step === 4 && workoutType === "bodybuilding" && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 mb-6 px-4">
+                <Button variant="ghost" onClick={goBack} size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Zurück
+                </Button>
+                <div className="w-12"></div>
+              </div>
+              
+              <div className="bg-muted/50 p-6 rounded-lg mx-4">
+                <h4 className="font-semibold mb-2">Deine Auswahl:</h4>
+                <p className="text-muted-foreground">Bodybuilding - {bodybuilding.focus} ({bodybuilding.difficulty})</p>
+              </div>
 
+              <div className="px-4">
                 <Button 
                   onClick={generateWorkout}
                   disabled={isGenerating}
                   size="lg"
-                  className="px-8"
+                  className="w-full"
                 >
                   {isGenerating ? "Generiere..." : "Workout generieren"}
                 </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
