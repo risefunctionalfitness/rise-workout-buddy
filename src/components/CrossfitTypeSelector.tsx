@@ -1,45 +1,33 @@
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { Target, Zap, Dumbbell, Trophy } from "lucide-react"
+import { Target, Trophy } from "lucide-react"
 
-export type SessionType = "wod_only" | "full_session" | "strength_only" | "weightlifting_only" | null
+export type CrossfitType = "WOD" | "Weightlifting" | null
 
-interface SessionTypeSelectorProps {
-  selectedType: SessionType
-  onTypeSelect: (type: SessionType) => void
+interface CrossfitTypeSelectorProps {
+  selectedType: CrossfitType
+  onTypeSelect: (type: CrossfitType) => void
 }
 
-export const SessionTypeSelector = ({ selectedType, onTypeSelect }: SessionTypeSelectorProps) => {
-  const sessionTypes = [
+export const CrossfitTypeSelector = ({ selectedType, onTypeSelect }: CrossfitTypeSelectorProps) => {
+  const types = [
     {
-      type: "wod_only" as const,
+      type: "WOD" as const,
       icon: Target,
-      title: "WOD Only",
-      description: "Nur Conditioning-Teil"
+      title: "WOD",
+      description: "Workout of the Day"
     },
     {
-      type: "strength_only" as const,
-      icon: Dumbbell,
-      title: "Strength Only",
-      description: "Nur Krafttraining"
-    },
-    {
-      type: "weightlifting_only" as const,
+      type: "Weightlifting" as const,
       icon: Trophy,
-      title: "Weightlifting Only",
-      description: "Nur Olympic Weightlifting"
-    },
-    {
-      type: "full_session" as const,
-      icon: Zap,
-      title: "Full Session",
-      description: "Komplette Trainingseinheit"
+      title: "Weightlifting",
+      description: "Olympic Weightlifting"
     }
   ]
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {sessionTypes.map(({ type, icon: Icon, title, description }) => (
+      {types.map(({ type, icon: Icon, title, description }) => (
         <Card 
           key={type}
           className={cn(

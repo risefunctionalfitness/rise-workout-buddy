@@ -1,252 +1,208 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dumbbell } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
-import { WorkoutTypeSelector } from "./WorkoutTypeSelector"
-import { SessionTypeSelector, type SessionType } from "./SessionTypeSelector"
-import { DurationSlider } from "./DurationSlider"
-import { BodySelector } from "./BodySelector"
-import { WorkoutDisplayWhiteboard } from "./WorkoutDisplayWhiteboard"
-import { WorkoutDisplayDatabase } from "./WorkoutDisplayDatabase"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { RiseHeader } from "./RiseHeader"
+import { WorkoutTypeSelector, WorkoutType } from "./WorkoutTypeSelector"
+import { CrossfitTypeSelector, CrossfitType } from "./CrossfitTypeSelector"
+import { BodybuildingSelector, BodybuildingFocus, BodybuildingDifficulty } from "./BodybuildingSelector"
+import { WorkoutDisplay } from "./WorkoutDisplay"
+import { WorkoutCreationForm } from "./WorkoutCreationForm"
 import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 import { User } from "@supabase/supabase-js"
-
-type WorkoutType = "crossfit" | "bodybuilding" | null
-type Focus = "ganzkörper" | "oberkörper" | "unterkörper" | null
-
-interface WorkoutData {
-  title: string
-  type: string
-  duration: number
-  exercises: Array<{
-    name: string
-    reps?: string
-    weight?: string
-    rest?: string
-  }>
-  notes?: string
-}
+import { Plus, Dumbbell } from "lucide-react"
 
 interface WorkoutGeneratorProps {
-  user: User
+  user?: User | null
+}
+
+interface CrossfitWorkout {
+  id: string
+  title: string
+  workout_type: string
+  author_nickname: string
+  workout_content: string
+  notes?: string
+  scaling_beginner?: string
+  scaling_scaled?: string
+  scaling_rx?: string
+  required_exercises?: string[]
+}
+
+interface BodybuildingWorkout {
+  id: string
+  title: string
+  focus_area: string
+  difficulty: string
+  workout_content: string
+  notes?: string
 }
 
 export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   const [workoutType, setWorkoutType] = useState<WorkoutType>(null)
-  const [sessionType, setSessionType] = useState<SessionType>(null)
-  const [duration, setDuration] = useState<number>(0)
-  const [focus, setFocus] = useState<Focus>(null)
-  const [generatedWorkout, setGeneratedWorkout] = useState<WorkoutData | null>(null)
-  const [generatedWorkoutId, setGeneratedWorkoutId] = useState<string | null>(null)
+  const [crossfitType, setCrossfitType] = useState<CrossfitType>(null)
+  const [bodybuilding, setBodybuilding] = useState<{
+    focus: BodybuildingFocus
+    difficulty: BodybuildingDifficulty
+  }>({ focus: null, difficulty: null })
+  
+  const [generatedWorkout, setGeneratedWorkout] = useState<CrossfitWorkout | BodybuildingWorkout | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showCreationForm, setShowCreationForm] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
 
-  const generateWorkout = async () => {
-    if (!workoutType) {
-      toast({
-        title: "Unvollständige Auswahl",
-        description: "Bitte wählen Sie eine Trainingsart aus.",
-        variant: "destructive"
-      })
-      return
+  useEffect(() => {
+    if (user) {
+      loadUserProfile()
     }
+  }, [user])
 
-    // Defaults setzen wenn nicht ausgewählt
-    const finalSessionType = sessionType || (workoutType === "crossfit" ? "wod_only" : "full_session")
-    const finalDuration = duration || (workoutType === "crossfit" ? 20 : 60)
-    const finalFocus = focus || "ganzkörper"
+  const loadUserProfile = async () => {
+    if (!user) return
 
-    setIsGenerating(true)
-    
     try {
-      // Lade bevorzugte Übungen des Users
-      let preferredExercises: string[] = []
-      const { data: profile } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('preferred_exercises')
+        .select('*')
         .eq('user_id', user.id)
         .single()
-      
-      if (profile?.preferred_exercises) {
-        preferredExercises = Array.isArray(profile.preferred_exercises) 
-          ? profile.preferred_exercises.filter((ex): ex is string => typeof ex === 'string')
-          : []
-      }
 
-      // Edge Function für intelligente Workout-Generierung aufrufen
-      const { data, error } = await supabase.functions.invoke('generate-workout', {
-        body: {
-          workoutType,
-          sessionType: finalSessionType,
-          duration: finalDuration,
-          focus: finalFocus,
-          userId: user.id,
-          preferredExercises
-        }
-      })
-
-      if (error) {
-        console.error('Edge Function Error:', error)
-        throw new Error(error.message || 'Fehler beim Generieren des Workouts')
-      }
-
-      // Wenn wir eine workout_id vom Server bekommen, nutzen wir die neue Database-Komponente
-      if (data.workout_id) {
-        setGeneratedWorkoutId(data.workout_id)
-        setGeneratedWorkout(null)
-      } else {
-        // Fallback: Konvertiere das neue Workout-Format in das bestehende Format
-        const convertedWorkout: WorkoutData = {
-          title: data.workout.name,
-          type: data.workout.type,
-          duration: data.workout.duration,
-          exercises: data.workout.parts.reduce((acc: any[], part: any) => {
-            if (part.exercises) {
-              acc.push(...part.exercises.map((ex: string) => ({ name: ex })))
-            }
-            return acc
-          }, []),
-          notes: data.workout.notes
-        }
-        setGeneratedWorkout(convertedWorkout)
-        setGeneratedWorkoutId(null)
-      }
-      
-      toast({
-        title: "Personalisiertes Workout generiert!",
-        description: `Dein ${workoutType.toUpperCase()} Workout basierend auf deinem Profil und bevorzugten Übungen.`
-      })
+      if (error) throw error
+      setUserProfile(data)
     } catch (error) {
-      console.error("Fehler beim Generieren:", error)
-      
-      // Fallback bei Fehlern - lokale Mock-Generierung
-      const mockWorkouts = {
-        crossfit: {
-          ganzkörper: {
-            title: "CrossFit AMRAP Challenge",
-            type: "AMRAP",
-            duration: finalDuration,
-            exercises: [
-              { name: "Burpees", reps: "10" },
-              { name: "Pull-ups", reps: "8" },
-              { name: "Box Jumps", reps: "15" },
-              { name: "Push-ups", reps: "12" },
-              { name: "Kettlebell Swings", reps: "20" }
-            ],
-            notes: `${finalDuration} Minuten AMRAP - so viele Runden wie möglich!`
-          },
-          oberkörper: {
-            title: "Upper Body CrossFit WOD",
-            type: "For Time",
-            duration: finalDuration,
-            exercises: [
-              { name: "Push-ups", reps: "50" },
-              { name: "Pull-ups", reps: "30" },
-              { name: "Handstand Push-ups", reps: "20" },
-              { name: "Ring Dips", reps: "25" }
-            ],
-            notes: "Absolviere alle Übungen so schnell wie möglich!"
-          },
-          unterkörper: {
-            title: "Lower Body Power WOD",
-            type: "EMOM",
-            duration: finalDuration,
-            exercises: [
-              { name: "Air Squats", reps: "15" },
-              { name: "Lunges", reps: "10 pro Seite" },
-              { name: "Jump Squats", reps: "12" },
-              { name: "Single Leg Deadlifts", reps: "8 pro Seite" }
-            ],
-            notes: `${finalDuration} Minuten EMOM - jede Minute eine Übung!`
-          }
-        },
-        bodybuilding: {
-          ganzkörper: {
-            title: "Full Body Strength Circuit",
-            type: "Krafttraining",
-            duration: finalDuration,
-            exercises: [
-              { name: "Squats", reps: "4x12", weight: "Körpergewicht" },
-              { name: "Push-ups", reps: "3x15", rest: "60s" },
-              { name: "Bent-over Rows", reps: "4x10", weight: "Hanteln" },
-              { name: "Overhead Press", reps: "3x12", weight: "Hanteln" },
-              { name: "Plank", reps: "3x45s", rest: "45s" }
-            ],
-            notes: "Fokus auf kontrollierte Bewegung und saubere Technik."
-          },
-          oberkörper: {
-            title: "Upper Body Mass Builder",
-            type: "Hypertrophie",
-            duration: finalDuration,
-            exercises: [
-              { name: "Bench Press", reps: "4x8-10", weight: "80% 1RM", rest: "90s" },
-              { name: "Lat Pulldowns", reps: "4x10-12", weight: "Schwer", rest: "75s" },
-              { name: "Shoulder Press", reps: "3x12", weight: "Moderat", rest: "60s" },
-              { name: "Bicep Curls", reps: "3x15", weight: "Leicht", rest: "45s" },
-              { name: "Tricep Dips", reps: "3x12-15", rest: "45s" }
-            ],
-            notes: "Fokus auf Muskelaufbau mit moderaten bis schweren Gewichten."
-          },
-          unterkörper: {
-            title: "Leg Day Power Session",
-            type: "Kraftaufbau",
-            duration: finalDuration,
-            exercises: [
-              { name: "Squats", reps: "5x5", weight: "Schwer", rest: "2-3min" },
-              { name: "Romanian Deadlifts", reps: "4x8", weight: "Moderat", rest: "90s" },
-              { name: "Bulgarian Split Squats", reps: "3x12 pro Seite", rest: "60s" },
-              { name: "Calf Raises", reps: "4x15", weight: "Moderat", rest: "45s" },
-              { name: "Leg Curls", reps: "3x15", rest: "45s" }
-            ],
-            notes: "Progressive Überlastung für maximalen Kraftzuwachs."
-          }
-        }
-      }
+      console.error('Error loading user profile:', error)
+    }
+  }
 
-      const workout = mockWorkouts[workoutType][finalFocus]
-      setGeneratedWorkout(workout)
-      
-      toast({
-        title: "Fallback-Workout generiert",
-        description: "KI-Generation nicht verfügbar, lokales Workout erstellt.",
-        variant: "destructive"
-      })
+  const generateWorkout = async () => {
+    setIsGenerating(true)
+
+    try {
+      if (workoutType === "crossfit" && crossfitType) {
+        await generateCrossfitWorkout()
+      } else if (workoutType === "bodybuilding" && bodybuilding.focus && bodybuilding.difficulty) {
+        await generateBodybuildingWorkout()
+      }
+    } catch (error) {
+      console.error('Error generating workout:', error)
+      toast.error("Fehler beim Generieren des Workouts")
     } finally {
       setIsGenerating(false)
     }
   }
 
+  const generateCrossfitWorkout = async () => {
+    if (!crossfitType) return
+
+    try {
+      let query = supabase
+        .from('crossfit_workouts')
+        .select('*')
+        .eq('workout_type', crossfitType)
+
+      // Filter by user's preferred exercises if it's a WOD
+      if (crossfitType === "WOD" && userProfile?.preferred_exercises && userProfile.preferred_exercises.length > 0) {
+        // Only get workouts that use exercises the user has selected
+        query = query.overlaps('required_exercises', userProfile.preferred_exercises)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+
+      if (!data || data.length === 0) {
+        toast.error("Keine passenden Workouts gefunden.")
+        return
+      }
+
+      // Select random workout
+      const randomWorkout = data[Math.floor(Math.random() * data.length)]
+      // Convert the database result to our interface
+      const convertedWorkout: CrossfitWorkout = {
+        ...randomWorkout,
+        required_exercises: Array.isArray(randomWorkout.required_exercises) 
+          ? randomWorkout.required_exercises.filter((ex): ex is string => typeof ex === 'string')
+          : []
+      }
+      setGeneratedWorkout(convertedWorkout)
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const generateBodybuildingWorkout = async () => {
+    if (!bodybuilding.focus || !bodybuilding.difficulty) return
+
+    try {
+      const { data, error } = await supabase
+        .from('bodybuilding_workouts')
+        .select('*')
+        .eq('focus_area', bodybuilding.focus)
+        .eq('difficulty', bodybuilding.difficulty)
+
+      if (error) throw error
+
+      if (!data || data.length === 0) {
+        toast.error("Keine passenden Workouts gefunden.")
+        return
+      }
+
+      // Select random workout
+      const randomWorkout = data[Math.floor(Math.random() * data.length)]
+      setGeneratedWorkout(randomWorkout as BodybuildingWorkout)
+    } catch (error) {
+      throw error
+    }
+  }
+
   const newWorkout = () => {
-    setGeneratedWorkout(null)
-    setGeneratedWorkoutId(null)
+    if (workoutType === "crossfit" && crossfitType) {
+      generateCrossfitWorkout()
+    } else if (workoutType === "bodybuilding" && bodybuilding.focus && bodybuilding.difficulty) {
+      generateBodybuildingWorkout()
+    }
   }
 
   const resetSelection = () => {
     setWorkoutType(null)
-    setSessionType(null)
-    setDuration(0)
-    setFocus(null)
+    setCrossfitType(null)
+    setBodybuilding({ focus: null, difficulty: null })
     setGeneratedWorkout(null)
-    setGeneratedWorkoutId(null)
-    setShowAdvanced(false)
+    setShowCreationForm(false)
   }
 
-  // Nutze die neue Database-Komponente wenn wir eine workout_id haben
-  if (generatedWorkoutId) {
+  const canGenerate = () => {
+    if (workoutType === "crossfit") {
+      return crossfitType !== null
+    }
+    if (workoutType === "bodybuilding") {
+      return bodybuilding.focus !== null && bodybuilding.difficulty !== null
+    }
+    return false
+  }
+
+  const isAuthor = userProfile?.authors === true
+
+  // Show creation form
+  if (showCreationForm && isAuthor) {
     return (
-      <WorkoutDisplayDatabase 
-        workoutId={generatedWorkoutId}
-        onNewWorkout={newWorkout}
-        onReset={resetSelection}
+      <WorkoutCreationForm 
+        userNickname={userProfile?.nickname || 'Unbekannt'}
+        onBack={() => setShowCreationForm(false)}
+        onWorkoutCreated={() => {
+          setShowCreationForm(false)
+          toast.success("Workout erfolgreich erstellt!")
+        }}
       />
     )
   }
 
-  // Fallback für alte Workout-Daten
+  // Show workout display
   if (generatedWorkout) {
     return (
-      <WorkoutDisplayWhiteboard 
+      <WorkoutDisplay 
         workout={generatedWorkout}
+        workoutType={workoutType!}
         onNewWorkout={newWorkout}
         onReset={resetSelection}
       />
@@ -254,84 +210,76 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Main Selection */}
-      <div className="text-center space-y-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Dumbbell className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-bold text-foreground">Trainingsziel</h2>
-        </div>
-        <WorkoutTypeSelector
-          selectedType={workoutType}
-          onTypeSelect={(type) => {
-            setWorkoutType(type)
-            setSessionType(null)
-          }}
-        />
-        
-        {/* Generate Button */}
-        {workoutType && (
-          <Button
-            onClick={generateWorkout}
-            disabled={isGenerating}
-            size="lg"
-            className="px-12 py-6 text-lg font-semibold"
-          >
-            {isGenerating ? "Workout wird generiert..." : "Workout generieren"}
-          </Button>
-        )}
-        
-        {/* Advanced Settings Toggle */}
-        {workoutType && (
-          <Button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            variant="outline"
-            size="sm"
-          >
-            {showAdvanced ? "Erweiterte Einstellungen ausblenden" : "Erweiterte Einstellungen"}
-          </Button>
-        )}
-      </div>
-
-      {/* Advanced Settings */}
-      {showAdvanced && workoutType && (
-        <div className="border rounded-lg p-6 space-y-6 bg-muted/50">
-          <h3 className="text-lg font-semibold text-center">Erweiterte Einstellungen</h3>
+    <div className="min-h-screen bg-background">
+      <RiseHeader />
+      
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+              <Dumbbell className="h-8 w-8 text-primary" />
+              Workout Generator
+            </CardTitle>
+            {isAuthor && (
+              <Button 
+                onClick={() => setShowCreationForm(true)}
+                className="mx-auto mt-4"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Neues WOD hinzufügen
+              </Button>
+            )}
+          </CardHeader>
           
-          {/* Session Type für CrossFit */}
-          {workoutType === "crossfit" && (
-            <div className="space-y-4">
-              <h4 className="text-md font-medium">Session-Typ</h4>
-              <SessionTypeSelector
-                selectedType={sessionType}
-                onTypeSelect={setSessionType}
+          <CardContent className="space-y-8">
+            {/* Workout Type Selection */}
+            <div className="text-center">
+              <h3 className="text-xl font-semibold mb-4">Training wählen</h3>
+              <WorkoutTypeSelector 
+                selectedType={workoutType}
+                onTypeSelect={setWorkoutType}
               />
             </div>
-          )}
 
-          {/* Duration für Bodybuilding */}
-          {workoutType === "bodybuilding" && (
-            <div className="space-y-4">
-              <DurationSlider
-                workoutType={workoutType}
-                duration={duration}
-                onDurationChange={setDuration}
-              />
-            </div>
-          )}
+            {/* CrossFit Type Selection */}
+            {workoutType === "crossfit" && (
+              <div className="text-center">
+                <h3 className="text-xl font-semibold mb-4">CrossFit Art wählen</h3>
+                <CrossfitTypeSelector
+                  selectedType={crossfitType}
+                  onTypeSelect={setCrossfitType}
+                />
+              </div>
+            )}
 
-          {/* Body Part Selection */}
-          <div className="space-y-4">
-            <h4 className="text-md font-medium text-center">Trainingsbereich</h4>
-            <div className="flex justify-center">
-              <BodySelector
-                selectedPart={focus}
-                onPartSelect={setFocus}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+            {/* Bodybuilding Selection */}
+            {workoutType === "bodybuilding" && (
+              <div className="text-center">
+                <BodybuildingSelector
+                  selectedFocus={bodybuilding.focus}
+                  selectedDifficulty={bodybuilding.difficulty}
+                  onFocusSelect={(focus) => setBodybuilding(prev => ({ ...prev, focus }))}
+                  onDifficultySelect={(difficulty) => setBodybuilding(prev => ({ ...prev, difficulty }))}
+                />
+              </div>
+            )}
+
+            {/* Generate Button */}
+            {canGenerate() && (
+              <div className="text-center">
+                <Button 
+                  onClick={generateWorkout}
+                  disabled={isGenerating}
+                  size="lg"
+                  className="px-8"
+                >
+                  {isGenerating ? "Generiere..." : "Workout generieren"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

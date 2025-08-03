@@ -40,6 +40,7 @@ export default function Admin() {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberCode, setNewMemberCode] = useState("");
   const [newMembershipType, setNewMembershipType] = useState("Member");
+  const [newMemberIsAuthor, setNewMemberIsAuthor] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -192,7 +193,8 @@ export default function Admin() {
           user_metadata: {
             display_name: newMemberName,
             access_code: newMemberCode,
-            membership_type: newMembershipType
+            membership_type: newMembershipType,
+            authors: newMemberIsAuthor
           }
         }
       });
@@ -206,6 +208,7 @@ export default function Admin() {
         setNewMemberEmail("");
         setNewMemberCode("");
         setNewMembershipType("Member");
+        setNewMemberIsAuthor(false);
         setDialogOpen(false);
         setCurrentPage(1);
         loadMembers();
@@ -380,6 +383,18 @@ export default function Admin() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="author-checkbox"
+                        checked={newMemberIsAuthor}
+                        onChange={(e) => setNewMemberIsAuthor(e.target.checked)}
+                        className="rounded"
+                      />
+                      <label htmlFor="author-checkbox" className="text-sm">
+                        Autor (kann WODs erstellen)
+                      </label>
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit" className="flex-1">

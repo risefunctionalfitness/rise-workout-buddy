@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Dumbbell, Zap } from "lucide-react"
 
-type WorkoutType = "crossfit" | "bodybuilding" | null
+export type WorkoutType = "crossfit" | "bodybuilding" | null
 
 interface WorkoutTypeSelectorProps {
   selectedType: WorkoutType

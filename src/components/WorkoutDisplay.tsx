@@ -1,116 +1,122 @@
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Target, Clock, RotateCcw, ArrowLeft, CheckCircle } from "lucide-react"
+import { ArrowLeft, RotateCcw } from "lucide-react"
 
-interface WorkoutData {
+interface CrossfitWorkout {
+  id: string
   title: string
-  type: string
-  duration: number
-  exercises: Array<{
-    name: string
-    reps?: string
-    weight?: string
-    rest?: string
-  }>
+  workout_type: string
+  author_nickname: string
+  workout_content: string
+  notes?: string
+  scaling_beginner?: string
+  scaling_scaled?: string
+  scaling_rx?: string
+}
+
+interface BodybuildingWorkout {
+  id: string
+  title: string
+  focus_area: string
+  difficulty: string
+  workout_content: string
   notes?: string
 }
 
 interface WorkoutDisplayProps {
-  workout: WorkoutData
+  workout: CrossfitWorkout | BodybuildingWorkout
+  workoutType: 'crossfit' | 'bodybuilding'
   onNewWorkout: () => void
   onReset: () => void
 }
 
-export const WorkoutDisplay = ({ workout, onNewWorkout, onReset }: WorkoutDisplayProps) => {
+export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset }: WorkoutDisplayProps) => {
+  const isCrossfitWorkout = (w: any): w is CrossfitWorkout => workoutType === 'crossfit'
+
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      <Card className="overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary to-primary-foreground p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold">{workout.title}</h1>
-            <div className="flex gap-2">
-              <Button onClick={onNewWorkout} variant="secondary" size="sm">
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Neues Workout
-              </Button>
-              <Button onClick={onReset} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Zurück
-              </Button>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">{workout.title}</CardTitle>
+          <div className="flex justify-center gap-2 flex-wrap">
+            {isCrossfitWorkout(workout) ? (
+              <>
+                <Badge variant="secondary">{workout.workout_type}</Badge>
+                <Badge variant="outline">von {workout.author_nickname}</Badge>
+              </>
+            ) : (
+              <>
+                <Badge variant="secondary">{workout.focus_area}</Badge>
+                <Badge variant="outline">{workout.difficulty}</Badge>
+              </>
+            )}
+          </div>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Workout</h3>
+            <div className="bg-muted p-4 rounded-lg">
+              <pre className="whitespace-pre-wrap font-mono text-sm">{workout.workout_content}</pre>
             </div>
           </div>
-          
-          <div className="flex gap-4">
-            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-              <Target className="h-4 w-4 mr-2" />
-              {workout.type}
-            </Badge>
-            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-              <Clock className="h-4 w-4 mr-2" />
-              {workout.duration} Minuten
-            </Badge>
-          </div>
-        </div>
 
-        {/* Exercises */}
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-primary" />
-            Übungen
-          </h2>
-          
-          <div className="grid gap-4">
-            {workout.exercises.map((exercise, index) => (
-              <div key={index}>
-                <Card className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </div>
-                      <span className="font-semibold text-lg">{exercise.name}</span>
-                    </div>
-                    
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      {exercise.reps && (
-                        <div className="flex flex-col items-center">
-                          <span className="font-medium text-foreground">{exercise.reps}</span>
-                          <span className="text-xs">Wiederholungen</span>
-                        </div>
-                      )}
-                      {exercise.weight && (
-                        <div className="flex flex-col items-center">
-                          <span className="font-medium text-foreground">{exercise.weight}</span>
-                          <span className="text-xs">Gewicht</span>
-                        </div>
-                      )}
-                      {exercise.rest && (
-                        <div className="flex flex-col items-center">
-                          <span className="font-medium text-foreground">{exercise.rest}</span>
-                          <span className="text-xs">Pause</span>
-                        </div>
-                      )}
+          {isCrossfitWorkout(workout) && (workout.scaling_beginner || workout.scaling_scaled || workout.scaling_rx) && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Scaling-Optionen</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {workout.scaling_beginner && (
+                  <div>
+                    <Badge className="mb-2" variant="outline">Beginner</Badge>
+                    <div className="bg-muted p-3 rounded text-sm">
+                      <pre className="whitespace-pre-wrap">{workout.scaling_beginner}</pre>
                     </div>
                   </div>
-                </Card>
-                {index < workout.exercises.length - 1 && <Separator className="my-2" />}
+                )}
+                {workout.scaling_scaled && (
+                  <div>
+                    <Badge className="mb-2" variant="outline">Scaled</Badge>
+                    <div className="bg-muted p-3 rounded text-sm">
+                      <pre className="whitespace-pre-wrap">{workout.scaling_scaled}</pre>
+                    </div>
+                  </div>
+                )}
+                {workout.scaling_rx && (
+                  <div>
+                    <Badge className="mb-2" variant="outline">RX</Badge>
+                    <div className="bg-muted p-3 rounded text-sm">
+                      <pre className="whitespace-pre-wrap">{workout.scaling_rx}</pre>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          )}
 
-        {/* Notes */}
-        {workout.notes && (
-          <div className="p-6 pt-0">
-            <Card className="p-4 bg-primary/5 border-primary/20">
-              <h3 className="font-semibold text-primary mb-2">Hinweise:</h3>
-              <p className="text-sm">{workout.notes}</p>
-            </Card>
+          {workout.notes && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Notizen</h3>
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <pre className="whitespace-pre-wrap text-sm">{workout.notes}</pre>
+              </div>
+            </div>
+          )}
+
+          <Separator />
+
+          <div className="flex gap-4 justify-center">
+            <Button onClick={onNewWorkout} variant="default">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Neues Workout
+            </Button>
+            <Button onClick={onReset} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Zurück
+            </Button>
           </div>
-        )}
+        </CardContent>
       </Card>
     </div>
   )

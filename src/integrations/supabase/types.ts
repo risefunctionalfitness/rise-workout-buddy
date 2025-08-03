@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      bodybuilding_workouts: {
+        Row: {
+          created_at: string | null
+          difficulty: string
+          focus_area: string
+          id: string
+          notes: string | null
+          title: string
+          updated_at: string | null
+          workout_content: string
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty: string
+          focus_area: string
+          id?: string
+          notes?: string | null
+          title: string
+          updated_at?: string | null
+          workout_content: string
+        }
+        Update: {
+          created_at?: string | null
+          difficulty?: string
+          focus_area?: string
+          id?: string
+          notes?: string | null
+          title?: string
+          updated_at?: string | null
+          workout_content?: string
+        }
+        Relationships: []
+      }
       course_registrations: {
         Row: {
           course_id: string
@@ -144,6 +177,51 @@ export type Database = {
           },
         ]
       }
+      crossfit_workouts: {
+        Row: {
+          author_nickname: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          required_exercises: Json | null
+          scaling_beginner: string | null
+          scaling_rx: string | null
+          scaling_scaled: string | null
+          title: string
+          updated_at: string | null
+          workout_content: string
+          workout_type: string
+        }
+        Insert: {
+          author_nickname: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          required_exercises?: Json | null
+          scaling_beginner?: string | null
+          scaling_rx?: string | null
+          scaling_scaled?: string | null
+          title: string
+          updated_at?: string | null
+          workout_content: string
+          workout_type: string
+        }
+        Update: {
+          author_nickname?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          required_exercises?: Json | null
+          scaling_beginner?: string | null
+          scaling_rx?: string | null
+          scaling_scaled?: string | null
+          title?: string
+          updated_at?: string | null
+          workout_content?: string
+          workout_type?: string
+        }
+        Relationships: []
+      }
       gym_access_codes: {
         Row: {
           code: string
@@ -241,6 +319,7 @@ export type Database = {
         Row: {
           access_code: string | null
           age: number | null
+          authors: boolean | null
           avatar_url: string | null
           back_squat_1rm: number | null
           bench_press_1rm: number | null
@@ -271,6 +350,7 @@ export type Database = {
         Insert: {
           access_code?: string | null
           age?: number | null
+          authors?: boolean | null
           avatar_url?: string | null
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
@@ -301,6 +381,7 @@ export type Database = {
         Update: {
           access_code?: string | null
           age?: number | null
+          authors?: boolean | null
           avatar_url?: string | null
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
@@ -463,252 +544,6 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
-        }
-        Relationships: []
-      }
-      workout_exercises: {
-        Row: {
-          created_at: string
-          distance_meters: number | null
-          duration_seconds: number | null
-          exercise_name: string
-          exercise_order: number
-          id: string
-          notes: string | null
-          percentage_1rm: number | null
-          reps: number | null
-          rest_seconds: number | null
-          weight_kg: number | null
-          workout_part_id: string
-        }
-        Insert: {
-          created_at?: string
-          distance_meters?: number | null
-          duration_seconds?: number | null
-          exercise_name: string
-          exercise_order: number
-          id?: string
-          notes?: string | null
-          percentage_1rm?: number | null
-          reps?: number | null
-          rest_seconds?: number | null
-          weight_kg?: number | null
-          workout_part_id: string
-        }
-        Update: {
-          created_at?: string
-          distance_meters?: number | null
-          duration_seconds?: number | null
-          exercise_name?: string
-          exercise_order?: number
-          id?: string
-          notes?: string | null
-          percentage_1rm?: number | null
-          reps?: number | null
-          rest_seconds?: number | null
-          weight_kg?: number | null
-          workout_part_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workout_exercises_workout_part_id_fkey"
-            columns: ["workout_part_id"]
-            isOneToOne: false
-            referencedRelation: "workout_parts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workout_parts: {
-        Row: {
-          created_at: string
-          description: string
-          duration_minutes: number | null
-          duration_rounds: number | null
-          id: string
-          notes: string | null
-          part_name: string
-          part_order: number
-          score_type: string | null
-          workout_id: string
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          duration_minutes?: number | null
-          duration_rounds?: number | null
-          id?: string
-          notes?: string | null
-          part_name: string
-          part_order: number
-          score_type?: string | null
-          workout_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          duration_minutes?: number | null
-          duration_rounds?: number | null
-          id?: string
-          notes?: string | null
-          part_name?: string
-          part_order?: number
-          score_type?: string | null
-          workout_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workout_parts_workout_id_fkey"
-            columns: ["workout_id"]
-            isOneToOne: false
-            referencedRelation: "workouts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workout_scalings: {
-        Row: {
-          created_at: string
-          exercise_substitute: string | null
-          id: string
-          notes: string | null
-          reps: number | null
-          scaling_type: string
-          weight_kg: number | null
-          workout_exercise_id: string
-        }
-        Insert: {
-          created_at?: string
-          exercise_substitute?: string | null
-          id?: string
-          notes?: string | null
-          reps?: number | null
-          scaling_type: string
-          weight_kg?: number | null
-          workout_exercise_id: string
-        }
-        Update: {
-          created_at?: string
-          exercise_substitute?: string | null
-          id?: string
-          notes?: string | null
-          reps?: number | null
-          scaling_type?: string
-          weight_kg?: number | null
-          workout_exercise_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workout_scalings_workout_exercise_id_fkey"
-            columns: ["workout_exercise_id"]
-            isOneToOne: false
-            referencedRelation: "workout_exercises"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workouts: {
-        Row: {
-          created_at: string
-          difficulty_level: string
-          duration_minutes: number
-          focus_area: string
-          id: string
-          notes: string | null
-          required_equipment: string[] | null
-          required_exercises: string[] | null
-          session_type: string
-          title: string
-          updated_at: string
-          workout_type: string
-        }
-        Insert: {
-          created_at?: string
-          difficulty_level: string
-          duration_minutes: number
-          focus_area: string
-          id?: string
-          notes?: string | null
-          required_equipment?: string[] | null
-          required_exercises?: string[] | null
-          session_type: string
-          title: string
-          updated_at?: string
-          workout_type: string
-        }
-        Update: {
-          created_at?: string
-          difficulty_level?: string
-          duration_minutes?: number
-          focus_area?: string
-          id?: string
-          notes?: string | null
-          required_equipment?: string[] | null
-          required_exercises?: string[] | null
-          session_type?: string
-          title?: string
-          updated_at?: string
-          workout_type?: string
-        }
-        Relationships: []
-      }
-      workouts_rag: {
-        Row: {
-          created_at: string | null
-          embedding: string | null
-          full_text: string | null
-          part_a_description: string | null
-          part_a_duration: string | null
-          part_a_notes: string | null
-          part_a_type: string | null
-          part_b_description: string | null
-          part_b_duration: string | null
-          part_b_notes: string | null
-          part_b_score_type: string | null
-          part_c_description: string | null
-          part_c_duration: string | null
-          part_c_notes: string | null
-          part_c_score_type: string | null
-          updated_at: string | null
-          workout_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          embedding?: string | null
-          full_text?: string | null
-          part_a_description?: string | null
-          part_a_duration?: string | null
-          part_a_notes?: string | null
-          part_a_type?: string | null
-          part_b_description?: string | null
-          part_b_duration?: string | null
-          part_b_notes?: string | null
-          part_b_score_type?: string | null
-          part_c_description?: string | null
-          part_c_duration?: string | null
-          part_c_notes?: string | null
-          part_c_score_type?: string | null
-          updated_at?: string | null
-          workout_id?: string
-        }
-        Update: {
-          created_at?: string | null
-          embedding?: string | null
-          full_text?: string | null
-          part_a_description?: string | null
-          part_a_duration?: string | null
-          part_a_notes?: string | null
-          part_a_type?: string | null
-          part_b_description?: string | null
-          part_b_duration?: string | null
-          part_b_notes?: string | null
-          part_b_score_type?: string | null
-          part_c_description?: string | null
-          part_c_duration?: string | null
-          part_c_notes?: string | null
-          part_c_score_type?: string | null
-          updated_at?: string | null
-          workout_id?: string
         }
         Relationships: []
       }
