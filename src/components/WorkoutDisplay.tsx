@@ -50,7 +50,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 pt-20 px-4">
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">{workout.title}</CardTitle>
