@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { RiseHeader } from "./RiseHeader"
+
 import { WorkoutTypeSelector, WorkoutType } from "./WorkoutTypeSelector"
 import { CrossfitTypeSelector, CrossfitType } from "./CrossfitTypeSelector"
 import { BodybuildingSelector, BodybuildingFocus, BodybuildingDifficulty } from "./BodybuildingSelector"
@@ -69,6 +69,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
 
       if (error) throw error
       setUserProfile(data)
+      console.log('User profile loaded:', data)
     } catch (error) {
       console.error('Error loading user profile:', error)
     }
@@ -182,6 +183,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   }
 
   const isAuthor = userProfile?.authors === true
+  console.log('User profile:', userProfile, 'Is author:', isAuthor)
 
   // Show creation form
   if (showCreationForm && isAuthor) {
@@ -210,9 +212,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <RiseHeader />
-      
+    <div className="min-h-screen bg-background">      
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader className="text-center">
