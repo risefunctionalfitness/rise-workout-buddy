@@ -19,14 +19,6 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
           onClick={() => navigate('/')}
         />
       </div>
-      <Button 
-        onClick={onProVersionClick}
-        variant="outline"
-        size="lg"
-        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-      >
-        Zur Pro-Version
-      </Button>
     </header>
   )
 }

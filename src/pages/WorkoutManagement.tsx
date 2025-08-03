@@ -11,6 +11,7 @@ import { Plus, Edit, Trash2, Search } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { RiseHeader } from "@/components/RiseHeader"
+import { WorkoutEditDialog } from "@/components/WorkoutEditDialog"
 
 interface CrossfitWorkout {
   id: string
@@ -362,9 +363,11 @@ const WorkoutManagement = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <WorkoutEditDialog 
+                          workout={workout}
+                          workoutType="crossfit"
+                          onWorkoutUpdated={loadWorkouts}
+                        />
                         <Button 
                           size="sm" 
                           variant="destructive"
@@ -404,9 +407,11 @@ const WorkoutManagement = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <WorkoutEditDialog 
+                          workout={workout}
+                          workoutType="bodybuilding"
+                          onWorkoutUpdated={loadWorkouts}
+                        />
                         <Button 
                           size="sm" 
                           variant="destructive"

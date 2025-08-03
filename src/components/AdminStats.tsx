@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Users } from "lucide-react"
+import { Calendar, Users, BarChart3 } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/integrations/supabase/client"
+import { ExtendedStatsDialog } from "./ExtendedStatsDialog"
 
 interface AdminStatsProps {
   onStatsLoad?: (stats: any) => void
@@ -201,6 +203,18 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Extended Stats Button */}
+      <div className="flex justify-center">
+        <ExtendedStatsDialog 
+          trigger={
+            <Button variant="outline" size="lg">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Weitere Statistiken
+            </Button>
+          }
+        />
+      </div>
     </div>
   )
 }
