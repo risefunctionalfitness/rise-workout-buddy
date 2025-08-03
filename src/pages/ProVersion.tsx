@@ -3,16 +3,12 @@ import { useNavigate } from "react-router-dom"
 import { Dashboard } from "./Dashboard"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
-import { useScrollToTop } from "@/hooks/useScrollToTop"
 
 const ProVersion = () => {
   const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  
-  // Don't scroll to top for the main dashboard (overview)
-  useScrollToTop([])  // Let the individual tabs handle their own scrolling
 
   useEffect(() => {
     let mounted = true

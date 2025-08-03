@@ -137,11 +137,9 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   const loadExtendedStats = async () => {
     setExtendedStatsLoading(true)
-    try {
-      await loadExtendedStatsManual()
-    } finally {
-      setExtendedStatsLoading(false)
-    }
+    // Direct to manual aggregation - this is more reliable
+    await loadExtendedStatsManual()
+    setExtendedStatsLoading(false)
   }
 
   const loadExtendedStatsManual = async () => {
