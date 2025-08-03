@@ -66,7 +66,19 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pt-20 px-4">
+    <div className="max-w-4xl mx-auto space-y-6 pt-4 px-4">
+      {/* Back button at top left */}
+      <div className="flex justify-start">
+        <Button 
+          onClick={onReset}
+          variant="ghost"
+          size="sm"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
+        </Button>
+      </div>
+      
       {/* Workout Type Heading */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-black mb-6">
@@ -171,19 +183,6 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
               className="flex flex-col items-center p-4 h-auto"
             >
               <Lightbulb className="h-6 w-6" />
-            </Button>
-          </div>
-          
-          {/* Back button - separate from the three icons */}
-          <div className="flex justify-center mt-6">
-            <Button 
-              onClick={onReset}
-              variant="outline"
-              size="lg"
-              className="px-8"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück
             </Button>
           </div>
         </CardContent>
