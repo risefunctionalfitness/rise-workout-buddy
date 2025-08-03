@@ -39,8 +39,13 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
   })
   const [loading, setLoading] = useState(true)
   const [extendedStatsOpen, setExtendedStatsOpen] = useState(false)
-  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<any[]>([])
-  const [thisYearLeaderboard, setThisYearLeaderboard] = useState<any[]>([])
+  const [extendedStats, setExtendedStats] = useState<{
+    allTimeLeaderboard: any[]
+    yearLeaderboard: any[]
+  }>({
+    allTimeLeaderboard: [],
+    yearLeaderboard: []
+  })
   const [extendedStatsLoading, setExtendedStatsLoading] = useState(false)
 
   useEffect(() => {
@@ -186,8 +191,10 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       console.log('All time leaderboard:', allTimeSorted)
       console.log('This year leaderboard:', thisYearSorted)
 
-      setAllTimeLeaderboard(allTimeSorted)
-      setThisYearLeaderboard(thisYearSorted)
+      setExtendedStats({
+        allTimeLeaderboard: allTimeSorted,
+        yearLeaderboard: thisYearSorted,
+      })
     } catch (error) {
       console.error('Error loading extended stats:', error)
     } finally {
@@ -197,7 +204,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   const toggleExtendedStats = () => {
     setExtendedStatsOpen(!extendedStatsOpen)
-    if (!extendedStatsOpen && allTimeLeaderboard.length === 0) {
+    if (!extendedStatsOpen && extendedStats.allTimeLeaderboard.length === 0) {
       loadExtendedStats()
     }
   }
@@ -344,7 +351,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {allTimeLeaderboard.map((entry, index) => (
+                    {extendedStats.allTimeLeaderboard.map((entry, index) => (
                       <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -376,7 +383,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {thisYearLeaderboard.map((entry, index) => (
+                    {extendedStats.yearLeaderboard.map((entry, index) => (
                       <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${

@@ -234,7 +234,10 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">      
+    <div className="min-h-screen bg-background">
+      <div className="text-center py-6">
+        <h1 className="text-3xl font-bold text-primary">WOD Generator</h1>
+      </div>      
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader className="text-center">

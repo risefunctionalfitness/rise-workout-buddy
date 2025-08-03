@@ -37,6 +37,17 @@ export const WorkoutChatInterface = ({ workout, workoutType, onClose }: WorkoutC
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+          <p className="text-lg text-muted-foreground">AI WOD Guide lädt...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pt-20 px-4 pb-24">
       <Card>
