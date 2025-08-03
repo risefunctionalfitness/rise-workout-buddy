@@ -32,63 +32,53 @@ export const BodybuildingSelector = ({
     { type: "Pro" as const, title: "Pro", description: "Profi" }
   ]
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <h3 className="text-lg font-semibold mb-4 text-center">Fokus wählen</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {focusOptions.map(({ type, icon: Icon, title, description }) => (
-            <Card 
-              key={type}
-              className={cn(
-                "p-4 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg",
-                selectedFocus === type 
-                  ? "border-primary bg-primary/5 shadow-md" 
-                  : "border-border hover:border-primary/50"
-              )}
-              onClick={() => onFocusSelect(type)}
-            >
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className={cn(
-                  "p-2 rounded-full transition-colors",
-                  selectedFocus === type ? "bg-primary text-primary-foreground" : "bg-muted"
-                )}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="font-semibold">{title}</h4>
-                  <p className="text-xs text-muted-foreground">{description}</p>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+  // For focus selection step (step 2)
+  if (!selectedFocus) {
+    return (
+      <div className="space-y-4 px-4">
+        {focusOptions.map(({ type, title, description }) => (
+          <Card 
+            key={type}
+            className={cn(
+              "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl",
+              selectedFocus === type 
+                ? "border-primary bg-primary/5 shadow-md" 
+                : "border-primary hover:border-primary"
+            )}
+            onClick={() => onFocusSelect(type)}
+          >
+            <div className="text-center space-y-3">
+              <h4 className="text-2xl font-bold">{title}</h4>
+              <p className="text-sm text-muted-foreground">
+                {description}
+              </p>
+            </div>
+          </Card>
+        ))}
       </div>
+    )
+  }
 
-      {selectedFocus && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 text-center">Schwierigkeit wählen</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {difficultyOptions.map(({ type, title, description }) => (
-              <Card 
-                key={type}
-                className={cn(
-                  "p-4 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg",
-                  selectedDifficulty === type 
-                    ? "border-primary bg-primary/5 shadow-md" 
-                    : "border-border hover:border-primary/50"
-                )}
-                onClick={() => onDifficultySelect(type)}
-              >
-                <div className="text-center space-y-2">
-                  <h4 className="font-semibold">{title}</h4>
-                  <p className="text-sm text-muted-foreground">{description}</p>
-                </div>
-              </Card>
-            ))}
+  // For difficulty selection step (step 3)
+  return (
+    <div className="space-y-4 px-4">
+      {difficultyOptions.map(({ type, title, description }) => (
+        <Card 
+          key={type}
+          className={cn(
+            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl",
+            selectedDifficulty === type 
+              ? "border-primary bg-primary/5 shadow-md" 
+              : "border-primary hover:border-primary"
+          )}
+          onClick={() => onDifficultySelect(type)}
+        >
+          <div className="text-center space-y-3">
+            <h4 className="text-2xl font-bold">{title}</h4>
+            <p className="text-sm text-muted-foreground">{description}</p>
           </div>
-        </div>
-      )}
+        </Card>
+      ))}
     </div>
   )
 }

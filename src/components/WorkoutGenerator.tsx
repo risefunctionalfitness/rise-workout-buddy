@@ -282,15 +282,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader className="text-center">
-            {isAuthor && workoutType === "crossfit" && (
-              <Button 
-                onClick={() => setShowCreationForm(true)}
-                className="mx-auto"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Neues WOD hinzufügen
-              </Button>
-            )}
+            {/* Authors can add workouts button is now inside CrossFit step */}
           </CardHeader>
           
           <CardContent className="space-y-8">
@@ -307,30 +299,46 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
 
             {/* Step 2: CrossFit Type Selection */}
             {step === 2 && workoutType === "crossfit" && (
-              <div className="text-center space-y-6">
-                <div className="flex items-center gap-4 mb-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 mb-6 px-4">
                   <Button variant="ghost" onClick={goBack} size="sm">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Zurück
                   </Button>
-                  <h3 className="text-xl font-semibold flex-1">CrossFit Art wählen</h3>
+                  <h3 className="text-xl font-semibold flex-1 text-center">CrossFit</h3>
+                  <div className="w-12"></div>
                 </div>
                 <CrossfitTypeSelector
                   selectedType={crossfitType}
                   onTypeSelect={handleCrossfitTypeSelect}
                 />
+                
+                {/* "Workout hinzufügen" Button for Authors */}
+                {isAuthor && (
+                  <div className="px-4 pt-4">
+                    <Button 
+                      onClick={() => setShowCreationForm(true)}
+                      variant="outline"
+                      className="w-full rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Workout hinzufügen
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Step 2: Bodybuilding Focus Selection */}
             {step === 2 && workoutType === "bodybuilding" && (
-              <div className="text-center space-y-6">
-                <div className="flex items-center gap-4 mb-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 mb-6 px-4">
                   <Button variant="ghost" onClick={goBack} size="sm">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Zurück
                   </Button>
-                  <h3 className="text-xl font-semibold flex-1">Fokus wählen</h3>
+                  <h3 className="text-xl font-semibold flex-1 text-center">Bodybuilding</h3>
+                  <div className="w-12"></div>
                 </div>
                 <BodybuildingSelector
                   selectedFocus={bodybuilding.focus}
@@ -343,13 +351,14 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
 
             {/* Step 3: Bodybuilding Difficulty Selection */}
             {step === 3 && workoutType === "bodybuilding" && (
-              <div className="text-center space-y-6">
-                <div className="flex items-center gap-4 mb-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 mb-6 px-4">
                   <Button variant="ghost" onClick={goBack} size="sm">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Zurück
                   </Button>
-                  <h3 className="text-xl font-semibold flex-1">Schwierigkeit wählen</h3>
+                  <h3 className="text-xl font-semibold flex-1 text-center">Bodybuilding</h3>
+                  <div className="w-12"></div>
                 </div>
                 <BodybuildingSelector
                   selectedFocus={bodybuilding.focus}

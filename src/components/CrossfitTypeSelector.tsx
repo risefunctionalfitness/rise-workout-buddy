@@ -13,44 +13,34 @@ export const CrossfitTypeSelector = ({ selectedType, onTypeSelect }: CrossfitTyp
   const types = [
     {
       type: "WOD" as const,
-      icon: Target,
       title: "WOD",
-      description: "Workout of the Day"
+      description: "Funktionelles\nGanzkörperworkout"
     },
     {
       type: "Weightlifting" as const,
-      icon: Trophy,
       title: "Weightlifting",
-      description: "Olympic Weightlifting"
+      description: "Olympisches\nGewichtheben"
     }
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {types.map(({ type, icon: Icon, title, description }) => (
+    <div className="space-y-4 px-4">
+      {types.map(({ type, title, description }) => (
         <Card 
           key={type}
           className={cn(
-            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg",
+            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl",
             selectedType === type 
               ? "border-primary bg-primary/5 shadow-md" 
-              : "border-border hover:border-primary/50"
+              : "border-primary hover:border-primary"
           )}
           onClick={() => onTypeSelect(type)}
         >
-          <div className="flex flex-col items-center text-center space-y-3">
-            <div className={cn(
-              "p-3 rounded-full transition-colors",
-              selectedType === type ? "bg-primary text-primary-foreground" : "bg-muted"
-            )}>
-              <Icon className="h-6 w-6" />
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold">{title}</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                {description}
-              </p>
-            </div>
+          <div className="text-center space-y-3">
+            <h4 className="text-2xl font-bold">{title}</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+              {description}
+            </p>
           </div>
         </Card>
       ))}

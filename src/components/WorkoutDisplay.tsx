@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, RotateCcw, Lightbulb } from "lucide-react"
+import { ArrowLeft, RotateCcw, Brain, Timer } from "lucide-react"
 import { WorkoutChatInterface } from "./WorkoutChatInterface"
+import { WorkoutTimer } from "./WorkoutTimer"
 
 interface CrossfitWorkout {
   id: string
@@ -37,15 +38,35 @@ interface WorkoutDisplayProps {
 
 export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, isGenerating }: WorkoutDisplayProps) => {
   const [showAIChat, setShowAIChat] = useState(false)
+  const [showTimer, setShowTimer] = useState(false)
   const isCrossfitWorkout = (w: any): w is CrossfitWorkout => workoutType === 'crossfit'
 
   if (showAIChat) {
     return (
-      <WorkoutChatInterface
+      <WorkoutChatInterface 
         workout={workout}
         workoutType={workoutType}
         onClose={() => setShowAIChat(false)}
       />
+    )
+  }
+
+  if (showTimer) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="text-center py-6">
+          <h1 className="text-3xl font-bold text-primary">WOD Timer</h1>
+        </div>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="mb-4">
+            <Button variant="ghost" onClick={() => setShowTimer(false)} size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Zurück zum Workout
+            </Button>
+          </div>
+          <WorkoutTimer />
+        </div>
+      </div>
     )
   }
 
@@ -120,16 +141,45 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
 
           <Separator />
 
-          <div className="flex gap-4 justify-center flex-wrap">
-            <Button onClick={onNewWorkout} variant="default" disabled={isGenerating}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {isGenerating ? "Generiere..." : "Neues Workout"}
+          {/* Three icon buttons at the bottom */}
+          <div className="flex justify-center gap-8 mt-6">
+            <Button 
+              onClick={onNewWorkout}
+              disabled={isGenerating}
+              variant="ghost"
+              size="lg"
+              className="flex flex-col items-center p-4 h-auto"
+            >
+              <RotateCcw className="h-6 w-6" />
             </Button>
-            <Button onClick={() => setShowAIChat(true)} variant="secondary">
-              <Lightbulb className="h-4 w-4 mr-2" />
-              AI WOD Guide
+            
+            <Button 
+              onClick={() => setShowTimer(true)}
+              variant="ghost"
+              size="lg"
+              className="flex flex-col items-center p-4 h-auto"
+            >
+              <Timer className="h-6 w-6" />
             </Button>
-            <Button onClick={onReset} variant="outline">
+            
+            <Button 
+              onClick={() => setShowAIChat(true)}
+              variant="ghost"
+              size="lg"
+              className="flex flex-col items-center p-4 h-auto"
+            >
+              <Brain className="h-6 w-6" />
+            </Button>
+          </div>
+          
+          {/* Back button - separate from the three icons */}
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={onReset}
+              variant="outline"
+              size="lg"
+              className="px-8"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Zurück
             </Button>
