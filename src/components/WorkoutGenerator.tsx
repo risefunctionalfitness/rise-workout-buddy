@@ -100,8 +100,12 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
         .select('*')
         .eq('workout_type', crossfitType)
 
-      // For now, don't filter WODs by preferred exercises to avoid JSONB issues
-      // All WODs will be available for selection
+      // Filter by user's preferred exercises if it's a WOD
+      if (crossfitType === "WOD" && userProfile?.preferred_exercises && userProfile.preferred_exercises.length > 0) {
+        // Use JSONB ?| operator to check if any preferred exercise is in required_exercises array
+        const preferredExercisesFilter = `{${userProfile.preferred_exercises.map((ex: string) => `"${ex}"`).join(',')}}`
+        query = query.filter('required_exercises', '?|', preferredExercisesFilter)
+      }
 
       const { data, error } = await query
 
