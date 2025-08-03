@@ -49,7 +49,7 @@ export const WorkoutChatInterface = ({ workout, workoutType, onClose }: WorkoutC
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pt-20 px-4 pb-24">
+    <div className="max-w-4xl mx-auto space-y-6 pt-4 px-4 pb-24">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">

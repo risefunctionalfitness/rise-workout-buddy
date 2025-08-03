@@ -66,7 +66,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pt-4 px-4 pb-24">
+    <div className="max-w-4xl mx-auto space-y-6 pt-4 px-4 pb-20">
       {/* Back button at top left */}
       <div className="flex justify-start">
         <Button 
