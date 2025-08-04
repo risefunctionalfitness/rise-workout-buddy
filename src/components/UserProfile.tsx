@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LogOut, Dumbbell, Target } from "lucide-react"
+import { LogOut, Dumbbell, Target, Moon, Sun } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
 import { AvatarUpload } from "@/components/AvatarUpload"
+import { useTheme } from "next-themes"
 
 interface UserProfileProps {
   onClose: () => void
@@ -16,6 +17,7 @@ interface UserProfileProps {
 export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { theme, setTheme } = useTheme()
   
   // Form states
   const [displayName, setDisplayName] = useState("")
@@ -151,6 +153,32 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             <Button onClick={saveProfile} className="w-full">
               Profil speichern
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Dark Mode Toggle */}
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Darstellung</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {theme === 'dark' ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
+                <Label>Dark Mode</Label>
+              </div>
+              <Button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                variant="outline"
+                size="sm"
+              >
+                {theme === 'dark' ? 'Ausschalten' : 'Einschalten'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

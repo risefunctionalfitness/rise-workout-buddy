@@ -1,5 +1,6 @@
 import { Flame, User, Zap, Award, Crown } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useTheme } from "next-themes"
 
 interface TrainingPathHeaderProps {
   trainingDaysThisMonth: number
@@ -14,6 +15,7 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
   userAvatar,
   onProfileClick
 }) => {
+  const { theme } = useTheme()
   return (
     <div className="flex items-center justify-between p-4 bg-background border-b">
       {/* Links: Nur Avatar anzeigen */}
@@ -29,7 +31,7 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
       {/* Mitte: RISE Logo */}
       <div className="flex-1 flex justify-center">
         <img 
-          src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
+          src={theme === 'dark' ? "/src/assets/rise-logo-dark.png" : "/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png"}
           alt="RISE Functional Fitness Logo" 
           className="h-10 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => window.location.href = '/pro'}

@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
 import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut } from "lucide-react"
+import { useTheme } from "next-themes"
 
 interface RiseHeaderProps {
   onProVersionClick?: () => void
@@ -16,6 +17,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
 }) => {
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const { theme } = useTheme()
 
   const handleLogout = async () => {
     if (onLogout) {
@@ -28,7 +30,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
     <header className="flex justify-between items-center w-full p-6 border-b border-border">
       <div className="flex items-center gap-4">
         <img 
-          src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
+          src={theme === 'dark' ? "/src/assets/rise-logo-dark.png" : "/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png"}
           alt="RISE Functional Fitness Logo" 
           className="h-12 cursor-pointer"
           onClick={() => navigate('/')}
