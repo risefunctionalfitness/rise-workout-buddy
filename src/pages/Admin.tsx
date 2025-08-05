@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search, Dumbbell } from "lucide-react";
+import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search, Dumbbell, CreditCard } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
+import { CreditManagement } from "@/components/CreditManagement";
 import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
 import { MembershipBadge } from "@/components/MembershipBadge";
@@ -45,7 +46,7 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits'>('home');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
@@ -695,6 +696,8 @@ export default function Admin() {
         return <NewsManager />;
       case 'codes':
         return <GymCodeManager />;
+      case 'credits':
+        return <CreditManagement />;
       default:
         return <AdminStats />;
     }
@@ -776,6 +779,16 @@ export default function Admin() {
                   >
                     <Newspaper className="h-12 w-12 text-gray-600 mb-3" />
                     <span className="text-lg font-medium">News</span>
+                  </div>
+                  <div 
+                    onClick={() => {
+                      setActivePage('credits');
+                      setDropdownOpen(false);
+                    }}
+                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <CreditCard className="h-12 w-12 text-gray-600 mb-3" />
+                    <span className="text-lg font-medium">Credits</span>
                   </div>
                   <div 
                     onClick={() => {

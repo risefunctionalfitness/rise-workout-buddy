@@ -10,6 +10,7 @@ import { WorkoutGenerator } from "@/components/WorkoutGenerator"
 import { CourseBooking } from "@/components/CourseBooking"
 import { NewsSection } from "@/components/NewsSection"
 import { LeaderboardPosition } from "@/components/LeaderboardPosition"
+import { DashboardStats } from "@/components/DashboardStats"
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
@@ -354,13 +355,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     switch (activeTab) {
       case 'home':
         return (
-          <TrainingPath 
-            trainingDays={trainingDays} 
-            onAddTraining={handleAddTraining}
-            onRemoveTraining={handleRemoveTraining}
-            user={user}
-            userRole={userRole}
-          />
+          <div className="p-4 space-y-6">
+            <DashboardStats user={user} />
+            <TrainingPath 
+              trainingDays={trainingDays} 
+              onAddTraining={handleAddTraining}
+              onRemoveTraining={handleRemoveTraining}
+              user={user}
+              userRole={userRole}
+            />
+          </div>
         )
       case 'wod':
         return (

@@ -11,9 +11,9 @@ interface MembershipBadgeProps {
 const getMembershipColor = (type: MembershipType) => {
   switch (type) {
     case 'Basic Member':
-      return 'hsl(45, 93%, 47%)' // #f0ad00 - Orange/Gold for Basic
+      return 'hsl(334, 87%, 40%)' // #bd114a - RISE Brand Color (rot)
     case 'Premium Member':
-      return 'hsl(334, 87%, 40%)' // #bd114a - RISE Brand Color
+      return 'hsl(45, 93%, 47%)' // #f0ad00 - Gold für Premium
     case 'Trainer':
       return 'hsl(212, 100%, 34%)' // #004aad
     case 'Administrator':
