@@ -623,6 +623,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      can_user_register_for_course: {
+        Args: { user_id_param: string; course_id_param: string }
+        Returns: boolean
+      }
       generate_courses_from_template: {
         Args: {
           template_id_param: string
@@ -643,6 +647,10 @@ export type Database = {
           waitlist_count: number
           max_participants: number
         }[]
+      }
+      get_weekly_registrations_count: {
+        Args: { user_id_param: string; check_date?: string }
+        Returns: number
       }
       halfvec_avg: {
         Args: { "": number[] }
