@@ -627,6 +627,18 @@ export type Database = {
         Args: { user_id_param: string; course_id_param: string }
         Returns: boolean
       }
+      debug_can_user_register_for_course: {
+        Args: { user_id_param: string; course_id_param: string }
+        Returns: {
+          user_role: string
+          user_membership_type: string
+          weekly_count: number
+          user_credits: number
+          course_date: string
+          can_register: boolean
+          debug_info: string
+        }[]
+      }
       generate_courses_from_template: {
         Args: {
           template_id_param: string
