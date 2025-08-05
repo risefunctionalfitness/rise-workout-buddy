@@ -43,7 +43,6 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   const [showDialog, setShowDialog] = useState(false)
   const [showNews, setShowNews] = useState(false)
   const [showDayCourses, setShowDayCourses] = useState(false)
-  const [courseRegistrations, setCourseRegistrations] = useState<{[key: string]: boolean}>({})
   const containerRef = useRef<HTMLDivElement>(null)
   const todayRef = useRef<HTMLDivElement>(null)
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
@@ -82,53 +81,6 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       setTimeout(scrollToToday, 800)
     }
   }, [trainingDays])
-
-  // Lade Kursanmeldungen für den aktuellen Monat
-  const loadCourseRegistrations = async () => {
-    if (!user?.id) return
-
-    try {
-      const currentDate = new Date()
-      const currentYear = currentDate.getFullYear()
-      const currentMonth = currentDate.getMonth()
-      const startOfMonth = new Date(currentYear, currentMonth, 1)
-      const endOfMonth = new Date(currentYear, currentMonth + 1, 0)
-
-      const { data: registrations, error } = await supabase
-        .from('course_registrations')
-        .select(`
-          course_id,
-          status,
-          courses(course_date)
-        `)
-        .eq('user_id', user.id)
-        .eq('status', 'registered')
-        .gte('courses.course_date', startOfMonth.toISOString().split('T')[0])
-        .lte('courses.course_date', endOfMonth.toISOString().split('T')[0])
-
-      if (error) {
-        console.error('Error loading course registrations:', error)
-        return
-      }
-
-      const registrationsByDate: {[key: string]: boolean} = {}
-      registrations?.forEach(reg => {
-        if (reg.courses?.course_date) {
-          const courseDate = new Date(reg.courses.course_date)
-          const dayNumber = courseDate.getDate()
-          registrationsByDate[dayNumber.toString()] = true
-        }
-      })
-
-      setCourseRegistrations(registrationsByDate)
-    } catch (error) {
-      console.error('Error loading course registrations:', error)
-    }
-  }
-
-  useEffect(() => {
-    loadCourseRegistrations()
-  }, [user?.id])
 
   const currentMonth = new Date().toLocaleDateString('de-DE', { 
     month: 'long', 
@@ -216,7 +168,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
                 workoutType={day.trainingSession?.type}
                 dayNumber={day.dayNumber}
                 onSelectWorkout={() => handleDayClick(day)}
-                isRegisteredForCourse={courseRegistrations[day.dayNumber.toString()] || false}
+                isRegisteredForCourse={false}
               />
               
               {/* Verbindungslinie zum nächsten Tag */}
@@ -281,9 +233,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         onOpenChange={(open) => {
           setShowDayCourses(open)
           if (!open) {
-            // Reload course registrations when dialog closes
-            loadCourseRegistrations()
-            // Also trigger reload of the MonthlyTrainingCalendar by dispatching event
+            // Trigger reload of both calendar views
             window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
           }
         }}

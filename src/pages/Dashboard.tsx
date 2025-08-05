@@ -75,11 +75,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       setActiveTab(event.detail as DashboardTabType)
     }
     
+    // Listen for course registration changes
+    const handleCourseRegistrationChanged = () => {
+      generateTrainingDays()
+    }
+    
     window.addEventListener('changeTab', handleTabChange as EventListener)
+    window.addEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
     
     return () => {
       mounted = false
       window.removeEventListener('changeTab', handleTabChange as EventListener)
+      window.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
     }
   }, [user.id])
 
@@ -122,11 +129,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       })
     }
 
-    // Load existing training sessions
     try {
+      // Load existing training sessions
       const { data: sessions, error } = await supabase
         .from('training_sessions')
-        .select('id, date, workout_type, status') // Only select needed fields
+        .select('id, date, workout_type, status')
         .eq('user_id', user.id)
         .gte('date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
         .lt('date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
@@ -134,6 +141,60 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       if (error) {
         console.error('Error loading training sessions:', error)
         return
+      }
+
+      // Load course registrations for the month
+      const { data: registrations, error: regError } = await supabase
+        .from('course_registrations')
+        .select(`
+          course_id,
+          status,
+          courses(course_date, start_time, end_time)
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'registered')
+        .gte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
+        .lt('courses.course_date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
+
+      if (regError) {
+        console.error('Error loading course registrations:', regError)
+      }
+
+      // Automatically create training sessions for expired courses
+      const expiredCourses = registrations?.filter(reg => {
+        if (!reg.courses?.course_date || !reg.courses?.end_time) return false
+        
+        const courseDate = new Date(reg.courses.course_date)
+        const [hours, minutes] = reg.courses.end_time.split(':').map(Number)
+        const courseEndTime = new Date(courseDate)
+        courseEndTime.setHours(hours, minutes, 0, 0)
+        
+        return courseEndTime < today
+      }) || []
+
+      // Create training sessions for expired courses if they don't exist
+      for (const expiredCourse of expiredCourses) {
+        if (!expiredCourse.courses?.course_date) continue
+        
+        const courseDate = expiredCourse.courses.course_date
+        const existingSession = sessions?.find(s => s.date === courseDate)
+        
+        if (!existingSession) {
+          const { data: newSession, error: insertError } = await supabase
+            .from('training_sessions')
+            .insert({
+              user_id: user.id,
+              date: courseDate,
+              workout_type: 'course',
+              status: 'completed'
+            })
+            .select()
+            .single()
+
+          if (!insertError && newSession) {
+            sessions?.push(newSession)
+          }
+        }
       }
 
       // Map sessions to days
@@ -154,10 +215,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       const completedSessions = sessions?.filter(s => s.status === 'completed').length || 0
       setTrainingCount(completedSessions)
     } catch (error) {
-      console.error('Error loading training sessions:', error)
+      console.error('Error loading training data:', error)
     }
     
     setTrainingDays(days)
+    
+    // Dispatch event to notify MonthlyTrainingCalendar of data changes
+    window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
   }
 
   const userName = user?.user_metadata?.display_name || 
