@@ -150,9 +150,16 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">{course.title}</CardTitle>
-            <Badge variant="secondary" className="bg-green-500 text-white">
-              ({registeredParticipants.length}/{course.max_participants})
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-green-500 text-white">
+                {registeredParticipants.length}/{course.max_participants} angemeldet
+              </Badge>
+              {waitlistedParticipants.length > 0 && (
+                <Badge variant="outline" className="bg-yellow-500 text-white">
+                  {waitlistedParticipants.length} wartend
+                </Badge>
+              )}
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">
             Trainer: {course.trainer} • {new Date(course.course_date).toLocaleDateString('de-DE')} • {course.start_time} - {course.end_time}
@@ -189,43 +196,6 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         </CardContent>
       </Card>
 
-      {waitlistedParticipants.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              Warteliste
-              <Badge variant="outline" className="bg-yellow-500 text-white">
-                {waitlistedParticipants.length}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {waitlistedParticipants.map((participant) => (
-              <div key={participant.id} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg min-h-[60px]">
-                <div className="flex items-center gap-3">
-                  <span className="font-medium">{participant.display_name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(participant.registered_at).toLocaleDateString('de-DE')}
-                  </span>
-                  <MembershipBadge type={participant.membership_type as any} />
-                </div>
-                <div className="flex items-center gap-2">
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeParticipant(participant.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
 
       <AdminParticipantManager
         courseId={course.id}
