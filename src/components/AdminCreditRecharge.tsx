@@ -63,9 +63,8 @@ export const AdminCreditRecharge = () => {
     try {
       const { error } = await supabase.functions.invoke('manage-credits', {
         body: {
-          action: 'add_credits',
           user_id: selectedUser,
-          credits: credits
+          credits_to_add: credits
         }
       })
 
