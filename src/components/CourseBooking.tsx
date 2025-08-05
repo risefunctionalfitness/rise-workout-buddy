@@ -226,17 +226,39 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         return
       }
 
-      const isWaitlist = course.registered_count >= course.max_participants
-
-      const { error } = await supabase
+      // Check if user already has a registration (including cancelled ones)
+      const { data: existingReg, error: checkError } = await supabase
         .from('course_registrations')
-        .insert({
-          course_id: courseId,
-          user_id: user.id,
-          status: isWaitlist ? 'waitlist' : 'registered'
-        })
+        .select('id, status')
+        .eq('course_id', courseId)
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-      if (error) throw error
+      if (checkError && checkError.code !== 'PGRST116') throw checkError
+
+      const isWaitlist = course.registered_count >= course.max_participants
+      const newStatus = isWaitlist ? 'waitlist' : 'registered'
+
+      if (existingReg) {
+        // Update existing registration
+        const { error } = await supabase
+          .from('course_registrations')
+          .update({ status: newStatus })
+          .eq('id', existingReg.id)
+
+        if (error) throw error
+      } else {
+        // Create new registration
+        const { error } = await supabase
+          .from('course_registrations')
+          .insert({
+            course_id: courseId,
+            user_id: user.id,
+            status: newStatus
+          })
+
+        if (error) throw error
+      }
 
       toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
       await loadCourses()

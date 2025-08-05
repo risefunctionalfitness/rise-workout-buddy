@@ -226,9 +226,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         }
       })
 
-      // Count training sessions for header
-      const completedSessions = sessions?.filter(s => s.status === 'completed').length || 0
-      setTrainingCount(completedSessions)
+      // Count unique training days for header (not individual sessions)
+      const uniqueTrainingDates = new Set()
+      sessions?.forEach(session => {
+        if (session.status === 'completed') {
+          uniqueTrainingDates.add(session.date)
+        }
+      })
+      setTrainingCount(uniqueTrainingDates.size)
     } catch (error) {
       console.error('Error loading training data:', error)
     }
