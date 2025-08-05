@@ -26,6 +26,24 @@ serve(async (req) => {
     
     console.log('Received request with:', { email, user_metadata })
 
+    // Check if user already exists
+    const { data: existingUser } = await supabase.auth.admin.listUsers()
+    const userExists = existingUser.users?.find(user => user.email === email)
+    
+    if (userExists) {
+      console.log('User already exists with email:', email)
+      return new Response(
+        JSON.stringify({ 
+          error: `Ein Benutzer mit der E-Mail-Adresse "${email}" ist bereits registriert.`,
+          code: 'USER_ALREADY_EXISTS'
+        }),
+        { 
+          status: 409, // Conflict status code
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
     // Create user with admin privileges
     const { data, error: createError } = await supabase.auth.admin.createUser({
       email,
@@ -36,8 +54,15 @@ serve(async (req) => {
 
     if (createError) {
       console.error('Error creating user:', createError)
+      
+      // Handle specific error cases
+      let errorMessage = createError.message
+      if (createError.message.includes('email address has already been registered')) {
+        errorMessage = `Ein Benutzer mit der E-Mail-Adresse "${email}" ist bereits registriert.`
+      }
+      
       return new Response(
-        JSON.stringify({ error: createError.message }),
+        JSON.stringify({ error: errorMessage }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
