@@ -165,33 +165,54 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
             Trainer: {course.trainer} • {new Date(course.course_date).toLocaleDateString('de-DE')} • {course.start_time} - {course.end_time}
           </p>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {registeredParticipants.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">Keine Anmeldungen</p>
-          ) : (
-            registeredParticipants.map((participant) => (
-              <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg min-h-[60px]">
-                <div className="flex items-center gap-3">
-                  <span className="font-medium">{participant.display_name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(participant.registered_at).toLocaleDateString('de-DE')}
-                  </span>
-                  <MembershipBadge type={participant.membership_type as any} />
-                </div>
-                <div className="flex items-center gap-2">
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeParticipant(participant.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+        <CardContent className="space-y-4">
+          {/* Registered Participants */}
+          <div>
+            <h3 className="font-medium text-sm mb-3">Angemeldete Teilnehmer</h3>
+            {registeredParticipants.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">Keine Anmeldungen</p>
+            ) : (
+              <div className="space-y-3">
+                {registeredParticipants.map((participant) => (
+                  <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg min-h-[60px]">
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium">{participant.display_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(participant.registered_at).toLocaleDateString('de-DE')}
+                      </span>
+                      <MembershipBadge type={participant.membership_type as any} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeParticipant(participant.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))
+            )}
+          </div>
+
+          {/* Waitlist Section - Only show count, not names */}
+          {waitlistedParticipants.length > 0 && (
+            <div>
+              <h3 className="font-medium text-sm mb-3">Warteliste</h3>
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  {waitlistedParticipants.length} Person(en) auf der Warteliste
+                </p>
+                <p className="text-xs text-yellow-600 mt-1">
+                  Namen werden aus Datenschutzgründen nicht angezeigt
+                </p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
