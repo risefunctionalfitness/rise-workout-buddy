@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
-import { CreditManagement } from "@/components/CreditManagement";
+import { AdminCreditRecharge } from "@/components/AdminCreditRecharge";
 import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
 import { MembershipBadge } from "@/components/MembershipBadge";
@@ -697,7 +697,7 @@ export default function Admin() {
       case 'codes':
         return <GymCodeManager />;
       case 'credits':
-        return <CreditManagement />;
+        return <AdminCreditRecharge />;
       default:
         return <AdminStats />;
     }

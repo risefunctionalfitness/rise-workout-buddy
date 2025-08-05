@@ -90,38 +90,21 @@ export const DashboardStats = ({ user }: DashboardStatsProps) => {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* 10er Karte Credits */}
-      {userProfile?.membership_type === '10er Karte' && (
+      {/* Nur für Premium Member andere Statistiken anzeigen */}
+      {userProfile?.membership_type === 'Premium Member' && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Verbleibende Anmeldungen</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Premium Mitgliedschaft</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{credits}</div>
+            <div className="text-2xl font-bold">Unlimitiert</div>
             <p className="text-xs text-muted-foreground">
-              {credits > 0 ? `Noch ${credits} Anmeldungen möglich` : 'Keine Credits verfügbar'}
+              Keine Begrenzung bei Kursanmeldungen
             </p>
           </CardContent>
         </Card>
       )}
-
-      {/* Basic Member Weekly Limit */}
-      {userProfile?.membership_type === 'Basic Member' && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Wöchentliche Anmeldungen</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{weeklyRegistrations}/2</div>
-            <p className="text-xs text-muted-foreground">
-              {weeklyRegistrations < 2 ? `Noch ${2 - weeklyRegistrations} Anmeldungen diese Woche` : 'Wochenlimit erreicht'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
     </div>
   )
 }

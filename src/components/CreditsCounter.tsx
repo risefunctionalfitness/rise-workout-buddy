@@ -20,7 +20,7 @@ export const CreditsCounter = ({ user }: CreditsCounterProps) => {
         .from('membership_credits')
         .select('credits_remaining')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
       if (error) {
         console.error('Error loading credits:', error)
