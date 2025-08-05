@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
 import { DayCourseDialog } from "./DayCourseDialog"
-import { Calendar } from "lucide-react"
+
 
 interface MonthlyTrainingCalendarProps {
   user: User
@@ -135,16 +135,13 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
 
   const getDayStatus = (day: number) => {
     const currentDay = getCurrentDay()
-    const isRegistered = registeredDays.has(day)
     
     if (trainingDays.has(day)) {
       return "bg-green-500" // Trainiert - grün
-    } else if (isRegistered && day >= currentDay) {
-      return "bg-blue-500" // Angemeldet für Kurs - blau
     } else if (day < currentDay) {
       return "bg-red-500" // Verpasst - rot
     } else {
-      return "bg-gray-400" // Zukünftig - grau
+      return "bg-gray-400" // Zukünftig - grau (auch wenn angemeldet)
     }
   }
 
@@ -206,9 +203,6 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
                   : 'Klicken für Kurse'
               }`}
             >
-              {isRegistered && (
-                <Calendar className="h-2 w-2 text-white" />
-              )}
             </div>
           )
         })}

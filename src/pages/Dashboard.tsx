@@ -29,6 +29,7 @@ interface TrainingDay {
     type: 'course' | 'free_training' | 'plan'
     id: string
   }
+  isRegisteredForCourse?: boolean
 }
 
 interface DashboardProps {
@@ -125,7 +126,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         isToday,
         isFuture,
         isPast,
-        trainingSession: undefined // Will be filled from actual data
+        trainingSession: undefined, // Will be filled from actual data
+        isRegisteredForCourse: false // Will be set based on course registrations
       })
     }
 
@@ -196,6 +198,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           }
         }
       }
+
+      // Map future course registrations to days
+      registrations?.forEach(reg => {
+        if (!reg.courses?.course_date) return
+        
+        const courseDate = new Date(reg.courses.course_date)
+        const dayNumber = courseDate.getDate()
+        const dayIndex = days.findIndex(d => d.dayNumber === dayNumber)
+        
+        if (dayIndex !== -1 && days[dayIndex].isFuture) {
+          days[dayIndex].isRegisteredForCourse = true
+        }
+      })
 
       // Map sessions to days
       sessions?.forEach(session => {

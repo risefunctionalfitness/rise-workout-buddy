@@ -22,6 +22,7 @@ interface TrainingDay {
     type: 'course' | 'free_training' | 'plan'
     id: string
   }
+  isRegisteredForCourse?: boolean
 }
 
 interface TrainingPathProps {
@@ -168,7 +169,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
                 workoutType={day.trainingSession?.type}
                 dayNumber={day.dayNumber}
                 onSelectWorkout={() => handleDayClick(day)}
-                isRegisteredForCourse={false}
+                isRegisteredForCourse={day.isRegisteredForCourse || false}
               />
               
               {/* Verbindungslinie zum nächsten Tag */}
