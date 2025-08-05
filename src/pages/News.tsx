@@ -61,7 +61,7 @@ export default function News() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Zurück
           </Button>
-          <h1 className="text-xl font-bold">Gym News</h1>
+          <h1 className="text-xl font-bold">RISE News</h1>
           <div className="w-20" /> {/* Spacer for center alignment */}
         </div>
       </div>

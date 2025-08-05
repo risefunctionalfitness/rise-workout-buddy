@@ -523,9 +523,6 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                       <p className="text-sm text-yellow-800">
                         {selectedCourse.waitlist_count} Person(en) auf der Warteliste
                       </p>
-                      <p className="text-xs text-yellow-600 mt-1">
-                        Namen werden aus Datenschutzgründen nicht angezeigt
-                      </p>
                     </div>
                   </div>
                 )}
