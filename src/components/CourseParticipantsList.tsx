@@ -163,7 +163,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
             <p className="text-center text-muted-foreground py-4">Keine Anmeldungen</p>
           ) : (
             registeredParticipants.map((participant) => (
-              <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg min-h-[60px]">
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{participant.display_name}</span>
                   <span className="text-xs text-muted-foreground">
@@ -191,7 +191,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
 
       {waitlistedParticipants.length > 0 && (
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               Warteliste
               <Badge variant="outline" className="bg-yellow-500 text-white">
@@ -201,7 +201,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           </CardHeader>
           <CardContent className="space-y-3">
             {waitlistedParticipants.map((participant) => (
-              <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div key={participant.id} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg min-h-[60px]">
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{participant.display_name}</span>
                   <span className="text-xs text-muted-foreground">
