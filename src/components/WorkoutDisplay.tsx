@@ -155,38 +155,44 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
 
           <Separator />
 
-          {/* Three buttons at the bottom */}
-          <div className="flex justify-center gap-4 mt-6">
-            <Button 
-              onClick={onNewWorkout}
-              disabled={isGenerating}
-              variant="ghost"
-              size="lg"
-              className="flex flex-col items-center p-4 h-auto min-w-[80px]"
-            >
-              <RotateCcw className="h-6 w-6 mb-1" />
-              <span className="text-xs">Nächstes</span>
-            </Button>
+          {/* Buttons arranged in two rows */}
+          <div className="space-y-4 mt-6">
+            {/* First row: Nächstes and Timer side by side */}
+            <div className="flex justify-center gap-4">
+              <Button 
+                onClick={onNewWorkout}
+                disabled={isGenerating}
+                variant="ghost"
+                size="lg"
+                className="flex flex-col items-center p-4 h-auto min-w-[80px]"
+              >
+                <RotateCcw className="h-6 w-6 mb-1" />
+                <span className="text-xs">Nächstes</span>
+              </Button>
+              
+              <Button 
+                onClick={() => setShowTimer(true)}
+                variant="ghost"
+                size="lg"
+                className="flex flex-col items-center p-4 h-auto min-w-[80px]"
+              >
+                <Timer className="h-6 w-6 mb-1" />
+                <span className="text-xs">Timer</span>
+              </Button>
+            </div>
             
-            <Button 
-              onClick={() => setShowTimer(true)}
-              variant="ghost"
-              size="lg"
-              className="flex flex-col items-center p-4 h-auto min-w-[80px]"
-            >
-              <Timer className="h-6 w-6 mb-1" />
-              <span className="text-xs">Timer</span>
-            </Button>
-            
-            <Button 
-              onClick={() => setShowAIChat(true)}
-              variant="ghost"
-              size="lg"
-              className="flex flex-col items-center p-4 h-auto min-w-[80px]"
-            >
-              <Lightbulb className="h-6 w-6 mb-1" />
-              <span className="text-xs">RISE KI-Coach</span>
-            </Button>
+            {/* Second row: RISE KI-Coach centered */}
+            <div className="flex justify-center">
+              <Button 
+                onClick={() => setShowAIChat(true)}
+                variant="ghost"
+                size="lg"
+                className="flex flex-col items-center p-4 h-auto min-w-[120px]"
+              >
+                <Lightbulb className="h-6 w-6 mb-1" />
+                <span className="text-xs">RISE KI-Coach</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

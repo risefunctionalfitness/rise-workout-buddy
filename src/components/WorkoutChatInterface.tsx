@@ -42,7 +42,7 @@ export const WorkoutChatInterface = ({ workout, workoutType, onClose }: WorkoutC
       <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
-          <p className="text-lg text-muted-foreground">RISE KI-Coach lädt...</p>
+          <p className="text-lg text-muted-foreground">KI-Coach überlegt, wie er's dir schonend beibringt...</p>
         </div>
       </div>
     )

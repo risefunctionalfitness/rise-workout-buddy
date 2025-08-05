@@ -22,7 +22,6 @@ interface CourseTemplate {
   title: string
   trainer: string
   strength_exercise?: string
-  max_participants: number
   registration_deadline_minutes: number
   cancellation_deadline_minutes: number
   duration_minutes: number
@@ -34,7 +33,6 @@ interface Course {
   title: string
   trainer: string
   strength_exercise?: string
-  max_participants: number
   course_date: string
   start_time: string
   end_time: string
@@ -61,7 +59,6 @@ export const CourseTemplateManager = () => {
     title: '',
     trainer: '',
     strength_exercise: '',
-    max_participants: 16,
     registration_deadline_minutes: 30,
     cancellation_deadline_minutes: 60,
     duration_minutes: 60
@@ -139,7 +136,7 @@ export const CourseTemplateManager = () => {
     try {
       const { error } = await supabase
         .from('course_templates')
-        .insert(templateForm)
+        .insert([templateForm] as any)
 
       if (error) throw error
 
@@ -148,7 +145,6 @@ export const CourseTemplateManager = () => {
         title: '',
         trainer: '',
         strength_exercise: '',
-        max_participants: 16,
         registration_deadline_minutes: 30,
         cancellation_deadline_minutes: 60,
         duration_minutes: 60
@@ -227,7 +223,7 @@ export const CourseTemplateManager = () => {
               title: template.title,
               trainer: template.trainer,
               strength_exercise: template.strength_exercise,
-              max_participants: template.max_participants,
+              
               registration_deadline_minutes: template.registration_deadline_minutes,
               cancellation_deadline_minutes: template.cancellation_deadline_minutes,
               duration_minutes: template.duration_minutes,
@@ -285,7 +281,7 @@ export const CourseTemplateManager = () => {
         title: formData.get('title') as string,
         trainer: formData.get('trainer') as string,
         strength_exercise: formData.get('strength_exercise') as string || null,
-        max_participants: parseInt(formData.get('max_participants') as string),
+        
         registration_deadline_minutes: parseInt(formData.get('registration_deadline_minutes') as string),
         cancellation_deadline_minutes: parseInt(formData.get('cancellation_deadline_minutes') as string),
         start_time: startTime,
@@ -306,6 +302,25 @@ export const CourseTemplateManager = () => {
     } catch (error) {
       console.error('Error updating course:', error)
       toast.error('Fehler beim Aktualisieren des Kurses')
+    }
+  }
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm('Sind Sie sicher, dass Sie diese Vorlage löschen möchten?')) return
+
+    try {
+      const { error } = await supabase
+        .from('course_templates')
+        .delete()
+        .eq('id', templateId)
+
+      if (error) throw error
+
+      toast.success('Vorlage erfolgreich gelöscht')
+      await loadTemplates()
+    } catch (error) {
+      console.error('Error deleting template:', error)
+      toast.error('Fehler beim Löschen der Vorlage')
     }
   }
 
@@ -421,16 +436,6 @@ export const CourseTemplateManager = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="max_participants">Max. Teilnehmer</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={templateForm.max_participants}
-                      onChange={(e) => setTemplateForm(prev => ({ ...prev, max_participants: parseInt(e.target.value) }))}
-                      required
-                    />
-                  </div>
-                  <div>
                     <Label htmlFor="registration_deadline_minutes">Anmeldefrist (Minuten vor Start)</Label>
                     <Input
                       type="number"
@@ -482,7 +487,7 @@ export const CourseTemplateManager = () => {
                     <TableHead>Titel</TableHead>
                     <TableHead>Trainer</TableHead>
                     <TableHead>Kraftübung</TableHead>
-                    <TableHead>Max. Teilnehmer</TableHead>
+                    
                     <TableHead>Dauer</TableHead>
                     <TableHead>Aktionen</TableHead>
                   </TableRow>
@@ -499,17 +504,26 @@ export const CourseTemplateManager = () => {
                           '-'
                         )}
                       </TableCell>
-                      <TableCell>{template.max_participants}</TableCell>
+                      
                       <TableCell>{template.duration_minutes} min</TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openGenerateDialog(template)}
-                        >
-                          <CalendarDays className="h-4 w-4 mr-2" />
-                          Kurse erstellen
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openGenerateDialog(template)}
+                          >
+                            <CalendarDays className="h-4 w-4 mr-2" />
+                            Kurse erstellen
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteTemplate(template.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -658,7 +672,7 @@ export const CourseTemplateManager = () => {
                       </TableCell>
                       <TableCell>{course.trainer}</TableCell>
                       <TableCell>
-                        {course.registered_count}/{course.max_participants}
+                        {course.registered_count} angemeldet
                         {course.waitlist_count > 0 && (
                           <span className="text-sm text-muted-foreground ml-1">
                             (+{course.waitlist_count} Warteliste)
@@ -711,10 +725,6 @@ export const CourseTemplateManager = () => {
               <div>
                 <Label htmlFor="strength_exercise">Kraftübung</Label>
                 <Input name="strength_exercise" defaultValue={editingCourse.strength_exercise || ''} />
-              </div>
-              <div>
-                <Label htmlFor="max_participants">Max. Teilnehmer</Label>
-                <Input name="max_participants" type="number" min="1" defaultValue={editingCourse.max_participants} required />
               </div>
               <div>
                 <Label htmlFor="registration_deadline_minutes">Anmeldefrist (Minuten vor Start)</Label>
