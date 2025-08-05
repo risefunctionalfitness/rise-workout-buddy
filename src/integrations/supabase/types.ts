@@ -288,6 +288,36 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_credits: {
+        Row: {
+          created_at: string
+          credits_remaining: number
+          credits_total: number
+          id: string
+          last_recharged_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_remaining?: number
+          credits_total?: number
+          id?: string
+          last_recharged_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_remaining?: number
+          credits_total?: number
+          id?: string
+          last_recharged_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           author_id: string
@@ -553,6 +583,33 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_course_limits: {
+        Row: {
+          created_at: string
+          id: string
+          registrations_count: number
+          updated_at: string
+          user_id: string
+          week_start_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          registrations_count?: number
+          updated_at?: string
+          user_id: string
+          week_start_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          registrations_count?: number
+          updated_at?: string
+          user_id?: string
+          week_start_date?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -732,7 +789,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "member" | "trainer" | "open_gym"
+      app_role:
+        | "admin"
+        | "member"
+        | "trainer"
+        | "open_gym"
+        | "basic_member"
+        | "premium_member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -860,7 +923,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "member", "trainer", "open_gym"],
+      app_role: [
+        "admin",
+        "member",
+        "trainer",
+        "open_gym",
+        "basic_member",
+        "premium_member",
+      ],
     },
   },
 } as const
