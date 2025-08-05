@@ -76,7 +76,11 @@ serve(async (req) => {
     
     let role = 'member' // default role
     
-    if (membershipType === 'Trainer') {
+    if (membershipType === 'Basic Member') {
+      role = 'basic_member'
+    } else if (membershipType === 'Premium Member') {
+      role = 'premium_member'
+    } else if (membershipType === 'Trainer') {
       role = 'trainer'
     } else if (membershipType === 'Administrator') {
       role = 'admin'
@@ -106,6 +110,23 @@ serve(async (req) => {
         )
       } else {
         console.log('Successfully added role:', role)
+      }
+      
+      // Initialize credits for 10er Karte members
+      if (membershipType === '10er Karte') {
+        const { error: creditsError } = await supabase
+          .from('membership_credits')
+          .insert({
+            user_id: data.user.id,
+            credits_remaining: 10,
+            credits_total: 10,
+            last_recharged_at: new Date().toISOString(),
+          })
+
+        if (creditsError) {
+          console.error('Error initializing credits:', creditsError)
+          // Don't throw error here, just log it
+        }
       }
     }
 

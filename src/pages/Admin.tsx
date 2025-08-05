@@ -25,7 +25,7 @@ interface Member {
   user_id: string | null;
   email?: string;
   created_at: string;
-  membership_type: 'Member' | 'Trainer' | 'Administrator' | 'Open Gym' | 'Wellpass' | '10er Karte';
+  membership_type: 'Basic Member' | 'Premium Member' | 'Trainer' | 'Administrator' | 'Open Gym' | 'Wellpass' | '10er Karte';
   status: string;
   last_login_at: string | null;
   authors?: boolean;
@@ -40,7 +40,7 @@ export default function Admin() {
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberCode, setNewMemberCode] = useState("");
-  const [newMembershipType, setNewMembershipType] = useState("Member");
+  const [newMembershipType, setNewMembershipType] = useState("Premium Member");
   const [newMemberIsAuthor, setNewMemberIsAuthor] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -129,7 +129,7 @@ export default function Admin() {
     }
   };
 
-  const membershipTypes = ["Member", "Trainer", "Administrator", "Open Gym", "Wellpass", "10er Karte"];
+  const membershipTypes = ["Basic Member", "Premium Member", "Trainer", "Administrator", "Open Gym", "Wellpass", "10er Karte"];
 
   const loadMembers = async () => {
     try {
@@ -208,7 +208,7 @@ export default function Admin() {
         setNewMemberName("");
         setNewMemberEmail("");
         setNewMemberCode("");
-        setNewMembershipType("Member");
+        setNewMembershipType("Premium Member");
         setNewMemberIsAuthor(false);
         setDialogOpen(false);
         setCurrentPage(1);
@@ -559,7 +559,7 @@ export default function Admin() {
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <MembershipBadge type={member.membership_type} />
+                        <MembershipBadge type={member.membership_type as any} />
                         {member.authors && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
                             Autor
@@ -600,7 +600,7 @@ export default function Admin() {
                       <TableCell>{member.access_code}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <MembershipBadge type={member.membership_type} />
+                          <MembershipBadge type={member.membership_type as any} />
                           {member.authors && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
                               Autor

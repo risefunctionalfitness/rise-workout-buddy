@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
+import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -42,6 +43,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isTrainer, setIsTrainer] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userMembershipType, setUserMembershipType] = useState<string>('')
 
   useEffect(() => {
     let mounted = true
@@ -69,15 +71,26 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   const checkUserRoles = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
+      const [rolesResult, profileResult] = await Promise.all([
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id),
+        supabase
+          .from('profiles')
+          .select('membership_type')
+          .eq('user_id', user.id)
+          .single()
+      ])
       
-      if (data) {
-        const roles = data.map(r => r.role)
+      if (rolesResult.data) {
+        const roles = rolesResult.data.map(r => r.role)
         setIsTrainer(roles.includes('trainer'))
         setIsAdmin(roles.includes('admin'))
+      }
+      
+      if (profileResult.data) {
+        setUserMembershipType(profileResult.data.membership_type || '')
       }
     } catch (error) {
       setIsTrainer(false)
@@ -208,6 +221,24 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const course = courses.find(c => c.id === courseId)
       if (!course) return
 
+      // Check if user can register (limits and credits)
+      const { data: canRegister, error: checkError } = await supabase
+        .rpc('can_user_register_for_course', {
+          user_id_param: user.id,
+          course_id_param: courseId
+        })
+
+      if (checkError || !canRegister) {
+        if (userMembershipType === 'Basic Member') {
+          toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
+        } else if (userMembershipType === '10er Karte') {
+          toast.error("Du hast keine Credits mehr. Bitte lade deine 10er Karte am Empfang auf")
+        } else {
+          toast.error("Anmeldung nicht möglich")
+        }
+        return
+      }
+
       // Check registration deadline before registering
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
@@ -227,14 +258,14 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       }
 
       // Check if user already has a registration (including cancelled ones)
-      const { data: existingReg, error: checkError } = await supabase
+      const { data: existingReg, error: regCheckError } = await supabase
         .from('course_registrations')
         .select('id, status')
         .eq('course_id', courseId)
         .eq('user_id', user.id)
         .maybeSingle()
 
-      if (checkError && checkError.code !== 'PGRST116') throw checkError
+      if (regCheckError && regCheckError.code !== 'PGRST116') throw regCheckError
 
       const isWaitlist = course.registered_count >= course.max_participants
       const newStatus = isWaitlist ? 'waitlist' : 'registered'
@@ -354,6 +385,14 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   return (
     <div className="p-4 space-y-4">
+      {/* Membership limits display for Basic Member and 10er Karte */}
+      {(userMembershipType === 'Basic Member' || userMembershipType === '10er Karte') && (
+        <MembershipLimitDisplay 
+          userId={user.id} 
+          membershipType={userMembershipType} 
+        />
+      )}
+      
       {/* Header */}
       <div className="text-center">
         <h2 className="font-semibold">Nächste 10 Kurstage</h2>

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-type MembershipType = 'Member' | 'Trainer' | 'Administrator' | 'Open Gym' | 'Wellpass' | '10er Karte'
+type MembershipType = 'Basic Member' | 'Premium Member' | 'Trainer' | 'Administrator' | 'Open Gym' | 'Wellpass' | '10er Karte'
 
 interface MembershipBadgeProps {
   type: MembershipType
@@ -10,8 +10,10 @@ interface MembershipBadgeProps {
 
 const getMembershipColor = (type: MembershipType) => {
   switch (type) {
-    case 'Member':
-      return 'hsl(334, 87%, 40%)' // #bd114a
+    case 'Basic Member':
+      return 'hsl(45, 93%, 47%)' // #f0ad00 - Orange/Gold for Basic
+    case 'Premium Member':
+      return 'hsl(334, 87%, 40%)' // #bd114a - RISE Brand Color
     case 'Trainer':
       return 'hsl(212, 100%, 34%)' // #004aad
     case 'Administrator':
