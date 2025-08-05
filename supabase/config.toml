@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.create-admin]
 verify_jwt = false
+
+[functions.process-waitlists]
+verify_jwt = false
