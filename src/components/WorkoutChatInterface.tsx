@@ -42,7 +42,7 @@ export const WorkoutChatInterface = ({ workout, workoutType, onClose }: WorkoutC
       <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
-          <p className="text-lg text-muted-foreground">AI WOD Guide lädt...</p>
+          <p className="text-lg text-muted-foreground">RISE KI-Coach lädt...</p>
         </div>
       </div>
     )
@@ -56,7 +56,7 @@ export const WorkoutChatInterface = ({ workout, workoutType, onClose }: WorkoutC
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-primary" />
-                AI WOD Guide
+                RISE KI-Coach
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">{workout.title}</p>
             </div>

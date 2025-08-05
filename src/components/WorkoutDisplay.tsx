@@ -155,34 +155,37 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
 
           <Separator />
 
-          {/* Three icon buttons at the bottom */}
-          <div className="flex justify-center gap-8 mt-6">
+          {/* Three buttons at the bottom */}
+          <div className="flex justify-center gap-4 mt-6">
             <Button 
               onClick={onNewWorkout}
               disabled={isGenerating}
               variant="ghost"
               size="lg"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-4 h-auto min-w-[80px]"
             >
-              <RotateCcw className="h-6 w-6" />
+              <RotateCcw className="h-6 w-6 mb-1" />
+              <span className="text-xs">Nächstes</span>
             </Button>
             
             <Button 
               onClick={() => setShowTimer(true)}
               variant="ghost"
               size="lg"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-4 h-auto min-w-[80px]"
             >
-              <Timer className="h-6 w-6" />
+              <Timer className="h-6 w-6 mb-1" />
+              <span className="text-xs">Timer</span>
             </Button>
             
             <Button 
               onClick={() => setShowAIChat(true)}
               variant="ghost"
               size="lg"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-4 h-auto min-w-[80px]"
             >
-              <Lightbulb className="h-6 w-6" />
+              <Lightbulb className="h-6 w-6 mb-1" />
+              <span className="text-xs">RISE KI-Coach</span>
             </Button>
           </div>
         </CardContent>
