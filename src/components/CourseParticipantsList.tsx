@@ -114,7 +114,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
   }
 
   const registeredParticipants = participants.filter(p => p.status === 'registered')
-  const waitlistedParticipants = participants.filter(p => p.status === 'waitlisted')
+  const waitlistedParticipants = participants.filter(p => p.status === 'waitlisted' || p.status === 'waitlist')
 
   if (loading) {
     return (
