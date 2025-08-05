@@ -84,6 +84,7 @@ export type Database = {
       }
       course_templates: {
         Row: {
+          cancellation_deadline_minutes: number
           created_at: string
           duration_minutes: number
           id: string
@@ -95,6 +96,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancellation_deadline_minutes?: number
           created_at?: string
           duration_minutes: number
           id?: string
@@ -106,6 +108,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancellation_deadline_minutes?: number
           created_at?: string
           duration_minutes?: number
           id?: string
@@ -120,6 +123,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          cancellation_deadline_minutes: number
           course_date: string
           created_at: string
           duration_minutes: number
@@ -136,6 +140,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancellation_deadline_minutes?: number
           course_date: string
           created_at?: string
           duration_minutes: number
@@ -152,6 +157,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancellation_deadline_minutes?: number
           course_date?: string
           created_at?: string
           duration_minutes?: number

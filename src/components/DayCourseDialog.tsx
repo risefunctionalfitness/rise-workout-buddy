@@ -19,6 +19,8 @@ interface Course {
   is_cancelled: boolean
   strength_exercise: string | null
   registration_count: number
+  registration_deadline_minutes: number
+  cancellation_deadline_minutes: number
   user_registered: boolean
 }
 
@@ -131,9 +133,27 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
     }
   }
 
+  const canCancelCourse = (course: Course) => {
+    const now = new Date()
+    const courseDateTime = new Date(`${course.course_date}T${course.start_time}`)
+    const cancellationDeadline = new Date(courseDateTime.getTime() - (course.cancellation_deadline_minutes * 60 * 1000))
+    return now < cancellationDeadline
+  }
+
   const handleRegistration = async (courseId: string, isRegistered: boolean) => {
     try {
       if (isRegistered) {
+        // Check cancellation deadline before unregistering
+        const course = courses.find(c => c.id === courseId)
+        if (course && !canCancelCourse(course)) {
+          toast({
+            title: "Abmeldung nicht möglich",
+            description: `Die Abmeldefrist ist bereits ${course.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`,
+            variant: "destructive"
+          })
+          return
+        }
+
         // Unregister
         const { error } = await supabase
           .from('course_registrations')
@@ -275,10 +295,13 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     {!isOpenGym && (
                       <button
                         onClick={() => handleRegistration(course.id, course.user_registered)}
-                        disabled={!course.user_registered && course.registration_count >= course.max_participants}
+                        disabled={
+                          (course.user_registered && !canCancelCourse(course)) ||
+                          (!course.user_registered && course.registration_count >= course.max_participants)
+                        }
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                           course.user_registered 
-                            ? 'bg-red-600 hover:bg-red-700' 
+                            ? (canCancelCourse(course) ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed')
                             : course.registration_count >= course.max_participants
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-primary hover:bg-primary/90'

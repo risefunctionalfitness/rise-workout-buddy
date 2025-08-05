@@ -21,6 +21,8 @@ interface Course {
   start_time: string
   end_time: string
   duration_minutes: number
+  registration_deadline_minutes: number
+  cancellation_deadline_minutes: number
   registered_count: number
   waitlist_count: number
   is_registered: boolean
@@ -247,7 +249,22 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     }
   }
 
-  const handleCancellation = async (courseId: string) => {
+  const canCancelCourse = (course: Course) => {
+    const now = new Date()
+    const courseDateTime = new Date(`${course.course_date}T${course.start_time}`)
+    const cancellationDeadline = new Date(courseDateTime.getTime() - (course.cancellation_deadline_minutes * 60 * 1000))
+    return now < cancellationDeadline
+  }
+
+  const handleCancellation = async (courseId: string, course?: Course) => {
+    const targetCourse = course || selectedCourse
+    if (!targetCourse) return
+
+    if (!canCancelCourse(targetCourse)) {
+      toast.error(`Die Abmeldefrist ist bereits ${targetCourse.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('course_registrations')
@@ -530,17 +547,19 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   <Button 
                     variant="destructive" 
                     onClick={() => handleCancellation(selectedCourse.id)}
+                    disabled={!canCancelCourse(selectedCourse)}
                     className="flex-1"
                   >
-                    Abmelden
+                    {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
                   </Button>
                 ) : selectedCourse.is_waitlisted ? (
                   <Button 
                     variant="destructive" 
                     onClick={() => handleCancellation(selectedCourse.id)}
+                    disabled={!canCancelCourse(selectedCourse)}
                     className="flex-1"
                   >
-                    Von Warteliste entfernen
+                    {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
                 ) : (
                   <Button 

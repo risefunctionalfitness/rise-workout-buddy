@@ -24,6 +24,7 @@ interface CourseTemplate {
   strength_exercise?: string
   max_participants: number
   registration_deadline_minutes: number
+  cancellation_deadline_minutes: number
   duration_minutes: number
   created_at: string
 }
@@ -38,6 +39,8 @@ interface Course {
   start_time: string
   end_time: string
   duration_minutes: number
+  registration_deadline_minutes: number
+  cancellation_deadline_minutes: number
   registered_count: number
   waitlist_count: number
 }
@@ -60,6 +63,7 @@ export const CourseTemplateManager = () => {
     strength_exercise: '',
     max_participants: 16,
     registration_deadline_minutes: 30,
+    cancellation_deadline_minutes: 60,
     duration_minutes: 60
   })
 
@@ -146,6 +150,7 @@ export const CourseTemplateManager = () => {
         strength_exercise: '',
         max_participants: 16,
         registration_deadline_minutes: 30,
+        cancellation_deadline_minutes: 60,
         duration_minutes: 60
       })
       await loadTemplates()
@@ -224,6 +229,7 @@ export const CourseTemplateManager = () => {
               strength_exercise: template.strength_exercise,
               max_participants: template.max_participants,
               registration_deadline_minutes: template.registration_deadline_minutes,
+              cancellation_deadline_minutes: template.cancellation_deadline_minutes,
               duration_minutes: template.duration_minutes,
               course_date: format(courseDate, 'yyyy-MM-dd'),
               start_time: startTime,
@@ -280,6 +286,8 @@ export const CourseTemplateManager = () => {
         trainer: formData.get('trainer') as string,
         strength_exercise: formData.get('strength_exercise') as string || null,
         max_participants: parseInt(formData.get('max_participants') as string),
+        registration_deadline_minutes: parseInt(formData.get('registration_deadline_minutes') as string),
+        cancellation_deadline_minutes: parseInt(formData.get('cancellation_deadline_minutes') as string),
         start_time: startTime,
         end_time: endTime,
         duration_minutes: durationMinutes
@@ -416,8 +424,7 @@ export const CourseTemplateManager = () => {
                     <Label htmlFor="max_participants">Max. Teilnehmer</Label>
                     <Input
                       type="number"
-                      min="10"
-                      max="20"
+                      min="1"
                       value={templateForm.max_participants}
                       onChange={(e) => setTemplateForm(prev => ({ ...prev, max_participants: parseInt(e.target.value) }))}
                       required
@@ -431,6 +438,17 @@ export const CourseTemplateManager = () => {
                       max="120"
                       value={templateForm.registration_deadline_minutes}
                       onChange={(e) => setTemplateForm(prev => ({ ...prev, registration_deadline_minutes: parseInt(e.target.value) }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cancellation_deadline_minutes">Abmeldefrist (Minuten vor Start)</Label>
+                    <Input
+                      type="number"
+                      min="30"
+                      max="480"
+                      value={templateForm.cancellation_deadline_minutes}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, cancellation_deadline_minutes: parseInt(e.target.value) }))}
                       required
                     />
                   </div>
@@ -696,7 +714,15 @@ export const CourseTemplateManager = () => {
               </div>
               <div>
                 <Label htmlFor="max_participants">Max. Teilnehmer</Label>
-                <Input name="max_participants" type="number" min="10" max="20" defaultValue={editingCourse.max_participants} required />
+                <Input name="max_participants" type="number" min="1" defaultValue={editingCourse.max_participants} required />
+              </div>
+              <div>
+                <Label htmlFor="registration_deadline_minutes">Anmeldefrist (Minuten vor Start)</Label>
+                <Input name="registration_deadline_minutes" type="number" min="15" max="120" defaultValue={editingCourse.registration_deadline_minutes} required />
+              </div>
+              <div>
+                <Label htmlFor="cancellation_deadline_minutes">Abmeldefrist (Minuten vor Start)</Label>
+                <Input name="cancellation_deadline_minutes" type="number" min="30" max="480" defaultValue={editingCourse.cancellation_deadline_minutes} required />
               </div>
               <div>
                 <Label htmlFor="start_time">Startzeit</Label>
