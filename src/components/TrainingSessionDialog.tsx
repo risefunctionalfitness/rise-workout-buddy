@@ -62,7 +62,7 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
             <div className="text-left">
               <div className="font-medium">Open Gym</div>
               <div className="text-sm text-muted-foreground">
-                Ich habe frei trainiert
+                QR-Code scannen zum anmelden
               </div>
             </div>
           </Button>

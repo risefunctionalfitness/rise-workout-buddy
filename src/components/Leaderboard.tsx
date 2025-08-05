@@ -148,7 +148,7 @@ export const Leaderboard: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
-          <p className="text-muted-foreground">Trainings für {currentMonth}</p>
+          <p className="text-muted-foreground">Trainingstage im {new Date().toLocaleDateString('de-DE', { month: 'long' })}</p>
           <div className="absolute top-0 right-0 flex items-center gap-2 text-sm text-muted-foreground">
             <span className="font-medium">{getRemainingDaysInMonth()}</span>
             <Calendar className="h-4 w-4" />

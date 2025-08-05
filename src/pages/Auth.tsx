@@ -136,10 +136,7 @@ export default function Auth() {
             alt="RISE Functional Fitness Logo" 
             className="h-12 mx-auto mb-4"
           />
-          <CardTitle className="text-2xl font-bold">RISE Fitness</CardTitle>
-          <CardDescription>
-            Melden Sie sich an oder registrieren Sie sich
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">Log in</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
