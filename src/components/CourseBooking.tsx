@@ -87,7 +87,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     try {
       setLoading(true)
 
-      // Get next 10 upcoming courses only
+      // Get upcoming courses and limit to next 10 unique course days
       const now = new Date()
       const nowDate = now.toISOString().split('T')[0]
       const nowTime = now.toTimeString().slice(0, 8)
@@ -103,8 +103,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           // Only future courses by date and time
           .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .order('course_date', { ascending: true })
-          .order('start_time', { ascending: true })
-          .limit(10),
+          .order('start_time', { ascending: true }),
         supabase
           .from('course_registrations')
           .select('course_id, status')
@@ -133,7 +132,18 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         }
       })
 
-      setCourses(processedCourses)
+      // Get only the next 10 unique course days
+      const uniqueDates = new Set<string>()
+      const filteredCourses = processedCourses.filter(course => {
+        if (uniqueDates.size >= 10) return false
+        if (!uniqueDates.has(course.course_date)) {
+          uniqueDates.add(course.course_date)
+          return true
+        }
+        return uniqueDates.has(course.course_date)
+      })
+
+      setCourses(filteredCourses)
     } catch (error) {
       console.error('Error loading courses:', error)
       toast.error('Fehler beim Laden der Kurse')
@@ -307,7 +317,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     <div className="p-4 space-y-4">
       {/* Header */}
       <div className="text-center">
-        <h2 className="font-semibold">Nächste 10 Kurse</h2>
+        <h2 className="font-semibold">Nächste 10 Kurstage</h2>
       </div>
 
       {/* Courses List */}
@@ -359,11 +369,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                             </Badge>
                           );
                         })()}
-                        {course.waitlist_count > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {course.waitlist_count} Warteliste
-                          </span>
-                        )}
+                         {course.waitlist_count > 0 && (
+                           <span className="text-xs" style={{ color: '#ff914d' }}>
+                             {course.waitlist_count} Warteliste
+                           </span>
+                         )}
                       </div>
                     </div>
                   </CardContent>

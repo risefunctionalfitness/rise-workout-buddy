@@ -303,7 +303,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     </h3>
                   </div>
                   <div className="text-xs text-gray-600">
-                    Ich habe frei trainiert
+                    QR-Code scannen zum anmelden
                   </div>
                 </div>
                 
