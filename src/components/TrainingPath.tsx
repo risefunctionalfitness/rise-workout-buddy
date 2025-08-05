@@ -283,6 +283,8 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
           if (!open) {
             // Reload course registrations when dialog closes
             loadCourseRegistrations()
+            // Also trigger reload of the MonthlyTrainingCalendar by dispatching event
+            window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
           }
         }}
         date={selectedDay ? `${selectedDay.date.getFullYear()}-${String(selectedDay.date.getMonth() + 1).padStart(2, '0')}-${String(selectedDay.date.getDate()).padStart(2, '0')}` : ''}

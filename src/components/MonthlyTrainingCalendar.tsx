@@ -20,6 +20,17 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
 
   useEffect(() => {
     loadTrainingDays()
+    
+    // Listen for course registration changes
+    const handleCourseRegistrationChanged = () => {
+      loadTrainingDays()
+    }
+    
+    window.addEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
+    
+    return () => {
+      window.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
+    }
   }, [user.id])
 
   const loadTrainingDays = async () => {
@@ -124,14 +135,27 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
 
   const getDayStatus = (day: number) => {
     const currentDay = getCurrentDay()
+    const isRegistered = registeredDays.has(day)
     
     if (trainingDays.has(day)) {
       return "bg-green-500" // Trainiert - grün
+    } else if (isRegistered && day >= currentDay) {
+      return "bg-blue-500" // Angemeldet für Kurs - blau
     } else if (day < currentDay) {
       return "bg-red-500" // Verpasst - rot
     } else {
       return "bg-gray-400" // Zukünftig - grau
     }
+  }
+
+  const getDayBorderClass = (day: number) => {
+    const currentDay = getCurrentDay()
+    const isRegistered = registeredDays.has(day)
+    
+    if (isRegistered && day >= currentDay) {
+      return "ring-2 ring-green-400 ring-offset-1" // Grüne Umrandung für angemeldete künftige Kurse
+    }
+    return ""
   }
 
   const handleDayClick = (day: number) => {
@@ -171,7 +195,7 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
             <div
               key={day}
               onClick={() => handleDayClick(day)}
-              className={`w-3 h-3 rounded-full ${getDayStatus(day)} transition-colors cursor-pointer hover:scale-110 relative flex items-center justify-center`}
+              className={`w-3 h-3 rounded-full ${getDayStatus(day)} ${getDayBorderClass(day)} transition-colors cursor-pointer hover:scale-110 relative flex items-center justify-center`}
               title={`Tag ${day}: ${
                 trainingDays.has(day) 
                   ? 'Trainiert' 
