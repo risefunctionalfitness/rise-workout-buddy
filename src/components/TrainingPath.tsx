@@ -5,6 +5,7 @@ import { MonthlyTrainingCalendar } from "./MonthlyTrainingCalendar"
 import { NewsSection } from "./NewsSection"
 import { WhatsAppButton } from "./WhatsAppButton"
 import { GymCodeDisplay } from "./GymCodeDisplay"
+import { CreditsCounter } from "./CreditsCounter"
 import { Button } from "@/components/ui/button"
 import { Newspaper } from "lucide-react"
 import { useNewsNotification } from "@/hooks/useNewsNotification"
@@ -44,6 +45,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   const [showDialog, setShowDialog] = useState(false)
   const [showNews, setShowNews] = useState(false)
   const [showDayCourses, setShowDayCourses] = useState(false)
+  const [userMembershipType, setUserMembershipType] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const todayRef = useRef<HTMLDivElement>(null)
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
@@ -82,6 +84,25 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       setTimeout(scrollToToday, 800)
     }
   }, [trainingDays])
+
+  // Load user membership type
+  useEffect(() => {
+    const loadUserMembershipType = async () => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('membership_type')
+          .eq('user_id', user.id)
+          .single()
+
+        setUserMembershipType(profile?.membership_type || null)
+      } catch (error) {
+        console.error('Error loading user membership type:', error)
+      }
+    }
+
+    loadUserMembershipType()
+  }, [user.id])
 
   const currentMonth = new Date().toLocaleDateString('de-DE', { 
     month: 'long', 
@@ -134,7 +155,11 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         
         {/* Button-Stack auch in News-Ansicht ÜBER der Navigation */}
         <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-3">
-          <GymCodeDisplay />
+          {userMembershipType === '10er Karte' ? (
+            <CreditsCounter user={user} />
+          ) : (
+            <GymCodeDisplay />
+          )}
           <WhatsAppButton />
         </div>
       </div>
@@ -208,8 +233,12 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
           )}
         </Button>
         
-        {/* Gym Code Button */}
-        <GymCodeDisplay />
+        {/* Gym Code Button oder Credits Counter */}
+        {userMembershipType === '10er Karte' ? (
+          <CreditsCounter user={user} />
+        ) : (
+          <GymCodeDisplay />
+        )}
         
         {/* WhatsApp Button */}
         <WhatsAppButton />

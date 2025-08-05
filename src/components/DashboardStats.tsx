@@ -122,44 +122,6 @@ export const DashboardStats = ({ user }: DashboardStatsProps) => {
         </Card>
       )}
 
-      {/* Monthly Trainings */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Trainings diesen Monat</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{monthlyTrainings}</div>
-          <p className="text-xs text-muted-foreground">
-            Leaderboard Position basiert auf dieser Zahl
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Membership Type */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Mitgliedschaft</CardTitle>
-          <Badge 
-            variant="outline"
-            style={{
-              backgroundColor: userProfile?.membership_type === 'Premium Member' ? 'hsl(45, 93%, 47%)' : 
-                              userProfile?.membership_type === 'Basic Member' ? 'hsl(334, 87%, 40%)' : 
-                              'hsl(0, 0%, 85%)',
-              color: userProfile?.membership_type === 'Open Gym' ? 'hsl(0, 0%, 20%)' : 'white',
-              border: 'none'
-            }}
-          >
-            {userProfile?.membership_type || 'Standard'}
-          </Badge>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{userProfile?.display_name || 'Unbekannt'}</div>
-          <p className="text-xs text-muted-foreground">
-            Mitglied seit {userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString('de-DE') : 'Unbekannt'}
-          </p>
-        </CardContent>
-      </Card>
     </div>
   )
 }
