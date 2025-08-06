@@ -8,10 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search, Dumbbell, CreditCard, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { UserPlus, Edit, Trash2, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
 import { AdminCreditRecharge } from "@/components/AdminCreditRecharge";
@@ -19,6 +17,7 @@ import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
 import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
+import { RiseHeader } from "@/components/RiseHeader";
 
 interface Member {
   id: string;
@@ -34,7 +33,6 @@ interface Member {
 }
 
 export default function Admin() {
-  const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -52,7 +50,6 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const membersPerPage = 10;
   const navigate = useNavigate();
 
@@ -706,121 +703,15 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header with Logo and Navigation */}
-      <header className="bg-white dark:bg-gray-800 shadow border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <img 
-                src="/lovable-uploads/b1f1270b-1ced-4aa4-93cb-d52260dee947.png" 
-                alt="RISE Logo" 
-                className="h-8 w-auto"
-              />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Admin Dashboard
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2"
-              >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
-              <Button 
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Abmelden
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Navigation Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
-          <Button
-            variant={activePage === 'home' ? 'default' : 'outline'}
-            onClick={() => setActivePage('home')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <Home className="h-4 w-4" />
-            <span className="leading-tight">Home</span>
-          </Button>
-
-          <Button
-            variant={activePage === 'members' ? 'default' : 'outline'}
-            onClick={() => setActivePage('members')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <Users className="h-4 w-4" />
-            <span className="leading-tight">Mitglieder</span>
-          </Button>
-
-          <Button
-            variant={activePage === 'courses' ? 'default' : 'outline'}
-            onClick={() => setActivePage('courses')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <Calendar className="h-4 w-4" />
-            <span className="leading-tight">Kurse</span>
-          </Button>
-
-          <Button
-            variant={activePage === 'templates' ? 'default' : 'outline'}
-            onClick={() => setActivePage('templates')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <Dumbbell className="h-4 w-4" />
-            <span className="leading-tight">Vorlagen</span>
-          </Button>
-
-          <Button
-            variant={activePage === 'news' ? 'default' : 'outline'}
-            onClick={() => setActivePage('news')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <Newspaper className="h-4 w-4" />
-            <span className="leading-tight">News</span>
-          </Button>
-
-          <Button
-            variant={activePage === 'credits' ? 'default' : 'outline'}
-            onClick={() => setActivePage('credits')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <CreditCard className="h-4 w-4" />
-            <span className="leading-tight">Credits</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => navigate('/admin/workouts')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <Dumbbell className="h-4 w-4" />
-            <span className="leading-tight">Workouts</span>
-          </Button>
-
-          <Button
-            variant={activePage === 'codes' ? 'default' : 'outline'}
-            onClick={() => setActivePage('codes')}
-            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
-          >
-            <MoreVertical className="h-4 w-4" />
-            <span className="leading-tight">Codes</span>
-          </Button>
-        </div>
-
-        {/* Main Content */}
+    <div className="min-h-screen bg-background">
+      <RiseHeader 
+        showAdminAccess={true}
+        onLogout={handleLogout}
+        activePage={activePage}
+        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits')}
+      />
+      
+      <div className="container mx-auto px-4 py-6">
         {renderPageContent()}
       </div>
     </div>

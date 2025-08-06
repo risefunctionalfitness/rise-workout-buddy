@@ -10,13 +10,17 @@ interface RiseHeaderProps {
   showNavigation?: boolean
   onLogout?: () => void
   showAdminAccess?: boolean
+  activePage?: string
+  onPageChange?: (page: string) => void
 }
 
 export const RiseHeader: React.FC<RiseHeaderProps> = ({ 
   onProVersionClick,
   showNavigation = false,
   onLogout,
-  showAdminAccess = false
+  showAdminAccess = false,
+  activePage,
+  onPageChange
 }) => {
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -105,63 +109,63 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
           <div className="grid grid-cols-2 gap-6 max-w-md w-full">
             <div 
               onClick={() => {
-                navigate('/admin');
+                onPageChange?.('home');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'home' ? 'bg-primary/10 text-primary' : ''}`}
             >
-              <Home className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">Home</span>
+              <Home className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Home</span>
             </div>
             <div 
               onClick={() => {
-                navigate('/admin');
+                onPageChange?.('members');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'members' ? 'bg-primary/10 text-primary' : ''}`}
             >
-              <Users className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">Mitglieder</span>
+              <Users className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Mitglieder</span>
             </div>
             <div 
               onClick={() => {
-                navigate('/admin');
+                onPageChange?.('courses');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'courses' ? 'bg-primary/10 text-primary' : ''}`}
             >
-              <Calendar className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">Kurse</span>
+              <Calendar className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Kurse</span>
             </div>
             <div 
               onClick={() => {
-                navigate('/admin');
+                onPageChange?.('templates');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'templates' ? 'bg-primary/10 text-primary' : ''}`}
             >
-              <Dumbbell className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">Vorlagen</span>
+              <Dumbbell className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Vorlagen</span>
             </div>
             <div 
               onClick={() => {
-                navigate('/admin');
+                onPageChange?.('news');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'news' ? 'bg-primary/10 text-primary' : ''}`}
             >
-              <Newspaper className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">News</span>
+              <Newspaper className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">News</span>
             </div>
             <div 
               onClick={() => {
-                navigate('/admin');
+                onPageChange?.('credits');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'credits' ? 'bg-primary/10 text-primary' : ''}`}
             >
-              <CreditCard className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">Credits</span>
+              <CreditCard className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Credits</span>
             </div>
             <div 
               onClick={() => {
@@ -170,18 +174,18 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
               }}
               className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
             >
-              <Dumbbell className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">Workouts</span>
+              <Dumbbell className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Workouts</span>
             </div>
             <div 
               onClick={() => {
-                navigate('/admin');
+                onPageChange?.('codes');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'codes' ? 'bg-primary/10 text-primary' : ''}`}
             >
-              <Users className="h-8 w-8 text-foreground mb-2" />
-              <span className="text-sm font-medium text-foreground">Codes</span>
+              <Users className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Codes</span>
             </div>
           </div>
           
