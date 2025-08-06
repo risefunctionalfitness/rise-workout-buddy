@@ -60,29 +60,67 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         return
       }
 
-      // Einfache Scroll-Logik: Scroll das Element in die Mitte des Containers
-      const elementOffsetTop = todayElement.offsetTop
-      const containerHeight = container.clientHeight
-      const elementHeight = todayElement.offsetHeight
-      
-      const targetScrollTop = elementOffsetTop - (containerHeight / 2) + (elementHeight / 2)
-      
-      container.scrollTo({
-        top: Math.max(0, targetScrollTop),
-        behavior: 'smooth'
+      // Use scrollIntoView for more reliable scrolling
+      todayElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
       })
     }
 
-    // Mehrere Versuche mit zunehmender Verzögerung
+    // Enhanced scroll logic with multiple attempts and better timing
     if (trainingDays.length > 0) {
-      // Sofort versuchen
-      setTimeout(scrollToToday, 100)
-      // Nach DOM-Update
-      setTimeout(scrollToToday, 300)
-      // Fallback
-      setTimeout(scrollToToday, 800)
+      // Immediate attempt
+      const immediateTimer = setTimeout(scrollToToday, 50)
+      
+      // After DOM update
+      const domTimer = setTimeout(scrollToToday, 200)
+      
+      // After layout calculations
+      const layoutTimer = setTimeout(scrollToToday, 500)
+      
+      // Final fallback with longer delay
+      const fallbackTimer = setTimeout(scrollToToday, 1000)
+
+      // Use ResizeObserver to handle dynamic content sizing
+      const resizeObserver = new ResizeObserver(() => {
+        setTimeout(scrollToToday, 100)
+      })
+
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current)
+      }
+
+      // Cleanup function
+      return () => {
+        clearTimeout(immediateTimer)
+        clearTimeout(domTimer)
+        clearTimeout(layoutTimer)
+        clearTimeout(fallbackTimer)
+        resizeObserver.disconnect()
+      }
     }
   }, [trainingDays])
+
+  // Additional effect to scroll when component first mounts
+  useEffect(() => {
+    const scrollToTodayOnMount = () => {
+      const todayElement = todayRef.current
+      
+      if (todayElement) {
+        todayElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        })
+      }
+    }
+
+    // Scroll when the component first loads and today element is available
+    const mountTimer = setTimeout(scrollToTodayOnMount, 100)
+    
+    return () => clearTimeout(mountTimer)
+  }, [])
 
   // Load user membership type
   useEffect(() => {
