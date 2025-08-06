@@ -39,10 +39,10 @@ export const AmrapTimer: React.FC = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-center gap-6">
               <Select value={minutes.toString()} onValueChange={(value) => setMinutes(Number(value))}>
-                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl">
+                <SelectTrigger className="timer-select-trigger w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[#B81243] rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl max-h-60">
+                <SelectContent className="timer-select-content bg-background border-2 border-primary dark:border-[#B81243] rounded-xl max-h-60">
                   {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num}
@@ -56,7 +56,7 @@ export const AmrapTimer: React.FC = () => {
             <Button
               onClick={handleStart}
               variant="outline"
-              className="w-full h-20 text-2xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-2xl font-medium"
+              className="timer-start-button w-full h-20 text-2xl border-2 border-primary dark:border-[#B81243] dark:bg-[#B81243] dark:text-white text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#9A0F39] rounded-2xl font-medium"
             >
               Start
             </Button>

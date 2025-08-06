@@ -85,7 +85,7 @@ export const EmomTimer: React.FC = () => {
             <Button
               onClick={handleStart}
               variant="outline"
-              className="w-full h-20 text-2xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-2xl font-medium"
+              className="timer-start-button w-full h-20 text-2xl border-2 border-primary dark:border-[#B81243] dark:bg-[#B81243] dark:text-white text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#9A0F39] rounded-2xl font-medium"
             >
               Start
             </Button>

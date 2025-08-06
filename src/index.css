@@ -98,6 +98,26 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* Timer specific styles for dark mode */
+  .dark {
+    --timer-input-border: 184 73% 35%;
+  }
+
+  .dark .timer-select-trigger,
+  .dark .timer-select-content {
+    border-color: hsl(var(--timer-input-border)) !important;
+  }
+
+  .dark .timer-start-button {
+    background-color: hsl(var(--timer-input-border)) !important;
+    border-color: hsl(var(--timer-input-border)) !important;
+    color: white !important;
+  }
+
+  .dark .timer-start-button:hover {
+    background-color: hsl(184 73% 30%) !important;
+  }
 }
 
 @layer base {
