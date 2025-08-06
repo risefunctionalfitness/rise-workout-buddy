@@ -188,7 +188,7 @@ export const Leaderboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right flex items-center gap-2">
-                        <Badge variant="secondary" className="text-lg px-3 py-1 bg-[#B81243] text-white flex items-center gap-1">
+                        <Badge variant="secondary" className="text-lg px-3 py-1 bg-rise-accent text-white flex items-center gap-1">
                           <Weight className="h-4 w-4" />
                           {entry.training_count}
                         </Badge>
