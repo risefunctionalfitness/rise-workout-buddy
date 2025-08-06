@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search, Dumbbell, CreditCard } from "lucide-react";
+import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search, Dumbbell, CreditCard, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
@@ -33,6 +34,7 @@ interface Member {
 }
 
 export default function Admin() {
+  const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -704,143 +706,121 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header with Logo and Navigation */}
+      <header className="bg-white dark:bg-gray-800 shadow border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
               <img 
-                src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
+                src="/lovable-uploads/b1f1270b-1ced-4aa4-93cb-d52260dee947.png" 
                 alt="RISE Logo" 
-                className="h-12 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => navigate('/')}
+                className="h-8 w-auto"
               />
-              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                Admin Dashboard
+              </h1>
             </div>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => setDropdownOpen(true)}
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-            
-            {/* Navigation Overlay */}
-            {dropdownOpen && (
-              <div className="fixed inset-0 z-50 bg-white flex flex-col justify-center items-center p-8">
-                <div className="grid grid-cols-2 gap-8 max-w-md w-full">
-                  <div 
-                    onClick={() => {
-                      setActivePage('home');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Home className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Home</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('members');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Users className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Mitglieder</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('courses');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Calendar className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Kurse</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('templates');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Calendar className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Vorlagen</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('news');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Newspaper className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">News</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('credits');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <CreditCard className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Credits</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      navigate('/admin/workouts');
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Dumbbell className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Workouts</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('codes');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Users className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Codes</span>
-                  </div>
-                </div>
-                <div className="mt-12">
-                  <div 
-                    onClick={() => {
-                      handleLogout();
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
-                  >
-                    <LogOut className="h-12 w-12 text-red-600 mb-3" />
-                    <span className="text-lg font-medium text-red-600">Abmelden</span>
-                  </div>
-                </div>
-                
-                {/* Close button */}
-                <div className="absolute top-6 right-6">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <span className="text-xl">×</span>
-                  </Button>
-                </div>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2"
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              <Button 
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Abmelden
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto p-6">
+      {/* Navigation Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+          <Button
+            variant={activePage === 'home' ? 'default' : 'outline'}
+            onClick={() => setActivePage('home')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <Home className="h-4 w-4" />
+            <span className="leading-tight">Home</span>
+          </Button>
+
+          <Button
+            variant={activePage === 'members' ? 'default' : 'outline'}
+            onClick={() => setActivePage('members')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <Users className="h-4 w-4" />
+            <span className="leading-tight">Mitglieder</span>
+          </Button>
+
+          <Button
+            variant={activePage === 'courses' ? 'default' : 'outline'}
+            onClick={() => setActivePage('courses')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <Calendar className="h-4 w-4" />
+            <span className="leading-tight">Kurse</span>
+          </Button>
+
+          <Button
+            variant={activePage === 'templates' ? 'default' : 'outline'}
+            onClick={() => setActivePage('templates')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <Dumbbell className="h-4 w-4" />
+            <span className="leading-tight">Vorlagen</span>
+          </Button>
+
+          <Button
+            variant={activePage === 'news' ? 'default' : 'outline'}
+            onClick={() => setActivePage('news')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <Newspaper className="h-4 w-4" />
+            <span className="leading-tight">News</span>
+          </Button>
+
+          <Button
+            variant={activePage === 'credits' ? 'default' : 'outline'}
+            onClick={() => setActivePage('credits')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            <span className="leading-tight">Credits</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin/workouts')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <Dumbbell className="h-4 w-4" />
+            <span className="leading-tight">Workouts</span>
+          </Button>
+
+          <Button
+            variant={activePage === 'codes' ? 'default' : 'outline'}
+            onClick={() => setActivePage('codes')}
+            className="h-16 min-h-[64px] flex flex-col items-center justify-center gap-1 hover:shadow-lg transition-all duration-200 text-xs font-medium px-2"
+          >
+            <MoreVertical className="h-4 w-4" />
+            <span className="leading-tight">Codes</span>
+          </Button>
+        </div>
+
+        {/* Main Content */}
         {renderPageContent()}
       </div>
     </div>
