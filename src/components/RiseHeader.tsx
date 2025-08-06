@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { supabase } from "@/integrations/supabase/client"
+import { Logo } from "@/components/Logo"
 
 interface RiseHeaderProps {
   onProVersionClick?: () => void
@@ -74,10 +75,8 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
   return (
     <header className="flex justify-between items-center w-full p-6 border-b border-border">
       <div className="flex items-center gap-4">
-        <img 
-          src={theme === 'dark' ? "/lovable-uploads/b08fe6ce-59ea-452d-9cb8-67250112b558.png" : "/lovable-uploads/92ae5157-61ac-4a34-850f-7a1e0ebbabf7.png"}
-          alt="RISE Functional Fitness Logo" 
-          className="h-12 cursor-pointer"
+        <Logo 
+          className="h-12"
           onClick={() => navigate('/')}
         />
       </div>

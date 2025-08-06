@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { CreditManagement } from "@/components/CreditManagement";
+import { Logo } from "@/components/Logo";
 
 export default function AdminCredits() {
   const [user, setUser] = useState<User | null>(null);
@@ -110,10 +111,8 @@ export default function AdminCredits() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-4">
-              <img 
-                src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
-                alt="RISE Logo" 
-                className="h-12 cursor-pointer hover:opacity-80 transition-opacity"
+              <Logo 
+                className="h-12"
                 onClick={() => navigate('/')}
               />
               <h1 className="text-2xl font-bold">Credits verwalten</h1>

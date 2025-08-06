@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { Logo } from "@/components/Logo";
 
 export default function Auth() {
   const [user, setUser] = useState<User | null>(null);
@@ -131,11 +132,9 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img 
-            src="/lovable-uploads/97c3e6bf-0940-4442-b89a-2155e4f0d895.png" 
-            alt="RISE Functional Fitness Logo" 
-            className="h-12 mx-auto mb-4"
-          />
+          <div className="mb-4">
+            <Logo className="h-12 mx-auto" />
+          </div>
           <CardTitle className="text-2xl font-bold">Log in</CardTitle>
         </CardHeader>
         <CardContent>

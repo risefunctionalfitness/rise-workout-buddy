@@ -5,6 +5,7 @@ import { useTheme } from "next-themes"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
+import { Logo } from "@/components/Logo"
 
 interface TrainingPathHeaderProps {
   trainingDaysThisMonth: number
@@ -81,10 +82,8 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
       
       {/* Mitte: Logo */}
       <div className="flex-1 flex justify-center">
-        <img 
-          src="/lovable-uploads/97c3e6bf-0940-4442-b89a-2155e4f0d895.png"
-          alt="Logo" 
-          className="h-10 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+        <Logo 
+          className="h-10 mt-1"
           onClick={() => window.location.href = '/pro'}
         />
       </div>
