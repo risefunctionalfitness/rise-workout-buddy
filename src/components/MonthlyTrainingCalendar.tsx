@@ -98,17 +98,24 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
                 .eq('user_id', user.id)
                 .eq('date', reg.courses.course_date)
                 .eq('workout_type', 'course')
-                .single()
+                .maybeSingle()
 
               if (!existingSession) {
-                await supabase
-                  .from('training_sessions')
-                  .insert({
-                    user_id: user.id,
-                    date: reg.courses.course_date,
-                    workout_type: 'course',
-                    status: 'completed'
-                  })
+                try {
+                  await supabase
+                    .from('training_sessions')
+                    .insert({
+                      user_id: user.id,
+                      date: reg.courses.course_date,
+                      workout_type: 'course',
+                      status: 'completed'
+                    })
+                } catch (error) {
+                  // Ignore duplicate key errors since we have a unique constraint now
+                  if (!error?.message?.includes('duplicate key')) {
+                    console.error('Error creating training session:', error)
+                  }
+                }
               }
             }
           }
