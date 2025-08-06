@@ -16,22 +16,17 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [showCourseDialog, setShowCourseDialog] = useState(false)
 
-  const isOpenGym = userRole === 'open_gym'
-
   useEffect(() => {
     loadTrainingDays()
     
-    // Listen for course registration changes
     const handleCourseRegistrationChanged = () => {
-      setTimeout(() => loadTrainingDays(), 100) // Small delay to ensure DB is updated
+      setTimeout(() => loadTrainingDays(), 100)
     }
     
     window.addEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
-    document.addEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
     
     return () => {
       window.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
-      document.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
     }
   }, [user.id])
 
@@ -87,11 +82,9 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
               regDays.add(day)
             }
 
-            // If course has ended and user didn't manually unregister, mark as completed
             if (now > courseEndTime) {
               days.add(day)
 
-              // Create training session if not exists
               const { data: existingSession } = await supabase
                 .from('training_sessions')
                 .select('id')
@@ -111,7 +104,6 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
                       status: 'completed'
                     })
                 } catch (error) {
-                  // Ignore duplicate key errors since we have a unique constraint now
                   if (!error?.message?.includes('duplicate key')) {
                     console.error('Error creating training session:', error)
                   }
@@ -166,11 +158,7 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
 
   const handleDayClick = (day: number) => {
     const currentDate = new Date()
-    const currentYear = currentDate.getFullYear()
-    const currentMonth = currentDate.getMonth()
-    
-    // Alle Tage sind klickbar für Kurs An-/Abmeldung, außer für Open Gym
-    const selectedDate = new Date(currentYear, currentMonth, day)
+    const selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
     const formattedDate = selectedDate.toISOString().split('T')[0]
     setSelectedDate(formattedDate)
     setShowCourseDialog(true)

@@ -43,7 +43,6 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
 }) => {
   const [selectedDay, setSelectedDay] = useState<TrainingDay | null>(null)
   const [showDialog, setShowDialog] = useState(false)
-  const [showNews, setShowNews] = useState(false)
   const [showDayCourses, setShowDayCourses] = useState(false)
   const [userMembershipType, setUserMembershipType] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -112,14 +111,10 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   const handleDayClick = (day: TrainingDay) => {
     setSelectedDay(day)
     
-    // Open Gym Mitglieder sehen keine Kurse
-    const isOpenGym = userRole === 'open_gym'
-    
-    // Zeige Kurse für alle Tage (außer für Open Gym Mitglieder)
-    if (!isOpenGym) {
-      setShowDayCourses(true)
-    } else {
+    if (userRole === 'open_gym') {
       setShowDialog(true)
+    } else {
+      setShowDayCourses(true)
     }
   }
 
@@ -140,31 +135,6 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
     return 'pending'
   }
 
-  if (showNews) {
-    return (
-      <div className="flex-1 relative">
-        <div className="absolute top-4 left-4 z-10">
-          <Button
-            variant="outline"
-            onClick={() => setShowNews(false)}
-          >
-            ← Zurück
-          </Button>
-        </div>
-        <NewsSection />
-        
-        {/* Button-Stack auch in News-Ansicht ÜBER der Navigation */}
-        <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-3">
-          {userMembershipType === '10er Karte' ? (
-            <CreditsCounter user={user} />
-          ) : (
-            <GymCodeDisplay />
-          )}
-          <WhatsAppButton />
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex-1 flex flex-col relative">
@@ -212,9 +182,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         <MonthlyTrainingCalendar user={user} userRole={userRole} />
       </div>
 
-      {/* Rechts unten: Button-Stack - fixiert ÜBER der Navigation */}
       <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-3">
-         {/* Aktuelles Button */}
          <Button
            variant="outline"
            size="icon"
@@ -233,14 +201,12 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
           )}
         </Button>
         
-        {/* Gym Code Button oder Credits Counter */}
         {userMembershipType === '10er Karte' ? (
           <CreditsCounter user={user} />
         ) : (
           <GymCodeDisplay />
         )}
         
-        {/* WhatsApp Button */}
         <WhatsAppButton />
       </div>
 
@@ -260,13 +226,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       {/* Dialog für Tages-Kurse */}
       <DayCourseDialog
         open={showDayCourses}
-        onOpenChange={(open) => {
-          setShowDayCourses(open)
-          if (!open) {
-            // Trigger reload of both calendar views
-            window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
-          }
-        }}
+        onOpenChange={setShowDayCourses}
         date={selectedDay ? `${selectedDay.date.getFullYear()}-${String(selectedDay.date.getMonth() + 1).padStart(2, '0')}-${String(selectedDay.date.getDate()).padStart(2, '0')}` : ''}
         user={user}
         userRole={userRole}

@@ -163,7 +163,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         console.error('Error loading course registrations:', regError)
       }
 
-      // Automatically create training sessions for expired courses
       const expiredCourses = registrations?.filter(reg => {
         if (!reg.courses?.course_date || !reg.courses?.end_time) return false
         
@@ -175,7 +174,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         return courseEndTime < today
       }) || []
 
-      // Create training sessions for expired courses if they don't exist
       for (const expiredCourse of expiredCourses) {
         if (!expiredCourse.courses?.course_date) continue
         
@@ -240,9 +238,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     }
     
     setTrainingDays(days)
-    
-    // Dispatch event to notify MonthlyTrainingCalendar of data changes
-    window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
   }
 
   const userName = user?.user_metadata?.display_name || 

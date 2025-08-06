@@ -57,33 +57,25 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       const now = new Date()
       const currentDateTime = now.toISOString()
 
-      // Get courses for the specific date or next 10 upcoming courses
       let query = supabase
         .from('courses')
         .select('*')
         .eq('is_cancelled', false)
 
       if (date) {
-        // Load courses for specific date - only future courses by time
         const dateString = date
         const nowTime = now.toTimeString().slice(0, 8)
         const nowDate = now.toISOString().split('T')[0]
         
         if (dateString === nowDate) {
-          // Today: only show courses that haven't ended yet
-          query = query
-            .eq('course_date', dateString)
-            .gt('end_time', nowTime)
+          query = query.eq('course_date', dateString).gt('end_time', nowTime)
         } else {
-          // Other days: show all courses
           query = query.eq('course_date', dateString)
         }
       } else {
-        // Load next 10 upcoming courses (based on date and time)
         const nowTime = now.toTimeString().slice(0, 8)
         const nowDate = now.toISOString().split('T')[0]
         
-        // Filter for future courses only
         query = query
           .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .order('course_date', { ascending: true })
@@ -95,13 +87,11 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
       if (coursesError) throw coursesError
 
-      // Filter future courses only (considering both date and time)
       const filteredCourses = (coursesData || []).filter(course => {
         const courseDateTime = new Date(`${course.course_date}T${course.end_time}`)
         return courseDateTime > now
       }).slice(0, 10)
 
-      // Get registration counts and user registrations
       const coursesWithCounts = await Promise.all(
         filteredCourses.map(async (course) => {
           const { data: registrations } = await supabase
@@ -110,12 +100,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
             .eq('course_id', course.id)
             .eq('status', 'registered')
 
-          const userRegistered = registrations?.some(reg => reg.user_id === user.id) || false
-
           return {
             ...course,
             registration_count: registrations?.length || 0,
-            user_registered: userRegistered
+            user_registered: registrations?.some(reg => reg.user_id === user.id) || false
           }
         })
       )
@@ -212,15 +200,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         })
       }
 
-      // Immediately update UI
       loadCoursesForDay()
       
-      // Trigger events for immediate UI updates
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       window.dispatchEvent(new CustomEvent('creditsUpdated'))
-      
-      // Also trigger calendar update
-      document.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
     } catch (error) {
       console.error('Error with registration:', error)
       toast({
