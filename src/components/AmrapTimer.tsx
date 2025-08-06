@@ -39,10 +39,10 @@ export const AmrapTimer: React.FC = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-center gap-6">
               <Select value={minutes.toString()} onValueChange={(value) => setMinutes(Number(value))}>
-                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl">
+                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
+                <SelectContent className="bg-background border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl max-h-60">
                   {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num}

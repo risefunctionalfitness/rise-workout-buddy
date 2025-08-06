@@ -7,6 +7,7 @@ import { Clock, Users, User as UserIcon, Check, Weight } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { User } from "@supabase/supabase-js"
+import { OpenGymCheckin } from "./OpenGymCheckin"
 
 interface Course {
   id: string
@@ -41,6 +42,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 }) => {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(false)
+  const [userMembershipType, setUserMembershipType] = useState<string>('')
+  const [showQRScanner, setShowQRScanner] = useState(false)
   const { toast } = useToast()
   
   const isOpenGym = userRole === 'open_gym'
@@ -48,8 +51,24 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   useEffect(() => {
     if (open) {
       loadCoursesForDay()
+      loadUserMembershipType()
     }
   }, [open, date])
+
+  const loadUserMembershipType = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('membership_type')
+        .eq('user_id', user.id)
+        .single()
+
+      if (error) throw error
+      setUserMembershipType(data?.membership_type || '')
+    } catch (error) {
+      console.error('Error loading user membership type:', error)
+    }
+  }
 
   const loadCoursesForDay = async () => {
     setLoading(true)
@@ -227,6 +246,40 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
     })
   }
 
+  const handleQRCheckinComplete = async () => {
+    try {
+      // Erstelle ein Training für Open Gym
+      const { error } = await supabase
+        .from('training_sessions')
+        .insert({
+          user_id: user.id,
+          date: date,
+          workout_type: 'free_training',
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+
+      if (error) throw error
+
+      toast({
+        title: "Open Gym Check-In erfolgreich",
+        description: "Dein freies Training wurde registriert."
+      })
+
+      setShowQRScanner(false)
+      
+      // Dispatch events to update other components
+      window.dispatchEvent(new CustomEvent('trainingSessionAdded'))
+    } catch (error) {
+      console.error('Error creating training session:', error)
+      toast({
+        title: "Fehler",
+        description: "Training konnte nicht registriert werden.",
+        variant: "destructive"
+      })
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -298,7 +351,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
             ))
           )}
 
-          {!isOpenGym && (
+          {!isOpenGym && userMembershipType !== '10er Karte' && (
             <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -315,8 +368,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      // This would trigger the free training logic from TrainingSessionDialog
                       onOpenChange(false)
+                      setShowQRScanner(true)
                     }}
                     className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm bg-primary hover:bg-primary/90"
                   >
@@ -328,6 +381,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           )}
         </div>
       </DialogContent>
+      
+      <OpenGymCheckin
+        open={showQRScanner}
+        onOpenChange={setShowQRScanner}
+        onCheckinComplete={handleQRCheckinComplete}
+      />
     </Dialog>
   )
 }

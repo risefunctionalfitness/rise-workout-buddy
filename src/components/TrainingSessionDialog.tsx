@@ -11,6 +11,7 @@ interface TrainingSessionDialogProps {
   dayNumber: number
   onSelectType: (type: 'course' | 'free_training' | 'plan' | 'remove') => void
   hasExistingSession?: boolean
+  userMembershipType?: string
 }
 
 export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
@@ -19,7 +20,8 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
   date,
   dayNumber,
   onSelectType,
-  hasExistingSession
+  hasExistingSession,
+  userMembershipType
 }) => {
   const [showQRScanner, setShowQRScanner] = useState(false)
 
@@ -53,19 +55,21 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
         </DialogHeader>
         
         <div className="space-y-3 mt-4">
-          <Button
-            variant="outline"
-            onClick={() => handleSelectType('free_training')}
-            className="w-full h-16 flex items-center gap-4 justify-start"
-          >
-            <Dumbbell className="h-6 w-6 text-primary" />
-            <div className="text-left">
-              <div className="font-medium">Open Gym</div>
-              <div className="text-sm text-muted-foreground">
-                QR-Code scannen zum anmelden
+          {userMembershipType !== '10er Karte' && (
+            <Button
+              variant="outline"
+              onClick={() => handleSelectType('free_training')}
+              className="w-full h-16 flex items-center gap-4 justify-start"
+            >
+              <Dumbbell className="h-6 w-6 text-primary" />
+              <div className="text-left">
+                <div className="font-medium">Open Gym</div>
+                <div className="text-sm text-muted-foreground">
+                  QR-Code scannen zum anmelden
+                </div>
               </div>
-            </div>
-          </Button>
+            </Button>
+          )}
           
           {hasExistingSession && (
             <Button

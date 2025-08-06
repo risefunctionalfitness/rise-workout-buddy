@@ -259,6 +259,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         dayNumber={selectedDay?.dayNumber || 0}
         onSelectType={handleSelectType}
         hasExistingSession={!!selectedDay?.trainingSession}
+        userMembershipType={userMembershipType}
       />
 
       {/* Dialog für Tages-Kurse */}

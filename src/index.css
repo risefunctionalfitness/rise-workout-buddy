@@ -60,6 +60,8 @@ All colors MUST be HSL.
   }
 
   .dark {
+    /* Custom dark mode timer input border */
+    --timer-input-border: 340 85% 40%;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 

@@ -43,10 +43,10 @@ export const TabataTimer: React.FC = () => {
             <div className="flex items-center justify-center gap-6">
               <span className="text-2xl font-medium">Runden:</span>
               <Select value={rounds.toString()} onValueChange={(value) => setRounds(Number(value))}>
-                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl">
+                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
+                <SelectContent className="bg-background border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl max-h-60">
                   {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num}
@@ -60,10 +60,10 @@ export const TabataTimer: React.FC = () => {
             <div className="flex items-center justify-center gap-6">
               <span className="text-2xl font-medium">Work:</span>
               <Select value={workSeconds.toString()} onValueChange={(value) => setWorkSeconds(Number(value))}>
-                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl">
+                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
+                <SelectContent className="bg-background border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl max-h-60">
                   {[10, 15, 20, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600].map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num >= 60 ? `${Math.floor(num / 60)}:${(num % 60).toString().padStart(2, '0')}` : `${num}s`}
@@ -77,10 +77,10 @@ export const TabataTimer: React.FC = () => {
             <div className="flex items-center justify-center gap-6">
               <span className="text-2xl font-medium">Rest:</span>
               <Select value={restSeconds.toString()} onValueChange={(value) => setRestSeconds(Number(value))}>
-                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary rounded-xl">
+                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-2 border-primary rounded-xl max-h-60">
+                <SelectContent className="bg-background border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl max-h-60">
                   {[5, 10, 15, 20, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600].map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num >= 60 ? `${Math.floor(num / 60)}:${(num % 60).toString().padStart(2, '0')}` : `${num}s`}
