@@ -147,6 +147,11 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   })
 
   const handleDayClick = (day: TrainingDay) => {
+    // Vergangene Tage können nicht angeklickt werden
+    if (!day.isToday && !day.isFuture) {
+      return
+    }
+    
     setSelectedDay(day)
     
     if (userRole === 'open_gym') {

@@ -336,10 +336,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                         }
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                           course.user_registered 
-                            ? (canCancelCourse(course) ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed')
+                            ? (canCancelCourse(course) ? 'bg-[#B81243] hover:bg-[#9A0F39]' : 'bg-gray-400 cursor-not-allowed')
                             : course.registration_count >= course.max_participants
                             ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-primary hover:bg-primary/90'
+                            : 'bg-[#B81243] hover:bg-[#9A0F39]'
                         }`}
                       >
                         {course.user_registered ? '−' : '+'}
@@ -351,7 +351,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
             ))
           )}
 
-          {!isOpenGym && userMembershipType !== '10er Karte' && (
+          {userMembershipType !== '10er Karte' && (
             <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -371,7 +371,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                       onOpenChange(false)
                       setShowQRScanner(true)
                     }}
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm bg-primary hover:bg-primary/90"
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm bg-[#B81243] hover:bg-[#9A0F39]"
                   >
                     +
                   </button>
