@@ -185,6 +185,36 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           description: "Du wurdest erfolgreich vom Kurs abgemeldet."
         })
       } else {
+        // Check if user can register (limits and credits)
+        const { data: canRegister, error: checkError } = await supabase
+          .rpc('can_user_register_for_course', {
+            user_id_param: user.id,
+            course_id_param: courseId
+          })
+
+        if (checkError || !canRegister) {
+          if (userMembershipType === 'Basic Member') {
+            toast({
+              title: "Wöchentliches Limit erreicht",
+              description: "Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht",
+              variant: "destructive",
+            })
+          } else if (userMembershipType === '10er Karte') {
+            toast({
+              title: "Keine Credits verfügbar",
+              description: "Du hast keine Credits mehr. Bitte lade deine 10er Karte am Empfang auf",
+              variant: "destructive",
+            })
+          } else {
+            toast({
+              title: "Anmeldung nicht möglich",
+              description: "Anmeldung nicht möglich",
+              variant: "destructive",
+            })
+          }
+          return
+        }
+
         // Check registration deadline before registering
         const course = courses.find(c => c.id === courseId)
         if (course) {
