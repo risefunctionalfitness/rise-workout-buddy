@@ -30,7 +30,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
     <header className="flex justify-between items-center w-full p-6 border-b border-border">
       <div className="flex items-center gap-4">
         <img 
-          src={theme === 'dark' ? "/lovable-uploads/b08fe6ce-59ea-452d-9cb8-67250112b558.png" : "/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png"}
+          src={theme === 'dark' ? "/lovable-uploads/b08fe6ce-59ea-452d-9cb8-67250112b558.png" : "/lovable-uploads/92ae5157-61ac-4a34-850f-7a1e0ebbabf7.png"}
           alt="RISE Functional Fitness Logo" 
           className="h-12 cursor-pointer"
           onClick={() => navigate('/')}
