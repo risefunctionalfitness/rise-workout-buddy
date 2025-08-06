@@ -134,7 +134,13 @@ export const ExerciseSelection = () => {
         .maybeSingle()
 
       if (profile) {
-        setSelectedExercises((profile.preferred_exercises as string[]) || EXERCISES.map(ex => ex.name))
+        const preferences = profile.preferred_exercises as string[]
+        // If preferences is null, undefined, or empty array, default to all exercises
+        if (!preferences || preferences.length === 0) {
+          setSelectedExercises(EXERCISES.map(ex => ex.name))
+        } else {
+          setSelectedExercises(preferences)
+        }
       }
     } catch (error) {
       console.error('Error loading exercise preferences:', error)
