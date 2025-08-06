@@ -615,10 +615,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      advance_waitlist: {
-        Args: { course_id_param: string }
-        Returns: undefined
-      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
