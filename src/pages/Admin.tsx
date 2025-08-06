@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, LogOut, Users, Calendar, Newspaper, Edit, Trash2, Home, MoreVertical, Search, Dumbbell, CreditCard } from "lucide-react";
+import { UserPlus, Users, Calendar, Newspaper, Edit, Trash2, Search, Dumbbell, CreditCard } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
@@ -18,6 +18,8 @@ import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
 import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
+import { RiseHeader } from "@/components/RiseHeader";
+import { BottomNavigation, TabType } from "@/components/BottomNavigation";
 
 interface Member {
   id: string;
@@ -46,11 +48,10 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits'>('home');
+  const [activePage, setActivePage] = useState<TabType>('members');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const membersPerPage = 10;
   const navigate = useNavigate();
 
@@ -684,19 +685,17 @@ export default function Admin() {
 
   const renderPageContent = () => {
     switch (activePage) {
-      case 'home':
-        return <AdminStats />;
       case 'members':
         return renderMembersContent();
-      case 'courses':
+      case 'participants':
         return <CourseParticipants />;
-      case 'templates':
+      case 'courses':
         return <CourseTemplateManager />;
       case 'news':
         return <NewsManager />;
-      case 'codes':
+      case 'gym-codes':
         return <GymCodeManager />;
-      case 'credits':
+      case 'workouts':
         return <AdminCreditRecharge />;
       default:
         return <AdminStats />;
@@ -704,145 +703,21 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img 
-                src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
-                alt="RISE Logo" 
-                className="h-12 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => navigate('/')}
-              />
-              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            </div>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => setDropdownOpen(true)}
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-            
-            {/* Navigation Overlay */}
-            {dropdownOpen && (
-              <div className="fixed inset-0 z-50 bg-white flex flex-col justify-center items-center p-8">
-                <div className="grid grid-cols-2 gap-8 max-w-md w-full">
-                  <div 
-                    onClick={() => {
-                      setActivePage('home');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Home className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Home</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('members');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Users className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Mitglieder</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('courses');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Calendar className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Kurse</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('templates');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Calendar className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Vorlagen</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('news');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Newspaper className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">News</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('credits');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <CreditCard className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Credits</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      navigate('/admin/workouts');
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Dumbbell className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Workouts</span>
-                  </div>
-                  <div 
-                    onClick={() => {
-                      setActivePage('codes');
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                  >
-                    <Users className="h-12 w-12 text-gray-600 mb-3" />
-                    <span className="text-lg font-medium">Codes</span>
-                  </div>
-                </div>
-                <div className="mt-12">
-                  <div 
-                    onClick={() => {
-                      handleLogout();
-                      setDropdownOpen(false);
-                    }}
-                    className="flex flex-col items-center justify-center p-6 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
-                  >
-                    <LogOut className="h-12 w-12 text-red-600 mb-3" />
-                    <span className="text-lg font-medium text-red-600">Abmelden</span>
-                  </div>
-                </div>
-                
-                {/* Close button */}
-                <div className="absolute top-6 right-6">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <span className="text-xl">×</span>
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background pb-20">
+      <RiseHeader 
+        showNavigation={true}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="container mx-auto p-6">
         {renderPageContent()}
       </div>
+
+      <BottomNavigation 
+        activeTab={activePage}
+        onTabChange={setActivePage}
+      />
     </div>
   );
 }
