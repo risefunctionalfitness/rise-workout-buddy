@@ -23,13 +23,15 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
     
     // Listen for course registration changes
     const handleCourseRegistrationChanged = () => {
-      loadTrainingDays()
+      setTimeout(() => loadTrainingDays(), 100) // Small delay to ensure DB is updated
     }
     
     window.addEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
+    document.addEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
     
     return () => {
       window.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
+      document.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
     }
   }, [user.id])
 

@@ -212,16 +212,15 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         })
       }
 
-      // Reload courses to update counts
+      // Immediately update UI
       loadCoursesForDay()
       
-      // Trigger parent component to reload registrations
-      if (onOpenChange) {
-        setTimeout(() => {
-          onOpenChange(false)
-          setTimeout(() => onOpenChange(true), 100)
-        }, 500)
-      }
+      // Trigger events for immediate UI updates
+      window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+      window.dispatchEvent(new CustomEvent('creditsUpdated'))
+      
+      // Also trigger calendar update
+      document.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
     } catch (error) {
       console.error('Error with registration:', error)
       toast({

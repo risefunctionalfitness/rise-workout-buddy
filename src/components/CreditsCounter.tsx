@@ -12,6 +12,17 @@ export const CreditsCounter = ({ user }: CreditsCounterProps) => {
 
   useEffect(() => {
     loadCredits()
+
+    // Listen for credit updates
+    const handleCreditUpdate = () => {
+      loadCredits()
+    }
+
+    window.addEventListener('creditsUpdated', handleCreditUpdate)
+    
+    return () => {
+      window.removeEventListener('creditsUpdated', handleCreditUpdate)
+    }
   }, [user.id])
 
   const loadCredits = async () => {
