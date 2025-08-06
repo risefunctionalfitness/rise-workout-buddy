@@ -426,7 +426,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           <LeaderboardPosition user={user} />
           <button 
             onClick={() => navigate("/workout-timer")}
-            className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-border shadow-lg flex items-center justify-center text-gray-700 hover:scale-105 transition-transform"
+            className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 border border-border shadow-lg flex items-center justify-center text-gray-100 hover:scale-105 transition-transform"
           >
             <Timer className="h-6 w-6" />
           </button>
