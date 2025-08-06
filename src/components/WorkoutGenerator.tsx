@@ -365,7 +365,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
                   onClick={generateWorkout}
                   disabled={isGenerating}
                   size="lg"
-                  className="w-full h-16 text-lg font-semibold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                  className="w-full h-16 text-lg font-semibold rounded-2xl bg-[hsl(var(--rise-accent))] hover:bg-[hsl(var(--rise-accent-dark))] text-primary-foreground shadow-lg"
                 >
                   <Dumbbell className="h-6 w-6 mr-3" />
                   {isGenerating ? "Generiere..." : "Workout generieren"}
@@ -387,7 +387,7 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
                   onClick={generateWorkout}
                   disabled={isGenerating}
                   size="lg"
-                  className="w-full h-16 text-lg font-semibold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                  className="w-full h-16 text-lg font-semibold rounded-2xl bg-[hsl(var(--rise-accent))] hover:bg-[hsl(var(--rise-accent-dark))] text-primary-foreground shadow-lg"
                 >
                   <Dumbbell className="h-6 w-6 mr-3" />
                   {isGenerating ? "Generiere..." : "Workout generieren"}

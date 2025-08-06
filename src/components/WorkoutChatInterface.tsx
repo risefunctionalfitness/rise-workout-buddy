@@ -39,10 +39,24 @@ export const WorkoutChatInterface = ({ workout, workoutType, onClose }: WorkoutC
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
-          <p className="text-lg text-muted-foreground">KI-Coach überlegt, wie er's dir schonend beibringt...</p>
+      <div className="min-h-screen bg-background">
+        <div className="px-4 pt-4 pb-2">
+          <Button variant="ghost" onClick={onClose} size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Zurück
+          </Button>
+        </div>
+        
+        <div className="text-center py-6">
+          <h1 className="text-3xl font-bold text-foreground">RISE KI-Coach</h1>
+        </div>
+        
+        <div className="flex items-center justify-center px-4">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+            <p className="text-lg text-muted-foreground">KI-Coach überlegt</p>
+            <p className="text-sm text-muted-foreground">geschätzte Ladezeit 14 Sekunden</p>
+          </div>
         </div>
       </div>
     )
