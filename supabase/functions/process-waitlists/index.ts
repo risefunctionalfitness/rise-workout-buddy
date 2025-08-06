@@ -42,7 +42,7 @@ serve(async (req) => {
         course_registrations!inner(status)
       `)
       .gte('course_date', new Date().toISOString().split('T')[0])
-      .eq('course_registrations.status', 'waitlisted');
+      .eq('course_registrations.status', 'waitlist');
 
     if (coursesError) {
       console.error('❌ Error fetching courses:', coursesError);
@@ -79,7 +79,7 @@ serve(async (req) => {
         }
 
         const registeredCount = registrations?.filter(r => r.status === 'registered').length || 0;
-        const waitlistedCount = registrations?.filter(r => r.status === 'waitlisted').length || 0;
+        const waitlistedCount = registrations?.filter(r => r.status === 'waitlist').length || 0;
         const availableSpots = course.max_participants - registeredCount;
 
         console.log(`📊 Course ${course.title}: ${registeredCount}/${course.max_participants} registered, ${waitlistedCount} waitlisted, ${availableSpots} spots available`);
@@ -94,7 +94,7 @@ serve(async (req) => {
           .from('course_registrations')
           .select('id, user_id, registered_at')
           .eq('course_id', course.id)
-          .eq('status', 'waitlisted')
+          .eq('status', 'waitlist')
           .order('registered_at', { ascending: true })
           .limit(availableSpots);
 
