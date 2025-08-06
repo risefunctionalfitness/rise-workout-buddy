@@ -205,7 +205,7 @@ export const StrengthValues = () => {
           </CardContent>
         </Card>
 
-        <Button onClick={saveStrengthValues} className="w-full">
+        <Button onClick={saveStrengthValues} className="w-full bg-rise-accent hover:bg-rise-accent-dark text-white">
           Kraftwerte speichern
         </Button>
       </div>

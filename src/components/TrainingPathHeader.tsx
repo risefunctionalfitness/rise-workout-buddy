@@ -49,7 +49,7 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
         ) : (
           <Flame className="h-6 w-6 text-rise-accent" />
         )}
-        <span className="font-bold text-lg">
+        <span className="font-bold text-lg text-rise-accent">
           {trainingDaysThisMonth} / {totalDaysInMonth}
         </span>
       </div>

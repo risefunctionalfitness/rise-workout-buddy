@@ -150,7 +150,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
               />
             </div>
             
-            <Button onClick={saveProfile} className="w-full">
+            <Button onClick={saveProfile} className="w-full bg-rise-accent hover:bg-rise-accent-dark text-white">
               Profil speichern
             </Button>
           </CardContent>
@@ -186,7 +186,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         <div className="grid grid-cols-2 gap-4 mb-4">
           <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={navigateToStrengthValues}>
             <CardContent className="flex flex-col items-center justify-center p-6">
-              <Dumbbell className="h-8 w-8 mb-2 text-primary" />
+              <Dumbbell className="h-8 w-8 mb-2 text-rise-accent" />
               <h3 className="font-semibold">Kraftwerte</h3>
               <p className="text-sm text-muted-foreground text-center">1RM Werte verwalten</p>
             </CardContent>
@@ -194,7 +194,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
           
           <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={navigateToExercises}>
             <CardContent className="flex flex-col items-center justify-center p-6">
-              <Target className="h-8 w-8 mb-2 text-primary" />
+              <Target className="h-8 w-8 mb-2 text-rise-accent" />
               <h3 className="font-semibold">Übungen</h3>
               <p className="text-sm text-muted-foreground text-center">Präferenzen bearbeiten</p>
             </CardContent>

@@ -174,7 +174,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
                 onClick={() => setShowTimer(true)}
                 variant="ghost"
                 size="lg"
-                className="flex flex-col items-center p-4 h-auto min-w-[80px] dark:bg-muted dark:text-background dark:hover:bg-muted/80"
+                className="flex flex-col items-center p-4 h-auto min-w-[80px] dark:bg-background dark:text-muted dark:hover:bg-muted dark:hover:text-background"
               >
                 <Timer className="h-6 w-6 mb-1" />
                 <span className="text-xs">Timer</span>

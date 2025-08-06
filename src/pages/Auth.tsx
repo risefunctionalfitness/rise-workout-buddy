@@ -160,7 +160,7 @@ export default function Auth() {
             </div>
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full bg-rise-accent hover:bg-rise-accent-dark text-white" 
               disabled={loading}
             >
               {loading ? "Anmelden..." : "Anmelden"}
