@@ -169,7 +169,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
             </div>
             <div 
               onClick={() => {
-                navigate('/workout-management');
+                navigate('/admin/workouts');
                 setDropdownOpen(false);
               }}
               className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
