@@ -14,10 +14,10 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
     <div className="space-y-4 px-4">
       <Card 
         className={cn(
-          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary h-32",
+          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-rise-accent h-32",
           selectedType === "crossfit" 
-            ? "bg-primary/5 shadow-md" 
-            : "hover:border-primary"
+            ? "bg-rise-accent/5 border-rise-accent shadow-md" 
+            : "hover:border-rise-accent"
         )}
         onClick={() => onTypeSelect("crossfit")}
       >
@@ -33,10 +33,10 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
 
       <Card 
         className={cn(
-          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary h-32",
+          "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-rise-accent h-32",
           selectedType === "bodybuilding" 
-            ? "bg-primary/5 shadow-md" 
-            : "hover:border-primary"
+            ? "bg-rise-accent/5 border-rise-accent shadow-md" 
+            : "hover:border-rise-accent"
         )}
         onClick={() => onTypeSelect("bodybuilding")}
       >

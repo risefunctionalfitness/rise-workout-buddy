@@ -287,11 +287,11 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
       )}
       
       <div className="text-center py-6">
-        <h1 className="text-3xl font-bold text-black">
+        <h1 className="text-3xl font-bold text-foreground">
           {workoutType === "crossfit" ? "CrossFit" : 
            workoutType === "bodybuilding" ? "Bodybuilding" : "WOD Creator"}
         </h1>
-      </div>      
+      </div>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-8">
           {/* Step 1: Workout Type Selection */}

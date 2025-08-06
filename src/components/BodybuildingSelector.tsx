@@ -40,10 +40,10 @@ export const BodybuildingSelector = ({
           <Card 
             key={type}
             className={cn(
-              "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
+              "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-rise-accent",
               selectedFocus === type 
-                ? "bg-primary/5 shadow-md" 
-                : "hover:border-primary"
+                ? "bg-rise-accent/5 border-rise-accent shadow-md" 
+                : "hover:border-rise-accent"
             )}
             onClick={() => onFocusSelect(type)}
           >
@@ -66,10 +66,10 @@ export const BodybuildingSelector = ({
         <Card 
           key={type}
           className={cn(
-            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-primary",
+            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-rise-accent",
             selectedDifficulty === type 
-              ? "bg-primary/5 shadow-md" 
-              : "hover:border-primary"
+              ? "bg-rise-accent/5 border-rise-accent shadow-md" 
+              : "hover:border-rise-accent"
           )}
           onClick={() => onDifficultySelect(type)}
         >
