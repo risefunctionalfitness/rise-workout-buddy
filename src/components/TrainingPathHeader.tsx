@@ -47,7 +47,7 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
         ) : trainingDaysThisMonth >= 5 ? (
           <Zap className="h-6 w-6 text-blue-500" />
         ) : (
-          <Flame className="h-6 w-6" />
+          <Flame className="h-6 w-6 text-rise-accent" />
         )}
         <span className="font-bold text-lg">
           {trainingDaysThisMonth} / {totalDaysInMonth}

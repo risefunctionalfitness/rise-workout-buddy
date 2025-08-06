@@ -132,7 +132,7 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <img 
-            src="/lovable-uploads/c96a74cb-c5bf-4636-97c3-b28e0057849e.png" 
+            src="/lovable-uploads/97c3e6bf-0940-4442-b89a-2155e4f0d895.png" 
             alt="RISE Functional Fitness Logo" 
             className="h-12 mx-auto mb-4"
           />
