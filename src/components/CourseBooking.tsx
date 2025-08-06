@@ -271,10 +271,13 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const newStatus = isWaitlist ? 'waitlist' : 'registered'
 
       if (existingReg) {
-        // Update existing registration
+        // Update existing registration (reactivate if cancelled)
         const { error } = await supabase
           .from('course_registrations')
-          .update({ status: newStatus })
+          .update({ 
+            status: newStatus,
+            registered_at: new Date().toISOString()
+          })
           .eq('id', existingReg.id)
 
         if (error) throw error

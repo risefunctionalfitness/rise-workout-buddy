@@ -113,16 +113,25 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
       const coursesWithCounts = await Promise.all(
         filteredCourses.map(async (course) => {
-          const { data: registrations } = await supabase
-            .from('course_registrations')
-            .select('user_id')
-            .eq('course_id', course.id)
-            .eq('status', 'registered')
+          const [registrationsResult, userRegistrationResult] = await Promise.all([
+            supabase
+              .from('course_registrations')
+              .select('user_id')
+              .eq('course_id', course.id)
+              .eq('status', 'registered'),
+            supabase
+              .from('course_registrations')
+              .select('status')
+              .eq('course_id', course.id)
+              .eq('user_id', user.id)
+              .in('status', ['registered', 'waitlist'])
+              .maybeSingle()
+          ])
 
           return {
             ...course,
-            registration_count: registrations?.length || 0,
-            user_registered: registrations?.some(reg => reg.user_id === user.id) || false
+            registration_count: registrationsResult.data?.length || 0,
+            user_registered: (userRegistrationResult.data?.status === 'registered' || userRegistrationResult.data?.status === 'waitlist') || false
           }
         })
       )
@@ -167,7 +176,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           .update({ status: 'cancelled' })
           .eq('course_id', courseId)
           .eq('user_id', user.id)
-          .eq('status', 'registered')
+          .in('status', ['registered', 'waitlist'])
 
         if (error) throw error
 
@@ -202,16 +211,39 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           }
         }
 
-        // Register
-        const { error } = await supabase
+        // Check if user already has a registration (including cancelled ones)
+        const { data: existingReg, error: regCheckError } = await supabase
           .from('course_registrations')
-          .insert({
-            course_id: courseId,
-            user_id: user.id,
-            status: 'registered'
-          })
+          .select('id, status')
+          .eq('course_id', courseId)
+          .eq('user_id', user.id)
+          .maybeSingle()
 
-        if (error) throw error
+        if (regCheckError && regCheckError.code !== 'PGRST116') throw regCheckError
+
+        if (existingReg) {
+          // Update existing registration (reactivate if cancelled)
+          const { error } = await supabase
+            .from('course_registrations')
+            .update({ 
+              status: 'registered',
+              registered_at: new Date().toISOString()
+            })
+            .eq('id', existingReg.id)
+
+          if (error) throw error
+        } else {
+          // Create new registration
+          const { error } = await supabase
+            .from('course_registrations')
+            .insert({
+              course_id: courseId,
+              user_id: user.id,
+              status: 'registered'
+            })
+
+          if (error) throw error
+        }
 
         toast({
           title: "Angemeldet",
