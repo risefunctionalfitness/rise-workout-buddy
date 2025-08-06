@@ -28,22 +28,22 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   const getStatusIcon = () => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="h-8 w-8 text-green-500" />
+        return <CheckCircle className="h-8 w-8 text-green-600" />
       case 'current':
         // Wenn für heute ein Kurs registriert ist, zeige grünes Häkchen
         if (isRegisteredForCourse) {
-          return <CheckCircle className="h-8 w-8 text-green-500" />
+          return <CheckCircle className="h-8 w-8 text-green-600" />
         }
         return <Play className="h-8 w-8 text-primary" />
       case 'locked':
         // Zukünftige Tage: wenn angemeldet grünes Häkchen, sonst graues Play
         if (isRegisteredForCourse) {
-          return <CheckCircle className="h-8 w-8 text-green-500" />
+          return <CheckCircle className="h-8 w-8 text-green-600" />
         }
         return <Play className="h-8 w-8 text-gray-600" />
       case 'pending':
         // Für vergangene Tage: X für nicht besucht
-        return <X className="h-8 w-8 text-red-500" />
+        return <X className="h-8 w-8 text-red-600" />
     }
   }
 
@@ -55,23 +55,23 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   const getStatusColor = () => {
     switch (status) {
       case 'completed':
-        // Vergangene Tage mit Training: altes hellgrün
-        return 'bg-green-100 border-green-500 hover:bg-green-200 text-green-700'
+        // Vergangene Tage mit Training: intensives grün
+        return 'bg-green-200 border-green-600 hover:bg-green-300 text-green-800 dark:bg-green-900/50 dark:border-green-500 dark:text-green-300'
       case 'current':
-        // Heute: wenn für Kurs angemeldet grau mit grünem Rand und grüner Schrift, sonst primary
+        // Heute: wenn für Kurs angemeldet intensives grün, sonst primary
         if (isRegisteredForCourse) {
-          return 'bg-gray-100 border-green-500 hover:bg-gray-200 text-green-600'
+          return 'bg-green-200 border-green-600 hover:bg-green-300 text-green-800 dark:bg-green-900/50 dark:border-green-500 dark:text-green-300'
         }
         return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary'
       case 'pending':
-        // Vergangene Tage ohne Training: rot
-        return 'bg-red-50 border-red-200 hover:bg-red-100 text-red-600'
+        // Vergangene Tage ohne Training: intensives rot
+        return 'bg-red-200 border-red-600 hover:bg-red-300 text-red-800 dark:bg-red-900/50 dark:border-red-500 dark:text-red-300'
       case 'locked':
-        // Zukünftige Tage: wenn angemeldet grau mit grünem Rand und grüner Schrift, sonst normal grau
+        // Zukünftige Tage: wenn angemeldet intensives grün, sonst normal grau
         if (isRegisteredForCourse) {
-          return 'bg-gray-100 border-green-500 hover:bg-gray-200 text-green-600 cursor-pointer'
+          return 'bg-green-200 border-green-600 hover:bg-green-300 text-green-800 cursor-pointer dark:bg-green-900/50 dark:border-green-500 dark:text-green-300'
         }
-        return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600 cursor-pointer'
+        return 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-600 cursor-pointer dark:bg-gray-800/50 dark:border-gray-600 dark:text-gray-400'
     }
   }
 

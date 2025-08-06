@@ -111,11 +111,11 @@ export const Leaderboard: React.FC = () => {
   const getRankColor = (position: number) => {
     switch (position) {
       case 1:
-        return "bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200"
+        return "bg-gradient-to-r from-yellow-100 to-yellow-200 border-yellow-300 dark:from-yellow-900/30 dark:to-yellow-800/30 dark:border-yellow-600"
       case 2:
-        return "bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200"
+        return "bg-gradient-to-r from-gray-100 to-gray-200 border-gray-300 dark:from-gray-800/50 dark:to-gray-700/50 dark:border-gray-600"
       case 3:
-        return "bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200"
+        return "bg-gradient-to-r from-orange-100 to-orange-200 border-orange-300 dark:from-orange-900/30 dark:to-orange-800/30 dark:border-orange-600"
       default:
         return "bg-card border-border"
     }
@@ -180,8 +180,8 @@ export const Leaderboard: React.FC = () => {
                             className="w-10 h-10 rounded-full object-cover border-2 border-border"
                           />
                           <div>
-                            <h3 className="font-semibold text-lg">{entry.display_name}</h3>
-                            <p className="text-sm text-muted-foreground">
+                            <h3 className="font-semibold text-lg text-foreground">{entry.display_name}</h3>
+                            <p className="text-sm text-muted-foreground font-medium">
                               Platz {position}
                             </p>
                           </div>
