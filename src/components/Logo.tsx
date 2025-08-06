@@ -13,10 +13,8 @@ export const Logo: React.FC<LogoProps> = ({
 }) => {
   const { theme } = useTheme()
   
-  // Dark mode: RISE Black, Light mode: RISE White
-  const logoSrc = theme === "dark" 
-    ? "/lovable-uploads/0b845073-7185-470c-9f04-c35431589618.png" // RISE Black
-    : "/lovable-uploads/728316cf-cfdf-4d56-9d3c-044e4ec6b20c.png" // RISE White
+  // Use the newly uploaded RISE logo
+  const logoSrc = "/lovable-uploads/c2f4fb4b-2b2b-4d58-85e9-6c31b062eda8.png" // RISE Functional Fitness Logo
   
   return (
     <img 
