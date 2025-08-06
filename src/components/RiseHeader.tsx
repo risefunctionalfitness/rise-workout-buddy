@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard } from "lucide-react"
+import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { supabase } from "@/integrations/supabase/client"
 
@@ -25,7 +25,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const { theme } = useTheme()
+  const { theme, setTheme } = useTheme()
 
   // Check admin role
   useEffect(() => {
@@ -83,6 +83,17 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
       </div>
       
       <div className="flex items-center gap-2">
+        {/* Dark Mode Toggle */}
+        {(showNavigation || (showAdminAccess && isAdmin)) && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+        )}
+        
         {onProVersionClick && (
           <Button 
             onClick={onProVersionClick}
