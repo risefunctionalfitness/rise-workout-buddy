@@ -149,43 +149,45 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   const loadExtendedStats = async () => {
     setExtendedStatsLoading(true)
-    // Direct to manual aggregation - this is more reliable
     await loadExtendedStatsManual()
     setExtendedStatsLoading(false)
   }
 
   const loadExtendedStatsManual = async () => {
     try {
-      console.log('Using manual aggregation method...')
+      console.log('Loading extended leaderboard stats...')
       const currentYear = new Date().getFullYear()
 
-      // Get ALL leaderboard entries (including 0 counts)
+      // Get ALL leaderboard entries with better error handling
       const { data: allTimeData, error: allTimeError } = await supabase
         .from('leaderboard_entries')
         .select('user_id, training_count, year, month')
+        .order('training_count', { ascending: false })
 
       if (allTimeError) {
-        console.error('All time error:', allTimeError)
+        console.error('Error fetching leaderboard entries:', allTimeError)
         throw allTimeError
       }
 
-      console.log('All leaderboard entries:', allTimeData?.length)
+      console.log('Leaderboard entries found:', allTimeData?.length || 0)
 
-      // Get all profiles
+      // Get all profiles with display names
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
         .not('user_id', 'is', null)
+        .not('display_name', 'is', null)
 
       if (profilesError) {
-        console.error('Profiles error:', profilesError)
+        console.error('Error fetching profiles:', profilesError)
         throw profilesError
       }
 
-      console.log('Profiles found:', profilesData?.length)
+      console.log('Profiles with display names found:', profilesData?.length || 0)
 
+      // Always create the extended stats structure, even if empty
       if (!allTimeData || allTimeData.length === 0) {
-        console.log('No leaderboard data found')
+        console.log('No leaderboard data available')
         setExtendedStats({
           allTimeLeaderboard: [],
           yearLeaderboard: []
@@ -193,59 +195,102 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         return
       }
 
-      // Create profiles lookup
+      // Create profiles lookup with better safety checks
       const profilesMap = (profilesData || []).reduce((acc, profile) => {
-        if (profile.user_id) {
+        if (profile.user_id && profile.display_name) {
           acc[profile.user_id] = profile
         }
         return acc
       }, {} as Record<string, any>)
 
-      // Aggregate all time data by user
-      const allTimeAggregated: { [key: string]: number } = {}
-      allTimeData.forEach(entry => {
-        if (entry.training_count > 0) { // Only count actual training sessions
-          allTimeAggregated[entry.user_id] = (allTimeAggregated[entry.user_id] || 0) + entry.training_count
+      // Aggregate by user for all time (sum all training counts across all months/years)
+      const allTimeAggregated = (allTimeData || []).reduce((acc, entry) => {
+        const userId = entry.user_id
+        if (!acc[userId]) {
+          acc[userId] = 0
         }
-      })
+        acc[userId] += entry.training_count || 0
+        return acc
+      }, {} as Record<string, number>)
 
-      // Aggregate this year data
-      const thisYearAggregated: { [key: string]: number } = {}
-      allTimeData
-        .filter(entry => entry.year === currentYear && entry.training_count > 0)
-        .forEach(entry => {
-          thisYearAggregated[entry.user_id] = (thisYearAggregated[entry.user_id] || 0) + entry.training_count
+      console.log('All time users aggregated:', Object.keys(allTimeAggregated).length)
+
+      // Create all-time leaderboard entries - only include users with profiles
+      const allTimeLeaderboard = Object.entries(allTimeAggregated)
+        .map(([userId, count]) => {
+          const profile = profilesMap[userId]
+          if (!profile || !profile.display_name) {
+            console.log('Skipping user without profile:', userId)
+            return null
+          }
+          return {
+            user_id: userId,
+            training_count: count,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url || null,
+            year: 0, // Indicates all-time
+            month: 0,
+            total: count // For compatibility with display component
+          }
         })
+        .filter(entry => entry !== null) // Remove null entries
+        .sort((a, b) => b.training_count - a.training_count)
+        .slice(0, 10) // Top 10
 
-      // Convert to sorted arrays with profile info
-      const allTimeSorted = Object.entries(allTimeAggregated)
-        .map(([user_id, total]) => ({
-          user_id,
-          total,
-          display_name: profilesMap[user_id]?.display_name || `User ${user_id.slice(0, 8)}`
-        }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 20)
+      console.log('All time leaderboard created with', allTimeLeaderboard.length, 'entries')
 
-      const thisYearSorted = Object.entries(thisYearAggregated)
-        .map(([user_id, total]) => ({
-          user_id,
-          total,
-          display_name: profilesMap[user_id]?.display_name || `User ${user_id.slice(0, 8)}`
-        }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 20)
+      // Aggregate by user for current year only
+      const currentYearData = (allTimeData || []).filter(entry => entry.year === currentYear)
+      console.log('Current year entries found:', currentYearData.length)
+      
+      const yearAggregated = currentYearData.reduce((acc, entry) => {
+        const userId = entry.user_id
+        if (!acc[userId]) {
+          acc[userId] = 0
+        }
+        acc[userId] += entry.training_count || 0
+        return acc
+      }, {} as Record<string, number>)
 
-      console.log('Manual aggregation results:')
-      console.log('All time top users:', allTimeSorted.length)
-      console.log('This year top users:', thisYearSorted.length)
+      console.log('Current year users aggregated:', Object.keys(yearAggregated).length)
 
+      // Create current year leaderboard entries - only include users with profiles
+      const yearLeaderboard = Object.entries(yearAggregated)
+        .map(([userId, count]) => {
+          const profile = profilesMap[userId]
+          if (!profile || !profile.display_name) {
+            return null
+          }
+          return {
+            user_id: userId,
+            training_count: count,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url || null,
+            year: currentYear,
+            month: 0,
+            total: count // For compatibility with display component
+          }
+        })
+        .filter(entry => entry !== null) // Remove null entries
+        .sort((a, b) => b.training_count - a.training_count)
+        .slice(0, 10) // Top 10
+
+      console.log('Year leaderboard created with', yearLeaderboard.length, 'entries')
+
+      // Set the final result
       setExtendedStats({
-        allTimeLeaderboard: allTimeSorted,
-        yearLeaderboard: thisYearSorted,
+        allTimeLeaderboard,
+        yearLeaderboard
       })
+
+      console.log('Extended stats successfully loaded:', {
+        allTimeCount: allTimeLeaderboard.length,
+        yearCount: yearLeaderboard.length
+      })
+
     } catch (error) {
-      console.error('Error in manual aggregation:', error)
+      console.error('Error loading extended stats:', error)
+      // Set empty arrays on error but don't fail silently
       setExtendedStats({
         allTimeLeaderboard: [],
         yearLeaderboard: []
@@ -367,7 +412,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
               <p className="text-lg font-medium text-gray-900">Anzahl Mitgliedschaften je Kategorie</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {Object.entries(stats.memberStats).map(([type, count]) => (
               <div key={type} className="text-center">
                 <Badge variant="secondary" className="text-sm mb-2">{type}</Badge>
@@ -379,7 +424,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
       </Card>
 
       {/* Extended Stats */}
-      <Collapsible open={extendedStatsOpen} onOpenChange={setExtendedStatsOpen}>
+      <Collapsible open={extendedStatsOpen} onOpenChange={toggleExtendedStats}>
         <CollapsibleTrigger asChild>
           <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
             <CardContent className="p-6">
