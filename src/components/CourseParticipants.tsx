@@ -37,6 +37,11 @@ export const CourseParticipants = () => {
       setLoading(true)
       const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 })
       const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
+      
+      // Get current date and time to filter out past courses
+      const now = new Date()
+      const nowDate = now.toISOString().split('T')[0]
+      const nowTime = now.toTimeString().slice(0, 8)
 
       const { data, error } = await supabase
         .from('courses')
@@ -51,6 +56,8 @@ export const CourseParticipants = () => {
         `)
         .gte('course_date', format(weekStart, 'yyyy-MM-dd'))
         .lte('course_date', format(weekEnd, 'yyyy-MM-dd'))
+        // Only future courses by date and time
+        .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
         .order('course_date', { ascending: true })
         .order('start_time', { ascending: true })
 
@@ -63,10 +70,10 @@ export const CourseParticipants = () => {
             .from('course_registrations')
             .select('status')
             .eq('course_id', course.id)
-            .in('status', ['registered', 'waitlisted'])
+            .in('status', ['registered', 'waitlist'])
 
           const registered_count = registrations?.filter(r => r.status === 'registered').length || 0
-          const waitlisted_count = registrations?.filter(r => r.status === 'waitlisted').length || 0
+          const waitlisted_count = registrations?.filter(r => r.status === 'waitlist').length || 0
 
           return {
             ...course,
@@ -183,9 +190,18 @@ export const CourseParticipants = () => {
                             </p>
                           </div>
                           <div className="text-right space-y-1">
-                            <Badge variant="secondary" className="bg-green-500 text-white">
-                              {course.registered_count}/{course.max_participants}
-                            </Badge>
+                            {(() => {
+                              const percentage = (course.registered_count / course.max_participants) * 100;
+                              let badgeColor = "bg-green-500";
+                              if (percentage >= 100) badgeColor = "bg-red-500";
+                              else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                              
+                              return (
+                                <Badge variant="secondary" className={`text-white ${badgeColor}`}>
+                                  {course.registered_count}/{course.max_participants}
+                                </Badge>
+                              );
+                            })()}
                             {course.waitlisted_count > 0 && (
                               <Badge variant="outline" className="bg-yellow-500 text-white block">
                                 Warteliste: {course.waitlisted_count}
