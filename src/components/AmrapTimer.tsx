@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useNavigate } from "react-router-dom"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
+import { ArrowLeft } from "lucide-react"
 
 export const AmrapTimer: React.FC = () => {
   const navigate = useNavigate()
@@ -23,9 +24,10 @@ export const AmrapTimer: React.FC = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/workout-timer")}
-          className="mb-4"
+          className="mb-4 text-[#B81243] hover:text-[#9A0F39] hover:bg-[#B81243]/10"
         >
-          ← Zurück
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
         </Button>
       </div>
       
@@ -39,10 +41,10 @@ export const AmrapTimer: React.FC = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-center gap-6">
               <Select value={minutes.toString()} onValueChange={(value) => setMinutes(Number(value))}>
-                <SelectTrigger className="timer-select-trigger w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[#B81243] rounded-xl">
+                <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-[#B81243] bg-background text-[#B81243] rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="timer-select-content bg-background border-2 border-primary dark:border-[#B81243] rounded-xl max-h-60">
+                <SelectContent className="bg-background border-2 border-[#B81243] rounded-xl max-h-60">
                   {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()} className="text-lg">
                       {num}
@@ -56,7 +58,7 @@ export const AmrapTimer: React.FC = () => {
             <Button
               onClick={handleStart}
               variant="outline"
-              className="timer-start-button w-full h-20 text-2xl border-2 border-primary dark:border-[#B81243] dark:bg-[#B81243] dark:text-white text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#9A0F39] rounded-2xl font-medium"
+              className="w-full h-20 text-2xl border-2 border-[#B81243] bg-background text-[#B81243] hover:bg-[#B81243] hover:text-white rounded-2xl font-medium transition-all duration-200"
             >
               Start
             </Button>

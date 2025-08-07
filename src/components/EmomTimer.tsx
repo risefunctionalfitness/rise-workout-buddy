@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
+import { ArrowLeft } from "lucide-react"
 
 export const EmomTimer: React.FC = () => {
   const navigate = useNavigate()
@@ -34,9 +35,10 @@ export const EmomTimer: React.FC = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/workout-timer")}
-          className="mb-4"
+          className="mb-4 text-[#B81243] hover:text-[#9A0F39] hover:bg-[#B81243]/10"
         >
-          ← Zurück
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
         </Button>
       </div>
       
@@ -52,10 +54,10 @@ export const EmomTimer: React.FC = () => {
               <div className="flex items-center justify-center gap-6">
                 <span className="text-2xl font-medium">Alle</span>
                 <Select value={interval.toString()} onValueChange={(value) => setInterval(Number(value))}>
-                  <SelectTrigger className="w-32 h-16 text-center text-2xl border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl">
+                  <SelectTrigger className="w-32 h-16 text-center text-2xl border-2 border-[#B81243] bg-background text-[#B81243] rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl max-h-60">
+                  <SelectContent className="bg-background border-2 border-[#B81243] rounded-xl max-h-60">
                     {intervalOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value.toString()} className="text-lg">
                         {option.label}
@@ -68,10 +70,10 @@ export const EmomTimer: React.FC = () => {
               <div className="flex items-center justify-center gap-6">
                 <span className="text-2xl font-medium">für</span>
                 <Select value={rounds.toString()} onValueChange={(value) => setRounds(Number(value))}>
-                  <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl">
+                  <SelectTrigger className="w-24 h-16 text-center text-2xl border-2 border-[#B81243] bg-background text-[#B81243] rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border-2 border-primary dark:border-[hsl(var(--timer-input-border))] rounded-xl max-h-60">
+                  <SelectContent className="bg-background border-2 border-[#B81243] rounded-xl max-h-60">
                     {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
                       <SelectItem key={num} value={num.toString()} className="text-lg">
                         {num}
@@ -85,7 +87,7 @@ export const EmomTimer: React.FC = () => {
             <Button
               onClick={handleStart}
               variant="outline"
-              className="timer-start-button w-full h-20 text-2xl border-2 border-primary dark:border-[#B81243] dark:bg-[#B81243] dark:text-white text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-[#9A0F39] rounded-2xl font-medium"
+              className="w-full h-20 text-2xl border-2 border-[#B81243] bg-background text-[#B81243] hover:bg-[#B81243] hover:text-white rounded-2xl font-medium transition-all duration-200"
             >
               Start
             </Button>

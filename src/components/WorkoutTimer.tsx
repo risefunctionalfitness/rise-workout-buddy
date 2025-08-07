@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
+import { ArrowLeft } from "lucide-react"
 
 interface WorkoutTimerProps {
   embedded?: boolean
@@ -32,7 +33,7 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
                   key={type.id}
                   variant="outline"
                   onClick={() => navigate(type.route)}
-                  className="w-full h-20 text-2xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-2xl font-medium"
+                  className="w-full h-20 text-2xl border-2 border-[#B81243] bg-background text-[#B81243] hover:bg-[#B81243] hover:text-white rounded-2xl font-medium transition-all duration-200"
                 >
                   {type.title}
                 </Button>
@@ -46,7 +47,18 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-6 pb-20">
+      <div className="p-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/pro")}
+          className="mb-4 text-[#B81243] hover:text-[#9A0F39] hover:bg-[#B81243]/10"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
+        </Button>
+      </div>
+      
+      <div className="flex-1 flex items-center justify-center p-6 pb-20" style={{ marginTop: '-1cm' }}>
         <div className="max-w-md w-full">
           <div className="text-center mb-4">
             <h1 className="text-6xl font-bold mb-1">WOD</h1>
@@ -59,7 +71,7 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
                 key={type.id}
                 variant="outline"
                 onClick={() => navigate(type.route)}
-                className="w-full h-20 text-2xl border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-2xl font-medium"
+                className="w-full h-20 text-2xl border-2 border-[#B81243] bg-background text-[#B81243] hover:bg-[#B81243] hover:text-white rounded-2xl font-medium transition-all duration-200"
               >
                 {type.title}
               </Button>
