@@ -48,20 +48,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     loadParticipants()
   }, [course.id])
 
-  // On admin view open, attempt a one-time dispatch of pending waitlist notifications
-  useEffect(() => {
-    if (isAdmin) {
-      supabase.functions.invoke('dispatch-waitlist-promotion-events', {
-        body: { source: 'admin_open_participants_list' }
-      }).then(({ data, error }) => {
-        if (error) {
-          console.warn('Initial dispatch call error:', error)
-        } else {
-          console.log('Initial dispatch call result:', data)
-        }
-      }).catch((e) => console.warn('Initial dispatch exception:', e))
-    }
-  }, [isAdmin])
+  // Removed: Waitlist processing is now handled by database trigger automatically
 
   const loadParticipants = async () => {
     try {
@@ -122,22 +109,6 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
       if (error) throw error
       toast.success('Teilnehmer entfernt')
 
-      // Trigger Dispatch of automatic waitlist promotion notifications (silent)
-      // This will send webhooks for newly promoted users created by the DB trigger.
-      supabase.functions.invoke('dispatch-waitlist-promotion-events', {
-        body: { source: 'admin_cancellation' }
-      })
-      .then(({ data, error }) => {
-        if (error) {
-          console.warn('Dispatch waitlist notifications error:', error)
-        } else {
-          console.log('Dispatch waitlist notifications result:', data)
-        }
-      })
-      .catch((e) => {
-        console.warn('Dispatch waitlist notifications exception:', e)
-      })
-
       await loadParticipants()
     } catch (error) {
       console.error('Error removing participant:', error)
@@ -171,16 +142,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         toast.warning('Benachrichtigung konnte nicht gesendet werden')
       }
 
-      // Also trigger dispatcher to process any pending waitlist events (idempotent)
-      supabase.functions.invoke('dispatch-waitlist-promotion-events', {
-        body: { source: 'admin_manual_promotion' }
-      }).then(({ data, error }) => {
-        if (error) {
-          console.warn('Dispatch waitlist notifications error:', error)
-        } else {
-          console.log('Dispatch waitlist notifications result:', data)
-        }
-      }).catch((e) => console.warn('Dispatch waitlist notifications exception:', e))
+      // Removed: Waitlist processing is now handled by database trigger automatically
 
       await loadParticipants()
     } catch (error) {
