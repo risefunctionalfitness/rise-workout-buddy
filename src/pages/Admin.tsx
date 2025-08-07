@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "sonner";
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { UserPlus, Edit, Trash2, Search } from "lucide-react";
@@ -20,6 +20,7 @@ import { AdminStats } from "@/components/AdminStats";
 import { RiseHeader } from "@/components/RiseHeader";
 import WorkoutManagement from "./WorkoutManagement";
 import TestMagnusInactive from "@/components/TestMagnusInactive";
+import { useToast } from "@/hooks/use-toast";
 
 interface Member {
   id: string;
@@ -54,6 +55,8 @@ export default function Admin() {
   const [totalMembers, setTotalMembers] = useState(0);
   const membersPerPage = 10;
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isProcessingWebhooks, setIsProcessingWebhooks] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -119,7 +122,11 @@ export default function Admin() {
         if (!!data) {
           loadMembers();
         } else {
-          toast.error("Keine Admin-Berechtigung");
+          toast({
+            title: "Fehler",
+            description: "Keine Admin-Berechtigung",
+            variant: "destructive",
+          });
           navigate("/pro");
         }
       }
@@ -156,14 +163,22 @@ export default function Admin() {
 
       if (error) {
         console.error('Error loading members:', error);
-        toast.error("Fehler beim Laden der Mitglieder");
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Laden der Mitglieder",
+          variant: "destructive",
+        });
       } else {
         setMembers((data || []) as Member[]);
         setTotalMembers(count || 0);
       }
     } catch (error) {
       console.error('Error loading members:', error);
-      toast.error("Fehler beim Laden der Mitglieder");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Laden der Mitglieder",
+        variant: "destructive",
+      });
     }
   };
 
@@ -171,7 +186,11 @@ export default function Admin() {
     e.preventDefault();
     
     if (!newMemberName || !newMemberEmail || !newMemberCode) {
-      toast.error("Bitte alle Felder ausfüllen");
+      toast({
+        title: "Fehler",
+        description: "Bitte alle Felder ausfüllen",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -184,7 +203,11 @@ export default function Admin() {
         .maybeSingle();
 
       if (existingCode) {
-        toast.error("Zugangscode bereits vergeben");
+        toast({
+          title: "Fehler",
+          description: "Zugangscode bereits vergeben",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -204,9 +227,16 @@ export default function Admin() {
 
       if (functionError || !result?.success) {
         console.error('Error creating member:', functionError || result?.error);
-        toast.error("Fehler beim Erstellen des Mitglieds");
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Erstellen des Mitglieds",
+          variant: "destructive",
+        });
       } else {
-        toast.success("Mitglied erfolgreich erstellt - kann sich sofort anmelden!");
+        toast({
+          title: "Erfolg",
+          description: "Mitglied erfolgreich erstellt - kann sich sofort anmelden!",
+        });
         setNewMemberName("");
         setNewMemberEmail("");
         setNewMemberCode("");
@@ -218,7 +248,11 @@ export default function Admin() {
       }
     } catch (error) {
       console.error('Error creating member:', error);
-      toast.error("Fehler beim Erstellen des Mitglieds");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Erstellen des Mitglieds",
+        variant: "destructive",
+      });
     }
   };
 
@@ -240,16 +274,27 @@ export default function Admin() {
 
       if (error) {
         console.error('Error updating member:', error);
-        toast.error("Fehler beim Aktualisieren des Mitglieds");
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Aktualisieren des Mitglieds",
+          variant: "destructive",
+        });
       } else {
-        toast.success("Mitglied erfolgreich aktualisiert");
+        toast({
+          title: "Erfolg",
+          description: "Mitglied erfolgreich aktualisiert",
+        });
         setEditDialogOpen(false);
         setEditingMember(null);
         loadMembers();
       }
     } catch (error) {
       console.error('Error updating member:', error);
-      toast.error("Fehler beim Aktualisieren des Mitglieds");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Aktualisieren des Mitglieds",
+        variant: "destructive",
+      });
     }
   };
 
@@ -266,9 +311,16 @@ export default function Admin() {
 
         if (error) {
           console.error('Error deleting member:', error);
-          toast.error("Fehler beim Löschen des Mitglieds");
+          toast({
+            title: "Fehler",
+            description: "Fehler beim Löschen des Mitglieds",
+            variant: "destructive",
+          });
         } else {
-          toast.success("Mitglied erfolgreich gelöscht");
+          toast({
+            title: "Erfolg",
+            description: "Mitglied erfolgreich gelöscht",
+          });
           setCurrentPage(1);
           loadMembers();
         }
@@ -282,15 +334,26 @@ export default function Admin() {
 
       if (functionError || !result?.success) {
         console.error('Error deleting member:', functionError || result?.error);
-        toast.error("Fehler beim Löschen des Mitglieds");
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Löschen des Mitglieds",
+          variant: "destructive",
+        });
       } else {
-        toast.success("Mitglied und Account erfolgreich gelöscht");
+        toast({
+          title: "Erfolg",
+          description: "Mitglied und Account erfolgreich gelöscht",
+        });
         setCurrentPage(1);
         loadMembers();
       }
     } catch (error) {
       console.error('Error deleting member:', error);
-      toast.error("Fehler beim Löschen des Mitglieds");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Löschen des Mitglieds",
+        variant: "destructive",
+      });
     }
   };
 
@@ -298,14 +361,50 @@ export default function Admin() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        toast.error("Fehler beim Abmelden");
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Abmelden",
+          variant: "destructive",
+        });
       } else {
-        toast.success("Erfolgreich abgemeldet");
+        toast({
+          title: "Erfolg",
+          description: "Erfolgreich abgemeldet",
+        });
         navigate("/");
       }
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error("Fehler beim Abmelden");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Abmelden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const processWaitlistWebhooks = async () => {
+    setIsProcessingWebhooks(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('dispatch-waitlist-promotion-events', {
+        body: { limit: 50 }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Webhook-Verarbeitung abgeschlossen",
+        description: `${data.processed} Events verarbeitet, ${data.succeeded} erfolgreich gesendet`,
+      });
+    } catch (error) {
+      console.error('Error processing webhooks:', error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Verarbeiten der Webhooks",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingWebhooks(false);
     }
   };
 
@@ -690,6 +789,29 @@ export default function Admin() {
           <div className="space-y-6">
             <AdminStats />
             <TestMagnusInactive />
+            <Card>
+              <CardHeader>
+                <CardTitle>Waitlist Webhook System</CardTitle>
+                <CardDescription>
+                  Verarbeitung ausstehender Waitlist-Promotion Events für Make.com
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Dieses System verarbeitet ausstehende Waitlist-Promotion Events und sendet sie als Webhooks an Make.com. 
+                    Das passiert normalerweise automatisch, aber kann hier manuell ausgelöst werden.
+                  </p>
+                  <Button 
+                    onClick={processWaitlistWebhooks}
+                    disabled={isProcessingWebhooks}
+                    variant="outline"
+                  >
+                    {isProcessingWebhooks ? "Verarbeite..." : "Waitlist Webhooks Verarbeiten"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
       case 'members':
