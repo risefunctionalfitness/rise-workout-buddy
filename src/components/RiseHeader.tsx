@@ -179,10 +179,10 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
             </div>
             <div 
               onClick={() => {
-                navigate('/admin/workouts');
+                onPageChange?.('workouts');
                 setDropdownOpen(false);
               }}
-              className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'workouts' ? 'bg-primary/10 text-primary' : ''}`}
             >
               <Dumbbell className="h-8 w-8 mb-2" />
               <span className="text-sm font-medium">Workouts</span>

@@ -18,6 +18,7 @@ import { CourseParticipants } from "@/components/CourseParticipants";
 import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
 import { RiseHeader } from "@/components/RiseHeader";
+import WorkoutManagement from "./WorkoutManagement";
 
 interface Member {
   id: string;
@@ -46,7 +47,7 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts'>('home');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
@@ -697,6 +698,8 @@ export default function Admin() {
         return <GymCodeManager />;
       case 'credits':
         return <AdminCreditRecharge />;
+      case 'workouts':
+        return <WorkoutManagement />;
       default:
         return <AdminStats />;
     }
@@ -708,7 +711,7 @@ export default function Admin() {
         showAdminAccess={true}
         onLogout={handleLogout}
         activePage={activePage}
-        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits')}
+        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts')}
       />
       
       <div className="container mx-auto px-4 py-6">
