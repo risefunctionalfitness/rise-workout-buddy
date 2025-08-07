@@ -18,7 +18,8 @@ interface LeaderboardStats {
   }
   currentMonthEntries: number
   registrationsByType: {
-    Member: number
+    'Basic Member': number
+    'Premium Member': number
     Wellpass: number
     '10er Karte': number
     'Open Gym': number
@@ -31,7 +32,8 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     memberStats: {},
     currentMonthEntries: 0,
     registrationsByType: {
-      Member: 0,
+      'Basic Member': 0,
+      'Premium Member': 0,
       Wellpass: 0,
       '10er Karte': 0,
       'Open Gym': 0
@@ -77,7 +79,8 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       // Count by membership type from leaderboard entries
       const membershipCounts = {
-        'Member': 0,
+        'Basic Member': 0,
+        'Premium Member': 0,
         'Wellpass': 0,
         '10er Karte': 0,
         'Open Gym': 0
@@ -85,11 +88,15 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       leaderboardData?.forEach(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
-        let membershipType = profile?.membership_type || 'Member'
+        let membershipType = profile?.membership_type || 'Basic Member'
         
         // Map "Trainer" to "Open Gym" for public stats
         if (membershipType === 'Trainer') {
           membershipType = 'Open Gym'
+        }
+        // Map old "Member" to "Basic Member" for backward compatibility
+        if (membershipType === 'Member') {
+          membershipType = 'Basic Member'
         }
         
         if (membershipCounts.hasOwnProperty(membershipType)) {
@@ -99,21 +106,26 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       // Count total memberships by category (filter out Trainer, replace with Open Gym)
       const membershipStats: { [key: string]: number } = {
-        'Member': 0,
+        'Basic Member': 0,
+        'Premium Member': 0,
         'Wellpass': 0,
         '10er Karte': 0,
         'Open Gym': 0
       }
       
       profiles?.forEach(profile => {
-        let membershipType = profile.membership_type || 'Member'
+        let membershipType = profile.membership_type || 'Basic Member'
         
         // Map "Trainer" to "Open Gym" for membership count display
         if (membershipType === 'Trainer') {
           membershipType = 'Open Gym'
         }
+        // Map old "Member" to "Basic Member" for backward compatibility
+        if (membershipType === 'Member') {
+          membershipType = 'Basic Member'
+        }
         
-        // Only count the 4 main categories we want to display
+        // Only count the 5 main categories we want to display
         if (membershipStats.hasOwnProperty(membershipType)) {
           membershipStats[membershipType] = (membershipStats[membershipType] || 0) + 1
         }
@@ -265,24 +277,27 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     )
   }
 
-  // Get colors from MembershipBadge component
+  // Get colors for membership types
   const getMembershipColor = (type: string) => {
     switch (type) {
-      case 'Member':
-        return 'hsl(334, 87%, 40%)' // #bd114a
+      case 'Basic Member':
+        return 'hsl(334, 87%, 40%)' // #bd114a (RISE Red)
+      case 'Premium Member': 
+        return 'hsl(334, 87%, 30%)' // Darker red for Premium
       case 'Wellpass':
         return 'hsl(185, 100%, 33%)' // #00a8b5
       case '10er Karte':
         return 'hsl(0, 0%, 0%)' // #000000
       case 'Open Gym':
-        return 'hsl(0, 0%, 85%)' // #d9d9d9
+        return 'hsl(0, 0%, 65%)' // #a5a5a5
       default:
         return 'hsl(334, 87%, 40%)'
     }
   }
 
   const chartData = [
-    { name: 'Member', value: stats.registrationsByType?.Member || 0, fill: getMembershipColor('Member') },
+    { name: 'Basic Member', value: stats.registrationsByType?.['Basic Member'] || 0, fill: getMembershipColor('Basic Member') },
+    { name: 'Premium Member', value: stats.registrationsByType?.['Premium Member'] || 0, fill: getMembershipColor('Premium Member') },
     { name: 'Wellpass', value: stats.registrationsByType?.Wellpass || 0, fill: getMembershipColor('Wellpass') },
     { name: '10er Karte', value: stats.registrationsByType?.['10er Karte'] || 0, fill: getMembershipColor('10er Karte') },
     { name: 'Open Gym', value: stats.registrationsByType?.['Open Gym'] || 0, fill: getMembershipColor('Open Gym') }
