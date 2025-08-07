@@ -14,8 +14,18 @@ Deno.serve(async (req) => {
   try {
     console.log('Manually triggering inactive member webhook for Magnus...')
 
+    const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL')
+    if (!mainWebhookUrl) {
+      console.warn('MAKE_MAIN_WEBHOOK_URL is not set')
+      return new Response(
+        JSON.stringify({ error: 'MAKE_MAIN_WEBHOOK_URL not set' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Magnus's data (from the database query)
     const magnusData = {
+      event_type: 'inactive_member',
       user_id: 'a5ffd9bf-7f8a-41ea-88eb-234277a6a52b',
       name: 'Magnus',
       email: 'magnusgottinger@gmail.com',
@@ -26,10 +36,10 @@ Deno.serve(async (req) => {
       reason: 'Manual trigger for testing - No activity for 21+ days'
     }
 
-    console.log('Sending webhook for Magnus:', magnusData)
+    console.log('Sending webhook for Magnus:', magnusData, '->', mainWebhookUrl)
 
     try {
-      const webhookResponse = await fetch('https://hook.eu2.make.com/xxts2ffa6v4iqyvryr74gn1u9cbx1s25', {
+      const webhookResponse = await fetch(mainWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -122,6 +122,23 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
 
       if (error) throw error
       toast.success(`${participantName} zum Kurs hinzugefügt`)
+
+      // Trigger Make.com notification via Edge Function
+      try {
+        const { error: notifyError } = await supabase.functions.invoke('notify-waitlist-promotion', {
+          body: { registration_id: registrationId }
+        })
+        if (notifyError) {
+          console.error('Notify waitlist promotion error:', notifyError)
+          toast.warning('Benachrichtigung konnte nicht gesendet werden')
+        } else {
+          console.log('Waitlist notification triggered')
+        }
+      } catch (notifyErr) {
+        console.error('Notify waitlist promotion exception:', notifyErr)
+        toast.warning('Benachrichtigung konnte nicht gesendet werden')
+      }
+
       await loadParticipants()
     } catch (error) {
       console.error('Error promoting participant:', error)

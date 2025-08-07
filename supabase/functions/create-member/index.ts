@@ -131,7 +131,9 @@ serve(async (req) => {
       
       // Send webhook to Make.com after successful member creation
       try {
+        const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL')
         const webhookData = {
+          event_type: 'registration',
           name: user_metadata?.display_name || 'Unbekannt',
           email: email,
           access_code: user_metadata?.access_code || '',
@@ -140,20 +142,24 @@ serve(async (req) => {
           user_id: data.user.id
         }
         
-        console.log('Sending webhook to Make.com:', webhookData)
+        console.log('Sending webhook to Make.com:', webhookData, '->', mainWebhookUrl)
         
-        const webhookResponse = await fetch('https://hook.eu2.make.com/1x226m8ffdcysoo9howptn2j7n3bwwiw', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookData)
-        })
-        
-        if (webhookResponse.ok) {
-          console.log('Webhook sent successfully to Make.com')
+        if (!mainWebhookUrl) {
+          console.warn('MAKE_MAIN_WEBHOOK_URL is not set')
         } else {
-          console.error('Webhook failed:', await webhookResponse.text())
+          const webhookResponse = await fetch(mainWebhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(webhookData)
+          })
+          
+          if (webhookResponse.ok) {
+            console.log('Webhook sent successfully to Make.com')
+          } else {
+            console.error('Webhook failed:', await webhookResponse.text())
+          }
         }
       } catch (webhookError) {
         console.error('Error sending webhook to Make.com:', webhookError)

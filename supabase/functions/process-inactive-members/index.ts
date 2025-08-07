@@ -117,7 +117,9 @@ Deno.serve(async (req) => {
         console.log(`Updated member ${member.display_name} to inactive status`)
 
         // Send webhook to Make.com
+        const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL')
         const webhookData = {
+          event_type: 'inactive_member',
           user_id: member.user_id,
           name: member.display_name || 'Unbekannt',
           email: member.email || 'Unbekannt',
@@ -128,20 +130,24 @@ Deno.serve(async (req) => {
           reason: 'No activity for 21+ days'
         }
 
-        console.log('Sending inactive member webhook:', webhookData)
+        console.log('Sending inactive member webhook:', webhookData, '->', mainWebhookUrl)
 
-        const webhookResponse = await fetch('https://hook.eu2.make.com/xxts2ffa6v4iqyvryr74gn1u9cbx1s25', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookData)
-        })
+        if (mainWebhookUrl) {
+          const webhookResponse = await fetch(mainWebhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(webhookData)
+          })
 
-        if (webhookResponse.ok) {
-          console.log(`Webhook sent successfully for member ${member.display_name}`)
+          if (webhookResponse.ok) {
+            console.log(`Webhook sent successfully for member ${member.display_name}`)
+          } else {
+            console.error(`Webhook failed for member ${member.user_id}:`, await webhookResponse.text())
+          }
         } else {
-          console.error(`Webhook failed for member ${member.user_id}:`, await webhookResponse.text())
+          console.warn('MAKE_MAIN_WEBHOOK_URL is not set')
         }
 
       } catch (memberError) {
