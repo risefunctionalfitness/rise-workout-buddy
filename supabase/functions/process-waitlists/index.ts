@@ -129,6 +129,50 @@ serve(async (req) => {
           }
 
           console.log(`✅ Promoted user ${user.user_id} from waitlist to registered for course ${course.title}`);
+          
+          // Send webhook notification for automatic promotion
+          try {
+            const webhookUrl = Deno.env.get('MAKE_WAITLIST_WEBHOOK_URL');
+            if (webhookUrl) {
+              // Get user profile and email for webhook
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('first_name, last_name, membership')
+                .eq('id', user.user_id)
+                .single();
+
+              const { data: { user: authUser } } = await supabase.auth.admin.getUserById(user.user_id);
+
+              const webhookData = {
+                event_type: 'waitlist_promoted',
+                course_id: course.id,
+                course_title: course.title,
+                user_id: user.user_id,
+                user_email: authUser?.email || 'unknown',
+                user_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown',
+                membership: profile?.membership || 'standard',
+                promoted_at: new Date().toISOString(),
+                promotion_type: 'automatic'
+              };
+
+              const webhookResponse = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(webhookData),
+              });
+
+              if (webhookResponse.ok) {
+                console.log(`📧 Webhook notification sent for user ${user.user_id} promotion`);
+              } else {
+                console.error(`❌ Failed to send webhook for user ${user.user_id}:`, webhookResponse.status);
+              }
+            }
+          } catch (webhookError) {
+            console.error(`❌ Error sending webhook for user ${user.user_id}:`, webhookError);
+          }
+          
           totalPromoted++;
         }
 
