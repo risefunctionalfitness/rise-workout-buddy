@@ -5,9 +5,14 @@ export const ScrollToTop = () => {
   const location = useLocation()
 
   useEffect(() => {
-    // Don't scroll to top on the main dashboard/overview page (/pro)
+    // Always scroll to top on route changes, except for the main dashboard overview
+    // The main dashboard tab switching will be handled separately
     if (location.pathname !== '/pro') {
-      window.scrollTo(0, 0)
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'smooth'
+      })
     }
   }, [location.pathname])
 

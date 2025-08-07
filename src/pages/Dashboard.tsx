@@ -75,6 +75,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     // Listen for custom tab change events
     const handleTabChange = (event: CustomEvent) => {
       setActiveTab(event.detail as DashboardTabType)
+      // Scroll to top when tab changes (except for home tab which is the overview)
+      if (event.detail !== 'home') {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'smooth'
+        })
+      }
     }
     
     // Listen for course registration changes
@@ -405,7 +413,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as DashboardTabType)}
+                onClick={() => {
+                  setActiveTab(tab.id as DashboardTabType)
+                  // Scroll to top when tab changes (except for home tab which is the overview)
+                  if (tab.id !== 'home') {
+                    window.scrollTo({
+                      top: 0,
+                      left: 0,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
                 className={`flex flex-col items-center gap-1 h-auto py-2 px-3 rounded-md transition-colors ${
                   activeTab === tab.id 
                     ? 'text-primary bg-primary/10' 
