@@ -48,6 +48,21 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     loadParticipants()
   }, [course.id])
 
+  // On admin view open, attempt a one-time dispatch of pending waitlist notifications
+  useEffect(() => {
+    if (isAdmin) {
+      supabase.functions.invoke('dispatch-waitlist-promotion-events', {
+        body: { source: 'admin_open_participants_list' }
+      }).then(({ data, error }) => {
+        if (error) {
+          console.warn('Initial dispatch call error:', error)
+        } else {
+          console.log('Initial dispatch call result:', data)
+        }
+      }).catch((e) => console.warn('Initial dispatch exception:', e))
+    }
+  }, [isAdmin])
+
   const loadParticipants = async () => {
     try {
       setLoading(true)
@@ -155,6 +170,17 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         console.error('Notify waitlist promotion exception:', notifyErr)
         toast.warning('Benachrichtigung konnte nicht gesendet werden')
       }
+
+      // Also trigger dispatcher to process any pending waitlist events (idempotent)
+      supabase.functions.invoke('dispatch-waitlist-promotion-events', {
+        body: { source: 'admin_manual_promotion' }
+      }).then(({ data, error }) => {
+        if (error) {
+          console.warn('Dispatch waitlist notifications error:', error)
+        } else {
+          console.log('Dispatch waitlist notifications result:', data)
+        }
+      }).catch((e) => console.warn('Dispatch waitlist notifications exception:', e))
 
       await loadParticipants()
     } catch (error) {
