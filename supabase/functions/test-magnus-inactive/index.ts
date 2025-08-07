@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     console.log('Sending webhook for Magnus:', magnusData)
 
     try {
-      const webhookResponse = await fetch('https://hook.eu2.make.com/o8rpbanyrp9asga16g4isj11ufw336wb', {
+      const webhookResponse = await fetch('https://hook.eu2.make.com/xxts2ffa6v4iqyvryr74gn1u9cbx1s25', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
