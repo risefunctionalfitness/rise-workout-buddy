@@ -583,6 +583,36 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_promotion_events: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          notified_at: string | null
+          payload: Json | null
+          registration_id: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          payload?: Json | null
+          registration_id: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          payload?: Json | null
+          registration_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_course_limits: {
         Row: {
           created_at: string

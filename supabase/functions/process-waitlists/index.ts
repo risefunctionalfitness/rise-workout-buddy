@@ -39,6 +39,9 @@ serve(async (req) => {
         id,
         title,
         max_participants,
+        course_date,
+        start_time,
+        end_time,
         course_registrations!inner(status)
       `)
       .gte('course_date', new Date().toISOString().split('T')[0])
@@ -134,25 +137,30 @@ serve(async (req) => {
           try {
             const webhookUrl = Deno.env.get('MAKE_WAITLIST_WEBHOOK_URL');
             if (webhookUrl) {
-              // Get user profile and email for webhook
+              // Get user profile and email for webhook (fixed columns and filter)
               const { data: profile } = await supabase
                 .from('profiles')
-                .select('first_name, last_name, membership')
-                .eq('id', user.user_id)
-                .single();
+                .select('display_name, membership_type')
+                .eq('user_id', user.user_id)
+                .maybeSingle();
 
               const { data: { user: authUser } } = await supabase.auth.admin.getUserById(user.user_id);
 
               const webhookData = {
                 event_type: 'waitlist_promoted',
+                promotion_type: 'automatic',
+                promoted_at: new Date().toISOString(),
+
                 course_id: course.id,
                 course_title: course.title,
+                course_date: (course as any).course_date ?? null,
+                start_time: (course as any).start_time ?? null,
+                end_time: (course as any).end_time ?? null,
+
                 user_id: user.user_id,
                 user_email: authUser?.email || 'unknown',
-                user_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown',
-                membership: profile?.membership || 'standard',
-                promoted_at: new Date().toISOString(),
-                promotion_type: 'automatic'
+                user_name: profile?.display_name || 'Unbekannt',
+                membership: profile?.membership_type || 'Member'
               };
 
               const webhookResponse = await fetch(webhookUrl, {

@@ -106,6 +106,23 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
 
       if (error) throw error
       toast.success('Teilnehmer entfernt')
+
+      // Trigger Dispatch of automatic waitlist promotion notifications (silent)
+      // This will send webhooks for newly promoted users created by the DB trigger.
+      supabase.functions.invoke('dispatch-waitlist-promotion-events', {
+        body: { source: 'admin_cancellation' }
+      })
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('Dispatch waitlist notifications error:', error)
+        } else {
+          console.log('Dispatch waitlist notifications result:', data)
+        }
+      })
+      .catch((e) => {
+        console.warn('Dispatch waitlist notifications exception:', e)
+      })
+
       await loadParticipants()
     } catch (error) {
       console.error('Error removing participant:', error)
