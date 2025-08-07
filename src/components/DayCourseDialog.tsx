@@ -360,20 +360,20 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
             </div>
           ) : (
             courses.map((course) => (
-              <div key={course.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+              <div key={course.id} className="bg-card rounded-lg p-3 border border-border shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900 text-sm">
+                      <h3 className="font-semibold text-card-foreground text-sm">
                         {course.title}
                       </h3>
                       {course.strength_exercise && (
-                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
                           {course.strength_exercise}
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-muted-foreground">
                       {formatTime(course.start_time)} - {formatTime(course.end_time)} • {course.trainer}
                     </div>
                   </div>
@@ -414,15 +414,15 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           )}
 
           {userMembershipType !== '10er Karte' && (
-            <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+            <div className="bg-card rounded-lg p-3 border border-border shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-900 text-sm">
+                    <h3 className="font-semibold text-card-foreground text-sm">
                       Open Gym
                     </h3>
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-muted-foreground">
                     QR-Code scannen zum anmelden
                   </div>
                 </div>
