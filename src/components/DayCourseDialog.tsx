@@ -184,6 +184,17 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           title: "Abgemeldet",
           description: "Du wurdest erfolgreich vom Kurs abgemeldet."
         })
+
+        // Trigger dispatcher to process any pending waitlist promotion events (idempotent)
+        supabase.functions.invoke('dispatch-waitlist-promotion-events', {
+          body: { source: 'user_cancellation_day_dialog' }
+        }).then(({ data, error }) => {
+          if (error) {
+            console.warn('Dispatch waitlist notifications error:', error)
+          } else {
+            console.log('Dispatch waitlist notifications result:', data)
+          }
+        }).catch((e) => console.warn('Dispatch waitlist notifications exception:', e))
       } else {
         // Check if user can register (limits and credits)
         const { data: canRegister, error: checkError } = await supabase

@@ -331,6 +331,16 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       if (error) throw error
 
       toast.success('Anmeldung erfolgreich storniert')
+      // Trigger dispatcher to process any pending waitlist promotion events (idempotent)
+      supabase.functions.invoke('dispatch-waitlist-promotion-events', {
+        body: { source: 'user_cancellation' }
+      }).then(({ data, error }) => {
+        if (error) {
+          console.warn('Dispatch waitlist notifications error:', error)
+        } else {
+          console.log('Dispatch waitlist notifications result:', data)
+        }
+      }).catch((e) => console.warn('Dispatch waitlist notifications exception:', e))
       await loadCourses()
       if (selectedCourse?.id === courseId) {
         await loadParticipants(courseId)
