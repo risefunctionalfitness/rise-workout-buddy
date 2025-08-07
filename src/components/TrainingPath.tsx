@@ -126,19 +126,28 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
   useEffect(() => {
     const loadUserMembershipType = async () => {
       try {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('membership_type')
           .eq('user_id', user.id)
           .single()
 
-        setUserMembershipType(profile?.membership_type || null)
+        if (error) {
+          console.error('Error loading user membership type:', error)
+          return
+        }
+
+        console.log('User membership type loaded:', profile?.membership_type)
+        setUserMembershipType(profile?.membership_type || 'Basic Member') // Default to Basic Member
       } catch (error) {
         console.error('Error loading user membership type:', error)
+        setUserMembershipType('Basic Member') // Default fallback
       }
     }
 
-    loadUserMembershipType()
+    if (user?.id) {
+      loadUserMembershipType()
+    }
   }, [user.id])
 
   const currentMonth = new Date().toLocaleDateString('de-DE', { 
