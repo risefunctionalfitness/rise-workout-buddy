@@ -11,6 +11,7 @@ interface InactiveMember {
   access_code: string | null
   membership_type: string | null
   last_activity: string | null
+  email: string | null
 }
 
 Deno.serve(async (req) => {
@@ -31,10 +32,16 @@ Deno.serve(async (req) => {
     const twentyOneDaysAgo = new Date()
     twentyOneDaysAgo.setDate(twentyOneDaysAgo.getDate() - 21)
 
-    // Get all active members
+    // Get all active members with their emails from auth.users
     const { data: activeMembers, error: membersError } = await supabase
       .from('profiles')
-      .select('user_id, display_name, access_code, membership_type, last_login_at')
+      .select(`
+        user_id, 
+        display_name, 
+        access_code, 
+        membership_type, 
+        last_login_at
+      `)
       .eq('status', 'active')
 
     if (membersError) {
@@ -51,6 +58,10 @@ Deno.serve(async (req) => {
 
     // Check each member's activity
     for (const member of activeMembers || []) {
+      // Get user email from auth.users
+      const { data: userData } = await supabase.auth.admin.getUserById(member.user_id)
+      const email = userData?.user?.email || null
+
       // Check for recent course registrations
       const { data: courseRegistrations } = await supabase
         .from('course_registrations')
@@ -78,7 +89,8 @@ Deno.serve(async (req) => {
           display_name: member.display_name,
           access_code: member.access_code,
           membership_type: member.membership_type,
-          last_activity: member.last_login_at
+          last_activity: member.last_login_at,
+          email: email
         })
       }
     }
@@ -108,6 +120,7 @@ Deno.serve(async (req) => {
         const webhookData = {
           user_id: member.user_id,
           name: member.display_name || 'Unbekannt',
+          email: member.email || 'Unbekannt',
           access_code: member.access_code || '',
           membership_type: member.membership_type || 'Member',
           last_activity: member.last_activity,

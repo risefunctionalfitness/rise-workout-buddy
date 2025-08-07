@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const magnusData = {
       user_id: 'a5ffd9bf-7f8a-41ea-88eb-234277a6a52b',
       name: 'Magnus',
+      email: 'magnusgottinger@gmail.com',
       access_code: '2001',
       membership_type: 'Wellpass',
       last_activity: '2025-08-07T13:57:43.139324+00:00',
