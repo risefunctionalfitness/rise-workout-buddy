@@ -19,6 +19,7 @@ import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
 import { RiseHeader } from "@/components/RiseHeader";
 import WorkoutManagement from "./WorkoutManagement";
+import TestMagnusInactive from "@/components/TestMagnusInactive";
 
 interface Member {
   id: string;
@@ -685,7 +686,12 @@ export default function Admin() {
   const renderPageContent = () => {
     switch (activePage) {
       case 'home':
-        return <AdminStats />;
+        return (
+          <div className="space-y-6">
+            <AdminStats />
+            <TestMagnusInactive />
+          </div>
+        );
       case 'members':
         return renderMembersContent();
       case 'courses':
