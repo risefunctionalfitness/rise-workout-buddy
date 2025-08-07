@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MembershipBadge } from "@/components/MembershipBadge"
-import { Trash2, Plus } from "lucide-react"
+import { Trash2, Plus, ArrowUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { AdminParticipantManager } from "@/components/AdminParticipantManager"
@@ -113,6 +113,22 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     }
   }
 
+  const promoteFromWaitlist = async (registrationId: string, participantName: string) => {
+    try {
+      const { error } = await supabase
+        .from('course_registrations')
+        .update({ status: 'registered' })
+        .eq('id', registrationId)
+
+      if (error) throw error
+      toast.success(`${participantName} zum Kurs hinzugefügt`)
+      await loadParticipants()
+    } catch (error) {
+      console.error('Error promoting participant:', error)
+      toast.error('Fehler beim Hinzufügen zum Kurs')
+    }
+  }
+
   const registeredParticipants = participants.filter(p => p.status === 'registered')
   const waitlistedParticipants = participants.filter(p => p.status === 'waitlisted' || p.status === 'waitlist')
 
@@ -151,7 +167,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">{course.title}</CardTitle>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-green-500 text-white">
+              <Badge variant="secondary" className={`text-white ${registeredParticipants.length > course.max_participants ? 'bg-orange-500' : 'bg-green-500'}`}>
                 {registeredParticipants.length}/{course.max_participants} angemeldet
               </Badge>
               {waitlistedParticipants.length > 0 && (
@@ -200,18 +216,56 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
             )}
           </div>
 
-          {/* Waitlist Section - Only show count, not names */}
+          {/* Waitlist Section */}
           {waitlistedParticipants.length > 0 && (
             <div>
               <h3 className="font-medium text-sm mb-3">Warteliste</h3>
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  {waitlistedParticipants.length} Person(en) auf der Warteliste
-                </p>
-                <p className="text-xs text-yellow-600 mt-1">
-                  Namen werden aus Datenschutzgründen nicht angezeigt
-                </p>
-              </div>
+              {isAdmin ? (
+                <div className="space-y-3">
+                  {waitlistedParticipants.map((participant) => (
+                    <div key={participant.id} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg min-h-[60px]">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{participant.display_name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(participant.registered_at).toLocaleDateString('de-DE')}
+                        </span>
+                        <MembershipBadge type={participant.membership_type as any} />
+                        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                          Wartend
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => promoteFromWaitlist(participant.id, participant.display_name)}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <ArrowUp className="h-4 w-4 mr-1" />
+                          Zum Kurs hinzufügen
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeParticipant(participant.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    {waitlistedParticipants.length} Person(en) auf der Warteliste
+                  </p>
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Namen werden aus Datenschutzgründen nicht angezeigt
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
