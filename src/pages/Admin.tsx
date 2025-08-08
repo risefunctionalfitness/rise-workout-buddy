@@ -802,13 +802,6 @@ export default function Admin() {
                     Dieses System verarbeitet ausstehende Waitlist-Promotion Events und sendet sie als Webhooks an Make.com. 
                     Das passiert normalerweise automatisch, aber kann hier manuell ausgelöst werden.
                   </p>
-                  <Button 
-                    onClick={processWaitlistWebhooks}
-                    disabled={isProcessingWebhooks}
-                    variant="outline"
-                  >
-                    {isProcessingWebhooks ? "Verarbeite..." : "Waitlist Webhooks Verarbeiten"}
-                  </Button>
                 </div>
               </CardContent>
             </Card>
