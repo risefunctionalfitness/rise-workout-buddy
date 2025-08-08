@@ -24,6 +24,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const [nickname, setNickname] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [userId, setUserId] = useState<string>("")
+  const [membershipType, setMembershipType] = useState<string | null>(null)
 
   useEffect(() => {
     loadProfile()
@@ -46,6 +47,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         setDisplayName(profile.display_name || "")
         setNickname(profile.nickname || profile.display_name || "")
         setAvatarUrl(profile.avatar_url)
+        setMembershipType(profile.membership_type || null)
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -62,7 +64,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         .upsert({
           user_id: user.id,
           display_name: displayName,
-          nickname: nickname
+          nickname: nickname,
+          membership_type: membershipType ?? undefined
         }, {
           onConflict: 'user_id'
         })
