@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client"
 import { Logo } from "@/components/Logo"
 
 interface RiseHeaderProps {
-  onProVersionClick?: () => void
   showNavigation?: boolean
   onLogout?: () => void
   showAdminAccess?: boolean
@@ -16,7 +15,6 @@ interface RiseHeaderProps {
 }
 
 export const RiseHeader: React.FC<RiseHeaderProps> = ({ 
-  onProVersionClick,
   showNavigation = false,
   onLogout,
   showAdminAccess = false,
@@ -46,7 +44,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
           .select('role')
           .eq('user_id', user.id)
           .eq('role', 'admin')
-          .single()
+          .maybeSingle()
 
         if (error && error.code !== 'PGRST116') {
           console.error('Error checking admin role:', error)
@@ -93,14 +91,6 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
           </Button>
         )}
         
-        {onProVersionClick && (
-          <Button 
-            onClick={onProVersionClick}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            Zur Pro-Version
-          </Button>
-        )}
         
         {(showNavigation || (showAdminAccess && isAdmin)) && (
           <Button 
