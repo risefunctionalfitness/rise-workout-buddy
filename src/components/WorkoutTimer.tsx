@@ -14,7 +14,7 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
     { id: 'fortime', title: 'For Time', route: '/workout-timer/fortime' },
     { id: 'amrap', title: 'AMRAP', route: '/workout-timer/amrap' },
     { id: 'emom', title: 'EMOM', route: '/workout-timer/emom' },
-    { id: 'tabata', title: 'Tabata', route: '/workout-timer/tabata' }
+    { id: 'tabata', title: 'TABATA', route: '/workout-timer/tabata' }
   ]
 
   if (embedded) {

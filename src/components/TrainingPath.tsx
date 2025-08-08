@@ -255,9 +255,9 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
         
         {userMembershipType === '10er Karte' ? (
           <CreditsCounter user={user} />
-        ) : (
+        ) : userMembershipType ? (
           <GymCodeDisplay />
-        )}
+        ) : null}
         
         <WhatsAppButton />
       </div>
