@@ -1,6 +1,6 @@
 {
-  "name": "RISE Workout Buddy",
-  "short_name": "RISE",
+  "name": "RISE App",
+  "short_name": "RISE App",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,12 +9,12 @@
   "description": "Digitaler Trainingsbegleiter für RISE Functional Fitness",
   "icons": [
     {
-      "src": "/lovable-uploads/0b5d2f27-b47b-4048-bf89-c694f5f02606.png",
+      "src": "/lovable-uploads/198f00f6-b784-40cf-8fd4-5b44ad87605a.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/lovable-uploads/42ff74f1-fbb3-426c-b567-4d43950e5543.png",
+      "src": "/lovable-uploads/198f00f6-b784-40cf-8fd4-5b44ad87605a.png",
       "sizes": "512x512",
       "type": "image/png"
     }
