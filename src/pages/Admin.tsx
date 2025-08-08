@@ -56,7 +56,7 @@ export default function Admin() {
   const membersPerPage = 10;
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isProcessingWebhooks, setIsProcessingWebhooks] = useState(false);
+  
 
   useEffect(() => {
     // Set up auth state listener
@@ -383,30 +383,6 @@ export default function Admin() {
     }
   };
 
-  const processWaitlistWebhooks = async () => {
-    setIsProcessingWebhooks(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('dispatch-waitlist-promotion-events', {
-        body: { limit: 50 }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Webhook-Verarbeitung abgeschlossen",
-        description: `${data.processed} Events verarbeitet, ${data.succeeded} erfolgreich gesendet`,
-      });
-    } catch (error) {
-      console.error('Error processing webhooks:', error);
-      toast({
-        title: "Fehler",
-        description: "Fehler beim Verarbeiten der Webhooks",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessingWebhooks(false);
-    }
-  };
 
   if (loading) {
     return (
