@@ -101,8 +101,15 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       const codeReader = new BrowserMultiFormatReader()
       codeReaderRef.current = codeReader
 
-      const controls = await codeReader.decodeFromVideoDevice(
-        undefined,
+      const controls = await codeReader.decodeFromConstraints(
+        {
+          audio: false,
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        },
         videoRef.current!,
         (result, err) => {
           if (result) {
@@ -198,7 +205,13 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
           {!isNative && (
             <div className="rounded-md overflow-hidden bg-muted">
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto" />
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-64 object-cover"
+              />
             </div>
           )}
           

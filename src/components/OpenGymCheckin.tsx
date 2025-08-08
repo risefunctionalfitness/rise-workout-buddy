@@ -15,6 +15,7 @@ export const OpenGymCheckin: React.FC<OpenGymCheckinProps> = ({
   const handleScanSuccess = (result: string) => {
     // QR-Code wurde erfolgreich gescannt
     onCheckinComplete()
+    window.dispatchEvent(new CustomEvent("open-gym-checkin-success"))
     onOpenChange(false)
   }
 

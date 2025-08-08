@@ -100,6 +100,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     }
   }, [user.id])
 
+  useEffect(() => {
+    const handleCheckin = () => {
+      generateTrainingDays()
+    }
+    window.addEventListener('open-gym-checkin-success', handleCheckin)
+    return () => {
+      window.removeEventListener('open-gym-checkin-success', handleCheckin)
+    }
+  }, [])
+
   const loadUserProfile = async () => {
     try {
       const { data: profile } = await supabase
