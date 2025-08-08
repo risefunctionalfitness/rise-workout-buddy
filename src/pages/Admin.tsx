@@ -19,7 +19,7 @@ import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
 import { RiseHeader } from "@/components/RiseHeader";
 import WorkoutManagement from "./WorkoutManagement";
-import TestMagnusInactive from "@/components/TestMagnusInactive";
+
 import { useToast } from "@/hooks/use-toast";
 
 interface Member {
@@ -788,7 +788,7 @@ export default function Admin() {
         return (
           <div className="space-y-6">
             <AdminStats />
-            <TestMagnusInactive />
+            
             <Card>
               <CardHeader>
                 <CardTitle>Waitlist Webhook System</CardTitle>
