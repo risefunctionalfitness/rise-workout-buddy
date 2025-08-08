@@ -98,18 +98,28 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const startWebScan = async () => {
     try {
       setScanning(true)
+
+      // 1) Get camera stream explicitly so the preview is visible
+      const constraints: MediaStreamConstraints = {
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      }
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.setAttribute('playsinline', 'true')
+        try { await videoRef.current.play() } catch {}
+      }
+
+      // 2) Start ZXing decoder using the already playing video element
       const codeReader = new BrowserMultiFormatReader()
       codeReaderRef.current = codeReader
 
-      const controls = await codeReader.decodeFromConstraints(
-        {
-          audio: false,
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }
-        },
+      const controls = await codeReader.decodeFromVideoElement(
         videoRef.current!,
         (result, err) => {
           if (result) {
