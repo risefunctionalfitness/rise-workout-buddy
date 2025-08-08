@@ -101,12 +101,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   }, [user.id])
 
   useEffect(() => {
-    const handleCheckin = () => {
-      generateTrainingDays()
+    const handleCheckin = (e: Event) => {
+      const ce = e as CustomEvent<{ date?: string; type?: string }>
+      const dateStr = ce.detail?.date
+      if (dateStr) {
+        const d = new Date(dateStr)
+        const dayNumber = d.getDate()
+        let incremented = false
+        setTrainingDays(prev => {
+          const idx = prev.findIndex(day => day.dayNumber === dayNumber)
+          if (idx === -1) return prev
+          const hadSession = !!prev[idx].trainingSession
+          const updated = prev.map(day =>
+            day.dayNumber === dayNumber
+              ? {
+                  ...day,
+                  trainingSession: prev[idx].trainingSession ?? {
+                    type: 'free_training',
+                    id: 'local'
+                  }
+                }
+              : day
+          )
+          if (!hadSession) incremented = true
+          return updated
+        })
+        if (incremented) {
+          setTrainingCount(prev => prev + 1)
+        }
+      } else {
+        // Fallback: just refresh from DB
+        generateTrainingDays()
+      }
+      // In all cases, reconcile with DB shortly after
+      setTimeout(() => generateTrainingDays(), 500)
     }
-    window.addEventListener('open-gym-checkin-success', handleCheckin)
+    window.addEventListener('open-gym-checkin-success', handleCheckin as EventListener)
     return () => {
-      window.removeEventListener('open-gym-checkin-success', handleCheckin)
+      window.removeEventListener('open-gym-checkin-success', handleCheckin as EventListener)
     }
   }, [])
 

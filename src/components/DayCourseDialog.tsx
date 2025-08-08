@@ -330,8 +330,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
       setShowQRScanner(false)
       
-      // Dispatch events to update other components
-      window.dispatchEvent(new CustomEvent('trainingSessionAdded'))
+      // Dispatch events to update other components immediately
+      window.dispatchEvent(
+        new CustomEvent('open-gym-checkin-success', {
+          detail: { date, type: 'free_training' }
+        })
+      )
     } catch (error) {
       console.error('Error creating training session:', error)
       toast({
