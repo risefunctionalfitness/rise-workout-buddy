@@ -409,7 +409,7 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           <div className="flex items-center mb-4">
             <Users className="h-8 w-8 text-primary" />
             <div className="ml-4">
-              <p className="text-lg font-medium text-gray-900">Anzahl Mitgliedschaften je Kategorie</p>
+              <p className="text-lg font-medium text-foreground">Anzahl Mitgliedschaften je Kategorie</p>
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

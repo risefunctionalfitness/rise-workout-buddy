@@ -51,7 +51,7 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
         <Button
           variant="ghost"
           onClick={() => navigate("/pro")}
-          className="mb-4 text-[#B81243] hover:text-[#9A0F39] hover:bg-[#B81243]/10"
+          className="mb-4 text-white hover:text-white hover:bg-white/10"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Zurück

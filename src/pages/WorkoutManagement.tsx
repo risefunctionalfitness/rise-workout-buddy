@@ -38,7 +38,9 @@ interface BodybuildingWorkout {
   created_at: string
 }
 
-const WorkoutManagement = () => {
+interface WorkoutManagementProps { hideHeader?: boolean }
+
+const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = false }) => {
   const navigate = useNavigate()
   const [crossfitWorkouts, setCrossfitWorkouts] = useState<CrossfitWorkout[]>([])
   const [bodybuildingWorkouts, setBodybuildingWorkouts] = useState<BodybuildingWorkout[]>([])
@@ -202,7 +204,7 @@ const WorkoutManagement = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <RiseHeader showNavigation={true} onLogout={handleLogout} />
+      {!hideHeader && <RiseHeader showNavigation={true} onLogout={handleLogout} />}
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">

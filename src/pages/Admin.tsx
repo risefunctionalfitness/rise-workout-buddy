@@ -780,7 +780,7 @@ export default function Admin() {
       case 'credits':
         return <AdminCreditRecharge />;
       case 'workouts':
-        return <WorkoutManagement />;
+        return <WorkoutManagement hideHeader />;
       default:
         return <AdminStats />;
     }

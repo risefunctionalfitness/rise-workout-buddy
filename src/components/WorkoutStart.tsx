@@ -170,7 +170,7 @@ export const WorkoutStart: React.FC = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/workout-timer")}
-          className="mb-4"
+          className="mb-4 text-white hover:text-white hover:bg-white/10"
         >
           ← Zurück
         </Button>
@@ -186,10 +186,10 @@ export const WorkoutStart: React.FC = () => {
                 <Button
                   onClick={handleStart}
                   size="lg"
-                  className="w-40 h-40 rounded-full bg-primary hover:bg-primary/90 border-4 border-primary"
+                  className="w-40 h-40 rounded-full bg-[#B81243] hover:bg-[#B81243]/90 border-4 border-[#B81243]"
                 >
-                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center ml-2">
-                    <div className="w-0 h-0 border-l-8 border-l-primary-foreground border-t-6 border-t-transparent border-b-6 border-b-transparent ml-1"></div>
+                  <div className="w-20 h-20 bg-[#B81243] rounded-full flex items-center justify-center ml-2">
+                    <div className="w-0 h-0 border-l-8 border-l-white border-t-6 border-t-transparent border-b-6 border-b-transparent ml-1"></div>
                   </div>
                 </Button>
               </div>
