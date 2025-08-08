@@ -789,22 +789,6 @@ export default function Admin() {
           <div className="space-y-6">
             <AdminStats />
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Waitlist Webhook System</CardTitle>
-                <CardDescription>
-                  Verarbeitung ausstehender Waitlist-Promotion Events für Make.com
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Dieses System verarbeitet ausstehende Waitlist-Promotion Events und sendet sie als Webhooks an Make.com. 
-                    Das passiert normalerweise automatisch, aber kann hier manuell ausgelöst werden.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         );
       case 'members':
