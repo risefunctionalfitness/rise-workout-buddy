@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { Capacitor } from "@capacitor/core"
+import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser"
 import { BarcodeScanner } from "@capacitor-community/barcode-scanner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -22,28 +24,39 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
+  const controlsRef = useRef<IScannerControls | null>(null)
+  const isNative = Capacitor.isNativePlatform()
+
   useEffect(() => {
     if (open) {
       startScan()
     } else {
-      stopScan()
+      stopAll()
     }
 
     return () => {
-      stopScan()
+      stopAll()
     }
   }, [open])
+
 
   const startScan = async () => {
     try {
       setError(null)
-      setScanning(true)
 
-      // Check permission
+      // Web/PWA fallback
+      if (!isNative) {
+        await startWebScan()
+        return
+      }
+
+      // Native (Capacitor) scanning
+      setScanning(true)
       const status = await BarcodeScanner.checkPermission({ force: true })
       
       if (status.granted) {
-        // Make background of WebView transparent
         BarcodeScanner.hideBackground()
         
         const result = await BarcodeScanner.startScan()
@@ -68,9 +81,10 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         variant: "destructive"
       })
     } finally {
-      setScanning(false)
+      if (isNative) setScanning(false)
     }
   }
+
 
   const stopScan = async () => {
     try {
@@ -81,8 +95,59 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     }
   }
 
+  const startWebScan = async () => {
+    try {
+      setScanning(true)
+      const codeReader = new BrowserMultiFormatReader()
+      codeReaderRef.current = codeReader
+
+      const controls = await codeReader.decodeFromVideoDevice(
+        undefined,
+        videoRef.current!,
+        (result, err) => {
+          if (result) {
+            handleScanResult(result.getText())
+          }
+          // ignore err (not found) to keep scanning
+        }
+      )
+      controlsRef.current = controls
+    } catch (err) {
+      console.error("Error starting web scan:", err)
+      setError("Scanner konnte im Browser nicht gestartet werden")
+      toast({
+        title: "Scanner-Fehler",
+        description: "QR-Code-Scanner konnte im Browser nicht gestartet werden.",
+        variant: "destructive"
+      })
+      setScanning(false)
+    }
+  }
+
+  const stopWebScan = () => {
+    try {
+      controlsRef.current?.stop()
+      codeReaderRef.current = null
+      const stream = videoRef.current?.srcObject as MediaStream | null
+      stream?.getTracks().forEach((t) => t.stop())
+      if (videoRef.current) videoRef.current.srcObject = null
+    } catch (err) {
+      console.error("Error stopping web scan:", err)
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  const stopAll = async () => {
+    if (isNative) {
+      await stopScan()
+    }
+    stopWebScan()
+  }
+
   const handleScanResult = (content: string) => {
     if (content.trim() === expectedText) {
+      stopAll()
       onScanSuccess(content)
       onOpenChange(false)
       toast({
@@ -100,7 +165,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   }
 
   const handleClose = () => {
-    stopScan()
+    stopAll()
     onOpenChange(false)
   }
 
@@ -130,8 +195,15 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
               Scanner läuft... Richte die Kamera auf den QR-Code.
             </div>
           )}
+
+          {!isNative && (
+            <div className="rounded-md overflow-hidden bg-muted">
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto" />
+            </div>
+          )}
           
           <div className="flex gap-2 justify-center">
+
             <Button 
               variant="outline" 
               onClick={handleClose}

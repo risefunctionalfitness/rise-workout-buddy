@@ -1,10 +1,10 @@
-const CACHE_NAME = 'rise-app-cache-v1';
+const CACHE_NAME = 'rise-app-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/lovable-uploads/0b5d2f27-b47b-4048-bf89-c694f5f02606.png',
-  '/lovable-uploads/42ff74f1-fbb3-426c-b567-4d43950e5543.png'
+  '/lovable-uploads/8a13e880-4305-4f6d-bb4a-1f2b4650dd36.png',
+  '/lovable-uploads/e9739c50-a4ab-45ca-86ca-3aef0ad19461.png'
 ];
 
 self.addEventListener('install', (event) => {
