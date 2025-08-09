@@ -59,11 +59,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const updates = {
-        display_name: displayName,
-        nickname: nickname,
-        membership_type: membershipType ?? null,
-      }
+      const updates = { nickname }
 
       // Update existing profile; if none updated, insert a new one (avoid upsert on non-unique column)
       const { data: updated, error: updateError } = await supabase
@@ -89,7 +85,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       console.error('Error saving profile:', error)
       toast({
         title: "Fehler",
-        description: "Profil konnte nicht gespeichert werden.",
+        description: (error as any)?.message ?? "Profil konnte nicht gespeichert werden.",
         variant: "destructive"
       })
     }
