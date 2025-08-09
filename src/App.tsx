@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,25 +29,35 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Auth />} />
-            <Route path="/pro" element={<ProVersion />} />
-            <Route path="/pro/strength-values" element={<StrengthValues />} />
-            <Route path="/pro/exercises" element={<ExerciseSelection />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/workout-timer" element={<WorkoutTimer />} />
-            <Route path="/workout-timer/fortime" element={<ForTimeTimer />} />
-            <Route path="/workout-timer/amrap" element={<AmrapTimer />} />
-            <Route path="/workout-timer/emom" element={<EmomTimer />} />
-            <Route path="/workout-timer/tabata" element={<TabataTimer />} />
-            <Route path="/workout-timer/start" element={<WorkoutStart />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/workouts" element={<WorkoutManagement />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        {/* Globaler Wrapper mit iOS Safe Area Insets, plus Bottom-Navigation-Puffer */}
+        <div
+          className="min-h-screen bg-background flex flex-col"
+          style={{
+            paddingTop: "env(safe-area-inset-top)",
+            // 4rem (~64px) als Puffer für die Bottom-Navigation + iOS Home Indicator
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 4rem)",
+          }}
+        >
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Auth />} />
+              <Route path="/pro" element={<ProVersion />} />
+              <Route path="/pro/strength-values" element={<StrengthValues />} />
+              <Route path="/pro/exercises" element={<ExerciseSelection />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/workout-timer" element={<WorkoutTimer />} />
+              <Route path="/workout-timer/fortime" element={<ForTimeTimer />} />
+              <Route path="/workout-timer/amrap" element={<AmrapTimer />} />
+              <Route path="/workout-timer/emom" element={<EmomTimer />} />
+              <Route path="/workout-timer/tabata" element={<TabataTimer />} />
+              <Route path="/workout-timer/start" element={<WorkoutStart />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/workouts" element={<WorkoutManagement />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
