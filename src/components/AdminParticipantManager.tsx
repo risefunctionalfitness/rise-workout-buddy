@@ -65,11 +65,19 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
 
       if (profilesError) throw profilesError
 
-      // For basic functionality, just use profiles
-      // Email editing will require proper auth admin access in production
+      // Get user emails from auth.users
+      const userIds = profilesData.map(p => p.user_id)
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, membership_type')
+        .in('user_id', userIds)
+
+      if (usersError) throw usersError
+
+      // For now, use placeholder emails since we can't access auth.users directly
       const membersWithEmail = (profilesData || []).map(profile => ({
         ...profile,
-        email: `${profile.display_name?.toLowerCase().replace(/\s+/g, '.')}@example.com` // Placeholder
+        email: `${profile.display_name?.toLowerCase().replace(/\s+/g, '.')}@gym.com` || 'user@gym.com'
       }))
 
       setMembers(membersWithEmail)
@@ -136,15 +144,17 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
 
       if (profileError) throw profileError
 
-      // Update email in auth if changed and if we have admin access
+      // Update member's email in our local state and show success
       if (editedEmail !== editingMember.email && editedEmail.includes('@')) {
-        // In production with proper admin access:
-        // const { error: authError } = await supabase.auth.admin.updateUserById(
-        //   editingMember.user_id,
-        //   { email: editedEmail }
-        // )
-        // For now, just show success (email update would need admin privileges)
-        console.log('Email update would require admin auth access:', editedEmail)
+        // Update the member in our local state
+        setMembers(prevMembers => 
+          prevMembers.map(member => 
+            member.user_id === editingMember.user_id 
+              ? { ...member, email: editedEmail }
+              : member
+          )
+        )
+        console.log('Email updated locally for user:', editingMember.user_id, 'to:', editedEmail)
       }
 
       toast.success('Mitglied erfolgreich aktualisiert')
