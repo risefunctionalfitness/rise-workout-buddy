@@ -163,7 +163,15 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   }
 
   const handleScanResult = (content: string) => {
-    if (content.trim() === expectedText) {
+    console.log("QR Code gescannt:", content)
+    console.log("Erwartet:", expectedText)
+    
+    // Clean up both strings for comparison
+    const cleanContent = content.trim().toLowerCase()
+    const cleanExpected = expectedText.trim().toLowerCase()
+    
+    // Check if content contains or matches the expected text
+    if (cleanContent === cleanExpected || cleanContent.includes(cleanExpected.replace(/\s+/g, ''))) {
       stopAll()
       onScanSuccess(content)
       onOpenChange(false)
@@ -173,9 +181,10 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         variant: "default"
       })
     } else {
+      console.log("QR-Code Inhalt stimmt nicht überein")
       toast({
         title: "Falscher QR-Code",
-        description: "Bitte scanne den korrekten Open Gym QR-Code.",
+        description: `Gescannt: "${content}" - Erwartet: "${expectedText}"`,
         variant: "destructive"
       })
     }
