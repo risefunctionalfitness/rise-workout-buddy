@@ -50,15 +50,15 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
       <div className="p-4">
         <Button
           variant="ghost"
-          onClick={() => navigate("/pro")}
-          className="mb-4 text-white hover:text-white hover:bg-white/10"
+          onClick={() => navigate(-1)}
+          className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Zurück
         </Button>
       </div>
       
-      <div className="flex-1 flex items-center justify-center p-6 pb-20" style={{ marginTop: '-1cm' }}>
+      <div className="flex-1 flex items-center justify-center p-6 pb-20">
         <div className="max-w-md w-full">
           <div className="text-center mb-4">
             <h1 className="text-6xl font-bold mb-1">WOD</h1>

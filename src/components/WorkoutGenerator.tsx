@@ -39,6 +39,7 @@ interface BodybuildingWorkout {
 }
 
 export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
+  const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [workoutType, setWorkoutType] = useState<WorkoutType>(null)
   const [crossfitType, setCrossfitType] = useState<CrossfitType>(null)
@@ -276,15 +277,13 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Back button for all steps except step 1 */}
-      {step !== 1 && (
-        <div className="px-4 pt-4 pb-2">
-          <Button variant="ghost" onClick={goBack} size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Zurück
-          </Button>
-        </div>
-      )}
+      {/* Back button top-left */}
+      <div className="px-4 pt-4 pb-2">
+        <Button variant="ghost" onClick={() => (step === 1 ? navigate(-1) : goBack())} size="sm">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
+        </Button>
+      </div>
       
       <div className="text-center py-6">
         <h1 className="text-3xl font-bold text-foreground">
