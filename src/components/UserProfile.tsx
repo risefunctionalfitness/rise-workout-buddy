@@ -59,18 +59,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: user.id,
-          display_name: displayName,
-          nickname: nickname,
-          membership_type: membershipType ?? undefined
-        }, {
-          onConflict: 'user_id'
-        })
+      const updates = {
+        display_name: displayName,
+        nickname: nickname,
+        membership_type: membershipType ?? null,
+      }
 
-      if (error) throw error
+      // Update existing profile; if none updated, insert a new one (avoid upsert on non-unique column)
+      const { data: updated, error: updateError } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', user.id)
+        .select('id')
+
+      if (updateError) throw updateError
+
+      if (!updated || updated.length === 0) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ user_id: user.id, ...updates })
+        if (insertError) throw insertError
+      }
 
       toast({
         title: "Profil gespeichert",
