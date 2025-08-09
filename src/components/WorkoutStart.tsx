@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Play, Pause, RotateCcw } from "lucide-react"
+import { Play, Pause, RotateCcw, ArrowLeft } from "lucide-react"
 import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
 
 interface LocationState {
@@ -29,6 +29,7 @@ export const WorkoutStart: React.FC = () => {
   const [currentRound, setCurrentRound] = useState(1)
   const [roundTime, setRoundTime] = useState(0)
   const [isWorkPhase, setIsWorkPhase] = useState(true)
+  const [isFinished, setIsFinished] = useState(false)
 
   // Create beep sound using Web Audio API
   const playBeep = (frequency: number = 800, duration: number = 200) => {
@@ -95,10 +96,11 @@ export const WorkoutStart: React.FC = () => {
             return newRoundTime
           })
           
-          if (currentRound > settings.rounds!) {
-            setIsRunning(false)
-            playBeep(600, 1000) // End sound
-          }
+            if (currentRound > settings.rounds!) {
+              setIsRunning(false)
+              setIsFinished(true)
+              playBeep(600, 1000) // End sound
+            }
         } else if (type === 'tabata') {
           setRoundTime(prev => {
             const newRoundTime = prev + 1
@@ -120,15 +122,18 @@ export const WorkoutStart: React.FC = () => {
             return newRoundTime
           })
           
-          if (currentRound > settings.rounds!) {
-            setIsRunning(false)
-            playBeep(600, 1000) // End sound
-          }
+            if (currentRound > settings.rounds!) {
+              setIsRunning(false)
+              setIsFinished(true)
+              playBeep(600, 1000) // End sound
+            }
         } else if (type === 'fortime' && settings.timeCap && workoutTime >= settings.timeCap * 60) {
           setIsRunning(false)
+          setIsFinished(true)
           playBeep(600, 1000) // End sound
         } else if (type === 'amrap' && settings.minutes && workoutTime >= settings.minutes * 60) {
           setIsRunning(false)
+          setIsFinished(true)
           playBeep(600, 1000) // End sound
         }
       }, 1000)
@@ -154,6 +159,7 @@ export const WorkoutStart: React.FC = () => {
     setCurrentRound(1)
     setRoundTime(0)
     setIsWorkPhase(true)
+    setIsFinished(false)
   }
 
   const formatTime = (seconds: number) => {
@@ -170,9 +176,10 @@ export const WorkoutStart: React.FC = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/workout-timer")}
-          className="mb-4 text-white hover:text-white hover:bg-white/10"
+          className="mb-4"
         >
-          ← Zurück
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
         </Button>
       </div>
       

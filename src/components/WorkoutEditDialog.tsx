@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Edit2, Save, X } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { EXERCISES, ExerciseItem } from "@/data/exercises"
 
 interface CrossfitWorkout {
   id: string
@@ -51,6 +52,22 @@ export const WorkoutEditDialog = ({ workout, workoutType, onWorkoutUpdated }: Wo
 
   const isCrossfitWorkout = (w: any): w is CrossfitWorkout => workoutType === 'crossfit'
 
+  const groupedExercises = EXERCISES.reduce((acc, exercise) => {
+    if (!acc[exercise.category]) acc[exercise.category] = []
+    acc[exercise.category].push(exercise)
+    return acc
+  }, {} as Record<string, ExerciseItem[]>)
+
+  const toggleExercise = (name: string) => {
+    setEditedWorkout((prev: any) => {
+      const current: string[] = Array.isArray(prev.required_exercises) ? prev.required_exercises : []
+      const next = current.includes(name)
+        ? current.filter((e) => e !== name)
+        : [...current, name]
+      return { ...prev, required_exercises: next }
+    })
+  }
+
   const handleSave = async () => {
     if (!editedWorkout.title || !editedWorkout.workout_content) {
       toast.error("Titel und Workout-Inhalt sind erforderlich")
@@ -69,7 +86,8 @@ export const WorkoutEditDialog = ({ workout, workoutType, onWorkoutUpdated }: Wo
             notes: editedWorkout.notes || null,
             scaling_beginner: editedWorkout.scaling_beginner || null,
             scaling_scaled: editedWorkout.scaling_scaled || null,
-            scaling_rx: editedWorkout.scaling_rx || null
+            scaling_rx: editedWorkout.scaling_rx || null,
+            required_exercises: Array.isArray(editedWorkout.required_exercises) ? editedWorkout.required_exercises : []
           })
           .eq('id', workout.id)
 
@@ -202,33 +220,58 @@ export const WorkoutEditDialog = ({ workout, workoutType, onWorkoutUpdated }: Wo
           </div>
 
           {isCrossfitWorkout(editedWorkout) && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="beginner">Beginner Scaling</Label>
-                <Textarea
-                  id="beginner"
-                  value={editedWorkout.scaling_beginner || ""}
-                  onChange={(e) => setEditedWorkout(prev => ({ ...prev, scaling_beginner: e.target.value }))}
-                  rows={4}
-                />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="beginner">Beginner Scaling</Label>
+                  <Textarea
+                    id="beginner"
+                    value={editedWorkout.scaling_beginner || ""}
+                    onChange={(e) => setEditedWorkout(prev => ({ ...prev, scaling_beginner: e.target.value }))}
+                    rows={4}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="scaled">Scaled Scaling</Label>
+                  <Textarea
+                    id="scaled"
+                    value={editedWorkout.scaling_scaled || ""}
+                    onChange={(e) => setEditedWorkout(prev => ({ ...prev, scaling_scaled: e.target.value }))}
+                    rows={4}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rx">RX Scaling</Label>
+                  <Textarea
+                    id="rx"
+                    value={editedWorkout.scaling_rx || ""}
+                    onChange={(e) => setEditedWorkout(prev => ({ ...prev, scaling_rx: e.target.value }))}
+                    rows={4}
+                  />
+                </div>
               </div>
+
               <div>
-                <Label htmlFor="scaled">Scaled Scaling</Label>
-                <Textarea
-                  id="scaled"
-                  value={editedWorkout.scaling_scaled || ""}
-                  onChange={(e) => setEditedWorkout(prev => ({ ...prev, scaling_scaled: e.target.value }))}
-                  rows={4}
-                />
-              </div>
-              <div>
-                <Label htmlFor="rx">RX Scaling</Label>
-                <Textarea
-                  id="rx"
-                  value={editedWorkout.scaling_rx || ""}
-                  onChange={(e) => setEditedWorkout(prev => ({ ...prev, scaling_rx: e.target.value }))}
-                  rows={4}
-                />
+                <Label>Verwendete Übungen</Label>
+                <div className="mt-2 space-y-4">
+                  {Object.entries(groupedExercises).map(([category, exercises]) => (
+                    <div key={category}>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-2">{category}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {exercises.map((exercise) => (
+                          <Badge
+                            key={exercise.name}
+                            variant={(Array.isArray(editedWorkout.required_exercises) ? editedWorkout.required_exercises : []).includes(exercise.name) ? "default" : "secondary"}
+                            className="cursor-pointer hover:bg-primary/20"
+                            onClick={() => toggleExercise(exercise.name)}
+                          >
+                            {exercise.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
