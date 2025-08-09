@@ -20,6 +20,7 @@ import { EmomTimer } from "@/components/EmomTimer";
 import { TabataTimer } from "@/components/TabataTimer";
 import WorkoutManagement from "./pages/WorkoutManagement";
 import { WorkoutStart } from "@/components/WorkoutStart";
+import { AuthKeeper } from "@/components/AuthKeeper";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <AuthKeeper />
         {/* Globaler Wrapper mit iOS Safe Area Insets, plus Bottom-Navigation-Puffer */}
         <div
           className="min-h-screen bg-background flex flex-col"
