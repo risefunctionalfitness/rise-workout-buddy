@@ -92,7 +92,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
         )}
         
         
-        {(showNavigation || (showAdminAccess && isAdmin)) && (
+        {(showAdminAccess && isAdmin) && (
           <Button 
             variant="outline" 
             size="icon"
@@ -104,7 +104,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
       </div>
       
       {/* Navigation Overlay */}
-      {dropdownOpen && (showNavigation || (showAdminAccess && isAdmin)) && (
+      {dropdownOpen && (showAdminAccess && isAdmin) && (
         <div className="fixed inset-0 z-50 bg-background flex flex-col justify-center items-center p-8">
           <div className="grid grid-cols-2 gap-6 max-w-md w-full">
             <div 

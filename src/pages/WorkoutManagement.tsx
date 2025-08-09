@@ -204,7 +204,7 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
 
   return (
     <div className="min-h-screen bg-background">
-      {!hideHeader && <RiseHeader showNavigation={true} onLogout={handleLogout} />}
+      {!hideHeader && <RiseHeader showAdminAccess={true} onLogout={handleLogout} />}
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
