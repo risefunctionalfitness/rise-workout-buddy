@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
-import { Search, Plus, X } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Search, Plus, X, Edit } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { MembershipBadge } from "@/components/MembershipBadge"
@@ -12,6 +14,7 @@ interface Member {
   user_id: string
   display_name: string
   membership_type: string
+  email?: string
 }
 
 interface AdminParticipantManagerProps {
@@ -32,6 +35,9 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(false)
   const [registeredUserIds, setRegisteredUserIds] = useState<string[]>([])
+  const [editingMember, setEditingMember] = useState<Member | null>(null)
+  const [editedEmail, setEditedEmail] = useState("")
+  const [editedDisplayName, setEditedDisplayName] = useState("")
 
   useEffect(() => {
     if (open) {
@@ -51,14 +57,23 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
   const loadMembers = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name, membership_type')
         .not('display_name', 'is', null)
         .order('display_name')
 
-      if (error) throw error
-      setMembers(data || [])
+      if (profilesError) throw profilesError
+
+      // For now, just use profiles without emails due to auth admin limitations
+      // In production, you'd need proper admin access to get user emails
+      const membersWithEmail = (profilesData || []).map(profile => ({
+        ...profile,
+        email: '' // Email editing will work when admin has proper auth access
+      }))
+
+      setMembers(membersWithEmail)
+
     } catch (error) {
       console.error('Error loading members:', error)
       toast.error('Fehler beim Laden der Mitglieder')
@@ -103,6 +118,43 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
     }
   }
 
+  const startEditingMember = (member: Member) => {
+    setEditingMember(member)
+    setEditedEmail(member.email || '')
+    setEditedDisplayName(member.display_name)
+  }
+
+  const saveChanges = async () => {
+    if (!editingMember) return
+
+    try {
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ display_name: editedDisplayName })
+        .eq('user_id', editingMember.user_id)
+
+      if (profileError) throw profileError
+
+      // Update email in auth if changed
+      if (editedEmail !== editingMember.email) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          editingMember.user_id,
+          { email: editedEmail }
+        )
+
+        if (authError) throw authError
+      }
+
+      toast.success('Mitglied erfolgreich aktualisiert')
+      setEditingMember(null)
+      await loadMembers()
+    } catch (error) {
+      console.error('Error updating member:', error)
+      toast.error('Fehler beim Aktualisieren des Mitglieds')
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
@@ -134,19 +186,34 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
               filteredMembers.map((member) => (
                 <Card key={member.user_id} className="cursor-pointer hover:bg-muted/50">
                   <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{member.display_name}</span>
-                        <MembershipBadge type={member.membership_type as any} />
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => addParticipant(member.user_id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
+                     <div className="flex items-center justify-between">
+                       <div className="flex-1">
+                         <div className="flex items-center gap-3 mb-1">
+                           <span className="font-medium">{member.display_name}</span>
+                           <MembershipBadge type={member.membership_type as any} />
+                         </div>
+                         {member.email && (
+                           <span className="text-sm text-muted-foreground">{member.email}</span>
+                         )}
+                       </div>
+                       <div className="flex gap-2">
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => startEditingMember(member)}
+                           className="h-8 w-8 p-0"
+                         >
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <Button
+                           size="sm"
+                           onClick={() => addParticipant(member.user_id)}
+                           className="h-8 w-8 p-0"
+                         >
+                           <Plus className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </div>
                   </CardContent>
                 </Card>
               ))
@@ -160,6 +227,46 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
           </Button>
         </div>
       </DialogContent>
+      
+      {/* Edit Member Dialog */}
+      {editingMember && (
+        <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Mitglied bearbeiten</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="editDisplayName">Name</Label>
+                <Input
+                  id="editDisplayName"
+                  value={editedDisplayName}
+                  onChange={(e) => setEditedDisplayName(e.target.value)}
+                  placeholder="Anzeigename"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editEmail">E-Mail</Label>
+                <Input
+                  id="editEmail"
+                  type="email"
+                  value={editedEmail}
+                  onChange={(e) => setEditedEmail(e.target.value)}
+                  placeholder="E-Mail Adresse"
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={saveChanges} disabled={!editedDisplayName || !editedEmail}>
+                  Speichern
+                </Button>
+                <Button variant="outline" onClick={() => setEditingMember(null)}>
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   )
 }

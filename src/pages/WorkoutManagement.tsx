@@ -205,7 +205,11 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
       notes: "",
       type: "WOD",
       focus: "Ganzkörper",
-      difficulty: "Leicht"
+      difficulty: "Leicht",
+      scaling_beginner: "",
+      scaling_scaled: "",
+      scaling_rx: "",
+      required_exercises: []
     })
   }
 
@@ -239,7 +243,7 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
                 Neues Workout
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Neues Workout erstellen</DialogTitle>
               </DialogHeader>

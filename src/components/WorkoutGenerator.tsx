@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
+import { useNavigate } from "react-router-dom"
 import { WorkoutTypeSelector, WorkoutType } from "./WorkoutTypeSelector"
 import { CrossfitTypeSelector, CrossfitType } from "./CrossfitTypeSelector"
 import { BodybuildingSelector, BodybuildingFocus, BodybuildingDifficulty } from "./BodybuildingSelector"
