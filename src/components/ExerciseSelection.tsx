@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -105,6 +105,8 @@ const EXERCISES = [
   { category: "Weitere", name: "D-Ball Over Shoulder" }
 ]
 
+type Exercise = typeof EXERCISES[number]
+
 export const ExerciseSelection = () => {
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -183,17 +185,26 @@ export const ExerciseSelection = () => {
     )
   }
 
-  const groupedExercises = EXERCISES.reduce((acc, exercise) => {
-    if (!acc[exercise.category]) {
-      acc[exercise.category] = []
-    }
-    acc[exercise.category].push(exercise)
-    return acc
-  }, {} as Record<string, typeof EXERCISES>)
+  const groupedExercises = useMemo(() => {
+    return EXERCISES.reduce((acc, exercise) => {
+      if (!acc[exercise.category]) {
+        acc[exercise.category] = []
+      }
+      acc[exercise.category].push(exercise)
+      return acc
+    }, {} as Record<string, Exercise[]>)
+  }, [])
 
   return (
-    <div className="fixed inset-0 bg-background z-50 overflow-auto">
-      <div className="max-w-2xl mx-auto p-4 pb-24">
+    <div
+      className="min-h-screen bg-background overflow-y-auto"
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "calc(env(safe-area-inset-bottom) + 4rem)",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      <div className="max-w-2xl mx-auto p-4">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={handleBack}>
