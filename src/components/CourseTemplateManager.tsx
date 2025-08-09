@@ -447,7 +447,7 @@ export const CourseTemplateManager = () => {
                       type="number"
                       min="1"
                       value={templateForm.max_participants}
-                      onChange={(e) => setTemplateForm(prev => ({ ...prev, max_participants: parseInt(e.target.value) }))}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, max_participants: e.target.value === '' ? 0 : parseInt(e.target.value, 10) }))}
                       required
                     />
                   </div>
@@ -458,7 +458,7 @@ export const CourseTemplateManager = () => {
                       min="15"
                       max="120"
                       value={templateForm.registration_deadline_minutes}
-                      onChange={(e) => setTemplateForm(prev => ({ ...prev, registration_deadline_minutes: parseInt(e.target.value) }))}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, registration_deadline_minutes: e.target.value === '' ? 0 : parseInt(e.target.value, 10) }))}
                       required
                     />
                   </div>
@@ -469,7 +469,7 @@ export const CourseTemplateManager = () => {
                       min="30"
                       max="480"
                       value={templateForm.cancellation_deadline_minutes}
-                      onChange={(e) => setTemplateForm(prev => ({ ...prev, cancellation_deadline_minutes: parseInt(e.target.value) }))}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, cancellation_deadline_minutes: e.target.value === '' ? 0 : parseInt(e.target.value, 10) }))}
                       required
                     />
                   </div>
@@ -480,7 +480,7 @@ export const CourseTemplateManager = () => {
                       min="30"
                       max="120"
                       value={templateForm.duration_minutes}
-                      onChange={(e) => setTemplateForm(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) }))}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, duration_minutes: e.target.value === '' ? 0 : parseInt(e.target.value, 10) }))}
                       required
                     />
                   </div>
