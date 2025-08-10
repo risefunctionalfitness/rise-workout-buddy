@@ -294,6 +294,30 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         if (error) throw error
       }
 
+      // Immediately update local state
+      setCourses(prev => prev.map(c => 
+        c.id === courseId 
+          ? { 
+              ...c, 
+              is_registered: newStatus === 'registered',
+              is_waitlisted: newStatus === 'waitlist',
+              registered_count: newStatus === 'registered' ? c.registered_count + 1 : c.registered_count,
+              waitlist_count: newStatus === 'waitlist' ? c.waitlist_count + 1 : c.waitlist_count
+            }
+          : c
+      ))
+
+      // Update selected course state
+      if (selectedCourse?.id === courseId) {
+        setSelectedCourse(prev => prev ? {
+          ...prev,
+          is_registered: newStatus === 'registered',
+          is_waitlisted: newStatus === 'waitlist',
+          registered_count: newStatus === 'registered' ? prev.registered_count + 1 : prev.registered_count,
+          waitlist_count: newStatus === 'waitlist' ? prev.waitlist_count + 1 : prev.waitlist_count
+        } : null)
+      }
+
       toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
       await loadCourses()
       if (selectedCourse?.id === courseId) {
@@ -329,6 +353,30 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         .eq('user_id', user.id)
 
       if (error) throw error
+
+      // Immediately update local state
+      setCourses(prev => prev.map(c => 
+        c.id === courseId 
+          ? { 
+              ...c, 
+              is_registered: false,
+              is_waitlisted: false,
+              registered_count: c.is_registered ? Math.max(0, c.registered_count - 1) : c.registered_count,
+              waitlist_count: c.is_waitlisted ? Math.max(0, c.waitlist_count - 1) : c.waitlist_count
+            }
+          : c
+      ))
+
+      // Update selected course state
+      if (selectedCourse?.id === courseId) {
+        setSelectedCourse(prev => prev ? {
+          ...prev,
+          is_registered: false,
+          is_waitlisted: false,
+          registered_count: prev.is_registered ? Math.max(0, prev.registered_count - 1) : prev.registered_count,
+          waitlist_count: prev.is_waitlisted ? Math.max(0, prev.waitlist_count - 1) : prev.waitlist_count
+        } : null)
+      }
 
       toast.success('Anmeldung erfolgreich storniert')
       await loadCourses()
@@ -412,7 +460,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               {dayCourses.map(course => (
                 <Card 
                   key={course.id} 
-                  className="cursor-pointer hover:shadow-md transition-all duration-200"
+                  className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+                    course.is_registered 
+                      ? 'border-green-500 border-2' 
+                      : ''
+                  }`}
                   onClick={() => handleCourseClick(course)}
                 >
                   <CardContent className="p-4">
