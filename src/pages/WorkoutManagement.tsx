@@ -126,13 +126,13 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
 
       if (error) throw error
       
-      toast.success("CrossFit Workout erstellt!")
+      toast.success("Functional Fitness Workout erstellt!")
       setShowCreateDialog(false)
       resetForm()
       loadWorkouts()
     } catch (error) {
       console.error('Error creating crossfit workout:', error)
-      toast.error("Fehler beim Erstellen des CrossFit Workouts")
+      toast.error("Fehler beim Erstellen des Functional Fitness Workouts")
     }
   }
 
@@ -171,11 +171,11 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
 
       if (error) throw error
       
-      toast.success("CrossFit Workout gelöscht!")
+      toast.success("Functional Fitness Workout gelöscht!")
       loadWorkouts()
     } catch (error) {
       console.error('Error deleting crossfit workout:', error)
-      toast.error("Fehler beim Löschen des CrossFit Workouts")
+      toast.error("Fehler beim Löschen des Functional Fitness Workouts")
     }
   }
 
@@ -250,7 +250,7 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
               <div className="space-y-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="crossfit">CrossFit</TabsTrigger>
+                    <TabsTrigger value="crossfit">Functional Fitness</TabsTrigger>
                     <TabsTrigger value="bodybuilding">Bodybuilding</TabsTrigger>
                   </TabsList>
                   
@@ -437,7 +437,7 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
         <Tabs defaultValue="crossfit" className="space-y-6">
           <TabsList>
             <TabsTrigger value="crossfit">
-              CrossFit Workouts ({filteredCrossfitWorkouts.length})
+              Functional Fitness Workouts ({filteredCrossfitWorkouts.length})
             </TabsTrigger>
             <TabsTrigger value="bodybuilding">
               Bodybuilding Workouts ({filteredBodybuildingWorkouts.length})

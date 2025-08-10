@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Medal, Award, Weight, Calendar } from "lucide-react"
+import { Trophy, Medal, Award, Dumbbell, Calendar } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { AvatarUpload } from "@/components/AvatarUpload"
 
@@ -181,15 +181,12 @@ export const Leaderboard: React.FC = () => {
                           />
                           <div>
                             <h3 className="font-semibold text-lg text-foreground">{entry.display_name}</h3>
-                            <p className="text-sm text-muted-foreground font-medium">
-                              Platz {position}
-                            </p>
                           </div>
                         </div>
                       </div>
                       <div className="text-right flex items-center gap-2">
                         <Badge variant="secondary" className="text-lg px-3 py-1 bg-rise-accent text-white flex items-center gap-1">
-                          <Weight className="h-4 w-4" />
+                          <Dumbbell className="h-4 w-4" />
                           {entry.training_count}
                         </Badge>
                       </div>

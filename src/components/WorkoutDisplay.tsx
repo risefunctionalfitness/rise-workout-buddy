@@ -87,7 +87,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
       {/* Workout Type Heading */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-black mb-6">
-          {workoutType === 'crossfit' ? 'CrossFit' : 'Bodybuilding'}
+          {workoutType === 'crossfit' ? 'Functional Fitness' : 'Bodybuilding'}
         </h1>
       </div>
       

@@ -22,7 +22,7 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
         onClick={() => onTypeSelect("crossfit")}
       >
         <div className="text-center space-y-3 flex flex-col justify-center h-full">
-          <h3 className="text-xl font-bold">CrossFit</h3>
+          <h3 className="text-xl font-bold">Functional Fitness</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Hochintensive,<br />
             funktionelle Workouts<br />
