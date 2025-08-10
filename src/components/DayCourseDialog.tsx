@@ -136,7 +136,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         })
       )
 
-      setCourses(coursesWithCounts)
+      // Sort courses by start_time (earliest first)
+      const sortedCourses = coursesWithCounts.sort((a, b) => 
+        a.start_time.localeCompare(b.start_time)
+      )
+
+      setCourses(sortedCourses)
     } catch (error) {
       console.error('Error loading courses:', error)
       toast({
@@ -364,7 +369,14 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
             </div>
           ) : (
             courses.map((course) => (
-              <div key={course.id} className="bg-card rounded-lg p-3 border border-border shadow-sm">
+              <div 
+                key={course.id} 
+                className={`bg-card rounded-lg p-3 border shadow-sm ${
+                  course.user_registered 
+                    ? 'border-green-500 border-2' 
+                    : 'border-border'
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
