@@ -130,7 +130,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       setImageSrc("")
       toast({
         title: "Profilbild hochgeladen",
-        description: "Ihr Profilbild wurde erfolgreich aktualisiert."
+        description: "Ihr Profilbild wurde erfolgreich aktualisiert. Die Änderung wird in ca. 1 Stunde sichtbar."
       })
     } catch (error) {
       console.error('Error uploading avatar:', error)
