@@ -421,6 +421,7 @@ export const CourseTemplateManager = () => {
                         <SelectItem value="Functional Fitness">Functional Fitness</SelectItem>
                         <SelectItem value="Strength">Strength</SelectItem>
                         <SelectItem value="Mobility">Mobility</SelectItem>
+                        <SelectItem value="Fundamentals">Fundamentals</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
