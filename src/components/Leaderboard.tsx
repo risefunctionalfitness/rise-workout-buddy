@@ -144,7 +144,7 @@ export const Leaderboard: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 overflow-auto p-4">
+    <div className="h-[calc(100vh-8rem)] overflow-auto p-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
@@ -155,7 +155,7 @@ export const Leaderboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 pb-4">
           {leaderboard.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">
