@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LogOut, Dumbbell, Target, Moon, Sun } from "lucide-react"
+import { LogOut, Dumbbell, Target, Moon, Sun, RotateCcw } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
@@ -28,7 +28,21 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
   useEffect(() => {
     loadProfile()
+    checkDailyRefresh()
   }, [])
+
+  const checkDailyRefresh = () => {
+    const lastRefresh = localStorage.getItem('lastAppRefresh')
+    const now = new Date()
+    const today = now.toDateString()
+    
+    if (!lastRefresh || lastRefresh !== today) {
+      localStorage.setItem('lastAppRefresh', today)
+      if (lastRefresh) {
+        setTimeout(() => window.location.reload(), 2000)
+      }
+    }
+  }
 
   const loadProfile = async () => {
     try {
@@ -109,6 +123,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
     navigate('/pro/exercises')
   }
 
+  const handleRefresh = () => {
+    window.location.reload()
+  }
+
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
       <div className="max-w-2xl mx-auto p-4 pb-24">
@@ -122,7 +140,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         {/* Basisdaten - immer sichtbar */}
         <Card className="mb-4">
           <CardHeader>
-            <CardTitle>Basisdaten</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Basisdaten</CardTitle>
+              <Button
+                onClick={handleRefresh}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-center mb-4">

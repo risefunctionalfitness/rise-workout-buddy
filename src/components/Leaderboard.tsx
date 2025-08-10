@@ -155,7 +155,7 @@ export const Leaderboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="space-y-3 pb-4">
+        <div className="space-y-3 pb-2">
           {leaderboard.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">
