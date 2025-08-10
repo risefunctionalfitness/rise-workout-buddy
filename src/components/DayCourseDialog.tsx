@@ -185,6 +185,13 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
         if (error) throw error
 
+        // Immediately update local state
+        setCourses(prev => prev.map(c => 
+          c.id === courseId 
+            ? { ...c, user_registered: false, registration_count: Math.max(0, c.registration_count - 1) }
+            : c
+        ))
+
         toast({
           title: "Abgemeldet",
           description: "Du wurdest erfolgreich vom Kurs abgemeldet."
@@ -280,13 +287,21 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           if (error) throw error
         }
 
+        // Immediately update local state
+        setCourses(prev => prev.map(c => 
+          c.id === courseId 
+            ? { ...c, user_registered: true, registration_count: c.registration_count + 1 }
+            : c
+        ))
+
         toast({
           title: "Angemeldet",
           description: "Du wurdest erfolgreich für den Kurs angemeldet."
         })
       }
 
-      loadCoursesForDay()
+      // Reload data as fallback to ensure consistency
+      await loadCoursesForDay()
       
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       window.dispatchEvent(new CustomEvent('creditsUpdated'))
