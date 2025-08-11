@@ -44,8 +44,7 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
           <h3 className="text-xl font-bold">Bodybuilding</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Gezielter Muskelaufbau<br />
-            und Kraftsteigerung vor<br />
-            allem mit Maschinen
+            und Kraftsteigerung
           </p>
         </div>
       </Card>
