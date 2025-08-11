@@ -180,7 +180,10 @@ export const Leaderboard: React.FC = () => {
                             src={entry.avatar_url || '/placeholder.svg'}
                             alt={entry.display_name}
                             className="w-10 h-10 rounded-full object-cover border-2 border-border cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => setSelectedProfile({ imageUrl: entry.avatar_url, displayName: entry.display_name })}
+                            onClick={() => setSelectedProfile({ 
+                              imageUrl: entry.avatar_url, 
+                              displayName: entry.display_name 
+                            })}
                           />
                           <div>
                             <h3 className="font-semibold text-lg text-foreground">{entry.display_name}</h3>

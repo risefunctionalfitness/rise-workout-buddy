@@ -29,6 +29,7 @@ interface Participant {
   display_name: string
   membership_type: string
   avatar_url?: string
+  nickname?: string
 }
 
 interface CourseParticipantsListProps {
@@ -75,7 +76,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
       const userIds = registrations.map(r => r.user_id)
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, membership_type, avatar_url')
+        .select('user_id, display_name, nickname, membership_type, avatar_url')
         .in('user_id', userIds)
 
       if (profileError) throw profileError
@@ -88,9 +89,10 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           user_id: reg.user_id,
           status: reg.status,
           registered_at: reg.registered_at,
-          display_name: profile?.display_name || 'Unbekannt',
+          display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
           membership_type: profile?.membership_type || 'Member',
-          avatar_url: profile?.avatar_url
+          avatar_url: profile?.avatar_url,
+          nickname: profile?.nickname
         }
       })
 
@@ -222,7 +224,10 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                         src={participant.avatar_url || '/placeholder.svg'}
                         alt={participant.display_name}
                         className="w-8 h-8 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setSelectedProfile({ imageUrl: participant.avatar_url || null, displayName: participant.display_name })}
+                        onClick={() => setSelectedProfile({ 
+                          imageUrl: participant.avatar_url || null, 
+                          displayName: participant.nickname || participant.display_name 
+                        })}
                       />
                       <span className="font-medium">{participant.display_name}</span>
                       <span className="text-xs text-muted-foreground">
@@ -261,7 +266,10 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                           src={participant.avatar_url || '/placeholder.svg'}
                           alt={participant.display_name}
                           className="w-8 h-8 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setSelectedProfile({ imageUrl: participant.avatar_url || null, displayName: participant.display_name })}
+                          onClick={() => setSelectedProfile({ 
+                            imageUrl: participant.avatar_url || null, 
+                            displayName: participant.nickname || participant.display_name 
+                          })}
                         />
                         <span className="font-medium">{participant.display_name}</span>
                         <span className="text-xs text-muted-foreground">

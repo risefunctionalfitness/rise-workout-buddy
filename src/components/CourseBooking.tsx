@@ -579,7 +579,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                     className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                                     onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
                                       imageUrl: participant.profiles.avatar_url, 
-                                      displayName: participant.profiles?.display_name || participant.profiles?.nickname || 'Unbekannt' 
+                                      displayName: participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt' 
                                     })}
                                   >
                                     {participant.profiles?.avatar_url ? (
