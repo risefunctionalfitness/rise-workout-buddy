@@ -208,10 +208,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
             >
               <TrainingPathNode
                 id={day.dayNumber.toString()}
-                date={day.date.toLocaleDateString('de-DE', { 
-                  day: '2-digit', 
-                  month: 'short' 
-                })}
+                date={day.date}
                 status={getNodeStatus(day)}
                 workoutType={day.trainingSession?.type}
                 dayNumber={day.dayNumber}
@@ -266,10 +263,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
       <TrainingSessionDialog
         open={showDialog}
         onOpenChange={setShowDialog}
-        date={selectedDay ? selectedDay.date.toLocaleDateString('de-DE', { 
-          day: '2-digit', 
-          month: 'short' 
-        }) : ''}
+        date={selectedDay?.date || new Date()}
         dayNumber={selectedDay?.dayNumber || 0}
         onSelectType={handleSelectType}
         hasExistingSession={!!selectedDay?.trainingSession}

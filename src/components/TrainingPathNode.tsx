@@ -6,7 +6,7 @@ type TrainingSessionStatus = 'completed' | 'current' | 'pending' | 'locked'
 
 interface TrainingPathNodeProps {
   id: string
-  date: string
+  date: Date
   status: TrainingSessionStatus
   workoutType?: 'course' | 'free_training' | 'plan'
   dayNumber: number
@@ -101,7 +101,7 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
       
       <div className="text-center">
         <div className="text-xs text-muted-foreground">
-          {new Date(date).toLocaleDateString('de-DE', { weekday: 'long' })}
+          {date.toLocaleDateString('de-DE', { weekday: 'long' })}
         </div>
         {(status === 'current' || status === 'completed') && workoutType && (
           <div className="text-xs font-medium mt-1">

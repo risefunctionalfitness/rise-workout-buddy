@@ -7,7 +7,7 @@ import { OpenGymCheckin } from "./OpenGymCheckin"
 interface TrainingSessionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  date: string
+  date: Date
   dayNumber: number
   onSelectType: (type: 'course' | 'free_training' | 'plan' | 'remove') => void
   hasExistingSession?: boolean
@@ -50,7 +50,7 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
             {hasExistingSession ? 'Training ändern' : 'Training hinzufügen'}
           </DialogTitle>
           <p className="text-center text-muted-foreground">
-            {date} (Tag {dayNumber})
+            {date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })} (Tag {dayNumber})
           </p>
         </DialogHeader>
         
