@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useNewsNotification } from "@/hooks/useNewsNotification"
 
 import { useNavigate } from "react-router-dom"
+import { timezone } from "@/lib/timezone"
 
 type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
 
@@ -157,7 +158,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   }
 
   const generateTrainingDays = async () => {
-    const today = new Date()
+    const today = timezone.nowInBerlin()
     const currentMonth = today.getMonth()
     const currentYear = today.getFullYear()
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
@@ -166,8 +167,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     
     // Generate all days of the current month
     for (let day = 1; day <= daysInMonth; day++) {
-      const currentDate = new Date(currentYear, currentMonth, day)
-      const isToday = currentDate.toDateString() === today.toDateString()
+      const currentDate = timezone.createDateInBerlin(currentYear, currentMonth, day)
+      const isToday = timezone.isSameDayInBerlin(currentDate, today)
       const isFuture = currentDate > today
       const isPast = currentDate < today && !isToday
       
@@ -298,8 +299,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
   const handleAddTraining = async (dayNumber: number, type: 'course' | 'free_training' | 'plan') => {
     try {
-      const currentDate = new Date()
-      const sessionDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayNumber)
+      const currentDate = timezone.nowInBerlin()
+      const sessionDate = timezone.createDateInBerlin(currentDate.getFullYear(), currentDate.getMonth(), dayNumber)
       
       const { data, error } = await supabase
         .from('training_sessions')
