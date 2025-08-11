@@ -454,7 +454,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     </h3>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    QR-Code scannen zum anmelden
+                    QR Code scannen fürs Leaderboard
                   </div>
                 </div>
                 
