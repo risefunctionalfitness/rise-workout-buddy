@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Trophy, Medal, Award, Dumbbell, Calendar } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { AvatarUpload } from "@/components/AvatarUpload"
+import { ProfileImageViewer } from "@/components/ProfileImageViewer"
 
 interface LeaderboardEntry {
   id: string
@@ -18,6 +19,7 @@ interface LeaderboardEntry {
 export const Leaderboard: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -177,7 +179,8 @@ export const Leaderboard: React.FC = () => {
                           <img
                             src={entry.avatar_url || '/placeholder.svg'}
                             alt={entry.display_name}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-border"
+                            className="w-10 h-10 rounded-full object-cover border-2 border-border cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setSelectedProfile({ imageUrl: entry.avatar_url, displayName: entry.display_name })}
                           />
                           <div>
                             <h3 className="font-semibold text-lg text-foreground">{entry.display_name}</h3>
@@ -198,6 +201,13 @@ export const Leaderboard: React.FC = () => {
           )}
         </div>
       </div>
+      
+      <ProfileImageViewer
+        isOpen={!!selectedProfile}
+        onClose={() => setSelectedProfile(null)}
+        imageUrl={selectedProfile?.imageUrl || null}
+        displayName={selectedProfile?.displayName || ''}
+      />
     </div>
   )
 }

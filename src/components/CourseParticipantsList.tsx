@@ -7,6 +7,7 @@ import { Trash2, Plus, ArrowUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { AdminParticipantManager } from "@/components/AdminParticipantManager"
+import { ProfileImageViewer } from "@/components/ProfileImageViewer"
 
 interface Course {
   id: string
@@ -27,6 +28,7 @@ interface Participant {
   registered_at: string
   display_name: string
   membership_type: string
+  avatar_url?: string
 }
 
 interface CourseParticipantsListProps {
@@ -43,6 +45,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
   const [participants, setParticipants] = useState<Participant[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
 
   useEffect(() => {
     loadParticipants()
@@ -72,7 +75,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
       const userIds = registrations.map(r => r.user_id)
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, membership_type')
+        .select('user_id, display_name, membership_type, avatar_url')
         .in('user_id', userIds)
 
       if (profileError) throw profileError
@@ -86,7 +89,8 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           status: reg.status,
           registered_at: reg.registered_at,
           display_name: profile?.display_name || 'Unbekannt',
-          membership_type: profile?.membership_type || 'Member'
+          membership_type: profile?.membership_type || 'Member',
+          avatar_url: profile?.avatar_url
         }
       })
 
@@ -214,6 +218,12 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                 {registeredParticipants.map((participant) => (
                   <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg min-h-[60px]">
                     <div className="flex items-center gap-3">
+                      <img
+                        src={participant.avatar_url || '/placeholder.svg'}
+                        alt={participant.display_name}
+                        className="w-8 h-8 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setSelectedProfile({ imageUrl: participant.avatar_url || null, displayName: participant.display_name })}
+                      />
                       <span className="font-medium">{participant.display_name}</span>
                       <span className="text-xs text-muted-foreground">
                         {new Date(participant.registered_at).toLocaleDateString('de-DE')}
@@ -247,6 +257,12 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                   {waitlistedParticipants.map((participant) => (
                     <div key={participant.id} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg min-h-[60px]">
                       <div className="flex items-center gap-3">
+                        <img
+                          src={participant.avatar_url || '/placeholder.svg'}
+                          alt={participant.display_name}
+                          className="w-8 h-8 rounded-full object-cover border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setSelectedProfile({ imageUrl: participant.avatar_url || null, displayName: participant.display_name })}
+                        />
                         <span className="font-medium">{participant.display_name}</span>
                         <span className="text-xs text-muted-foreground">
                           {new Date(participant.registered_at).toLocaleDateString('de-DE')}
@@ -299,6 +315,13 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onParticipantAdded={loadParticipants}
+      />
+      
+      <ProfileImageViewer
+        isOpen={!!selectedProfile}
+        onClose={() => setSelectedProfile(null)}
+        imageUrl={selectedProfile?.imageUrl || null}
+        displayName={selectedProfile?.displayName || ''}
       />
     </div>
   )
