@@ -185,11 +185,13 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
           const currentDay = getCurrentDay()
           const isRegistered = registeredDays.has(day)
           
+          const isClickable = day >= currentDay
+          
           return (
             <div
               key={day}
-              onClick={() => handleDayClick(day)}
-              className={`w-3 h-3 rounded-full ${getDayStatus(day)} ${getDayBorderClass(day)} transition-colors cursor-pointer hover:scale-110 relative flex items-center justify-center`}
+              onClick={isClickable ? () => handleDayClick(day) : undefined}
+              className={`w-3 h-3 rounded-full ${getDayStatus(day)} ${getDayBorderClass(day)} transition-colors ${isClickable ? 'cursor-pointer hover:scale-110' : ''} relative flex items-center justify-center`}
               title={`Tag ${day}: ${
                 trainingDays.has(day) 
                   ? 'Trainiert' 
