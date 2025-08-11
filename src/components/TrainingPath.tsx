@@ -215,7 +215,7 @@ export const TrainingPath: React.FC<TrainingPathProps> = ({
                 status={getNodeStatus(day)}
                 workoutType={day.trainingSession?.type}
                 dayNumber={day.dayNumber}
-                onSelectWorkout={() => handleDayClick(day)}
+                onSelectWorkout={day.isToday || day.isFuture ? () => handleDayClick(day) : undefined}
                 isRegisteredForCourse={day.isRegisteredForCourse || false}
               />
               

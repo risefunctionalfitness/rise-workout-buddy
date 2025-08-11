@@ -75,7 +75,7 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
     }
   }
 
-  const isClickable = status === 'current' || status === 'locked' // Nur heutige und zukünftige Tage klickbar
+  const isClickable = !!onSelectWorkout // Nur klickbar wenn onSelectWorkout Handler vorhanden ist
 
   return (
     <div className="flex flex-col items-center gap-2">
