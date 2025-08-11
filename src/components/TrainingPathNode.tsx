@@ -55,8 +55,8 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
   const getStatusColor = () => {
     switch (status) {
       case 'completed':
-        // Vergangene Tage mit Training: intensives grün
-        return 'bg-green-200 border-green-600 hover:bg-green-300 text-green-800 dark:bg-green-900/50 dark:border-green-500 dark:text-green-300'
+        // Vergangene Tage mit Training: intensives grün, nicht klickbar
+        return 'bg-green-200 border-green-600 text-green-800 dark:bg-green-900/50 dark:border-green-500 dark:text-green-300'
       case 'current':
         // Heute: wenn für Kurs angemeldet intensives grün, sonst primary
         if (isRegisteredForCourse) {
@@ -64,8 +64,8 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
         }
         return 'bg-primary/10 border-primary hover:bg-primary/20 text-primary'
       case 'pending':
-        // Vergangene Tage ohne Training: intensives rot
-        return 'bg-red-200 border-red-600 hover:bg-red-300 text-red-800 dark:bg-red-900/50 dark:border-red-500 dark:text-red-300'
+        // Vergangene Tage ohne Training: intensives rot, nicht klickbar
+        return 'bg-red-200 border-red-600 text-red-800 dark:bg-red-900/50 dark:border-red-500 dark:text-red-300'
       case 'locked':
         // Zukünftige Tage: wenn angemeldet nur grüner Rand, sonst normal grau
         if (isRegisteredForCourse) {
@@ -75,7 +75,7 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
     }
   }
 
-  const isClickable = true // Alle Tage klickbar machen
+  const isClickable = status === 'current' || status === 'locked' // Nur heutige und zukünftige Tage klickbar
 
   return (
     <div className="flex flex-col items-center gap-2">
