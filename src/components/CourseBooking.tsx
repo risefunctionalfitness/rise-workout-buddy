@@ -8,6 +8,7 @@ import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucid
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
+import { ProfileImageViewer } from "@/components/ProfileImageViewer"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -44,6 +45,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [isTrainer, setIsTrainer] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [userMembershipType, setUserMembershipType] = useState<string>('')
+  const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -573,19 +575,25 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                            return (
                              <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                                <div className="flex items-center gap-3">
-                                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                                   {participant.profiles?.avatar_url ? (
-                                     <img 
-                                       src={participant.profiles.avatar_url} 
-                                       alt="Avatar" 
-                                       className="w-full h-full object-cover"
-                                     />
-                                   ) : (
-                                     <span className="text-xs font-medium">
-                                       {participant.profiles?.display_name?.charAt(0) || '?'}
-                                     </span>
-                                   )}
-                                 </div>
+                                  <div 
+                                    className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
+                                      imageUrl: participant.profiles.avatar_url, 
+                                      displayName: participant.profiles?.display_name || participant.profiles?.nickname || 'Unbekannt' 
+                                    })}
+                                  >
+                                    {participant.profiles?.avatar_url ? (
+                                      <img 
+                                        src={participant.profiles.avatar_url} 
+                                        alt="Avatar" 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="text-xs font-medium">
+                                        {participant.profiles?.display_name?.charAt(0) || '?'}
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className="font-medium">
                                     {(isTrainer || isAdmin) 
                                       ? participant.profiles?.display_name || 'Unbekannt'
@@ -658,6 +666,13 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           )}
         </DialogContent>
       </Dialog>
+      
+      <ProfileImageViewer
+        isOpen={!!selectedProfile}
+        onClose={() => setSelectedProfile(null)}
+        imageUrl={selectedProfile?.imageUrl || null}
+        displayName={selectedProfile?.displayName || ''}
+      />
     </div>
   )
 }
