@@ -165,7 +165,6 @@ export const StrengthValues = () => {
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* Exercise rows with inline mini calculator */}
             {[
               { name: "Front Squat", value: frontSquat1rm, setter: setFrontSquat1rm },
               { name: "Back Squat", value: backSquat1rm, setter: setBackSquat1rm },
@@ -176,44 +175,72 @@ export const StrengthValues = () => {
               { name: "Jerk", value: jerk1rm, setter: setJerk1rm },
               { name: "Clean & Jerk", value: cleanAndJerk1rm, setter: setCleanAndJerk1rm }
             ].map(({ name, value, setter }) => (
-              <div key={name} className="flex flex-col sm:flex-row gap-2 p-2 bg-muted/20 rounded-lg">
-                {/* Main exercise input */}
-                <div className="flex gap-2 items-center min-w-0 flex-1">
-                  <Label className="text-xs font-medium min-w-16 text-right">{name}:</Label>
-                  <Input 
-                    type="number" 
-                    step="0.5" 
-                    value={value} 
-                    onChange={(e) => setter(e.target.value)} 
-                    placeholder="kg" 
-                    className="w-16 h-8 text-sm" 
-                  />
-                  <span className="text-xs text-muted-foreground">kg</span>
-                </div>
-                
-                {/* Mini calculator */}
-                {value && parseFloat(value) > 0 && (
-                  <div className="flex gap-1 items-center text-xs">
-                    <Input 
-                      type="number" 
-                      min="1" 
-                      max="100" 
-                      placeholder="%" 
-                      className="w-12 h-6 text-xs p-1" 
-                      onChange={(e) => {
-                        const percent = e.target.value
-                        const calc = percent ? ((parseFloat(value) * parseFloat(percent)) / 100).toFixed(1) : ""
-                        e.target.nextElementSibling.textContent = calc ? `${calc}kg` : ""
-                      }}
-                    />
-                    <span className="text-xs">% =</span>
-                    <div className="min-w-12 text-xs font-medium text-primary"></div>
-                  </div>
-                )}
+              <div key={name} className="flex gap-2 items-center">
+                <Label className="text-sm font-medium min-w-24 text-right">{name}:</Label>
+                <Input 
+                  type="number" 
+                  step="0.5" 
+                  value={value} 
+                  onChange={(e) => setter(e.target.value)} 
+                  placeholder="kg" 
+                  className="w-20" 
+                />
+                <span className="text-sm text-muted-foreground">kg</span>
               </div>
             ))}
           </CardContent>
         </Card>
+
+        {/* Prozentrechner */}
+        {getLiftsData().length > 0 && (
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                Prozentrechner
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Berechne Prozentsätze deiner 1RM Werte.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                <div>
+                  <Label>Übung</Label>
+                  <Select value={selectedLift} onValueChange={setSelectedLift}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Übung wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getLiftsData().map((lift) => (
+                        <SelectItem key={lift.name} value={lift.name}>
+                          {lift.name} ({lift.value}kg)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Prozent</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="150"
+                    value={percentage}
+                    onChange={(e) => setPercentage(e.target.value)}
+                    placeholder="%"
+                  />
+                </div>
+                <div>
+                  <Label>Ergebnis</Label>
+                  <div className="h-10 flex items-center px-3 bg-muted rounded-md text-lg font-bold text-primary">
+                    {calculatePercentage() ? `${calculatePercentage()}kg` : '---'}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Zusätzliche Übungen */}
         <Card className="mb-4">
