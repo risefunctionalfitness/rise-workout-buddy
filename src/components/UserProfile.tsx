@@ -114,28 +114,28 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         })
         return
       }
-      
-      const updates = { nickname, access_code: accessCode }
 
-      // Update existing profile; if none updated, insert a new one (avoid upsert on non-unique column)
-      const { data: updated, error: updateError } = await supabase
+      // Update nickname directly in profiles table
+      const { error: nicknameError } = await supabase
         .from('profiles')
-        .update(updates)
+        .update({ nickname })
         .eq('user_id', user.id)
-        .select('id')
 
-      if (updateError) throw updateError
+      if (nicknameError) throw nicknameError
 
-      if (!updated || updated.length === 0) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({ user_id: user.id, ...updates })
-        if (insertError) throw insertError
+      // Update access code using edge function (updates both profile and auth password)
+      const { data, error: accessCodeError } = await supabase.functions.invoke('update-access-code', {
+        body: { newAccessCode: accessCode }
+      })
+
+      if (accessCodeError) {
+        console.error('Access code update error:', accessCodeError)
+        throw new Error(accessCodeError.message || 'Fehler beim Aktualisieren des Zugangscodes')
       }
 
       toast({
         title: "Profil gespeichert",
-        description: "Deine Änderungen wurden erfolgreich gespeichert."
+        description: data?.message || "Zugangscode erfolgreich geändert. Verwenden Sie den neuen Code für die nächste Anmeldung.",
       })
     } catch (error) {
       console.error('Error saving profile:', error)
