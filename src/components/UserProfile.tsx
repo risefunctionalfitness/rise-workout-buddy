@@ -22,9 +22,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   // Form states
   const [displayName, setDisplayName] = useState("")
   const [nickname, setNickname] = useState("")
+  const [accessCode, setAccessCode] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [userId, setUserId] = useState<string>("")
   const [membershipType, setMembershipType] = useState<string | null>(null)
+  const [accessCodeError, setAccessCodeError] = useState("")
 
   useEffect(() => {
     loadProfile()
@@ -60,6 +62,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       if (profile) {
         setDisplayName(profile.display_name || "")
         setNickname(profile.nickname || profile.display_name || "")
+        setAccessCode(profile.access_code || "")
         setAvatarUrl(profile.avatar_url)
         setMembershipType(profile.membership_type || null)
       }
@@ -68,12 +71,50 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
     }
   }
 
+  const validateAccessCode = (code: string) => {
+    if (!code) {
+      setAccessCodeError("Zugangscode ist erforderlich")
+      return false
+    }
+    if (!/^\d+$/.test(code)) {
+      setAccessCodeError("Zugangscode darf nur Zahlen enthalten")
+      return false
+    }
+    if (code.length < 6) {
+      setAccessCodeError("Zugangscode muss mindestens 6 Zahlen haben")
+      return false
+    }
+    setAccessCodeError("")
+    return true
+  }
+
+  const handleAccessCodeChange = (value: string) => {
+    // Only allow numbers
+    const numericValue = value.replace(/\D/g, '')
+    setAccessCode(numericValue)
+    if (numericValue) {
+      validateAccessCode(numericValue)
+    } else {
+      setAccessCodeError("")
+    }
+  }
+
   const saveProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const updates = { nickname }
+      // Validate access code before saving
+      if (!validateAccessCode(accessCode)) {
+        toast({
+          title: "Fehler",
+          description: "Bitte überprüfe deinen Zugangscode.",
+          variant: "destructive"
+        })
+        return
+      }
+      
+      const updates = { nickname, access_code: accessCode }
 
       // Update existing profile; if none updated, insert a new one (avoid upsert on non-unique column)
       const { data: updated, error: updateError } = await supabase
@@ -184,6 +225,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder={displayName || "Dein Spitzname"}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="accessCode">Zugangscode (mindestens 6 Zahlen) *</Label>
+              <Input
+                id="accessCode"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={accessCode}
+                onChange={(e) => handleAccessCodeChange(e.target.value)}
+                placeholder="123456"
+                maxLength={12}
+                className={accessCodeError ? "border-destructive" : ""}
+              />
+              {accessCodeError && (
+                <p className="text-sm text-destructive mt-1">{accessCodeError}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Dein persönlicher Zugangscode für die App
+              </p>
             </div>
             
             <Button onClick={saveProfile} className="w-full bg-rise-accent hover:bg-rise-accent-dark text-white">
