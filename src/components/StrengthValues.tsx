@@ -192,55 +192,53 @@ export const StrengthValues = () => {
         </Card>
 
         {/* Prozentrechner */}
-        {getLiftsData().length > 0 && (
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calculator className="h-5 w-5" />
-                Prozentrechner
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Berechne Prozentsätze deiner 1RM Werte.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label>Übung</Label>
-                  <Select value={selectedLift} onValueChange={setSelectedLift}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Übung wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getLiftsData().map((lift) => (
-                        <SelectItem key={lift.name} value={lift.name}>
-                          {lift.name} ({lift.value}kg)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Prozent</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="150"
-                    value={percentage}
-                    onChange={(e) => setPercentage(e.target.value)}
-                    placeholder="%"
-                  />
-                </div>
-                <div>
-                  <Label>Ergebnis</Label>
-                  <div className="h-10 flex items-center px-3 bg-muted rounded-md text-lg font-bold text-primary">
-                    {calculatePercentage() ? `${calculatePercentage()}kg` : '---'}
-                  </div>
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Prozentrechner
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Berechne Prozentsätze deiner 1RM Werte.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+              <div>
+                <Label>Übung</Label>
+                <Select value={selectedLift} onValueChange={setSelectedLift}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Übung wählen" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-lg z-50">
+                    {getLiftsData().map((lift) => (
+                      <SelectItem key={lift.name} value={lift.name} className="bg-background hover:bg-muted">
+                        {lift.name} ({lift.value}kg)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Prozent</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="150"
+                  value={percentage}
+                  onChange={(e) => setPercentage(e.target.value)}
+                  placeholder="%"
+                />
+              </div>
+              <div>
+                <Label>Ergebnis</Label>
+                <div className="h-10 flex items-center px-3 bg-muted rounded-md text-lg font-bold text-primary">
+                  {calculatePercentage() ? `${calculatePercentage()}kg` : '---'}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Zusätzliche Übungen */}
         <Card className="mb-4">
