@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { LogOut, Dumbbell, Target, Moon, Sun, RotateCcw } from "lucide-react"
+import { LogOut, Dumbbell, Target, Moon, Sun, RotateCcw, Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
@@ -27,6 +27,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const [userId, setUserId] = useState<string>("")
   const [membershipType, setMembershipType] = useState<string | null>(null)
   const [accessCodeError, setAccessCodeError] = useState("")
+  const [showAccessCode, setShowAccessCode] = useState(false)
 
   useEffect(() => {
     loadProfile()
@@ -229,17 +230,32 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
             <div>
               <Label htmlFor="accessCode">Zugangscode (mindestens 6 Zahlen) *</Label>
-              <Input
-                id="accessCode"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={accessCode}
-                onChange={(e) => handleAccessCodeChange(e.target.value)}
-                placeholder="123456"
-                maxLength={12}
-                className={accessCodeError ? "border-destructive" : ""}
-              />
+              <div className="relative">
+                <Input
+                  id="accessCode"
+                  type={showAccessCode ? "text" : "password"}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={accessCode}
+                  onChange={(e) => handleAccessCodeChange(e.target.value)}
+                  placeholder="123456"
+                  maxLength={12}
+                  className={`pr-10 ${accessCodeError ? "border-destructive" : ""}`}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowAccessCode(!showAccessCode)}
+                >
+                  {showAccessCode ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
               {accessCodeError && (
                 <p className="text-sm text-destructive mt-1">{accessCodeError}</p>
               )}
