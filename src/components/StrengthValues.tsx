@@ -164,48 +164,54 @@ export const StrengthValues = () => {
               Gib deine 1 rep max ein, damit dein Training individualisiert werden kann.
             </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Front Squat:</Label>
-                <Input type="number" step="0.5" value={frontSquat1rm} onChange={(e) => setFrontSquat1rm(e.target.value)} placeholder="kg" className="w-20" />
+          <CardContent className="space-y-3">
+            {/* Exercise rows with inline mini calculator */}
+            {[
+              { name: "Front Squat", value: frontSquat1rm, setter: setFrontSquat1rm },
+              { name: "Back Squat", value: backSquat1rm, setter: setBackSquat1rm },
+              { name: "Deadlift", value: deadlift1rm, setter: setDeadlift1rm },
+              { name: "Bench Press", value: benchPress1rm, setter: setBenchPress1rm },
+              { name: "Snatch", value: snatch1rm, setter: setSnatch1rm },
+              { name: "Clean", value: clean1rm, setter: setClean1rm },
+              { name: "Jerk", value: jerk1rm, setter: setJerk1rm },
+              { name: "Clean & Jerk", value: cleanAndJerk1rm, setter: setCleanAndJerk1rm }
+            ].map(({ name, value, setter }) => (
+              <div key={name} className="flex flex-col sm:flex-row gap-2 p-2 bg-muted/20 rounded-lg">
+                {/* Main exercise input */}
+                <div className="flex gap-2 items-center min-w-0 flex-1">
+                  <Label className="text-xs font-medium min-w-16 text-right">{name}:</Label>
+                  <Input 
+                    type="number" 
+                    step="0.5" 
+                    value={value} 
+                    onChange={(e) => setter(e.target.value)} 
+                    placeholder="kg" 
+                    className="w-16 h-8 text-sm" 
+                  />
+                  <span className="text-xs text-muted-foreground">kg</span>
+                </div>
+                
+                {/* Mini calculator */}
+                {value && parseFloat(value) > 0 && (
+                  <div className="flex gap-1 items-center text-xs">
+                    <Input 
+                      type="number" 
+                      min="1" 
+                      max="100" 
+                      placeholder="%" 
+                      className="w-12 h-6 text-xs p-1" 
+                      onChange={(e) => {
+                        const percent = e.target.value
+                        const calc = percent ? ((parseFloat(value) * parseFloat(percent)) / 100).toFixed(1) : ""
+                        e.target.nextElementSibling.textContent = calc ? `${calc}kg` : ""
+                      }}
+                    />
+                    <span className="text-xs">% =</span>
+                    <div className="min-w-12 text-xs font-medium text-primary"></div>
+                  </div>
+                )}
               </div>
-              
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Back Squat:</Label>
-                <Input type="number" step="0.5" value={backSquat1rm} onChange={(e) => setBackSquat1rm(e.target.value)} placeholder="kg" className="w-20" />
-              </div>
-
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Deadlift:</Label>
-                <Input type="number" step="0.5" value={deadlift1rm} onChange={(e) => setDeadlift1rm(e.target.value)} placeholder="kg" className="w-20" />
-              </div>
-
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Bench Press:</Label>
-                <Input type="number" step="0.5" value={benchPress1rm} onChange={(e) => setBenchPress1rm(e.target.value)} placeholder="kg" className="w-20" />
-              </div>
-
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Snatch:</Label>
-                <Input type="number" step="0.5" value={snatch1rm} onChange={(e) => setSnatch1rm(e.target.value)} placeholder="kg" className="w-20" />
-              </div>
-
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Clean:</Label>
-                <Input type="number" step="0.5" value={clean1rm} onChange={(e) => setClean1rm(e.target.value)} placeholder="kg" className="w-20" />
-              </div>
-
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Jerk:</Label>
-                <Input type="number" step="0.5" value={jerk1rm} onChange={(e) => setJerk1rm(e.target.value)} placeholder="kg" className="w-20" />
-              </div>
-
-              <div className="flex gap-2">
-                <Label className="min-w-24 pt-2">Clean & Jerk:</Label>
-                <Input type="number" step="0.5" value={cleanAndJerk1rm} onChange={(e) => setCleanAndJerk1rm(e.target.value)} placeholder="kg" className="w-20" />
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -255,67 +261,6 @@ export const StrengthValues = () => {
           </CardContent>
         </Card>
 
-        {/* Prozentrechner */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              Prozentrechner
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Berechne Prozentsätze deiner 1RM Werte für dein Training.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Übung auswählen</Label>
-                <Select value={selectedLift} onValueChange={setSelectedLift}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Übung wählen..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getLiftsData().map((lift) => (
-                      <SelectItem key={lift.name} value={lift.name}>
-                        {lift.name} ({lift.value} kg)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label>Prozentsatz</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    step="1"
-                    min="1"
-                    max="100"
-                    value={percentage}
-                    onChange={(e) => setPercentage(e.target.value)}
-                    placeholder="%"
-                    className="w-20"
-                  />
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm text-muted-foreground">% =</span>
-                    <div className="min-w-16 h-10 bg-muted rounded-md flex items-center justify-center text-sm font-medium">
-                      {calculatePercentage() ? `${calculatePercentage()} kg` : '--'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {selectedLift && percentage && (
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm">
-                  <strong>{percentage}%</strong> von {selectedLift} ({getLiftsData().find(l => l.name === selectedLift)?.value} kg) = <strong>{calculatePercentage()} kg</strong>
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         <Button onClick={saveStrengthValues} className="w-full bg-rise-accent hover:bg-rise-accent-dark text-white">
           Kraftwerte speichern
