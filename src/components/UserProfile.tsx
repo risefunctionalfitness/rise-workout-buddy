@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
 import { AvatarUpload } from "@/components/AvatarUpload"
 import { useTheme } from "next-themes"
+import UserBadges from "@/components/UserBadges"
 
 interface UserProfileProps {
   onClose: () => void
@@ -195,17 +196,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-center mb-4">
-              {userId && (
-                <AvatarUpload
-                  userId={userId}
-                  currentAvatarUrl={avatarUrl}
-                  onAvatarUpdate={setAvatarUrl}
-                  size="lg"
-                  showUploadButton={false}
-                />
-              )}
+            <div className="flex flex-col items-center space-y-4 mb-6">
+              <AvatarUpload userId={userId} onAvatarUpdate={loadProfile} />
+              <div className="text-center">
+                <h2 className="text-lg font-semibold">{displayName}</h2>
+                <p className="text-sm text-muted-foreground">{membershipType}</p>
+              </div>
             </div>
+
+            <UserBadges />
 
             <div>
               <Label htmlFor="name">Name (vergeben vom Admin)</Label>

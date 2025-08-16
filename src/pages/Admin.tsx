@@ -795,7 +795,7 @@ export default function Admin() {
         showAdminAccess={true}
         onLogout={handleLogout}
         activePage={activePage}
-        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts')}
+        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges')}
       />
       
       <div className="container mx-auto px-4 py-6">

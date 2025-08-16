@@ -10,6 +10,8 @@ import { WorkoutGenerator } from "@/components/WorkoutGenerator"
 import { CourseBooking } from "@/components/CourseBooking"
 import { NewsSection } from "@/components/NewsSection"
 import { LeaderboardPosition } from "@/components/LeaderboardPosition"
+import ChallengeCard from "@/components/ChallengeCard"
+import ChallengeDetail from "@/components/ChallengeDetail"
 
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
