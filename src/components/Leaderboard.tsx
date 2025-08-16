@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Medal, Award, Dumbbell, Calendar } from "lucide-react"
+import { Trophy, Medal, Award, Dumbbell, Calendar, CheckCircle } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { AvatarUpload } from "@/components/AvatarUpload"
 import { ProfileImageViewer } from "@/components/ProfileImageViewer"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface LeaderboardEntry {
   id: string
@@ -16,6 +17,7 @@ interface LeaderboardEntry {
   year: number
   month: number
   total_score: number
+  hasCompletedChallenge: boolean
 }
 
 export const Leaderboard: React.FC = () => {
@@ -81,16 +83,35 @@ export const Leaderboard: React.FC = () => {
         return
       }
 
+      // Get challenge completion status for current month
+      const { data: challengeProgress, error: challengeError } = await supabase
+        .from('user_challenge_progress')
+        .select(`
+          user_id,
+          is_completed,
+          monthly_challenges!inner(year, month)
+        `)
+        .eq('monthly_challenges.year', currentYear)
+        .eq('monthly_challenges.month', currentMonth)
+        .eq('is_completed', true)
+        .in('user_id', userIds)
+
+      if (challengeError) {
+        console.error('Error loading challenge progress:', challengeError)
+      }
+
       // Combine leaderboard data with profile info and calculate total score
       const leaderboardWithProfiles = leaderboardData.map(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
+        const hasCompletedChallenge = challengeProgress?.some(cp => cp.user_id === entry.user_id) || false
         const totalScore = entry.training_count + (entry.challenge_bonus_points || 0)
         return {
           ...entry,
           challenge_bonus_points: entry.challenge_bonus_points || 0,
           display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
           avatar_url: profile?.avatar_url || null,
-          total_score: totalScore
+          total_score: totalScore,
+          hasCompletedChallenge
         }
       }).sort((a, b) => b.total_score - a.total_score) // Sort by total score
 
@@ -191,8 +212,20 @@ export const Leaderboard: React.FC = () => {
                               displayName: entry.display_name 
                             })}
                           />
-                          <div>
+                          <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-lg text-foreground">{entry.display_name}</h3>
+                            {entry.hasCompletedChallenge && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <CheckCircle className="h-5 w-5 text-green-500 cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Monatschallenge abgeschlossen</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                           </div>
                         </div>
                       </div>
