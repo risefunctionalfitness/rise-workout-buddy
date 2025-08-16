@@ -100,7 +100,7 @@ export default function UserBadges() {
                   <BadgeImage 
                     icon={badge.monthly_challenges.icon} 
                     alt={badge.monthly_challenges.title}
-                    className="w-12 h-12"
+                    className="w-16 h-16"
                   />
                 </div>
                 <div className="text-xs text-center text-muted-foreground">
