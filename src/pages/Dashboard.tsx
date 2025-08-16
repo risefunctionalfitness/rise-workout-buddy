@@ -180,6 +180,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
       if (error && error.code !== 'PGRST116') throw error
       setCurrentChallenge(challenge)
+      
+      // Challenge is loaded and ready
     } catch (error) {
       console.error("Error loading current challenge:", error)
     }
@@ -422,6 +424,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         description: "Training konnte nicht entfernt werden.",
         variant: "destructive"
       })
+    }
+  }
+
+  const handleChallengeClick = async () => {
+    if (!currentChallenge) {
+      await loadCurrentChallenge()
+      return
+    }
+
+    try {
+      // Load user progress for this challenge
+      const { data: progress } = await supabase
+        .from("user_challenge_progress")
+        .select("*")
+        .eq("challenge_id", currentChallenge.id)
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      setSelectedChallenge({
+        challenge: currentChallenge,
+        progress: progress || {
+          completed_checkpoints: 0,
+          is_completed: false
+        }
+      })
+    } catch (error) {
+      console.error("Error loading challenge progress:", error)
     }
   }
 

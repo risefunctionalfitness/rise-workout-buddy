@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Archive, Users, TrendingUp, Calendar, Target, Dumbbell, Flame, Clock, Sun, Star, Trophy, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { BADGE_ICONS_FOR_ADMIN } from "@/components/BadgeIconMapper";
 
 interface Challenge {
   id: string;
@@ -357,20 +358,24 @@ export default function AdminChallengeManager() {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Icon</label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {CHALLENGE_ICONS.map((iconOption) => {
-                    const IconComponent = iconOption.icon;
+                <label className="text-sm font-medium">Badge Icon</label>
+                <div className="grid grid-cols-5 gap-2 mt-2">
+                  {BADGE_ICONS_FOR_ADMIN.map((badgeOption) => {
                     return (
                       <Button
-                        key={iconOption.value}
+                        key={badgeOption.value}
                         type="button"
-                        variant={formData.icon === iconOption.value ? "default" : "outline"}
+                        variant={formData.icon === badgeOption.value ? "default" : "outline"}
                         size="sm"
-                        className="aspect-square p-0"
-                        onClick={() => setFormData({ ...formData, icon: iconOption.value })}
+                        className="aspect-square p-1 h-auto"
+                        onClick={() => setFormData({ ...formData, icon: badgeOption.value })}
+                        title={badgeOption.label}
                       >
-                        <IconComponent className="w-4 h-4" />
+                        <img 
+                          src={badgeOption.image} 
+                          alt={badgeOption.label}
+                          className="w-6 h-6 object-contain"
+                        />
                       </Button>
                     );
                   })}

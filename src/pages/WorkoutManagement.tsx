@@ -533,16 +533,17 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
           </TabsContent>
         </Tabs>
 
-        {/* WOD Timer Button - Bottom right */}
-        <div className="fixed bottom-6 right-6 z-50">
-          <button 
-            onClick={() => navigate("/workout-timer")}
-            className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-700 dark:to-gray-800 light:from-[#B81243] light:to-[#9A0F39] border border-border shadow-lg flex items-center justify-center text-gray-100 dark:text-gray-100 light:text-white hover:scale-105 transition-transform"
-            title="WOD Timer"
-          >
-            <Timer className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
-          </button>
-        </div>
+      </div>
+
+      {/* WOD Timer Button - Fixed position bottom right */}
+      <div className="fixed bottom-20 right-4 z-40">
+        <button
+          onClick={() => navigate('/pro/wod-timer')}
+          className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-700 dark:to-gray-800 light:from-[#B81243] light:to-[#9A0F39] border border-border shadow-lg flex items-center justify-center text-gray-100 dark:text-gray-100 light:text-white hover:scale-105 transition-transform"
+          title="WOD Timer"
+        >
+          <Timer className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
+        </button>
       </div>
     </div>
   )

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Target, Trophy, Calendar } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { BadgeImage } from "@/components/BadgeIconMapper";
 
 interface UserBadge {
   id: string;
@@ -15,16 +16,7 @@ interface UserBadge {
   };
 }
 
-const ICON_MAP = {
-  target: Target,
-  dumbbell: Target,
-  flame: Star,
-  clock: Calendar,
-  sun: Star,
-  star: Star,
-  trophy: Trophy,
-  zap: Star
-};
+// Removed ICON_MAP as we now use BadgeImage component
 
 const MONTHS = [
   "Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
@@ -99,14 +91,17 @@ export default function UserBadges() {
       <h3 className="font-medium">Abzeichen ({badges.length})</h3>
       <div className="grid grid-cols-3 gap-2">
         {badges.map((badge) => {
-          const IconComponent = ICON_MAP[badge.monthly_challenges.icon as keyof typeof ICON_MAP] || Target;
           const monthName = MONTHS[badge.monthly_challenges.month - 1];
           
           return (
             <Card key={badge.id} className="aspect-square p-2 relative group hover:scale-105 transition-transform">
               <CardContent className="p-0 h-full flex flex-col items-center justify-center">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                  <IconComponent className="w-4 h-4 text-primary" />
+                <div className="mb-1">
+                  <BadgeImage 
+                    icon={badge.monthly_challenges.icon} 
+                    alt={badge.monthly_challenges.title}
+                    className="w-8 h-8"
+                  />
                 </div>
                 <Badge variant="outline" className="text-xs px-1 py-0">
                   {monthName} {badge.monthly_challenges.year}

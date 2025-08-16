@@ -204,8 +204,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
               </div>
             </div>
 
-            <UserBadges />
-
             <div>
               <Label htmlFor="name">Name (vergeben vom Admin)</Label>
               <Input
@@ -266,6 +264,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             <Button onClick={saveProfile} className="w-full bg-rise-accent hover:bg-rise-accent-dark text-white">
               Profil speichern
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Meine Abzeichen */}
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Meine Abzeichen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UserBadges />
           </CardContent>
         </Card>
 
