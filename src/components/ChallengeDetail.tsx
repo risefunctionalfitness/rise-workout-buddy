@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Target, Check, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { BadgeImage } from "@/components/BadgeIconMapper";
 
 interface Challenge {
   id: string;
@@ -15,6 +16,7 @@ interface Challenge {
   month: number;
   year: number;
   icon: string;
+  bonus_points?: number;
 }
 
 interface ChallengeProgress {
@@ -150,6 +152,11 @@ export default function ChallengeDetail({
         setTimeout(() => setShowConfetti(false), 3000);
       }
 
+      // Update local state immediately for instant UI feedback
+      const newCheckpoints = [...checkpoints];
+      newCheckpoints[index] = !isCurrentlyChecked;
+      setCheckpoints(newCheckpoints);
+      
       // Reload checkpoints and notify parent
       await loadCheckpoints();
       onProgressUpdate();
@@ -173,7 +180,11 @@ export default function ChallengeDetail({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary" />
+            <BadgeImage 
+              icon={challenge.icon} 
+              alt={challenge.title}
+              className="w-6 h-6"
+            />
             {challenge.title}
             {progress.is_completed && (
               <Badge variant="default" className="bg-green-500">
@@ -185,7 +196,14 @@ export default function ChallengeDetail({
         </DialogHeader>
         
         <div className="space-y-6">
-          <p className="text-muted-foreground">{challenge.description}</p>
+          <div>
+            <p className="text-muted-foreground">{challenge.description}</p>
+            {challenge.bonus_points && (
+              <p className="text-sm text-primary font-medium mt-2">
+                💪 {challenge.bonus_points} Bonus Punkte für das Leaderboard
+              </p>
+            )}
+          </div>
           
           <div>
             <div className="flex justify-between text-sm mb-2">
