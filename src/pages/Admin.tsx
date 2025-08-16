@@ -19,6 +19,7 @@ import { MembershipBadge } from "@/components/MembershipBadge";
 import { AdminStats } from "@/components/AdminStats";
 import { RiseHeader } from "@/components/RiseHeader";
 import WorkoutManagement from "./WorkoutManagement";
+import AdminChallengeManager from "@/components/AdminChallengeManager";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,7 +50,7 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges'>('home');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
@@ -781,6 +782,8 @@ export default function Admin() {
         return <AdminCreditRecharge />;
       case 'workouts':
         return <WorkoutManagement hideHeader />;
+      case 'challenges':
+        return <AdminChallengeManager />;
       default:
         return <AdminStats />;
     }

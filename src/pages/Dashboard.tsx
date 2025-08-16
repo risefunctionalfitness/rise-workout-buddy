@@ -46,6 +46,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [trainingCount, setTrainingCount] = useState(0)
   const [showProfile, setShowProfile] = useState(false)
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
+  const [selectedChallenge, setSelectedChallenge] = useState<{challenge: any, progress: any} | null>(null)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
   
@@ -403,6 +404,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         return (
           <div className="p-4 space-y-6">
             
+            <ChallengeCard onOpenChallenge={(challenge, progress) => setSelectedChallenge({challenge, progress})} />
+            
             <TrainingPath 
               trainingDays={trainingDays} 
               onAddTraining={handleAddTraining}
@@ -496,6 +499,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
       {showProfile && (
         <UserProfile onClose={() => setShowProfile(false)} />
+      )}
+      
+      {selectedChallenge && (
+        <ChallengeDetail
+          challenge={selectedChallenge.challenge}
+          progress={selectedChallenge.progress}
+          open={!!selectedChallenge}
+          onOpenChange={(open) => !open && setSelectedChallenge(null)}
+          onProgressUpdate={() => {
+            // Refresh challenge card by triggering a re-render
+            setSelectedChallenge(null);
+            setTimeout(() => window.location.reload(), 100);
+          }}
+        />
       )}
     </div>
   )

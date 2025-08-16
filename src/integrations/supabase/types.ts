@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -46,6 +46,38 @@ export type Database = {
           workout_content?: string
         }
         Relationships: []
+      }
+      challenge_checkpoints: {
+        Row: {
+          challenge_id: string
+          checked_at: string
+          checkpoint_number: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          checked_at?: string
+          checkpoint_number: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          checked_at?: string
+          checkpoint_number?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_checkpoints_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       course_registrations: {
         Row: {
@@ -318,6 +350,51 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_challenges: {
+        Row: {
+          checkpoint_count: number
+          created_at: string
+          created_by: string
+          description: string
+          icon: string
+          id: string
+          is_archived: boolean
+          is_primary: boolean
+          month: number
+          title: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          checkpoint_count?: number
+          created_at?: string
+          created_by: string
+          description: string
+          icon?: string
+          id?: string
+          is_archived?: boolean
+          is_primary?: boolean
+          month: number
+          title: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          checkpoint_count?: number
+          created_at?: string
+          created_by?: string
+          description?: string
+          icon?: string
+          id?: string
+          is_archived?: boolean
+          is_primary?: boolean
+          month?: number
+          title?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           author_id: string
@@ -360,6 +437,7 @@ export type Database = {
           back_squat_1rm: number | null
           bench_press_1rm: number | null
           birth_year: number | null
+          clean_1rm: number | null
           clean_and_jerk_1rm: number | null
           created_at: string
           deadlift_1rm: number | null
@@ -369,6 +447,7 @@ export type Database = {
           front_squat_1rm: number | null
           gender: string | null
           id: string
+          jerk_1rm: number | null
           last_login_at: string | null
           limitations: Json | null
           membership_type: string | null
@@ -391,6 +470,7 @@ export type Database = {
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
           birth_year?: number | null
+          clean_1rm?: number | null
           clean_and_jerk_1rm?: number | null
           created_at?: string
           deadlift_1rm?: number | null
@@ -400,6 +480,7 @@ export type Database = {
           front_squat_1rm?: number | null
           gender?: string | null
           id?: string
+          jerk_1rm?: number | null
           last_login_at?: string | null
           limitations?: Json | null
           membership_type?: string | null
@@ -422,6 +503,7 @@ export type Database = {
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
           birth_year?: number | null
+          clean_1rm?: number | null
           clean_and_jerk_1rm?: number | null
           created_at?: string
           deadlift_1rm?: number | null
@@ -431,6 +513,7 @@ export type Database = {
           front_squat_1rm?: number | null
           gender?: string | null
           id?: string
+          jerk_1rm?: number | null
           last_login_at?: string | null
           limitations?: Json | null
           membership_type?: string | null
@@ -529,6 +612,76 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          challenge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_challenge_progress: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          completed_checkpoints: number
+          created_at: string
+          id: string
+          is_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          completed_checkpoints?: number
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          completed_checkpoints?: number
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_challenges"
             referencedColumns: ["id"]
           },
         ]
@@ -650,44 +803,44 @@ export type Database = {
         Returns: unknown
       }
       can_user_register_for_course: {
-        Args: { user_id_param: string; course_id_param: string }
+        Args: { course_id_param: string; user_id_param: string }
         Returns: boolean
       }
       debug_can_user_register_for_course: {
-        Args: { user_id_param: string; course_id_param: string }
+        Args: { course_id_param: string; user_id_param: string }
         Returns: {
-          user_role: string
-          user_membership_type: string
-          weekly_count: number
-          user_credits: number
-          course_date: string
           can_register: boolean
+          course_date: string
           debug_info: string
+          user_credits: number
+          user_membership_type: string
+          user_role: string
+          weekly_count: number
         }[]
       }
       generate_courses_from_template: {
         Args: {
-          template_id_param: string
-          start_date_param: string
           end_date_param: string
+          start_date_param: string
+          template_id_param: string
         }
         Returns: {
-          course_id: string
           course_date: string
-          start_time: string
+          course_id: string
           end_time: string
+          start_time: string
         }[]
       }
       get_course_stats: {
         Args: { course_id_param: string }
         Returns: {
+          max_participants: number
           registered_count: number
           waitlist_count: number
-          max_participants: number
         }[]
       }
       get_weekly_registrations_count: {
-        Args: { user_id_param: string; check_date?: string }
+        Args: { check_date?: string; user_id_param: string }
         Returns: number
       }
       halfvec_avg: {
@@ -708,8 +861,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -751,42 +904,42 @@ export type Database = {
       }
       match_workouts: {
         Args: {
-          query_embedding: string
-          match_threshold?: number
           match_count?: number
+          match_threshold?: number
+          query_embedding: string
         }
         Returns: {
-          workout_id: string
           full_text: string
           part_a_description: string
-          part_b_description: string
-          part_c_description: string
           part_a_type: string
+          part_b_description: string
           part_b_score_type: string
+          part_c_description: string
           part_c_score_type: string
           similarity: number
+          workout_id: string
         }[]
       }
       match_workouts_v2: {
         Args: {
-          query_embedding: string
-          workout_type_param?: string
-          session_type_param?: string
           duration_minutes_param?: number
           focus_area_param?: string
-          user_preferred_exercises?: string[]
-          match_threshold?: number
           match_count?: number
+          match_threshold?: number
+          query_embedding: string
+          session_type_param?: string
+          user_preferred_exercises?: string[]
+          workout_type_param?: string
         }
         Returns: {
-          workout_id: string
-          title: string
-          workout_type: string
-          session_type: string
+          difficulty_level: string
           duration_minutes: number
           focus_area: string
-          difficulty_level: string
+          session_type: string
           similarity: number
+          title: string
+          workout_id: string
+          workout_type: string
         }[]
       }
       sparsevec_out: {
@@ -802,7 +955,7 @@ export type Database = {
         Returns: number
       }
       update_leaderboard_entry: {
-        Args: { user_id_param: string; session_date: string }
+        Args: { session_date: string; user_id_param: string }
         Returns: undefined
       }
       update_member_status: {
