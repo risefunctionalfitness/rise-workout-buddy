@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Archive, Users, TrendingUp, Calendar, Target } from "lucide-react";
+import { Plus, Edit, Archive, Users, TrendingUp, Calendar, Target, Dumbbell, Flame, Clock, Sun, Star, Trophy, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -33,14 +33,14 @@ interface ChallengeStats {
 }
 
 const CHALLENGE_ICONS = [
-  { value: "target", label: "Target" },
-  { value: "dumbbell", label: "Dumbbell" },
-  { value: "flame", label: "Fire" },
-  { value: "clock", label: "Clock" },
-  { value: "sun", label: "Sun" },
-  { value: "star", label: "Star" },
-  { value: "trophy", label: "Trophy" },
-  { value: "zap", label: "Lightning" }
+  { value: "target", label: "Target", icon: Target },
+  { value: "dumbbell", label: "Dumbbell", icon: Dumbbell },
+  { value: "flame", label: "Fire", icon: Flame },
+  { value: "clock", label: "Clock", icon: Clock },
+  { value: "sun", label: "Sun", icon: Sun },
+  { value: "star", label: "Star", icon: Star },
+  { value: "trophy", label: "Trophy", icon: Trophy },
+  { value: "zap", label: "Lightning", icon: Zap }
 ];
 
 const MONTHS = [
@@ -256,6 +256,9 @@ export default function AdminChallengeManager() {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="flex items-center gap-2">
+                    {CHALLENGE_ICONS.find(i => i.value === challenge.icon)?.icon && 
+                      React.createElement(CHALLENGE_ICONS.find(i => i.value === challenge.icon)!.icon, { className: "w-5 h-5" })
+                    }
                     {challenge.title}
                     {challenge.is_primary && <Badge variant="default">Primär</Badge>}
                     {challenge.is_archived && <Badge variant="outline">Archiviert</Badge>}
@@ -355,18 +358,23 @@ export default function AdminChallengeManager() {
               </div>
               <div>
                 <label className="text-sm font-medium">Icon</label>
-                <Select value={formData.icon} onValueChange={(value) => setFormData({ ...formData, icon: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CHALLENGE_ICONS.map((icon) => (
-                      <SelectItem key={icon.value} value={icon.value}>
-                        {icon.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {CHALLENGE_ICONS.map((iconOption) => {
+                    const IconComponent = iconOption.icon;
+                    return (
+                      <Button
+                        key={iconOption.value}
+                        type="button"
+                        variant={formData.icon === iconOption.value ? "default" : "outline"}
+                        size="sm"
+                        className="aspect-square p-0"
+                        onClick={() => setFormData({ ...formData, icon: iconOption.value })}
+                      >
+                        <IconComponent className="w-4 h-4" />
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <div className="flex justify-between">

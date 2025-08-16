@@ -49,6 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [showProfile, setShowProfile] = useState(false)
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const [selectedChallenge, setSelectedChallenge] = useState<{challenge: any, progress: any} | null>(null)
+  const [currentChallenge, setCurrentChallenge] = useState<any>(null)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
   
@@ -64,6 +65,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       await loadUserProfile()
       if (!mounted) return
       await generateTrainingDays()
+      if (!mounted) return
+      await loadCurrentChallenge()
     }
     
     loadData()
@@ -157,6 +160,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       setUserAvatar(profile?.avatar_url || null)
     } catch (error) {
       console.error('Error loading user profile:', error)
+    }
+  }
+
+  const loadCurrentChallenge = async () => {
+    try {
+      const currentDate = new Date()
+      const currentMonth = currentDate.getMonth() + 1
+      const currentYear = currentDate.getFullYear()
+
+      const { data: challenge, error } = await supabase
+        .from("monthly_challenges")
+        .select("*")
+        .eq("month", currentMonth)
+        .eq("year", currentYear)
+        .eq("is_primary", true)
+        .eq("is_archived", false)
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error
+      setCurrentChallenge(challenge)
+    } catch (error) {
+      console.error("Error loading current challenge:", error)
     }
   }
 
@@ -491,8 +516,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         <div className="fixed top-24 right-4 z-50 flex flex-col gap-4">
           <LeaderboardPosition user={user} />
           <button 
-            onClick={() => setSelectedChallenge({ challenge: { title: 'Current Challenge' }, progress: null })}
+            onClick={async () => {
+              if (currentChallenge && user?.id) {
+                // Load or create challenge progress
+                let { data: progress, error } = await supabase
+                  .from("user_challenge_progress")
+                  .select("*")
+                  .eq("user_id", user.id)
+                  .eq("challenge_id", currentChallenge.id)
+                  .single()
+
+                if (error && error.code === 'PGRST116') {
+                  // Create new progress if it doesn't exist
+                  const { data: newProgress, error: createError } = await supabase
+                    .from("user_challenge_progress")
+                    .insert({
+                      user_id: user.id,
+                      challenge_id: currentChallenge.id,
+                      completed_checkpoints: 0,
+                      is_completed: false
+                    })
+                    .select()
+                    .single()
+
+                  if (createError) {
+                    console.error("Error creating progress:", createError)
+                    return
+                  }
+                  progress = newProgress
+                }
+
+                setSelectedChallenge({ challenge: currentChallenge, progress })
+              }
+            }}
             className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-700 dark:to-gray-800 light:from-[#B81243] light:to-[#9A0F39] border border-border shadow-lg flex items-center justify-center text-gray-100 dark:text-gray-100 light:text-white hover:scale-105 transition-transform"
+            disabled={!currentChallenge}
           >
             <Award className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
           </button>
@@ -510,9 +568,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           open={!!selectedChallenge}
           onOpenChange={(open) => !open && setSelectedChallenge(null)}
           onProgressUpdate={() => {
-            // Refresh challenge card by triggering a re-render
-            setSelectedChallenge(null);
-            setTimeout(() => window.location.reload(), 100);
+            loadCurrentChallenge()
           }}
         />
       )}
