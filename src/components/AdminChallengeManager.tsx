@@ -74,7 +74,8 @@ export default function AdminChallengeManager() {
     checkpoint_count: 12,
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    icon: "target"
+    icon: "target",
+    bonus_points: 0
   });
 
   useEffect(() => {
@@ -193,7 +194,8 @@ export default function AdminChallengeManager() {
       checkpoint_count: 12,
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
-      icon: "target"
+      icon: "target",
+      bonus_points: 0
     });
   };
 
@@ -204,7 +206,8 @@ export default function AdminChallengeManager() {
       checkpoint_count: challenge.checkpoint_count,
       month: challenge.month,
       year: challenge.year,
-      icon: challenge.icon
+      icon: challenge.icon,
+      bonus_points: (challenge as any).bonus_points || 0
     });
     setEditingChallenge(challenge);
     setShowCreateDialog(true);
@@ -320,6 +323,16 @@ export default function AdminChallengeManager() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Bonus Punkte (Leaderboard)</label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.bonus_points}
+                onChange={(e) => setFormData({ ...formData, bonus_points: parseInt(e.target.value) || 0 })}
+                placeholder="Bonus Punkte für Challenge-Abschluss"
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Badge Icon auswählen</label>

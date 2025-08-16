@@ -292,6 +292,7 @@ export type Database = {
       }
       leaderboard_entries: {
         Row: {
+          challenge_bonus_points: number
           created_at: string
           id: string
           month: number
@@ -301,6 +302,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          challenge_bonus_points?: number
           created_at?: string
           id?: string
           month: number
@@ -310,6 +312,7 @@ export type Database = {
           year: number
         }
         Update: {
+          challenge_bonus_points?: number
           created_at?: string
           id?: string
           month?: number
@@ -352,6 +355,7 @@ export type Database = {
       }
       monthly_challenges: {
         Row: {
+          bonus_points: number
           checkpoint_count: number
           created_at: string
           created_by: string
@@ -366,6 +370,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          bonus_points?: number
           checkpoint_count?: number
           created_at?: string
           created_by: string
@@ -380,6 +385,7 @@ export type Database = {
           year: number
         }
         Update: {
+          bonus_points?: number
           checkpoint_count?: number
           created_at?: string
           created_by?: string
@@ -798,6 +804,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_challenge_bonus: {
+        Args: { challenge_id_param: string; user_id_param: string }
+        Returns: undefined
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown

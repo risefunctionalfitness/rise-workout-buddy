@@ -10,10 +10,12 @@ interface LeaderboardEntry {
   id: string
   user_id: string
   training_count: number
+  challenge_bonus_points: number
   display_name: string
   avatar_url: string | null
   year: number
   month: number
+  total_score: number
 }
 
 export const Leaderboard: React.FC = () => {
@@ -78,15 +80,18 @@ export const Leaderboard: React.FC = () => {
         return
       }
 
-      // Combine leaderboard data with profile info
+      // Combine leaderboard data with profile info and calculate total score
       const leaderboardWithProfiles = leaderboardData.map(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
+        const totalScore = entry.training_count + (entry.challenge_bonus_points || 0)
         return {
           ...entry,
+          challenge_bonus_points: entry.challenge_bonus_points || 0,
           display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
-          avatar_url: profile?.avatar_url || null
+          avatar_url: profile?.avatar_url || null,
+          total_score: totalScore
         }
-      })
+      }).sort((a, b) => b.total_score - a.total_score) // Sort by total score
 
       setLeaderboard(leaderboardWithProfiles)
     } catch (error) {
@@ -191,10 +196,20 @@ export const Leaderboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right flex items-center gap-2">
-                        <Badge variant="secondary" className="text-lg px-3 py-1 bg-rise-accent text-white flex items-center gap-1">
-                          <Dumbbell className="h-4 w-4" />
-                          {entry.training_count}
-                        </Badge>
+                        <div className="text-right">
+                          <Badge variant="secondary" className="text-lg px-3 py-1 bg-rise-accent text-white flex items-center gap-1">
+                            <Dumbbell className="h-4 w-4" />
+                            {entry.total_score}
+                          </Badge>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {entry.training_count} Trainings
+                            {entry.challenge_bonus_points > 0 && (
+                              <span className="block text-accent">
+                                +{entry.challenge_bonus_points} Bonus
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
