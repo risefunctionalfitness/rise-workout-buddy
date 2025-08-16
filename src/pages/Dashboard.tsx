@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Home, Calendar, Trophy, Weight, Timer } from "lucide-react"
+import { Home, Calendar, Trophy, Weight, Award } from "lucide-react"
 import { TrainingPathHeader } from "@/components/TrainingPathHeader"
 import { TrainingPath } from "@/components/TrainingPath"
 import { BottomNavigation } from "@/components/BottomNavigation"
@@ -406,7 +406,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         return (
           <div className="p-4 space-y-6">
             
-            <ChallengeCard onOpenChallenge={(challenge, progress) => setSelectedChallenge({challenge, progress})} />
+            
             
             <TrainingPath 
               trainingDays={trainingDays} 
@@ -491,10 +491,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         <div className="fixed top-24 right-4 z-50 flex flex-col gap-4">
           <LeaderboardPosition user={user} />
           <button 
-            onClick={() => navigate("/workout-timer")}
+            onClick={() => setSelectedChallenge({ challenge: { title: 'Current Challenge' }, progress: null })}
             className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-700 dark:to-gray-800 light:from-[#B81243] light:to-[#9A0F39] border border-border shadow-lg flex items-center justify-center text-gray-100 dark:text-gray-100 light:text-white hover:scale-105 transition-transform"
           >
-            <Timer className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
+            <Award className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
           </button>
         </div>
       )}

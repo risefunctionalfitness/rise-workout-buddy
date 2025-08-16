@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun } from "lucide-react"
+import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun, Trophy } from "lucide-react"
 import { useTheme } from "next-themes"
 import { supabase } from "@/integrations/supabase/client"
 import { Logo } from "@/components/Logo"
@@ -186,6 +186,16 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
             >
               <Users className="h-8 w-8 mb-2" />
               <span className="text-sm font-medium">Codes</span>
+            </div>
+            <div 
+              onClick={() => {
+                onPageChange?.('challenges');
+                setDropdownOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'challenges' ? 'bg-primary/10 text-primary' : ''}`}
+            >
+              <Trophy className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Challenges</span>
             </div>
           </div>
           

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Edit, Trash2, Search } from "lucide-react"
+import { Plus, Edit, Trash2, Search, Timer } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { RiseHeader } from "@/components/RiseHeader"
@@ -532,6 +532,17 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* WOD Timer Button - Bottom right */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <button 
+            onClick={() => navigate("/workout-timer")}
+            className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-700 dark:to-gray-800 light:from-[#B81243] light:to-[#9A0F39] border border-border shadow-lg flex items-center justify-center text-gray-100 dark:text-gray-100 light:text-white hover:scale-105 transition-transform"
+            title="WOD Timer"
+          >
+            <Timer className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
+          </button>
+        </div>
       </div>
     </div>
   )
