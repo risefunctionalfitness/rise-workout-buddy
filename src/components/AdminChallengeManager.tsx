@@ -75,7 +75,8 @@ export default function AdminChallengeManager() {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
     icon: "target",
-    bonus_points: 0
+    bonus_points: 0,
+    is_recurring: false
   });
 
   useEffect(() => {
@@ -195,7 +196,8 @@ export default function AdminChallengeManager() {
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
       icon: "target",
-      bonus_points: 0
+      bonus_points: 0,
+      is_recurring: false
     });
   };
 
@@ -207,7 +209,8 @@ export default function AdminChallengeManager() {
       month: challenge.month,
       year: challenge.year,
       icon: challenge.icon,
-      bonus_points: (challenge as any).bonus_points || 0
+      bonus_points: (challenge as any).bonus_points || 0,
+      is_recurring: (challenge as any).is_recurring || false
     });
     setEditingChallenge(challenge);
     setShowCreateDialog(true);
@@ -357,6 +360,18 @@ export default function AdminChallengeManager() {
                   );
                 })}
               </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_recurring"
+                checked={formData.is_recurring}
+                onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label htmlFor="is_recurring" className="text-sm font-medium">
+                Jährlich wiederholen
+              </label>
             </div>
             <div className="flex justify-between">
               <Button type="button" variant="outline" onClick={() => {

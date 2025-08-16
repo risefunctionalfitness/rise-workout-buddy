@@ -10,7 +10,7 @@ import { WorkoutCreationForm } from "./WorkoutCreationForm"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { User } from "@supabase/supabase-js"
-import { Plus, Dumbbell, ArrowLeft } from "lucide-react"
+import { Plus, Dumbbell, ArrowLeft, Clock } from "lucide-react"
 
 interface WorkoutGeneratorProps {
   user?: User | null
@@ -398,6 +398,16 @@ export const WorkoutGenerator = ({ user }: WorkoutGeneratorProps) => {
           )}
         </div>
       </div>
+      
+      {/* Timer Button - Fixed Position */}
+      <Button 
+        onClick={() => navigate('/workout-timer')}
+        size="lg"
+        className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-40 bg-[hsl(var(--rise-accent))] hover:bg-[hsl(var(--rise-accent-dark))] border-2 border-primary/20"
+        title="WOD Timer"
+      >
+        <Clock className="h-6 w-6" />
+      </Button>
     </div>
   )
 }

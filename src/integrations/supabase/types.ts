@@ -364,6 +364,7 @@ export type Database = {
           id: string
           is_archived: boolean
           is_primary: boolean
+          is_recurring: boolean
           month: number
           title: string
           updated_at: string
@@ -379,6 +380,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           is_primary?: boolean
+          is_recurring?: boolean
           month: number
           title: string
           updated_at?: string
@@ -394,6 +396,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           is_primary?: boolean
+          is_recurring?: boolean
           month?: number
           title?: string
           updated_at?: string
