@@ -178,21 +178,23 @@ export default function ChallengeDetail({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+        <DialogHeader className="text-center">
+          <div className="flex flex-col items-center gap-4 mb-2">
             <BadgeImage 
               icon={challenge.icon} 
               alt={challenge.title}
-              className="w-6 h-6"
+              className="w-24 h-24"
             />
-            {challenge.title}
-            {progress.is_completed && (
-              <Badge variant="default" className="bg-green-500">
-                <Star className="w-3 h-3 mr-1" />
-                Abgeschlossen
-              </Badge>
-            )}
-          </DialogTitle>
+            <DialogTitle className="flex items-center gap-2 justify-center">
+              {challenge.title}
+              {progress.is_completed && (
+                <Badge variant="default" className="bg-green-500">
+                  <Star className="w-3 h-3 mr-1" />
+                  Abgeschlossen
+                </Badge>
+              )}
+            </DialogTitle>
+          </div>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -206,15 +208,7 @@ export default function ChallengeDetail({
           </div>
           
           <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span>Fortschritt</span>
-              <span>{progress.completed_checkpoints}/{challenge.checkpoint_count}</span>
-            </div>
-            <Progress value={progressPercentage} className="h-3" />
-          </div>
-          
-          <div>
-            <h3 className="font-medium mb-3">Checkpoints</h3>
+            <h3 className="font-medium mb-3">Checkpoints ({progress.completed_checkpoints}/{challenge.checkpoint_count})</h3>
             <div className={`grid ${gridCols} gap-2`}>
               {Array.from({ length: challenge.checkpoint_count }, (_, index) => (
                 <Button
