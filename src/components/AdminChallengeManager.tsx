@@ -233,50 +233,58 @@ export default function AdminChallengeManager() {
         </Button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {challenges.map((challenge) => (
-          <Card key={challenge.id} className={challenge.is_archived ? "opacity-50" : ""}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1">
-                    {BADGE_ICONS_FOR_ADMIN.find(b => b.value === challenge.icon)?.image && (
-                      <img 
-                        src={BADGE_ICONS_FOR_ADMIN.find(b => b.value === challenge.icon)!.image}
-                        alt={challenge.title}
-                        className="w-8 h-8 object-contain"
-                      />
-                    )}
+          <Card key={challenge.id} className={`${challenge.is_archived ? "opacity-50" : ""} p-3`}>
+            <div className="flex flex-col gap-3">
+              {/* Badge und Status */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {BADGE_ICONS_FOR_ADMIN.find(b => b.value === challenge.icon)?.image && (
+                    <img 
+                      src={BADGE_ICONS_FOR_ADMIN.find(b => b.value === challenge.icon)!.image}
+                      alt={challenge.title}
+                      className="w-12 h-12 object-contain"
+                    />
+                  )}
+                  <div className="flex flex-col gap-1">
+                    {challenge.is_primary && <Badge variant="default" className="text-xs">Primär</Badge>}
+                    {challenge.is_archived && <Badge variant="outline" className="text-xs">Archiviert</Badge>}
                   </div>
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {challenge.title}
-                      {challenge.is_primary && <Badge variant="default">Primär</Badge>}
-                      {challenge.is_archived && <Badge variant="outline">Archiviert</Badge>}
-                    </CardTitle>
-                    <p className="text-muted-foreground mt-1">{challenge.description}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {MONTHS.find(m => m.value === challenge.month)?.label} {challenge.year} • {challenge.checkpoint_count} Checkpoints
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => openStatsDialog(challenge)}>
-                    <TrendingUp className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => openEditDialog(challenge)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => handleDelete(challenge.id)}
-                  >
-                    <Archive className="w-4 h-4" />
-                  </Button>
                 </div>
               </div>
-            </CardHeader>
+              
+              {/* Content */}
+              <div className="flex-1">
+                <h3 className="font-semibold text-base leading-tight mb-1">
+                  {challenge.title}
+                </h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                  {challenge.description}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {MONTHS.find(m => m.value === challenge.month)?.label} {challenge.year} • {challenge.checkpoint_count} Checkpoints
+                </p>
+              </div>
+              
+              {/* Actions */}
+              <div className="flex gap-1 pt-2 border-t">
+                <Button variant="outline" size="sm" onClick={() => openStatsDialog(challenge)} className="flex-1">
+                  <TrendingUp className="w-3 h-3" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => openEditDialog(challenge)} className="flex-1">
+                  <Edit className="w-3 h-3" />
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => handleDelete(challenge.id)}
+                  className="flex-1"
+                >
+                  <Archive className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
           </Card>
         ))}
       </div>
