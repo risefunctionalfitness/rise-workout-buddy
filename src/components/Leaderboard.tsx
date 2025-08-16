@@ -201,14 +201,11 @@ export const Leaderboard: React.FC = () => {
                             <Dumbbell className="h-4 w-4" />
                             {entry.total_score}
                           </Badge>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {entry.training_count} Trainings
-                            {entry.challenge_bonus_points > 0 && (
-                              <span className="block text-accent">
-                                +{entry.challenge_bonus_points} Bonus
-                              </span>
-                            )}
-                          </div>
+                          {entry.challenge_bonus_points > 0 && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              +{entry.challenge_bonus_points} Bonus
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
