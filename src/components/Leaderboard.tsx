@@ -53,6 +53,7 @@ export const Leaderboard: React.FC = () => {
         .eq('year', currentYear)
         .eq('month', currentMonth)
         .order('training_count', { ascending: false })
+        .limit(30)
 
       if (leaderboardError) {
         console.error('Error loading leaderboard:', leaderboardError)
@@ -155,7 +156,7 @@ export const Leaderboard: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
-          <p className="text-muted-foreground">Trainingstage im {new Date().toLocaleDateString('de-DE', { month: 'long' })}</p>
+          <p className="text-muted-foreground">Top 30 im {new Date().toLocaleDateString('de-DE', { month: 'long' })}</p>
           <div className="absolute top-0 right-0 flex items-center gap-2 text-sm text-muted-foreground">
             <span className="font-medium">{getRemainingDaysInMonth()}</span>
             <Calendar className="h-4 w-4" />
@@ -201,11 +202,6 @@ export const Leaderboard: React.FC = () => {
                             <Dumbbell className="h-4 w-4" />
                             {entry.total_score}
                           </Badge>
-                          {entry.challenge_bonus_points > 0 && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              +{entry.challenge_bonus_points} Bonus
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>

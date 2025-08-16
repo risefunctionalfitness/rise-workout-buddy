@@ -27,17 +27,24 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
       // Get current month's leaderboard data
       const { data: leaderboardData, error } = await supabase
         .from('leaderboard_entries')
-        .select('user_id, training_count')
+        .select('user_id, training_count, challenge_bonus_points')
         .eq('year', currentYear)
         .eq('month', currentMonth)
-        .order('training_count', { ascending: false })
 
       if (error) throw error
 
       if (leaderboardData && leaderboardData.length > 0) {
-        const userPosition = leaderboardData.findIndex(entry => entry.user_id === user.id) + 1
+        // Calculate total scores and sort by total score
+        const sortedData = leaderboardData
+          .map(entry => ({
+            ...entry,
+            total_score: entry.training_count + (entry.challenge_bonus_points || 0)
+          }))
+          .sort((a, b) => b.total_score - a.total_score)
+        
+        const userPosition = sortedData.findIndex(entry => entry.user_id === user.id) + 1
         setPosition(userPosition > 0 ? userPosition : null)
-        setTotalUsers(leaderboardData.length)
+        setTotalUsers(sortedData.length)
       } else {
         setPosition(null)
         setTotalUsers(0)

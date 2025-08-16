@@ -222,7 +222,7 @@ export default function ChallengeDetail({
                   size="sm"
                   className="aspect-square p-0 relative"
                   onClick={() => toggleCheckpoint(index)}
-                  disabled={loading}
+                  disabled={loading || progress.is_completed}
                 >
                   {checkpoints[index] ? (
                     <Check className="w-4 h-4" />
