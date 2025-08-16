@@ -174,7 +174,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         .select("*")
         .eq("month", currentMonth)
         .eq("year", currentYear)
-        .eq("is_primary", true)
         .eq("is_archived", false)
         .single()
 

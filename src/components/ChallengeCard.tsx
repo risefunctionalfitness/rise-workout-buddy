@@ -54,13 +54,12 @@ export default function ChallengeCard({ onOpenChallenge }: ChallengeCardProps) {
       const currentMonth = currentDate.getMonth() + 1;
       const currentYear = currentDate.getFullYear();
 
-      // Get current month's primary challenge
+      // Get current month's challenge
       const { data: challengeData, error: challengeError } = await supabase
         .from("monthly_challenges")
         .select("*")
         .eq("month", currentMonth)
         .eq("year", currentYear)
-        .eq("is_primary", true)
         .eq("is_archived", false)
         .single();
 
