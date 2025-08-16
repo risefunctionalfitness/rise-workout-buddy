@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Home, Calendar, Trophy, Weight, Award } from "lucide-react"
+import { Home, Calendar, Trophy, Weight, Award, Clock } from "lucide-react"
 import { TrainingPathHeader } from "@/components/TrainingPathHeader"
 import { TrainingPath } from "@/components/TrainingPath"
 import { BottomNavigation } from "@/components/BottomNavigation"
@@ -583,6 +583,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
             <Award className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
           </button>
         </div>
+      )}
+
+      {/* Timer Button - Only show on WOD tab */}
+      {activeTab === 'wod' && (
+        <button
+          onClick={() => navigate('/workout-timer')}
+          className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-700 dark:to-gray-800 light:from-[#B81243] light:to-[#9A0F39] border border-border shadow-lg flex items-center justify-center text-gray-100 dark:text-gray-100 light:text-white hover:scale-105 transition-transform z-50"
+          title="WOD Timer"
+        >
+          <Clock className="h-6 w-6" />
+        </button>
       )}
 
       {showProfile && (
