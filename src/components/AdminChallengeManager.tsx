@@ -74,8 +74,7 @@ export default function AdminChallengeManager() {
     checkpoint_count: 12,
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
-    icon: "target",
-    is_primary: false
+    icon: "target"
   });
 
   useEffect(() => {
@@ -167,45 +166,25 @@ export default function AdminChallengeManager() {
     }
   };
 
-  const handleArchive = async (challengeId: string) => {
+  const handleDelete = async (challengeId: string) => {
+    if (!confirm("Challenge wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.")) return;
+    
     try {
       const { error } = await supabase
         .from("monthly_challenges")
-        .update({ is_archived: true })
+        .delete()
         .eq("id", challengeId);
 
       if (error) throw error;
-      toast({ title: "Challenge archiviert" });
+      toast({ title: "Challenge gelöscht" });
       loadChallenges();
     } catch (error) {
-      console.error("Error archiving challenge:", error);
-      toast({ title: "Fehler beim Archivieren", variant: "destructive" });
+      console.error("Error deleting challenge:", error);
+      toast({ title: "Fehler beim Löschen", variant: "destructive" });
     }
   };
 
-  const handleSetPrimary = async (challengeId: string, month: number, year: number) => {
-    try {
-      // Remove primary status from other challenges in the same month
-      await supabase
-        .from("monthly_challenges")
-        .update({ is_primary: false })
-        .eq("month", month)
-        .eq("year", year);
-
-      // Set new primary challenge
-      const { error } = await supabase
-        .from("monthly_challenges")
-        .update({ is_primary: true })
-        .eq("id", challengeId);
-
-      if (error) throw error;
-      toast({ title: "Primäre Challenge festgelegt" });
-      loadChallenges();
-    } catch (error) {
-      console.error("Error setting primary challenge:", error);
-      toast({ title: "Fehler beim Festlegen", variant: "destructive" });
-    }
-  };
+  // Primär Challenge Funktion entfernt
 
   const resetForm = () => {
     setFormData({
@@ -214,8 +193,7 @@ export default function AdminChallengeManager() {
       checkpoint_count: 12,
       month: new Date().getMonth() + 1,
       year: new Date().getFullYear(),
-      icon: "target",
-      is_primary: false
+      icon: "target"
     });
   };
 
@@ -226,8 +204,7 @@ export default function AdminChallengeManager() {
       checkpoint_count: challenge.checkpoint_count,
       month: challenge.month,
       year: challenge.year,
-      icon: challenge.icon,
-      is_primary: challenge.is_primary
+      icon: challenge.icon
     });
     setEditingChallenge(challenge);
     setShowCreateDialog(true);
@@ -255,19 +232,27 @@ export default function AdminChallengeManager() {
           <Card key={challenge.id} className={challenge.is_archived ? "opacity-50" : ""}>
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    {CHALLENGE_ICONS.find(i => i.value === challenge.icon)?.icon && 
-                      React.createElement(CHALLENGE_ICONS.find(i => i.value === challenge.icon)!.icon, { className: "w-5 h-5" })
-                    }
-                    {challenge.title}
-                    {challenge.is_primary && <Badge variant="default">Primär</Badge>}
-                    {challenge.is_archived && <Badge variant="outline">Archiviert</Badge>}
-                  </CardTitle>
-                  <p className="text-muted-foreground mt-1">{challenge.description}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {MONTHS.find(m => m.value === challenge.month)?.label} {challenge.year} • {challenge.checkpoint_count} Checkpoints
-                  </p>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1">
+                    {BADGE_ICONS_FOR_ADMIN.find(b => b.value === challenge.icon)?.image && (
+                      <img 
+                        src={BADGE_ICONS_FOR_ADMIN.find(b => b.value === challenge.icon)!.image}
+                        alt={challenge.title}
+                        className="w-8 h-8 object-contain"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      {challenge.title}
+                      {challenge.is_primary && <Badge variant="default">Primär</Badge>}
+                      {challenge.is_archived && <Badge variant="outline">Archiviert</Badge>}
+                    </CardTitle>
+                    <p className="text-muted-foreground mt-1">{challenge.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {MONTHS.find(m => m.value === challenge.month)?.label} {challenge.year} • {challenge.checkpoint_count} Checkpoints
+                    </p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => openStatsDialog(challenge)}>
@@ -276,24 +261,13 @@ export default function AdminChallengeManager() {
                   <Button variant="outline" size="sm" onClick={() => openEditDialog(challenge)}>
                     <Edit className="w-4 h-4" />
                   </Button>
-                  {!challenge.is_archived && (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleSetPrimary(challenge.id, challenge.month, challenge.year)}
-                      >
-                        <Target className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleArchive(challenge.id)}
-                      >
-                        <Archive className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => handleDelete(challenge.id)}
+                  >
+                    <Archive className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -332,17 +306,6 @@ export default function AdminChallengeManager() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Jahr</label>
-                <Input
-                  type="number"
-                  min="2024"
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
                 <label className="text-sm font-medium">Monat</label>
                 <Select value={formData.month.toString()} onValueChange={(value) => setFormData({ ...formData, month: parseInt(value) })}>
                   <SelectTrigger>
@@ -357,29 +320,29 @@ export default function AdminChallengeManager() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="text-sm font-medium">Badge Icon</label>
-                <div className="grid grid-cols-5 gap-2 mt-2">
-                  {BADGE_ICONS_FOR_ADMIN.map((badgeOption) => {
-                    return (
-                      <Button
-                        key={badgeOption.value}
-                        type="button"
-                        variant={formData.icon === badgeOption.value ? "default" : "outline"}
-                        size="sm"
-                        className="aspect-square p-1 h-auto"
-                        onClick={() => setFormData({ ...formData, icon: badgeOption.value })}
-                        title={badgeOption.label}
-                      >
-                        <img 
-                          src={badgeOption.image} 
-                          alt={badgeOption.label}
-                          className="w-6 h-6 object-contain"
-                        />
-                      </Button>
-                    );
-                  })}
-                </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Badge Icon auswählen</label>
+              <div className="grid grid-cols-6 gap-2 mt-2">
+                {BADGE_ICONS_FOR_ADMIN.map((badgeOption) => {
+                  return (
+                    <Button
+                      key={badgeOption.value}
+                      type="button"
+                      variant={formData.icon === badgeOption.value ? "default" : "outline"}
+                      size="sm"
+                      className="aspect-square p-1 h-auto"
+                      onClick={() => setFormData({ ...formData, icon: badgeOption.value })}
+                      title={badgeOption.label}
+                    >
+                      <img 
+                        src={badgeOption.image} 
+                        alt={badgeOption.label}
+                        className="w-6 h-6 object-contain"
+                      />
+                    </Button>
+                  );
+                })}
               </div>
             </div>
             <div className="flex justify-between">
