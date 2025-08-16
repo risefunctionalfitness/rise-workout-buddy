@@ -89,6 +89,14 @@ export default function ChallengeDetail({
       const checkpointNumber = index + 1;
       const isCurrentlyChecked = checkpoints[index];
 
+      // Update local state immediately for instant UI feedback
+      const newCheckpoints = [...checkpoints];
+      newCheckpoints[index] = !isCurrentlyChecked;
+      setCheckpoints(newCheckpoints);
+
+      // Calculate new count from actual checkpoints
+      const newCheckedCount = newCheckpoints.filter(Boolean).length;
+
       if (isCurrentlyChecked) {
         // Remove checkpoint
         const { error } = await supabase
@@ -111,11 +119,6 @@ export default function ChallengeDetail({
 
         if (error) throw error;
       }
-
-      // Update progress
-      const newCheckedCount = isCurrentlyChecked 
-        ? progress.completed_checkpoints - 1 
-        : progress.completed_checkpoints + 1;
       
       const isCompleted = newCheckedCount >= challenge.checkpoint_count;
 
@@ -131,7 +134,13 @@ export default function ChallengeDetail({
       if (progressError) throw progressError;
 
       // If just completed, create badge
-      if (isCompleted && !progress.is_completed) {
+      const wasNotCompleted = !progress.is_completed;
+      
+      // Update local progress object
+      progress.completed_checkpoints = newCheckedCount;
+      progress.is_completed = isCompleted;
+
+      if (isCompleted && wasNotCompleted) {
         const { error: badgeError } = await supabase
           .from("user_badges")
           .insert({
@@ -152,17 +161,13 @@ export default function ChallengeDetail({
         setTimeout(() => setShowConfetti(false), 3000);
       }
 
-      // Update local state immediately for instant UI feedback
-      const newCheckpoints = [...checkpoints];
-      newCheckpoints[index] = !isCurrentlyChecked;
-      setCheckpoints(newCheckpoints);
-      
-      // Reload checkpoints and notify parent
-      await loadCheckpoints();
+      // Notify parent to update progress
       onProgressUpdate();
       
     } catch (error) {
       console.error("Error toggling checkpoint:", error);
+      // Revert local state on error
+      await loadCheckpoints();
       toast({ title: "Fehler beim Aktualisieren", variant: "destructive" });
     } finally {
       setLoading(false);
