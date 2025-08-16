@@ -94,25 +94,23 @@ export default function UserBadges() {
           const monthName = MONTHS[badge.monthly_challenges.month - 1];
           
           return (
-            <Card key={badge.id} className="aspect-square p-3 relative group hover:scale-105 transition-transform">
-              <CardContent className="p-0 h-full flex flex-col items-center justify-center">
-                <div className="mb-2">
-                  <BadgeImage 
-                    icon={badge.monthly_challenges.icon} 
-                    alt={badge.monthly_challenges.title}
-                    className="w-16 h-16"
-                  />
-                </div>
-                <div className="text-xs text-center text-muted-foreground">
-                  {monthName}
-                </div>
-                
-                {/* Tooltip */}
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  {badge.monthly_challenges.title}
-                </div>
-              </CardContent>
-            </Card>
+            <div key={badge.id} className="aspect-square relative group hover:scale-105 transition-transform flex flex-col items-center justify-center">
+              <div className="mb-2">
+                <BadgeImage 
+                  icon={badge.monthly_challenges.icon} 
+                  alt={badge.monthly_challenges.title}
+                  className="w-16 h-16"
+                />
+              </div>
+              <div className="text-xs text-center text-muted-foreground">
+                {monthName}
+              </div>
+              
+              {/* Tooltip */}
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-popover border rounded px-2 py-1 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                {badge.monthly_challenges.title}
+              </div>
+            </div>
           );
         })}
       </div>
