@@ -50,7 +50,15 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
       <div className="p-4">
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // Store navigation context for better back navigation
+            const referrer = sessionStorage.getItem('timer-referrer')
+            if (referrer && referrer !== window.location.pathname) {
+              navigate(referrer)
+            } else {
+              navigate(-1)
+            }
+          }}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

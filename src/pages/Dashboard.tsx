@@ -50,6 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const [selectedChallenge, setSelectedChallenge] = useState<{challenge: any, progress: any} | null>(null)
   const [currentChallenge, setCurrentChallenge] = useState<any>(null)
+  const [wodStep, setWodStep] = useState(1)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
   
@@ -473,7 +474,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       case 'wod':
         return (
           <div className="flex-1 container mx-auto px-6 py-8">
-            <WorkoutGenerator user={user} />
+            <WorkoutGenerator user={user} wodStep={wodStep} onStepChange={setWodStep} />
           </div>
         )
       case 'courses':
@@ -585,10 +586,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         </div>
       )}
 
-      {/* Timer Button - Only show on WOD tab and not on timer sub-pages */}
-      {activeTab === 'wod' && !window.location.pathname.includes('/workout-timer') && (
+      {/* Timer Button - Only show on main WOD page (step 1) */}
+      {activeTab === 'wod' && wodStep === 1 && user?.user_metadata?.role !== 'admin' && (
         <button
-          onClick={() => navigate('/workout-timer')}
+          onClick={() => {
+            // Store current page as referrer for better back navigation
+            sessionStorage.setItem('timer-referrer', window.location.pathname)
+            navigate('/workout-timer')
+          }}
           className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-700 dark:to-gray-800 light:from-[#B81243] light:to-[#9A0F39] border border-border shadow-lg flex items-center justify-center text-gray-100 dark:text-gray-100 light:text-white hover:scale-105 transition-transform z-50"
           title="WOD Timer"
         >
