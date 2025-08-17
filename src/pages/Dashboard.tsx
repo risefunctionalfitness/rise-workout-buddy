@@ -12,6 +12,7 @@ import { NewsSection } from "@/components/NewsSection"
 import { LeaderboardPosition } from "@/components/LeaderboardPosition"
 import ChallengeCard from "@/components/ChallengeCard"
 import ChallengeDetail from "@/components/ChallengeDetail"
+import { FirstLoginDialog } from "@/components/FirstLoginDialog"
 
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
@@ -51,6 +52,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [selectedChallenge, setSelectedChallenge] = useState<{challenge: any, progress: any} | null>(null)
   const [currentChallenge, setCurrentChallenge] = useState<any>(null)
   const [wodStep, setWodStep] = useState(1)
+  const [showFirstLoginDialog, setShowFirstLoginDialog] = useState(false)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
   
@@ -68,6 +70,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       await generateTrainingDays()
       if (!mounted) return
       await loadCurrentChallenge()
+      if (!mounted) return
+      await checkFirstLogin()
     }
     
     loadData()
@@ -161,6 +165,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       setUserAvatar(profile?.avatar_url || null)
     } catch (error) {
       console.error('Error loading user profile:', error)
+    }
+  }
+
+  const checkFirstLogin = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('last_login_at')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      
+      // Show dialog if this is the first login (last_login_at is null)
+      if (!profile?.last_login_at) {
+        setShowFirstLoginDialog(true)
+        
+        // Update last_login_at to mark that the user has logged in
+        await supabase
+          .from('profiles')
+          .update({ last_login_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+      }
+    } catch (error) {
+      console.error('Error checking first login:', error)
     }
   }
 
@@ -602,6 +629,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           }}
         />
       )}
+
+      <FirstLoginDialog 
+        open={showFirstLoginDialog} 
+        onClose={() => setShowFirstLoginDialog(false)} 
+      />
     </div>
   )
 }
