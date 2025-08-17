@@ -176,9 +176,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         .eq('user_id', user.id)
         .maybeSingle()
       
+      console.log('First login check:', profile)
+      
       // Show dialog if this is the first login (last_login_at is null)
       if (!profile?.last_login_at) {
-        setShowFirstLoginDialog(true)
+        // Wait 2 seconds before showing the dialog
+        setTimeout(() => {
+          setShowFirstLoginDialog(true)
+        }, 2000)
         
         // Update last_login_at to mark that the user has logged in
         await supabase
