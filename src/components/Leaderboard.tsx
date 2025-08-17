@@ -48,14 +48,12 @@ export const Leaderboard: React.FC = () => {
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
 
-      // First get leaderboard entries
+      // Get all leaderboard entries (no limit initially)
       const { data: leaderboardData, error: leaderboardError } = await supabase
         .from('leaderboard_entries')
         .select('*')
         .eq('year', currentYear)
         .eq('month', currentMonth)
-        .order('training_count', { ascending: false })
-        .limit(30)
 
       if (leaderboardError) {
         console.error('Error loading leaderboard:', leaderboardError)
@@ -114,6 +112,7 @@ export const Leaderboard: React.FC = () => {
           hasCompletedChallenge
         }
       }).sort((a, b) => b.total_score - a.total_score) // Sort by total score
+        .slice(0, 30) // Limit to top 30 AFTER sorting
 
       setLeaderboard(leaderboardWithProfiles)
     } catch (error) {
