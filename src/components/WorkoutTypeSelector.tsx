@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { Dumbbell, Zap } from "lucide-react"
+import { Dumbbell, Zap, Timer } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 export type WorkoutType = "crossfit" | "bodybuilding" | null
 
@@ -10,6 +11,14 @@ interface WorkoutTypeSelectorProps {
 }
 
 export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeSelectorProps) => {
+  const navigate = useNavigate()
+
+  const handleTimerClick = () => {
+    // Store current page as referrer for better back navigation
+    sessionStorage.setItem('timer-referrer', window.location.pathname)
+    navigate('/workout-timer')
+  }
+
   return (
     <div className="space-y-4 px-4">
       <Card 
@@ -46,6 +55,16 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
             Gezielter Muskelaufbau<br />
             und Kraftsteigerung
           </p>
+        </div>
+      </Card>
+
+      <Card 
+        className="p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-muted-foreground/20 hover:border-muted-foreground/40 h-32 bg-muted/20"
+        onClick={handleTimerClick}
+      >
+        <div className="text-center space-y-3 flex flex-col justify-center h-full">
+          <Timer className="h-6 w-6 mx-auto text-muted-foreground" />
+          <h3 className="text-xl font-bold text-muted-foreground">Workout- Timer</h3>
         </div>
       </Card>
     </div>
