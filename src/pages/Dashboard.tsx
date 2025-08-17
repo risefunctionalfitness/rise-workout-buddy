@@ -578,7 +578,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
                 setSelectedChallenge({ challenge: currentChallenge, progress })
               }
             }}
-            className="w-14 h-14 rounded-full bg-[hsl(var(--challenge-button))] hover:bg-[hsl(178_61%_60%)] border border-border shadow-lg flex items-center justify-center text-white hover:scale-105 transition-all duration-200"
+            className="w-14 h-14 rounded-full bg-[hsl(var(--challenge-button))] hover:bg-[hsl(173_27%_40%)] border border-border shadow-lg flex items-center justify-center text-white hover:scale-105 transition-all duration-200"
             disabled={!currentChallenge}
           >
             <Award className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />

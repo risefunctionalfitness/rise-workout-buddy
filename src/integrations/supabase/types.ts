@@ -440,102 +440,75 @@ export type Database = {
       profiles: {
         Row: {
           access_code: string | null
-          age: number | null
           authors: boolean | null
           avatar_url: string | null
           back_squat_1rm: number | null
           bench_press_1rm: number | null
-          birth_year: number | null
           clean_1rm: number | null
           clean_and_jerk_1rm: number | null
           created_at: string
           deadlift_1rm: number | null
           display_name: string | null
           extra_lifts: Json | null
-          fitness_level: string | null
           front_squat_1rm: number | null
-          gender: string | null
           id: string
           jerk_1rm: number | null
           last_login_at: string | null
-          limitations: Json | null
           membership_type: string | null
           nickname: string | null
-          preferences: Json | null
           preferred_exercises: Json | null
-          session_duration_minutes: number | null
           snatch_1rm: number | null
           status: string | null
-          training_frequency_per_week: number | null
           updated_at: string
           user_id: string | null
-          weight_kg: number | null
         }
         Insert: {
           access_code?: string | null
-          age?: number | null
           authors?: boolean | null
           avatar_url?: string | null
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
-          birth_year?: number | null
           clean_1rm?: number | null
           clean_and_jerk_1rm?: number | null
           created_at?: string
           deadlift_1rm?: number | null
           display_name?: string | null
           extra_lifts?: Json | null
-          fitness_level?: string | null
           front_squat_1rm?: number | null
-          gender?: string | null
           id?: string
           jerk_1rm?: number | null
           last_login_at?: string | null
-          limitations?: Json | null
           membership_type?: string | null
           nickname?: string | null
-          preferences?: Json | null
           preferred_exercises?: Json | null
-          session_duration_minutes?: number | null
           snatch_1rm?: number | null
           status?: string | null
-          training_frequency_per_week?: number | null
           updated_at?: string
           user_id?: string | null
-          weight_kg?: number | null
         }
         Update: {
           access_code?: string | null
-          age?: number | null
           authors?: boolean | null
           avatar_url?: string | null
           back_squat_1rm?: number | null
           bench_press_1rm?: number | null
-          birth_year?: number | null
           clean_1rm?: number | null
           clean_and_jerk_1rm?: number | null
           created_at?: string
           deadlift_1rm?: number | null
           display_name?: string | null
           extra_lifts?: Json | null
-          fitness_level?: string | null
           front_squat_1rm?: number | null
-          gender?: string | null
           id?: string
           jerk_1rm?: number | null
           last_login_at?: string | null
-          limitations?: Json | null
           membership_type?: string | null
           nickname?: string | null
-          preferences?: Json | null
           preferred_exercises?: Json | null
-          session_duration_minutes?: number | null
           snatch_1rm?: number | null
           status?: string | null
-          training_frequency_per_week?: number | null
           updated_at?: string
           user_id?: string | null
-          weight_kg?: number | null
         }
         Relationships: []
       }
