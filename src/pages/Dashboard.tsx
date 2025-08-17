@@ -169,30 +169,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   }
 
   const checkFirstLogin = async () => {
+    if (!user) return
+    
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('last_login_at')
+        .select('welcome_dialog_shown')
         .eq('user_id', user.id)
         .maybeSingle()
       
-      console.log('First login check:', profile)
+      console.log('Welcome dialog check:', profile)
       
-      // Show dialog if this is the first login (last_login_at is null)
-      if (!profile?.last_login_at) {
+      // Show dialog if welcome dialog hasn't been shown yet
+      if (!profile?.welcome_dialog_shown) {
         // Wait 2 seconds before showing the dialog
         setTimeout(() => {
           setShowFirstLoginDialog(true)
         }, 2000)
-        
-        // Update last_login_at to mark that the user has logged in
-        await supabase
-          .from('profiles')
-          .update({ last_login_at: new Date().toISOString() })
-          .eq('user_id', user.id)
       }
     } catch (error) {
-      console.error('Error checking first login:', error)
+      console.error('Error checking welcome dialog status:', error)
     }
   }
 
@@ -635,10 +631,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         />
       )}
 
-      <FirstLoginDialog 
-        open={showFirstLoginDialog} 
-        onClose={() => setShowFirstLoginDialog(false)} 
-      />
+        <FirstLoginDialog 
+          open={showFirstLoginDialog} 
+          onClose={async () => {
+            setShowFirstLoginDialog(false)
+            // Mark dialog as shown in database
+            try {
+              await supabase
+                .from('profiles')
+                .update({ welcome_dialog_shown: true })
+                .eq('user_id', user.id)
+            } catch (error) {
+              console.error('Error updating welcome dialog status:', error)
+            }
+          }} 
+        />
     </div>
   )
 }

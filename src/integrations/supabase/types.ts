@@ -461,6 +461,7 @@ export type Database = {
           status: string | null
           updated_at: string
           user_id: string | null
+          welcome_dialog_shown: boolean
         }
         Insert: {
           access_code?: string | null
@@ -485,6 +486,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string | null
+          welcome_dialog_shown?: boolean
         }
         Update: {
           access_code?: string | null
@@ -509,6 +511,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string | null
+          welcome_dialog_shown?: boolean
         }
         Relationships: []
       }
