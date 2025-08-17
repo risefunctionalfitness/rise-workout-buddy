@@ -34,6 +34,11 @@ const ProVersion = () => {
             .maybeSingle()
           
           if (mounted) {
+            // Check if user is admin and redirect immediately
+            if (roleData?.role === 'admin' || session.user.email === 'admin@rise-fitness.com') {
+              navigate("/admin")
+              return
+            }
             setUserRole(roleData?.role || null)
             setLoading(false)
           }
