@@ -59,11 +59,10 @@ export const WorkoutTypeSelector = ({ selectedType, onTypeSelect }: WorkoutTypeS
       </Card>
 
       <Card 
-        className="p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-muted-foreground/20 hover:border-muted-foreground/40 h-32 bg-muted/20"
+        className="p-4 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-muted-foreground/20 hover:border-muted-foreground/40 h-20 bg-muted/20"
         onClick={handleTimerClick}
       >
-        <div className="text-center space-y-3 flex flex-col justify-center h-full">
-          <Timer className="h-6 w-6 mx-auto text-muted-foreground" />
+        <div className="text-center flex flex-col justify-center h-full">
           <h3 className="text-xl font-bold text-muted-foreground">Workout- Timer</h3>
         </div>
       </Card>
