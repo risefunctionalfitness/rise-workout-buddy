@@ -86,11 +86,19 @@ export const WorkoutStart: React.FC = () => {
       interval = setInterval(() => {
         setWorkoutTime(prev => prev + 1)
         
-        if (type === 'emom') {
+         if (type === 'emom') {
           setRoundTime(prev => {
             const newRoundTime = prev + 1
+            const remainingTime = settings.interval! - newRoundTime
+            
+            // Play beep for last 3 seconds
+            if (remainingTime <= 3 && remainingTime > 0) {
+              playBeep(1000, 200)
+            }
+            
             if (newRoundTime >= settings.interval!) {
               setCurrentRound(r => r + 1)
+              playBeep(1200, 400) // Round complete sound
               return 0
             }
             return newRoundTime
@@ -101,21 +109,27 @@ export const WorkoutStart: React.FC = () => {
               setIsFinished(true)
               playBeep(600, 1000) // End sound
             }
-        } else if (type === 'tabata') {
+         } else if (type === 'tabata') {
           setRoundTime(prev => {
             const newRoundTime = prev + 1
             const currentInterval = isWorkPhase ? settings.workSeconds! : settings.restSeconds!
+            const remainingTime = currentInterval - newRoundTime
+            
+            // Play beep for last 3 seconds of each interval
+            if (remainingTime <= 3 && remainingTime > 0) {
+              playBeep(1000, 200)
+            }
             
             if (newRoundTime >= currentInterval) {
               if (isWorkPhase) {
                 // Work phase ends, start rest
                 setIsWorkPhase(false)
-                playBeep(800, 200) // Phase change sound
+                playBeep(800, 400) // Phase change sound
               } else {
                 // Rest phase ends, start next work round
                 setIsWorkPhase(true)
                 setCurrentRound(r => r + 1)
-                playBeep(1000, 200) // Phase change sound
+                playBeep(1200, 400) // Phase change sound
               }
               return 0
             }
@@ -214,10 +228,10 @@ export const WorkoutStart: React.FC = () => {
             </div>
           )}
 
-          {(isRunning || (!isRunning && !isFinished && workoutTime > 0)) && (
+           {(isRunning || (!isRunning && !isFinished && workoutTime > 0)) && (
             <div className="text-center space-y-12">
               <div>
-                <h1 className="text-8xl font-bold">{formatTime(workoutTime)}</h1>
+                {type !== 'tabata' && <h1 className="text-8xl font-bold">{formatTime(workoutTime)}</h1>}
                 {type === 'emom' && (
                   <div className="mt-6">
                     <p className="text-2xl">Runde {currentRound} von {settings.rounds}</p>
@@ -226,15 +240,16 @@ export const WorkoutStart: React.FC = () => {
                     </p>
                   </div>
                 )}
-                {type === 'tabata' && (
+                 {type === 'tabata' && (
                   <div className="mt-6">
-                    <p className="text-2xl">Runde {currentRound} von {settings.rounds}</p>
+                    <p className="text-xl text-muted-foreground">Gesamt: {formatTime(workoutTime)}</p>
+                    <p className={`text-8xl font-bold ${isWorkPhase ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {formatTime((isWorkPhase ? settings.workSeconds! : settings.restSeconds!) - roundTime)}
+                    </p>
                     <p className={`text-3xl font-bold ${isWorkPhase ? 'text-primary' : 'text-muted-foreground'}`}>
                       {isWorkPhase ? 'WORK' : 'REST'}
                     </p>
-                    <p className="text-xl text-muted-foreground">
-                      {formatTime((isWorkPhase ? settings.workSeconds! : settings.restSeconds!) - roundTime)}
-                    </p>
+                    <p className="text-xl">Runde {currentRound} von {settings.rounds}</p>
                   </div>
                 )}
               </div>

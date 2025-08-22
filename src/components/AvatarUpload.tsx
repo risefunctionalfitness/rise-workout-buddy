@@ -198,7 +198,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       </div>
       
       {/* Icon buttons positioned below avatar */}
-      {!showUploadButton && (
+      {showUploadButton && (
         <div className="flex gap-2">
           <Button
             size="sm"
