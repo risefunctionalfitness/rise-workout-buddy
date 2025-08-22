@@ -341,9 +341,71 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           uniqueTrainingDates.add(session.date)
         }
       })
-      setTrainingCount(uniqueTrainingDates.size)
+      
+      // Debug logging for Android issue
+      console.log('📊 Training Count Debug:', {
+        totalSessions: sessions?.length || 0,
+        completedSessions: sessions?.filter(s => s.status === 'completed').length || 0,
+        uniqueTrainingDates: Array.from(uniqueTrainingDates),
+        finalCount: uniqueTrainingDates.size,
+        userAgent: navigator.userAgent,
+        isAndroid: /Android/i.test(navigator.userAgent)
+      })
+      
+      const calculatedCount = uniqueTrainingDates.size
+      setTrainingCount(calculatedCount)
+      
+      // Fallback: Direct database query for training count if Android
+      if (/Android/i.test(navigator.userAgent) && calculatedCount === 0) {
+        console.log('🔄 Android fallback: Querying training count directly')
+        try {
+          const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+          const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
+          
+          const { data: fallbackSessions, error: fallbackError } = await supabase
+            .from('training_sessions')
+            .select('date')
+            .eq('user_id', user.id)
+            .eq('status', 'completed')
+            .gte('date', startOfMonth)
+            .lte('date', endOfMonth)
+          
+          if (!fallbackError && fallbackSessions) {
+            const fallbackCount = new Set(fallbackSessions.map(s => s.date)).size
+            console.log('📱 Android fallback result:', fallbackCount)
+            if (fallbackCount > calculatedCount) {
+              setTrainingCount(fallbackCount)
+            }
+          }
+        } catch (fallbackError) {
+          console.error('Android fallback query failed:', fallbackError)
+        }
+      }
     } catch (error) {
       console.error('Error loading training data:', error)
+      // Try alternative approach on error
+      if (user?.id) {
+        try {
+          const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
+          const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
+          
+          const { data: emergencySessions } = await supabase
+            .from('training_sessions')
+            .select('date')
+            .eq('user_id', user.id)
+            .eq('status', 'completed')
+            .gte('date', startOfMonth)
+            .lte('date', endOfMonth)
+          
+          if (emergencySessions) {
+            const emergencyCount = new Set(emergencySessions.map(s => s.date)).size
+            console.log('🆘 Emergency count fallback:', emergencyCount)
+            setTrainingCount(emergencyCount)
+          }
+        } catch (emergencyError) {
+          console.error('Emergency fallback also failed:', emergencyError)
+        }
+      }
     }
     
     setTrainingDays(days)
