@@ -231,7 +231,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
                     .update({ avatar_url: null })
                     .eq('user_id', userId)
                   
-                  onAvatarUpdate?.(null)
+                  onAvatarUpdate?.("")
                   toast({
                     title: "Profilbild gelöscht",
                     description: "Das Profilbild wurde erfolgreich entfernt."

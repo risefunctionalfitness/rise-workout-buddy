@@ -197,7 +197,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col items-center space-y-4 mb-6">
-              <AvatarUpload userId={userId} onAvatarUpdate={loadProfile} />
+              <AvatarUpload 
+                userId={userId} 
+                currentAvatarUrl={avatarUrl}
+                onAvatarUpdate={(newAvatarUrl) => {
+                  setAvatarUrl(newAvatarUrl)
+                  loadProfile() // Reload profile to sync data
+                }}
+              />
               <div className="text-center">
                 <h2 className="text-lg font-semibold">{displayName}</h2>
                 <p className="text-sm text-muted-foreground">{membershipType}</p>
