@@ -87,7 +87,7 @@ export const TrainingPathNode: React.FC<TrainingPathNodeProps> = ({
           disabled={!isClickable}
           onClick={() => isClickable && onSelectWorkout?.(id)}
           className={cn(
-            "h-20 w-20 rounded-full border-2 transition-all duration-200",
+            "h-20 w-20 rounded-full border-2 transition-all duration-200 shadow-md hover:shadow-lg",
             getStatusColor(),
             isClickable && "cursor-pointer transform hover:scale-105"
           )}
