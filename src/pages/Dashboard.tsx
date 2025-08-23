@@ -141,12 +141,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         if (incremented) {
           setTrainingCount(prev => prev + 1)
         }
+        console.log('[Android Debug] Local state updated successfully, count:', trainingCount + (incremented ? 1 : 0))
       } else {
-        // Fallback: just refresh from DB
-        generateTrainingDays()
+        console.log('[Android Debug] No date in event, falling back to DB refresh')
+        // Fallback: just refresh from DB with protection for trainingCount
+        const currentCount = trainingCount
+        generateTrainingDays().catch(error => {
+          console.error('[Android Debug] Fallback generateTrainingDays failed:', error)
+          // Restore training count if DB refresh failed
+          setTrainingCount(currentCount + 1)
+        })
       }
-      // In all cases, reconcile with DB shortly after
-      setTimeout(() => generateTrainingDays(), 500)
+      // In all cases, reconcile with DB shortly after with error handling
+      setTimeout(() => {
+        generateTrainingDays().catch(error => {
+          console.error('[Android Debug] Background generateTrainingDays failed:', error)
+        })
+      }, 500)
     }
     window.addEventListener('open-gym-checkin-success', handleCheckin as EventListener)
     return () => {

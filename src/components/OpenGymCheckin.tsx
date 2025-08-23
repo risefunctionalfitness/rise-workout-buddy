@@ -5,17 +5,22 @@ interface OpenGymCheckinProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCheckinComplete: () => void
+  date?: Date
 }
 
 export const OpenGymCheckin: React.FC<OpenGymCheckinProps> = ({
   open,
   onOpenChange,
-  onCheckinComplete
+  onCheckinComplete,
+  date
 }) => {
   const handleScanSuccess = (result: string) => {
     // QR-Code wurde erfolgreich gescannt
     onCheckinComplete()
-    window.dispatchEvent(new CustomEvent("open-gym-checkin-success"))
+    
+    // Event mit Datum-Information für lokale State-Update
+    const eventDetail = date ? { date: date.toISOString(), type: 'free_training' } : {}
+    window.dispatchEvent(new CustomEvent("open-gym-checkin-success", { detail: eventDetail }))
     onOpenChange(false)
   }
 

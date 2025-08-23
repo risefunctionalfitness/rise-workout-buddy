@@ -87,6 +87,7 @@ export const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({
         open={showQRScanner}
         onOpenChange={setShowQRScanner}
         onCheckinComplete={handleQRCheckinComplete}
+        date={date}
       />
     </Dialog>
   )
