@@ -26,6 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 interface Member {
   id: string;
   display_name: string;
+  first_name?: string;
+  last_name?: string;
   access_code: string;
   user_id: string | null;
   email?: string;
@@ -153,10 +155,10 @@ export default function Admin() {
       // Build query with search filter
       let query = supabase
         .from('profiles')
-        .select('id, display_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors', { count: 'exact' });
+        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors', { count: 'exact' });
       
       if (searchTerm) {
-        query = query.or(`display_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
+        query = query.or(`display_name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
       }
       
       const { data, error, count } = await query
@@ -629,7 +631,11 @@ export default function Admin() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-medium text-sm">{member.display_name}</h3>
+                         <h3 className="font-medium text-sm">
+                           {member.first_name && member.last_name 
+                             ? `${member.first_name} ${member.last_name}` 
+                             : member.display_name}
+                         </h3>
                         <p className="text-xs text-gray-500">{member.access_code}</p>
                         <p className="text-xs text-gray-400">
                           {new Date(member.created_at).toLocaleDateString('de-DE')}
@@ -696,7 +702,11 @@ export default function Admin() {
                 <TableBody>
                   {members.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.display_name}</TableCell>
+                       <TableCell className="font-medium">
+                         {member.first_name && member.last_name 
+                           ? `${member.first_name} ${member.last_name}` 
+                           : member.display_name}
+                       </TableCell>
                       <TableCell>{member.access_code}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
