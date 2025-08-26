@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Users, ChevronDown, ChevronUp, Trophy, TrendingUp } from "lucide-react"
+import { Calendar, Users, ChevronDown, ChevronUp, Trophy, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/integrations/supabase/client"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -49,6 +49,11 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     yearLeaderboard: []
   })
   const [extendedStatsLoading, setExtendedStatsLoading] = useState(false)
+  const [allTimeCurrentPage, setAllTimeCurrentPage] = useState(1)
+  const [yearCurrentPage, setYearCurrentPage] = useState(1)
+  const [allTimeTotal, setAllTimeTotal] = useState(0)
+  const [yearTotal, setYearTotal] = useState(0)
+  const itemsPerPage = 10
 
   useEffect(() => {
     loadStats()
@@ -147,13 +152,13 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     }
   }
 
-  const loadExtendedStats = async () => {
+  const loadExtendedStats = async (allTimePage = 1, yearPage = 1) => {
     setExtendedStatsLoading(true)
-    await loadExtendedStatsManual()
+    await loadExtendedStatsManual(allTimePage, yearPage)
     setExtendedStatsLoading(false)
   }
 
-  const loadExtendedStatsManual = async () => {
+  const loadExtendedStatsManual = async (allTimePage = 1, yearPage = 1) => {
     try {
       console.log('Loading extended leaderboard stats...')
       const currentYear = new Date().getFullYear()
@@ -171,10 +176,10 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       console.log('Leaderboard entries found:', allTimeData?.length || 0)
 
-      // Get all profiles with display names
+      // Get all profiles with display names, first_name, last_name
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, avatar_url')
+        .select('user_id, display_name, first_name, last_name, avatar_url')
         .not('user_id', 'is', null)
         .not('display_name', 'is', null)
 
@@ -192,6 +197,8 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           allTimeLeaderboard: [],
           yearLeaderboard: []
         })
+        setAllTimeTotal(0)
+        setYearTotal(0)
         return
       }
 
@@ -215,18 +222,21 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       console.log('All time users aggregated:', Object.keys(allTimeAggregated).length)
 
-      // Create all-time leaderboard entries - only include users with profiles
-      const allTimeLeaderboard = Object.entries(allTimeAggregated)
+      // Create all-time leaderboard entries - include ALL users with profiles
+      const allTimeLeaderboardFull = Object.entries(allTimeAggregated)
         .map(([userId, count]) => {
           const profile = profilesMap[userId]
           if (!profile || !profile.display_name) {
             console.log('Skipping user without profile:', userId)
             return null
           }
+          const fullName = profile.first_name && profile.last_name 
+            ? `${profile.first_name} ${profile.last_name}` 
+            : profile.display_name
           return {
             user_id: userId,
             training_count: count,
-            display_name: profile.display_name,
+            display_name: fullName,
             avatar_url: profile.avatar_url || null,
             year: 0, // Indicates all-time
             month: 0,
@@ -235,9 +245,16 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         })
         .filter(entry => entry !== null) // Remove null entries
         .sort((a, b) => b.training_count - a.training_count)
-        .slice(0, 10) // Top 10
 
-      console.log('All time leaderboard created with', allTimeLeaderboard.length, 'entries')
+      // Set total count
+      setAllTimeTotal(allTimeLeaderboardFull.length)
+
+      // Get paginated results for all time
+      const allTimeStartIndex = (allTimePage - 1) * itemsPerPage
+      const allTimeEndIndex = allTimeStartIndex + itemsPerPage
+      const allTimeLeaderboard = allTimeLeaderboardFull.slice(allTimeStartIndex, allTimeEndIndex)
+
+      console.log('All time leaderboard created with', allTimeLeaderboard.length, 'entries on page', allTimePage)
 
       // Aggregate by user for current year only
       const currentYearData = (allTimeData || []).filter(entry => entry.year === currentYear)
@@ -254,17 +271,20 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       console.log('Current year users aggregated:', Object.keys(yearAggregated).length)
 
-      // Create current year leaderboard entries - only include users with profiles
-      const yearLeaderboard = Object.entries(yearAggregated)
+      // Create current year leaderboard entries - include ALL users with profiles
+      const yearLeaderboardFull = Object.entries(yearAggregated)
         .map(([userId, count]) => {
           const profile = profilesMap[userId]
           if (!profile || !profile.display_name) {
             return null
           }
+          const fullName = profile.first_name && profile.last_name 
+            ? `${profile.first_name} ${profile.last_name}` 
+            : profile.display_name
           return {
             user_id: userId,
             training_count: count,
-            display_name: profile.display_name,
+            display_name: fullName,
             avatar_url: profile.avatar_url || null,
             year: currentYear,
             month: 0,
@@ -273,9 +293,16 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         })
         .filter(entry => entry !== null) // Remove null entries
         .sort((a, b) => b.training_count - a.training_count)
-        .slice(0, 10) // Top 10
 
-      console.log('Year leaderboard created with', yearLeaderboard.length, 'entries')
+      // Set total count
+      setYearTotal(yearLeaderboardFull.length)
+
+      // Get paginated results for current year
+      const yearStartIndex = (yearPage - 1) * itemsPerPage
+      const yearEndIndex = yearStartIndex + itemsPerPage
+      const yearLeaderboard = yearLeaderboardFull.slice(yearStartIndex, yearEndIndex)
+
+      console.log('Year leaderboard created with', yearLeaderboard.length, 'entries on page', yearPage)
 
       // Set the final result
       setExtendedStats({
@@ -285,7 +312,9 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
       console.log('Extended stats successfully loaded:', {
         allTimeCount: allTimeLeaderboard.length,
-        yearCount: yearLeaderboard.length
+        yearCount: yearLeaderboard.length,
+        allTimeTotal: allTimeLeaderboardFull.length,
+        yearTotal: yearLeaderboardFull.length
       })
 
     } catch (error) {
@@ -295,6 +324,8 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
         allTimeLeaderboard: [],
         yearLeaderboard: []
       })
+      setAllTimeTotal(0)
+      setYearTotal(0)
     }
   }
 
@@ -303,6 +334,16 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     if (!extendedStatsOpen && extendedStats.allTimeLeaderboard.length === 0) {
       loadExtendedStats()
     }
+  }
+
+  const handleAllTimePageChange = (page: number) => {
+    setAllTimeCurrentPage(page)
+    loadExtendedStats(page, yearCurrentPage)
+  }
+
+  const handleYearPageChange = (page: number) => {
+    setYearCurrentPage(page)
+    loadExtendedStats(allTimeCurrentPage, page)
   }
 
   if (loading) {
@@ -465,30 +506,65 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                     {extendedStats.allTimeLeaderboard.length === 0 ? (
-                       <div className="text-center py-8 text-muted-foreground">
-                         Keine Daten verfügbar
+                   <div className="space-y-4">
+                     <div className="space-y-2 max-h-96 overflow-y-auto">
+                       {extendedStats.allTimeLeaderboard.length === 0 ? (
+                         <div className="text-center py-8 text-muted-foreground">
+                           Keine Daten verfügbar
+                         </div>
+                       ) : (
+                         extendedStats.allTimeLeaderboard.map((entry, index) => {
+                           const globalIndex = (allTimeCurrentPage - 1) * itemsPerPage + index
+                           return (
+                             <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                               <div className="flex items-center gap-3">
+                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                   globalIndex === 0 ? 'bg-yellow-500 text-white' :
+                                   globalIndex === 1 ? 'bg-gray-400 text-white' :
+                                   globalIndex === 2 ? 'bg-amber-600 text-white' :
+                                   'bg-gray-200 text-gray-700'
+                                 }`}>
+                                   {globalIndex + 1}
+                                 </div>
+                                 <span className="font-medium">{entry.display_name}</span>
+                               </div>
+                               <Badge variant="secondary" className="text-sm">
+                                 {entry.total} Sessions
+                               </Badge>
+                             </div>
+                           )
+                         })
+                       )}
+                     </div>
+                     
+                     {/* All Time Pagination */}
+                     {allTimeTotal > itemsPerPage && (
+                       <div className="flex items-center justify-between pt-4">
+                         <div className="text-sm text-muted-foreground">
+                           Zeige {((allTimeCurrentPage - 1) * itemsPerPage) + 1} bis {Math.min(allTimeCurrentPage * itemsPerPage, allTimeTotal)} von {allTimeTotal} Nutzern
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleAllTimePageChange(allTimeCurrentPage - 1)}
+                             disabled={allTimeCurrentPage === 1}
+                           >
+                             <ChevronLeft className="h-4 w-4" />
+                           </Button>
+                           <span className="text-sm px-3 py-1 bg-muted rounded">
+                             {allTimeCurrentPage} / {Math.ceil(allTimeTotal / itemsPerPage)}
+                           </span>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleAllTimePageChange(allTimeCurrentPage + 1)}
+                             disabled={allTimeCurrentPage >= Math.ceil(allTimeTotal / itemsPerPage)}
+                           >
+                             <ChevronRight className="h-4 w-4" />
+                           </Button>
+                         </div>
                        </div>
-                     ) : (
-                       extendedStats.allTimeLeaderboard.map((entry, index) => (
-                      <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            index === 0 ? 'bg-yellow-500 text-white' :
-                            index === 1 ? 'bg-gray-400 text-white' :
-                            index === 2 ? 'bg-amber-600 text-white' :
-                            'bg-gray-200 text-gray-700'
-                          }`}>
-                            {index + 1}
-                          </div>
-                          <span className="font-medium">{entry.display_name}</span>
-                        </div>
-                        <Badge variant="secondary" className="text-sm">
-                          {entry.total} Sessions
-                         </Badge>
-                       </div>
-                       ))
                      )}
                    </div>
                 </CardContent>
@@ -503,30 +579,65 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                     {extendedStats.yearLeaderboard.length === 0 ? (
-                       <div className="text-center py-8 text-muted-foreground">
-                         Keine Daten verfügbar
+                   <div className="space-y-4">
+                     <div className="space-y-2 max-h-96 overflow-y-auto">
+                       {extendedStats.yearLeaderboard.length === 0 ? (
+                         <div className="text-center py-8 text-muted-foreground">
+                           Keine Daten verfügbar
+                         </div>
+                       ) : (
+                         extendedStats.yearLeaderboard.map((entry, index) => {
+                           const globalIndex = (yearCurrentPage - 1) * itemsPerPage + index
+                           return (
+                             <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                               <div className="flex items-center gap-3">
+                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                   globalIndex === 0 ? 'bg-yellow-500 text-white' :
+                                   globalIndex === 1 ? 'bg-gray-400 text-white' :
+                                   globalIndex === 2 ? 'bg-amber-600 text-white' :
+                                   'bg-gray-200 text-gray-700'
+                                 }`}>
+                                   {globalIndex + 1}
+                                 </div>
+                                 <span className="font-medium">{entry.display_name}</span>
+                               </div>
+                               <Badge variant="secondary" className="text-sm">
+                                 {entry.total} Sessions
+                               </Badge>
+                             </div>
+                           )
+                         })
+                       )}
+                     </div>
+                     
+                     {/* Year Pagination */}
+                     {yearTotal > itemsPerPage && (
+                       <div className="flex items-center justify-between pt-4">
+                         <div className="text-sm text-muted-foreground">
+                           Zeige {((yearCurrentPage - 1) * itemsPerPage) + 1} bis {Math.min(yearCurrentPage * itemsPerPage, yearTotal)} von {yearTotal} Nutzern
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleYearPageChange(yearCurrentPage - 1)}
+                             disabled={yearCurrentPage === 1}
+                           >
+                             <ChevronLeft className="h-4 w-4" />
+                           </Button>
+                           <span className="text-sm px-3 py-1 bg-muted rounded">
+                             {yearCurrentPage} / {Math.ceil(yearTotal / itemsPerPage)}
+                           </span>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleYearPageChange(yearCurrentPage + 1)}
+                             disabled={yearCurrentPage >= Math.ceil(yearTotal / itemsPerPage)}
+                           >
+                             <ChevronRight className="h-4 w-4" />
+                           </Button>
+                         </div>
                        </div>
-                     ) : (
-                       extendedStats.yearLeaderboard.map((entry, index) => (
-                      <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                            index === 0 ? 'bg-yellow-500 text-white' :
-                            index === 1 ? 'bg-gray-400 text-white' :
-                            index === 2 ? 'bg-amber-600 text-white' :
-                            'bg-gray-200 text-gray-700'
-                          }`}>
-                            {index + 1}
-                          </div>
-                          <span className="font-medium">{entry.display_name}</span>
-                        </div>
-                        <Badge variant="secondary" className="text-sm">
-                          {entry.total} Sessions
-                         </Badge>
-                       </div>
-                       ))
                      )}
                    </div>
                 </CardContent>
