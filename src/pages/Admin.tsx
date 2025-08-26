@@ -42,7 +42,8 @@ export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
-  const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberFirstName, setNewMemberFirstName] = useState("");
+  const [newMemberLastName, setNewMemberLastName] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberCode, setNewMemberCode] = useState("");
   const [newMembershipType, setNewMembershipType] = useState("Premium Member");
@@ -186,7 +187,7 @@ export default function Admin() {
   const handleCreateMember = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newMemberName || !newMemberEmail || !newMemberCode) {
+    if (!newMemberFirstName || !newMemberLastName || !newMemberEmail || !newMemberCode) {
       toast({
         title: "Fehler",
         description: "Bitte alle Felder ausfüllen",
@@ -218,7 +219,9 @@ export default function Admin() {
           email: newMemberEmail,
           password: newMemberCode,
           user_metadata: {
-            display_name: newMemberName,
+            display_name: newMemberFirstName, // Vorname wird als display_name verwendet
+            first_name: newMemberFirstName,
+            last_name: newMemberLastName,
             access_code: newMemberCode,
             membership_type: newMembershipType,
             authors: newMemberIsAuthor
@@ -238,7 +241,8 @@ export default function Admin() {
           title: "Erfolg",
           description: "Mitglied erfolgreich erstellt - kann sich sofort anmelden!",
         });
-        setNewMemberName("");
+        setNewMemberFirstName("");
+        setNewMemberLastName("");
         setNewMemberEmail("");
         setNewMemberCode("");
         setNewMembershipType("Premium Member");
@@ -442,32 +446,50 @@ export default function Admin() {
                       Erstellen Sie einen neuen Mitgliederaccount mit Name und Zugangscode
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleCreateMember} className="space-y-4">
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Name des Mitglieds"
-                        value={newMemberName}
-                        onChange={(e) => setNewMemberName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Input
-                        type="email"
-                        placeholder="E-Mail des Mitglieds"
-                        value={newMemberEmail}
-                        onChange={(e) => setNewMemberEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Zugangscode (z.B. 2019)"
-                        value={newMemberCode}
-                        onChange={(e) => setNewMemberCode(e.target.value)}
-                        required
-                      />
-                    </div>
+                   <form onSubmit={handleCreateMember} className="space-y-4">
+                     <div className="grid grid-cols-2 gap-2">
+                       <Input
+                         placeholder="Vorname"
+                         value={newMemberFirstName}
+                         onChange={(e) => setNewMemberFirstName(e.target.value)}
+                         required
+                       />
+                       <Input
+                         placeholder="Nachname"
+                         value={newMemberLastName}
+                         onChange={(e) => setNewMemberLastName(e.target.value)}
+                         required
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Input
+                         type="email"
+                         placeholder="E-Mail des Mitglieds"
+                         value={newMemberEmail}
+                         onChange={(e) => setNewMemberEmail(e.target.value)}
+                         required
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <div className="flex gap-2">
+                         <Input
+                           placeholder="Zugangscode (z.B. 123456)"
+                           value={newMemberCode}
+                           onChange={(e) => setNewMemberCode(e.target.value)}
+                           required
+                         />
+                         <Button
+                           type="button"
+                           variant="outline"
+                           onClick={() => {
+                             const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+                             setNewMemberCode(randomCode);
+                           }}
+                         >
+                           Generieren
+                         </Button>
+                       </div>
+                     </div>
                     <div className="space-y-2">
                       <Select value={newMembershipType} onValueChange={setNewMembershipType}>
                         <SelectTrigger>

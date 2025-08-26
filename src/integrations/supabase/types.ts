@@ -450,10 +450,12 @@ export type Database = {
           deadlift_1rm: number | null
           display_name: string | null
           extra_lifts: Json | null
+          first_name: string | null
           front_squat_1rm: number | null
           id: string
           jerk_1rm: number | null
           last_login_at: string | null
+          last_name: string | null
           membership_type: string | null
           nickname: string | null
           preferred_exercises: Json | null
@@ -475,10 +477,12 @@ export type Database = {
           deadlift_1rm?: number | null
           display_name?: string | null
           extra_lifts?: Json | null
+          first_name?: string | null
           front_squat_1rm?: number | null
           id?: string
           jerk_1rm?: number | null
           last_login_at?: string | null
+          last_name?: string | null
           membership_type?: string | null
           nickname?: string | null
           preferred_exercises?: Json | null
@@ -500,10 +504,12 @@ export type Database = {
           deadlift_1rm?: number | null
           display_name?: string | null
           extra_lifts?: Json | null
+          first_name?: string | null
           front_squat_1rm?: number | null
           id?: string
           jerk_1rm?: number | null
           last_login_at?: string | null
+          last_name?: string | null
           membership_type?: string | null
           nickname?: string | null
           preferred_exercises?: Json | null
