@@ -48,60 +48,79 @@ export const WorkoutStart: React.FC = () => {
     }
   }, [audioInitialized])
 
-  // Enhanced beep function with iOS compatibility
-  const playBeep = useCallback((frequency: number = 800, duration: number = 0.2) => {
+  // Car horn-like sound function with iOS compatibility
+  const playBeep = useCallback((frequency: number = 300, duration: number = 0.3) => {
     // Initialize audio on first use
     if (!audioInitialized) {
       initializeAudio()
     }
 
     try {
-      // Primary method: Web Audio API
+      // Primary method: Web Audio API - Car horn style
       if (audioContextRef.current && audioContextRef.current.state === 'running') {
-        const oscillator = audioContextRef.current.createOscillator()
+        // Create two oscillators for a more complex horn sound
+        const oscillator1 = audioContextRef.current.createOscillator()
+        const oscillator2 = audioContextRef.current.createOscillator()
         const gainNode = audioContextRef.current.createGain()
         
-        oscillator.connect(gainNode)
+        oscillator1.connect(gainNode)
+        oscillator2.connect(gainNode)
         gainNode.connect(audioContextRef.current.destination)
         
-        oscillator.frequency.setValueAtTime(frequency, audioContextRef.current.currentTime)
-        oscillator.type = 'sine'
-        gainNode.gain.setValueAtTime(0.3, audioContextRef.current.currentTime)
+        // Car horn frequencies - lower and more aggressive
+        oscillator1.frequency.setValueAtTime(frequency, audioContextRef.current.currentTime)
+        oscillator2.frequency.setValueAtTime(frequency * 1.5, audioContextRef.current.currentTime)
+        
+        // Square wave for harsher, horn-like sound
+        oscillator1.type = 'square'
+        oscillator2.type = 'square'
+        
+        // More aggressive gain envelope for horn effect
+        gainNode.gain.setValueAtTime(0.4, audioContextRef.current.currentTime)
+        gainNode.gain.setValueAtTime(0.4, audioContextRef.current.currentTime + duration * 0.1)
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration)
         
-        oscillator.start(audioContextRef.current.currentTime)
-        oscillator.stop(audioContextRef.current.currentTime + duration)
+        oscillator1.start(audioContextRef.current.currentTime)
+        oscillator2.start(audioContextRef.current.currentTime)
+        oscillator1.stop(audioContextRef.current.currentTime + duration)
+        oscillator2.stop(audioContextRef.current.currentTime + duration)
       } else {
         // Fallback: Try to create and use a new context
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
         if (audioContext.state === 'suspended') {
           audioContext.resume().then(() => {
-            const oscillator = audioContext.createOscillator()
+            const oscillator1 = audioContext.createOscillator()
+            const oscillator2 = audioContext.createOscillator()
             const gainNode = audioContext.createGain()
             
-            oscillator.connect(gainNode)
+            oscillator1.connect(gainNode)
+            oscillator2.connect(gainNode)
             gainNode.connect(audioContext.destination)
             
-            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime)
-            oscillator.type = 'sine'
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+            oscillator1.frequency.setValueAtTime(frequency, audioContext.currentTime)
+            oscillator2.frequency.setValueAtTime(frequency * 1.5, audioContext.currentTime)
+            oscillator1.type = 'square'
+            oscillator2.type = 'square'
+            gainNode.gain.setValueAtTime(0.4, audioContext.currentTime)
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration)
             
-            oscillator.start(audioContext.currentTime)
-            oscillator.stop(audioContext.currentTime + duration)
+            oscillator1.start(audioContext.currentTime)
+            oscillator2.start(audioContext.currentTime)
+            oscillator1.stop(audioContext.currentTime + duration)
+            oscillator2.stop(audioContext.currentTime + duration)
           })
         }
       }
 
       // Vibration as additional feedback for mobile devices
       if ('vibrator' in navigator || 'vibrate' in navigator) {
-        navigator.vibrate?.(50)
+        navigator.vibrate?.(100)
       }
     } catch (error) {
       console.log("Audio playback failed:", error)
       // Final fallback: vibration only
       if ('vibrator' in navigator || 'vibrate' in navigator) {
-        navigator.vibrate?.(100)
+        navigator.vibrate?.(150)
       }
     }
   }, [audioInitialized, initializeAudio])
@@ -118,12 +137,12 @@ export const WorkoutStart: React.FC = () => {
     if (countdown > 0 && isCountingDown) {
       const timer = setTimeout(() => {
         setCountdown(countdown - 1)
-        // Play beep for last 3 seconds with different tones
+        // Play horn for last 3 seconds with different tones
         if (countdown <= 3) {
           if (countdown === 1) {
-            playBeep(900, 0.4) // Modified pitch for final second
+            playBeep(250, 0.5) // Lower horn for final second
           } else {
-            playBeep(600, 0.3) // Modified beep for 3-2 seconds
+            playBeep(300, 0.3) // Standard horn for 3-2 seconds
           }
         }
       }, 1000)
@@ -131,7 +150,7 @@ export const WorkoutStart: React.FC = () => {
     } else if (countdown === 0 && isCountingDown) {
       setIsCountingDown(false)
       setIsRunning(true)
-      playBeep(500, 0.6) // Modified start beep
+      playBeep(200, 0.8) // Deep horn for start
     }
   }, [countdown, isCountingDown, playBeep])
 
