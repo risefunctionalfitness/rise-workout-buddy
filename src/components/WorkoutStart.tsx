@@ -121,9 +121,9 @@ export const WorkoutStart: React.FC = () => {
         // Play beep for last 3 seconds with different tones
         if (countdown <= 3) {
           if (countdown === 1) {
-            playBeep(1000, 0.5) // Higher pitch for final second
+            playBeep(900, 0.4) // Modified pitch for final second
           } else {
-            playBeep(800, 0.2) // Standard beep for 3-2 seconds
+            playBeep(600, 0.3) // Modified beep for 3-2 seconds
           }
         }
       }, 1000)
@@ -131,7 +131,7 @@ export const WorkoutStart: React.FC = () => {
     } else if (countdown === 0 && isCountingDown) {
       setIsCountingDown(false)
       setIsRunning(true)
-      playBeep(600, 0.8) // Lower, longer beep for start
+      playBeep(500, 0.6) // Modified start beep
     }
   }, [countdown, isCountingDown, playBeep])
 
@@ -318,11 +318,6 @@ export const WorkoutStart: React.FC = () => {
               <div className="text-2xl text-muted-foreground">
                 Bereit machen...
               </div>
-              {countdown <= 3 && (
-                <div className="text-lg text-[#B81243] font-medium animate-pulse">
-                  🔊 Hör auf die Beeps
-                </div>
-              )}
             </div>
           )}
 
@@ -356,13 +351,6 @@ export const WorkoutStart: React.FC = () => {
                         : formatTime((settings.restSeconds || 10) - ((roundTime - (settings.workSeconds || 20)) % (settings.restSeconds || 10)))
                       }
                     </div>
-                    {/* Visual indicator for last 3 seconds */}
-                    {((isWorkPhase && ((settings.workSeconds || 20) - (roundTime % (settings.workSeconds || 20))) <= 3) ||
-                      (!isWorkPhase && ((settings.restSeconds || 10) - ((roundTime - (settings.workSeconds || 20)) % (settings.restSeconds || 10))) <= 3)) && (
-                      <div className="text-2xl text-[#B81243] font-bold animate-bounce">
-                        🔊 Final Countdown!
-                      </div>
-                    )}
                     <div className="text-xl text-muted-foreground">
                       Gesamt: {formatTime(workoutTime)}
                     </div>
