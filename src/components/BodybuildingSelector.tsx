@@ -2,8 +2,8 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Dumbbell, ArrowUp, ArrowDown, User, Zap } from "lucide-react"
 
-export type BodybuildingFocus = "Push" | "Pull" | "Legs" | "Upper" | "Full" | null
-export type BodybuildingDifficulty = "Beginner" | "Intermediate" | "Pro" | null
+export type BodybuildingFocus = "Unterkörper" | "Oberkörper" | "Ganzkörper" | null
+export type BodybuildingDifficulty = "Leicht" | "Mittel" | "Schwer" | null
 
 interface BodybuildingSelectorProps {
   selectedFocus: BodybuildingFocus
@@ -19,17 +19,15 @@ export const BodybuildingSelector = ({
   onDifficultySelect 
 }: BodybuildingSelectorProps) => {
   const focusOptions = [
-    { type: "Push" as const, icon: ArrowUp, title: "Push", description: "Brust, Schultern, Trizeps" },
-    { type: "Pull" as const, icon: ArrowDown, title: "Pull", description: "Rücken, Bizeps" },
-    { type: "Legs" as const, icon: Dumbbell, title: "Beine", description: "Quadrizeps, Hamstrings, Glutes" },
-    { type: "Upper" as const, icon: User, title: "Oberkörper", description: "Kompletter Oberkörper" },
-    { type: "Full" as const, icon: Zap, title: "Ganzkörper", description: "Komplettes Training" }
+    { type: "Unterkörper" as const, icon: Dumbbell, title: "Unterkörper", description: "Quadrizeps, Hamstrings, Glutes" },
+    { type: "Oberkörper" as const, icon: User, title: "Oberkörper", description: "Kompletter Oberkörper" },
+    { type: "Ganzkörper" as const, icon: Zap, title: "Ganzkörper", description: "Komplettes Training" }
   ]
 
   const difficultyOptions = [
-    { type: "Beginner" as const, title: "Beginner", description: "Anfänger" },
-    { type: "Intermediate" as const, title: "Intermediate", description: "Fortgeschritten" },
-    { type: "Pro" as const, title: "Pro", description: "Profi" }
+    { type: "Leicht" as const, title: "Leicht", description: "Anfänger" },
+    { type: "Mittel" as const, title: "Mittel", description: "Fortgeschritten" },
+    { type: "Schwer" as const, title: "Schwer", description: "Profi" }
   ]
 
   // For focus selection step (step 2)

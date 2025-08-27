@@ -70,7 +70,7 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
     content: "",
     notes: "",
     type: "WOD" as "WOD" | "Weightlifting",
-    focus: "Ganzkörper" as "Ganzkörper" | "Oberkörper" | "Unterkörper" | "Push" | "Pull" | "Beine",
+    focus: "Ganzkörper" as "Ganzkörper" | "Oberkörper" | "Unterkörper",
     difficulty: "Leicht" as "Leicht" | "Mittel" | "Schwer",
     scaling_beginner: "",
     scaling_scaled: "",
@@ -281,7 +281,7 @@ const WorkoutManagement: React.FC<WorkoutManagementProps> = ({ hideHeader = fals
                       <div>
                         <Label>Fokusbereich</Label>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {["Ganzkörper", "Oberkörper", "Unterkörper", "Push", "Pull", "Beine"].map(focus => (
+                          {["Ganzkörper", "Oberkörper", "Unterkörper"].map(focus => (
                             <Button
                               key={focus}
                               type="button"

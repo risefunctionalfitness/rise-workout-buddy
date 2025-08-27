@@ -167,7 +167,7 @@ export const WorkoutEditDialog = ({ workout, workoutType, onWorkoutUpdated }: Wo
               <div>
                 <Label>Fokusbereich</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {["Ganzkörper", "Oberkörper", "Unterkörper", "Push", "Pull", "Beine"].map(focus => (
+                  {["Ganzkörper", "Oberkörper", "Unterkörper"].map(focus => (
                     <Button
                       key={focus}
                       type="button"
