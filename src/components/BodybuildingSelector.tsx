@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Dumbbell, ArrowUp, ArrowDown, User, Zap } from "lucide-react"
 
-export type BodybuildingFocus = "Unterkörper" | "Oberkörper" | "Ganzkörper" | null
+export type BodybuildingFocus = "Push" | "Pull" | "Unterkörper" | "Oberkörper" | "Ganzkörper" | null
 export type BodybuildingDifficulty = "Leicht" | "Mittel" | "Schwer" | null
 
 interface BodybuildingSelectorProps {
@@ -19,6 +19,8 @@ export const BodybuildingSelector = ({
   onDifficultySelect 
 }: BodybuildingSelectorProps) => {
   const focusOptions = [
+    { type: "Push" as const, icon: ArrowUp, title: "Push", description: "Brust, Schultern, Trizeps" },
+    { type: "Pull" as const, icon: ArrowDown, title: "Pull", description: "Rücken, Bizeps" },
     { type: "Unterkörper" as const, icon: Dumbbell, title: "Unterkörper", description: "Quadrizeps, Hamstrings, Glutes" },
     { type: "Oberkörper" as const, icon: User, title: "Oberkörper", description: "Kompletter Oberkörper" },
     { type: "Ganzkörper" as const, icon: Zap, title: "Ganzkörper", description: "Komplettes Training" }
