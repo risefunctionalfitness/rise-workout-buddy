@@ -34,27 +34,27 @@ export const AdminCreditRecharge = () => {
   const loadTenCardUsers = async () => {
     setLoadingUsers(true)
     try {
-      // Get all 10er Karte users with their credit information
-      const { data, error } = await supabase
+      // First get all 10er Karte users
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          user_id,
-          display_name,
-          first_name,
-          last_name,
-          membership_credits (
-            credits_remaining,
-            credits_total,
-            last_recharged_at
-          )
-        `)
+        .select('user_id, display_name, first_name, last_name')
         .eq('membership_type', '10er Karte')
         .order('display_name')
 
-      if (error) throw error
+      if (profilesError) throw profilesError
 
-      const usersWithCredits = data?.map(user => {
-        const credits = Array.isArray(user.membership_credits) ? user.membership_credits[0] : null;
+      // Then get all credits for these users
+      const userIds = profilesData?.map(p => p.user_id) || []
+      const { data: creditsData, error: creditsError } = await supabase
+        .from('membership_credits')
+        .select('user_id, credits_remaining, credits_total, last_recharged_at')
+        .in('user_id', userIds)
+
+      if (creditsError) throw creditsError
+
+      // Combine the data
+      const usersWithCredits = profilesData?.map(user => {
+        const credits = creditsData?.find(c => c.user_id === user.user_id);
         return {
           user_id: user.user_id,
           display_name: user.display_name || 'Unbekannt',
