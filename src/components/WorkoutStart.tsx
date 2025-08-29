@@ -343,13 +343,20 @@ export const WorkoutStart: React.FC = () => {
            {(isRunning || (!isRunning && !isFinished && workoutTime > 0)) && (
             <div className="text-center space-y-12">
               <div>
-                {type !== 'tabata' && <h1 className="text-8xl font-bold">{formatTime(workoutTime)}</h1>}
+                {type !== 'tabata' && type !== 'emom' && <h1 className="text-8xl font-bold">{formatTime(workoutTime)}</h1>}
                 {type === 'emom' && (
-                  <div className="mt-6">
+                  <div className="space-y-6">
+                    <h1 className="text-8xl font-bold">{formatTime(roundTime)}</h1>
                     <p className="text-2xl">Runde {currentRound} von {settings.rounds}</p>
                     <p className="text-xl text-muted-foreground">
-                      Rundenzeit: {formatTime(roundTime)}
+                      Gesamtzeit: {formatTime(workoutTime)}
                     </p>
+                    {/* Countdown for last 3 seconds */}
+                    {roundTime <= 3 && roundTime > 0 && (
+                      <div className="text-6xl font-bold text-red-500 animate-pulse mt-4">
+                        {roundTime}
+                      </div>
+                    )}
                   </div>
                 )}
                  {type === 'tabata' && (

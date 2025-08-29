@@ -112,15 +112,15 @@ serve(async (req) => {
         console.log('Successfully added role:', role)
       }
       
-      // Initialize credits for 10er Karte members
+      // Initialize credits for 10er Karte members with 0 credits (admin must recharge)
       if (membershipType === '10er Karte') {
         const { error: creditsError } = await supabase
           .from('membership_credits')
           .insert({
             user_id: data.user.id,
-            credits_remaining: 10,
-            credits_total: 10,
-            last_recharged_at: new Date().toISOString(),
+            credits_remaining: 0,
+            credits_total: 0,
+            last_recharged_at: null,
           })
 
         if (creditsError) {
