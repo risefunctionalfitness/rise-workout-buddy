@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { CreditCard, Plus, RefreshCw, User } from "lucide-react"
+import { CreditCard, Plus, RefreshCw, User, Minus } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 interface UserCredit {
   user_id: string
@@ -22,6 +23,7 @@ interface UserCredit {
 export const AdminCreditRecharge = () => {
   const [selectedUser, setSelectedUser] = useState<string>("")
   const [creditsToAdd, setCreditsToAdd] = useState<string>("10")
+  const [isSubtracting, setIsSubtracting] = useState(false)
   const [users, setUsers] = useState<UserCredit[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -101,10 +103,11 @@ export const AdminCreditRecharge = () => {
 
     setLoading(true)
     try {
+      const creditsToProcess = isSubtracting ? -credits : credits
       const { error } = await supabase.functions.invoke('manage-credits', {
         body: {
           user_id: selectedUser,
-          credits_to_add: credits
+          credits_to_add: creditsToProcess
         }
       })
 
@@ -112,7 +115,7 @@ export const AdminCreditRecharge = () => {
 
       toast({
         title: "Erfolg",
-        description: `${credits} Credits wurden erfolgreich aufgeladen.`
+        description: `${credits} Credits wurden erfolgreich ${isSubtracting ? 'abgezogen' : 'aufgeladen'}.`
       })
       
       setSelectedUser("")
@@ -135,11 +138,30 @@ export const AdminCreditRecharge = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Credits hinzufügen
+            {isSubtracting ? <Minus className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+            Credits {isSubtracting ? 'abziehen' : 'hinzufügen'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Aktion wählen</Label>
+              <RadioGroup 
+                value={isSubtracting ? "subtract" : "add"} 
+                onValueChange={(value) => setIsSubtracting(value === "subtract")}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="add" id="add" />
+                  <Label htmlFor="add">Credits hinzufügen</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="subtract" id="subtract" />
+                  <Label htmlFor="subtract">Credits abziehen</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="user-select">Mitglied auswählen</Label>
@@ -183,10 +205,12 @@ export const AdminCreditRecharge = () => {
               >
                 {loading ? (
                   <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                ) : isSubtracting ? (
+                  <Minus className="h-4 w-4 mr-2" />
                 ) : (
-                  <CreditCard className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                 )}
-                Credits hinzufügen
+                Credits {isSubtracting ? 'abziehen' : 'hinzufügen'}
               </Button>
             </div>
           </div>
