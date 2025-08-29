@@ -12,8 +12,6 @@ import { CreditCard, Plus, RefreshCw, User } from "lucide-react"
 interface UserCredit {
   user_id: string
   display_name: string
-  first_name: string
-  last_name: string
   credits_remaining: number
   credits_total: number
   last_recharged_at: string
@@ -38,8 +36,6 @@ export const CreditManagement = () => {
         .select(`
           user_id,
           display_name,
-          first_name,
-          last_name,
           membership_credits (
             credits_remaining,
             credits_total,
@@ -55,8 +51,6 @@ export const CreditManagement = () => {
         return {
           user_id: user.user_id,
           display_name: user.display_name || 'Unbekannt',
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
           credits_remaining: credits?.credits_remaining || 0,
           credits_total: credits?.credits_total || 0,
           last_recharged_at: credits?.last_recharged_at || '',
@@ -122,11 +116,7 @@ export const CreditManagement = () => {
                   {users.map(user => (
                     <SelectItem key={user.user_id} value={user.user_id}>
                       <div className="flex items-center justify-between w-full">
-                        <span>
-                          {user.first_name && user.last_name 
-                            ? `${user.first_name} ${user.last_name}` 
-                            : user.display_name}
-                        </span>
+                        <span>{user.display_name}</span>
                         <Badge variant="outline" className="ml-2">
                           {user.credits_remaining} Credits
                         </Badge>
@@ -185,11 +175,7 @@ export const CreditManagement = () => {
               users.map(user => (
                 <div key={user.user_id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <p className="font-medium">
-                      {user.first_name && user.last_name 
-                        ? `${user.first_name} ${user.last_name}` 
-                        : user.display_name}
-                    </p>
+                    <p className="font-medium">{user.display_name}</p>
                     {user.last_recharged_at && (
                       <p className="text-sm text-muted-foreground">
                         Zuletzt aufgeladen: {new Date(user.last_recharged_at).toLocaleDateString('de-DE')}
