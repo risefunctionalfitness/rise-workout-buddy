@@ -351,12 +351,6 @@ export const WorkoutStart: React.FC = () => {
                     <p className="text-xl text-muted-foreground">
                       Gesamtzeit: {formatTime(workoutTime)}
                     </p>
-                    {/* Countdown for last 3 seconds */}
-                    {roundTime <= 3 && roundTime > 0 && (
-                      <div className="text-6xl font-bold text-red-500 animate-pulse mt-4">
-                        {roundTime}
-                      </div>
-                    )}
                   </div>
                 )}
                  {type === 'tabata' && (
