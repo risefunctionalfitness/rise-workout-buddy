@@ -161,7 +161,7 @@ export const StrengthValues = () => {
           <CardHeader>
             <CardTitle>1RM Grundübungen</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Gib deine 1 rep max ein, damit dein Training individualisiert werden kann.
+              Gib deine 1 rep max ein für zukünftige Trainingsreferenzen.
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
