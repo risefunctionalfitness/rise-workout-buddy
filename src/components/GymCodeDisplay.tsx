@@ -6,13 +6,20 @@ import { Button } from "@/components/ui/button"
 export const GymCodeDisplay = () => {
   const [isVisible, setIsVisible] = useState(false)
   const [gymCode, setGymCode] = useState<string>("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
     loadActiveGymCode()
   }, [])
 
-  const loadActiveGymCode = async () => {
+  const loadActiveGymCode = async (retryCount = 0) => {
     try {
+      setIsLoading(true)
+      setHasError(false)
+      
+      console.log('Loading gym code, attempt:', retryCount + 1)
+      
       const { data, error } = await supabase
         .from('gym_access_codes')
         .select('code')
@@ -22,17 +29,43 @@ export const GymCodeDisplay = () => {
 
       if (error) {
         console.error('Error loading gym code:', error)
+        setHasError(true)
+        
+        // Retry up to 2 times with increasing delay
+        if (retryCount < 2) {
+          setTimeout(() => loadActiveGymCode(retryCount + 1), (retryCount + 1) * 1000)
+          return
+        }
         return
       }
 
-      setGymCode(data?.[0]?.code || "")
+      const code = data?.[0]?.code || ""
+      console.log('Gym code loaded:', code ? 'SUCCESS' : 'NO CODE FOUND')
+      setGymCode(code)
+      
+      // Cache the code in localStorage as fallback
+      if (code) {
+        localStorage.setItem('cached_gym_code', code)
+      }
     } catch (error) {
       console.error('Error loading gym code:', error)
+      setHasError(true)
+      
+      // Try to use cached code as fallback
+      const cachedCode = localStorage.getItem('cached_gym_code')
+      if (cachedCode) {
+        console.log('Using cached gym code')
+        setGymCode(cachedCode)
+      } else if (retryCount < 2) {
+        setTimeout(() => loadActiveGymCode(retryCount + 1), (retryCount + 1) * 1000)
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleShowCode = () => {
-    if (!gymCode) {
+    if (!gymCode && !isLoading) {
       loadActiveGymCode()
     }
     
@@ -42,6 +75,13 @@ export const GymCodeDisplay = () => {
     setTimeout(() => {
       setIsVisible(false)
     }, 5000)
+  }
+
+  const getDisplayText = () => {
+    if (isLoading) return "Lädt..."
+    if (hasError && !gymCode) return "Fehler"
+    if (!gymCode) return "----"
+    return gymCode
   }
 
   return (
@@ -54,7 +94,10 @@ export const GymCodeDisplay = () => {
       >
         <div className="px-4 text-center whitespace-nowrap">
           <p className="text-xs text-[#B81243] font-medium">Tür-Code</p>
-          <p className="text-lg font-mono font-bold text-black">{gymCode || "----"}</p>
+          <p className="text-lg font-mono font-bold text-black">{getDisplayText()}</p>
+          {hasError && gymCode && (
+            <p className="text-xs text-orange-600">Cache</p>
+          )}
         </div>
       </div>
 

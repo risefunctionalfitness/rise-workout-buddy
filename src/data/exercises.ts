@@ -66,7 +66,6 @@ export const EXERCISES: ExerciseItem[] = [
   { category: "Cardio", name: "Box Jump Over" },
   { category: "Cardio", name: "Burpee" },
   { category: "Cardio", name: "Burpee Box Jump Over" },
-  { category: "Cardio", name: "Burpee Box Jump Overs" },
 
   // Dumbbell Movements
   { category: "Dumbbell Movements", name: "DB Snatch" },
