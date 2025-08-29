@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const { user_id, credits_to_add }: ManageCreditsRequest = await req.json();
 
-    if (!user_id || typeof credits_to_add !== 'number' || credits_to_add <= 0) {
+    if (!user_id || typeof credits_to_add !== 'number' || credits_to_add === 0) {
       return new Response(JSON.stringify({ error: 'Invalid parameters' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -88,12 +88,26 @@ serve(async (req) => {
       .single();
 
     if (existingCredits) {
+      // Check if deducting credits would result in negative balance
+      if (credits_to_add < 0 && existingCredits.credits_remaining + credits_to_add < 0) {
+        return new Response(JSON.stringify({ 
+          error: `Nicht genügend Credits vorhanden. Aktuell: ${existingCredits.credits_remaining}, versucht abzuziehen: ${Math.abs(credits_to_add)}` 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        });
+      }
+
+      // Calculate new credits
+      const newCreditsRemaining = existingCredits.credits_remaining + credits_to_add;
+      const newCreditsTotal = credits_to_add > 0 ? existingCredits.credits_total + credits_to_add : existingCredits.credits_total;
+
       // Update existing credits
       const { data, error } = await supabase
         .from('membership_credits')
         .update({
-          credits_remaining: existingCredits.credits_remaining + credits_to_add,
-          credits_total: existingCredits.credits_total + credits_to_add,
+          credits_remaining: newCreditsRemaining,
+          credits_total: newCreditsTotal,
           last_recharged_at: new Date().toISOString(),
         })
         .eq('user_id', user_id)
@@ -102,16 +116,29 @@ serve(async (req) => {
 
       if (error) throw error;
 
+      const action = credits_to_add > 0 ? 'hinzugefügt' : 'abgezogen';
+      const amount = Math.abs(credits_to_add);
+
       return new Response(JSON.stringify({ 
         success: true, 
         credits: data,
-        message: `${credits_to_add} Credits erfolgreich hinzugefügt`
+        message: `${amount} Credits erfolgreich ${action}`
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     } else {
-      // Create new credits record
+      // Can't deduct from non-existing credits
+      if (credits_to_add < 0) {
+        return new Response(JSON.stringify({ 
+          error: 'Benutzer hat noch keine Credits. Kann nicht von 0 abziehen.' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        });
+      }
+
+      // Create new credits record (only for positive values)
       const { data, error } = await supabase
         .from('membership_credits')
         .insert({
