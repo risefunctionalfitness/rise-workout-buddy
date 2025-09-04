@@ -152,10 +152,10 @@ export default function Admin() {
       // Calculate offset for pagination
       const offset = (currentPage - 1) * membersPerPage;
       
-      // Build query with search filter
+      // Build query with search filter - removed email from profiles query
       let query = supabase
         .from('profiles')
-        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors, email', { count: 'exact' });
+        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors', { count: 'exact' });
       
       if (searchTerm) {
         query = query.or(`display_name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
@@ -184,6 +184,34 @@ export default function Admin() {
         variant: "destructive",
       });
     }
+  };
+
+  const loadMemberEmailForEdit = async (member: Member) => {
+    if (!member.user_id) {
+      setEditingMember({ ...member, email: '' });
+      setEditDialogOpen(true);
+      return;
+    }
+
+    try {
+      // Try to get email from auth.users via admin function
+      const { data: userData, error } = await supabase.auth.admin.getUserById(member.user_id);
+      
+      if (error) {
+        console.error('Error loading user email:', error);
+        setEditingMember({ ...member, email: member.email || '' });
+      } else {
+        setEditingMember({ 
+          ...member, 
+          email: userData.user?.email || member.email || '' 
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user email:', error);
+      setEditingMember({ ...member, email: member.email || '' });
+    }
+    
+    setEditDialogOpen(true);
   };
 
   const handleCreateMember = async (e: React.FormEvent) => {
@@ -269,33 +297,53 @@ export default function Admin() {
     if (!editingMember) return;
 
     try {
-      const { error } = await supabase
+      // Update profiles table first
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           display_name: editingMember.display_name,
-          email: editingMember.email,
           access_code: editingMember.access_code,
           membership_type: editingMember.membership_type,
           authors: editingMember.authors
         })
         .eq('id', editingMember.id);
 
-      if (error) {
-        console.error('Error updating member:', error);
+      if (profileError) {
+        console.error('Error updating member profile:', profileError);
         toast({
           title: "Fehler",
-          description: "Fehler beim Aktualisieren des Mitglieds",
+          description: "Fehler beim Aktualisieren des Mitgliederprofils",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Erfolg",
-          description: "Mitglied erfolgreich aktualisiert",
-        });
-        setEditDialogOpen(false);
-        setEditingMember(null);
-        loadMembers();
+        return;
       }
+
+      // Update email if it's provided and user has a user_id
+      if (editingMember.email && editingMember.user_id) {
+        const { error: emailError } = await supabase.functions.invoke('update-member-email', {
+          body: {
+            userId: editingMember.user_id,
+            newEmail: editingMember.email
+          }
+        });
+
+        if (emailError) {
+          console.error('Error updating email:', emailError);
+          toast({
+            title: "Warnung",
+            description: "Profil aktualisiert, aber E-Mail konnte nicht geändert werden",
+            variant: "destructive",
+          });
+        }
+      }
+
+      toast({
+        title: "Erfolg",
+        description: "Mitglied erfolgreich aktualisiert",
+      });
+      setEditDialogOpen(false);
+      setEditingMember(null);
+      loadMembers();
     } catch (error) {
       console.error('Error updating member:', error);
       toast({
@@ -654,17 +702,14 @@ export default function Admin() {
                         </p>
                       </div>
                       <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs px-2 py-1 h-8"
-                          onClick={() => {
-                            setEditingMember(member);
-                            setEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           className="text-xs px-2 py-1 h-8"
+                           onClick={() => loadMemberEmailForEdit(member)}
+                         >
+                           <Edit className="h-3 w-3" />
+                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
@@ -700,28 +745,26 @@ export default function Admin() {
             {/* Desktop View - Table */}
             <div className="hidden md:block">
               <Table>
-                 <TableHeader>
-                   <TableRow>
-                     <TableHead>Name</TableHead>
-                     <TableHead>E-Mail</TableHead>
-                     <TableHead>Zugangscode</TableHead>
-                     <TableHead>Mitgliedschaft</TableHead>
-                     <TableHead>Erstellt am</TableHead>
-                     <TableHead>Status</TableHead>
-                     <TableHead>Letzter Login</TableHead>
-                     <TableHead>Aktionen</TableHead>
-                   </TableRow>
-                 </TableHeader>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Zugangscode</TableHead>
+                      <TableHead>Mitgliedschaft</TableHead>
+                      <TableHead>Erstellt am</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Letzter Login</TableHead>
+                      <TableHead>Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {members.map((member) => (
                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">
-                          {member.first_name && member.last_name 
-                            ? `${member.first_name} ${member.last_name}` 
-                            : member.display_name}
-                        </TableCell>
-                       <TableCell>{member.email || '-'}</TableCell>
-                       <TableCell>{member.access_code}</TableCell>
+                         <TableCell className="font-medium">
+                           {member.first_name && member.last_name 
+                             ? `${member.first_name} ${member.last_name}` 
+                             : member.display_name}
+                         </TableCell>
+                        <TableCell>{member.access_code}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <MembershipBadge type={member.membership_type as any} />
@@ -752,16 +795,13 @@ export default function Admin() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setEditingMember(member);
-                              setEditDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                           <Button 
+                             variant="outline" 
+                             size="sm"
+                             onClick={() => loadMemberEmailForEdit(member)}
+                           >
+                             <Edit className="h-4 w-4" />
+                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm"
