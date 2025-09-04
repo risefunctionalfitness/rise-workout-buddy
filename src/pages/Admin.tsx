@@ -155,7 +155,7 @@ export default function Admin() {
       // Build query with search filter
       let query = supabase
         .from('profiles')
-        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors', { count: 'exact' });
+        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors, email', { count: 'exact' });
       
       if (searchTerm) {
         query = query.or(`display_name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
@@ -273,6 +273,7 @@ export default function Admin() {
         .from('profiles')
         .update({
           display_name: editingMember.display_name,
+          email: editingMember.email,
           access_code: editingMember.access_code,
           membership_type: editingMember.membership_type,
           authors: editingMember.authors
@@ -545,28 +546,39 @@ export default function Admin() {
                   </DialogHeader>
                   {editingMember && (
                     <form onSubmit={handleEditMember} className="space-y-4">
-                      <div className="space-y-2">
-                        <Input
-                          placeholder="Name des Mitglieds"
-                          value={editingMember.display_name}
-                          onChange={(e) => setEditingMember({
-                            ...editingMember,
-                            display_name: e.target.value
-                          })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Input
-                          placeholder="Zugangscode"
-                          value={editingMember.access_code}
-                          onChange={(e) => setEditingMember({
-                            ...editingMember,
-                            access_code: e.target.value
-                          })}
-                          required
-                        />
-                      </div>
+                       <div className="space-y-2">
+                         <Input
+                           placeholder="Name des Mitglieds"
+                           value={editingMember.display_name}
+                           onChange={(e) => setEditingMember({
+                             ...editingMember,
+                             display_name: e.target.value
+                           })}
+                           required
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <Input
+                           type="email"
+                           placeholder="E-Mail Adresse"
+                           value={editingMember.email || ''}
+                           onChange={(e) => setEditingMember({
+                             ...editingMember,
+                             email: e.target.value
+                           })}
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <Input
+                           placeholder="Zugangscode"
+                           value={editingMember.access_code}
+                           onChange={(e) => setEditingMember({
+                             ...editingMember,
+                             access_code: e.target.value
+                           })}
+                           required
+                         />
+                       </div>
                       <div className="space-y-2">
                         <Select 
                           value={editingMember.membership_type} 
@@ -688,26 +700,28 @@ export default function Admin() {
             {/* Desktop View - Table */}
             <div className="hidden md:block">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Zugangscode</TableHead>
-                    <TableHead>Mitgliedschaft</TableHead>
-                    <TableHead>Erstellt am</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Letzter Login</TableHead>
-                    <TableHead>Aktionen</TableHead>
-                  </TableRow>
-                </TableHeader>
+                 <TableHeader>
+                   <TableRow>
+                     <TableHead>Name</TableHead>
+                     <TableHead>E-Mail</TableHead>
+                     <TableHead>Zugangscode</TableHead>
+                     <TableHead>Mitgliedschaft</TableHead>
+                     <TableHead>Erstellt am</TableHead>
+                     <TableHead>Status</TableHead>
+                     <TableHead>Letzter Login</TableHead>
+                     <TableHead>Aktionen</TableHead>
+                   </TableRow>
+                 </TableHeader>
                 <TableBody>
                   {members.map((member) => (
-                    <TableRow key={member.id}>
-                       <TableCell className="font-medium">
-                         {member.first_name && member.last_name 
-                           ? `${member.first_name} ${member.last_name}` 
-                           : member.display_name}
-                       </TableCell>
-                      <TableCell>{member.access_code}</TableCell>
+                     <TableRow key={member.id}>
+                        <TableCell className="font-medium">
+                          {member.first_name && member.last_name 
+                            ? `${member.first_name} ${member.last_name}` 
+                            : member.display_name}
+                        </TableCell>
+                       <TableCell>{member.email || '-'}</TableCell>
+                       <TableCell>{member.access_code}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <MembershipBadge type={member.membership_type as any} />

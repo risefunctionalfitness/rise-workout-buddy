@@ -449,6 +449,7 @@ export type Database = {
           created_at: string
           deadlift_1rm: number | null
           display_name: string | null
+          email: string | null
           extra_lifts: Json | null
           first_name: string | null
           front_squat_1rm: number | null
@@ -476,6 +477,7 @@ export type Database = {
           created_at?: string
           deadlift_1rm?: number | null
           display_name?: string | null
+          email?: string | null
           extra_lifts?: Json | null
           first_name?: string | null
           front_squat_1rm?: number | null
@@ -503,6 +505,7 @@ export type Database = {
           created_at?: string
           deadlift_1rm?: number | null
           display_name?: string | null
+          email?: string | null
           extra_lifts?: Json | null
           first_name?: string | null
           front_squat_1rm?: number | null
