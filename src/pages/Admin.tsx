@@ -342,7 +342,7 @@ export default function Admin() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          display_name: editedDisplayName,
+          display_name: `${editedFirstName} ${editedLastName}`.trim() || editedFirstName || editedLastName,
           first_name: editedFirstName,
           last_name: editedLastName,
           email: editedEmail // Also update in profiles for consistency
@@ -365,7 +365,6 @@ export default function Admin() {
       });
       setEditDialogOpen(false);
       setEditingMember(null);
-      setEditedDisplayName('');
       setEditedFirstName('');
       setEditedLastName('');
       setEditedEmail('');
@@ -622,24 +621,18 @@ export default function Admin() {
                   </DialogHeader>
                    {editingMember && (
                      <form onSubmit={handleEditMember} className="space-y-4">
-                        <div className="space-y-2">
-                          <Input
-                            placeholder="Anzeigename"
-                            value={editedDisplayName}
-                            onChange={(e) => setEditedDisplayName(e.target.value)}
-                            required
-                          />
-                        </div>
                         <div className="grid grid-cols-2 gap-2">
                           <Input
                             placeholder="Vorname"
                             value={editedFirstName}
                             onChange={(e) => setEditedFirstName(e.target.value)}
+                            required
                           />
                           <Input
                             placeholder="Nachname"
                             value={editedLastName}
                             onChange={(e) => setEditedLastName(e.target.value)}
+                            required
                           />
                         </div>
                         <div className="space-y-2">
