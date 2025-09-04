@@ -53,6 +53,10 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [editedEmail, setEditedEmail] = useState('')
+  const [editedDisplayName, setEditedDisplayName] = useState('')
+  const [editedFirstName, setEditedFirstName] = useState('')
+  const [editedLastName, setEditedLastName] = useState('')
   const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges'>('home');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -187,28 +191,41 @@ export default function Admin() {
   };
 
   const loadMemberEmailForEdit = async (member: Member) => {
+    setEditingMember(member);
+    setEditedDisplayName(member.display_name || '');
+    setEditedFirstName(member.first_name || '');
+    setEditedLastName(member.last_name || '');
+    
     if (!member.user_id) {
-      setEditingMember({ ...member, email: '' });
+      setEditedEmail('');
       setEditDialogOpen(true);
       return;
     }
 
     try {
-      // Try to get email from auth.users via admin function
-      const { data: userData, error } = await supabase.auth.admin.getUserById(member.user_id);
-      
+      const { data, error } = await supabase.functions.invoke('get-member-email', {
+        body: { userId: member.user_id }
+      });
+
       if (error) {
-        console.error('Error loading user email:', error);
-        setEditingMember({ ...member, email: member.email || '' });
-      } else {
-        setEditingMember({ 
-          ...member, 
-          email: userData.user?.email || member.email || '' 
+        console.error('Error loading member email:', error);
+        setEditedEmail('');
+        toast({
+          title: "Warnung",
+          description: "E-Mail-Adresse konnte nicht geladen werden",
+          variant: "destructive",
         });
+      } else {
+        setEditedEmail(data?.email || '');
       }
     } catch (error) {
-      console.error('Error loading user email:', error);
-      setEditingMember({ ...member, email: member.email || '' });
+      console.error('Error in loadMemberEmailForEdit:', error);
+      setEditedEmail('');
+      toast({
+        title: "Warnung", 
+        description: "E-Mail-Adresse konnte nicht geladen werden",
+        variant: "destructive",
+      });
     }
     
     setEditDialogOpen(true);
@@ -296,45 +313,50 @@ export default function Admin() {
     
     if (!editingMember) return;
 
+    setLoading(true);
     try {
-      // Update profiles table first
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          display_name: editingMember.display_name,
-          access_code: editingMember.access_code,
-          membership_type: editingMember.membership_type,
-          authors: editingMember.authors
-        })
-        .eq('id', editingMember.id);
+      const hasEmailChanged = editedEmail !== editingMember.email;
 
-      if (profileError) {
-        console.error('Error updating member profile:', profileError);
-        toast({
-          title: "Fehler",
-          description: "Fehler beim Aktualisieren des Mitgliederprofils",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update email if it's provided and user has a user_id
-      if (editingMember.email && editingMember.user_id) {
+      // If email changed, use the edge function to update it in auth.users
+      if (hasEmailChanged && editingMember.user_id && editedEmail) {
         const { error: emailError } = await supabase.functions.invoke('update-member-email', {
-          body: {
+          body: { 
             userId: editingMember.user_id,
-            newEmail: editingMember.email
+            newEmail: editedEmail 
           }
         });
 
         if (emailError) {
           console.error('Error updating email:', emailError);
           toast({
-            title: "Warnung",
-            description: "Profil aktualisiert, aber E-Mail konnte nicht geändert werden",
+            title: "Fehler",
+            description: "Fehler beim Aktualisieren der E-Mail",
             variant: "destructive",
           });
+          setLoading(false);
+          return;
         }
+      }
+
+      // Update profile data (display_name, first_name, last_name, etc.)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          display_name: editedDisplayName,
+          first_name: editedFirstName,
+          last_name: editedLastName,
+          email: editedEmail // Also update in profiles for consistency
+        })
+        .eq('user_id', editingMember.user_id);
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        toast({
+          title: "Fehler",
+          description: "Fehler beim Aktualisieren des Profils",
+          variant: "destructive",
+        });
+        return;
       }
 
       toast({
@@ -343,14 +365,20 @@ export default function Admin() {
       });
       setEditDialogOpen(false);
       setEditingMember(null);
+      setEditedDisplayName('');
+      setEditedFirstName('');
+      setEditedLastName('');
+      setEditedEmail('');
       loadMembers();
     } catch (error) {
-      console.error('Error updating member:', error);
+      console.error('Error in handleEditMember:', error);
       toast({
         title: "Fehler",
         description: "Fehler beim Aktualisieren des Mitglieds",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -592,41 +620,47 @@ export default function Admin() {
                       Bearbeiten Sie die Mitgliederdaten
                     </DialogDescription>
                   </DialogHeader>
-                  {editingMember && (
-                    <form onSubmit={handleEditMember} className="space-y-4">
-                       <div className="space-y-2">
-                         <Input
-                           placeholder="Name des Mitglieds"
-                           value={editingMember.display_name}
-                           onChange={(e) => setEditingMember({
-                             ...editingMember,
-                             display_name: e.target.value
-                           })}
-                           required
-                         />
-                       </div>
-                       <div className="space-y-2">
-                         <Input
-                           type="email"
-                           placeholder="E-Mail Adresse"
-                           value={editingMember.email || ''}
-                           onChange={(e) => setEditingMember({
-                             ...editingMember,
-                             email: e.target.value
-                           })}
-                         />
-                       </div>
-                       <div className="space-y-2">
-                         <Input
-                           placeholder="Zugangscode"
-                           value={editingMember.access_code}
-                           onChange={(e) => setEditingMember({
-                             ...editingMember,
-                             access_code: e.target.value
-                           })}
-                           required
-                         />
-                       </div>
+                   {editingMember && (
+                     <form onSubmit={handleEditMember} className="space-y-4">
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Anzeigename"
+                            value={editedDisplayName}
+                            onChange={(e) => setEditedDisplayName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Vorname"
+                            value={editedFirstName}
+                            onChange={(e) => setEditedFirstName(e.target.value)}
+                          />
+                          <Input
+                            placeholder="Nachname"
+                            value={editedLastName}
+                            onChange={(e) => setEditedLastName(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Input
+                            type="email"
+                            placeholder="E-Mail Adresse"
+                            value={editedEmail}
+                            onChange={(e) => setEditedEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Zugangscode"
+                            value={editingMember.access_code}
+                            onChange={(e) => setEditingMember({
+                              ...editingMember,
+                              access_code: e.target.value
+                            })}
+                            required
+                          />
+                        </div>
                       <div className="space-y-2">
                         <Select 
                           value={editingMember.membership_type} 
