@@ -155,7 +155,7 @@ export default function Admin() {
       // Build query with search filter
       let query = supabase
         .from('profiles')
-        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors, email', { count: 'exact' });
+        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors', { count: 'exact' });
       
       if (searchTerm) {
         query = query.or(`display_name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
@@ -630,18 +630,17 @@ export default function Admin() {
                 <Card key={member.id} className="p-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
-                       <div>
-                          <h3 className="font-medium text-sm">
-                            {member.first_name && member.last_name 
-                              ? `${member.first_name} ${member.last_name}` 
-                              : member.display_name}
-                          </h3>
-                         <p className="text-xs text-gray-500">{member.email || 'Keine E-Mail'}</p>
-                         <p className="text-xs text-gray-500">{member.access_code}</p>
-                         <p className="text-xs text-gray-400">
-                           {new Date(member.created_at).toLocaleDateString('de-DE')}
-                         </p>
-                       </div>
+                      <div>
+                         <h3 className="font-medium text-sm">
+                           {member.first_name && member.last_name 
+                             ? `${member.first_name} ${member.last_name}` 
+                             : member.display_name}
+                         </h3>
+                        <p className="text-xs text-gray-500">{member.access_code}</p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(member.created_at).toLocaleDateString('de-DE')}
+                        </p>
+                      </div>
                       <div className="flex gap-1">
                         <Button
                           variant="outline"
@@ -690,27 +689,25 @@ export default function Admin() {
             <div className="hidden md:block">
               <Table>
                 <TableHeader>
-                   <TableRow>
-                     <TableHead>Name</TableHead>
-                     <TableHead>E-Mail</TableHead>
-                     <TableHead>Zugangscode</TableHead>
-                     <TableHead>Mitgliedschaft</TableHead>
-                     <TableHead>Erstellt am</TableHead>
-                     <TableHead>Status</TableHead>
-                     <TableHead>Letzter Login</TableHead>
-                     <TableHead>Aktionen</TableHead>
-                   </TableRow>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Zugangscode</TableHead>
+                    <TableHead>Mitgliedschaft</TableHead>
+                    <TableHead>Erstellt am</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Letzter Login</TableHead>
+                    <TableHead>Aktionen</TableHead>
+                  </TableRow>
                 </TableHeader>
                 <TableBody>
                   {members.map((member) => (
-                     <TableRow key={member.id}>
-                        <TableCell className="font-medium">
-                          {member.first_name && member.last_name 
-                            ? `${member.first_name} ${member.last_name}` 
-                            : member.display_name}
-                        </TableCell>
-                        <TableCell>{member.email || 'Keine E-Mail'}</TableCell>
-                       <TableCell>{member.access_code}</TableCell>
+                    <TableRow key={member.id}>
+                       <TableCell className="font-medium">
+                         {member.first_name && member.last_name 
+                           ? `${member.first_name} ${member.last_name}` 
+                           : member.display_name}
+                       </TableCell>
+                      <TableCell>{member.access_code}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <MembershipBadge type={member.membership_type as any} />
