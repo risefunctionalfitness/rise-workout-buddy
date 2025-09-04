@@ -725,11 +725,11 @@ export default function Admin() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
-                         <h3 className="font-medium text-sm">
-                           {member.first_name && member.last_name 
-                             ? `${member.first_name} ${member.last_name}` 
-                             : member.display_name}
-                         </h3>
+                          <h3 className="font-medium text-sm">
+                            {member.first_name && member.last_name 
+                              ? `${member.first_name} ${member.last_name}` 
+                              : member.display_name}
+                          </h3>
                         <p className="text-xs text-gray-500">{member.access_code}</p>
                         <p className="text-xs text-gray-400">
                           {new Date(member.created_at).toLocaleDateString('de-DE')}
@@ -793,11 +793,11 @@ export default function Admin() {
                 <TableBody>
                   {members.map((member) => (
                      <TableRow key={member.id}>
-                         <TableCell className="font-medium">
-                           {member.first_name && member.last_name 
-                             ? `${member.first_name} ${member.last_name}` 
-                             : member.display_name}
-                         </TableCell>
+                          <TableCell className="font-medium">
+                            {member.first_name && member.last_name 
+                              ? `${member.first_name} ${member.last_name}` 
+                              : member.display_name}
+                          </TableCell>
                         <TableCell>{member.access_code}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.dispatch-waitlist-promotion-events]
 verify_jwt = false
+
+[functions.get-member-email]
+verify_jwt = false
