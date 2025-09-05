@@ -189,7 +189,7 @@ export const AdminLeaderboard: React.FC = () => {
                 Leaderboard
               </CardTitle>
               <CardDescription>
-                Top {Math.min(entriesPerPage, totalEntries)} im {currentMonthName}
+                Alle Teilnehmer {currentMonthName} (aktueller Monat)
               </CardDescription>
             </div>
             <div className="flex gap-2 items-center">
