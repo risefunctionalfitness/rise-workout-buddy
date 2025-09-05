@@ -5,6 +5,7 @@ import { Trophy, Medal, Award, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProfileImageViewer } from "@/components/ProfileImageViewer"
 import { supabase } from "@/integrations/supabase/client"
 
 interface LeaderboardEntry {
@@ -26,6 +27,7 @@ export const AdminLeaderboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const entriesPerPage = 30
 
   useEffect(() => {
@@ -194,7 +196,6 @@ export const AdminLeaderboard: React.FC = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Name suchen..."
                   className="pl-10 w-64"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -236,7 +237,13 @@ export const AdminLeaderboard: React.FC = () => {
                         <div className="flex items-center justify-center w-8">
                           {getRankIcon(globalRank)}
                         </div>
-                        <Avatar className="w-10 h-10">
+                        <Avatar 
+                          className="w-10 h-10 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setSelectedProfile({
+                            imageUrl: entry.avatar_url,
+                            displayName: entry.display_name
+                          })}
+                        >
                           <AvatarImage src={entry.avatar_url || undefined} />
                           <AvatarFallback>
                             {entry.display_name.charAt(0).toUpperCase()}
@@ -297,6 +304,15 @@ export const AdminLeaderboard: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {selectedProfile && (
+        <ProfileImageViewer
+          imageUrl={selectedProfile.imageUrl}
+          displayName={selectedProfile.displayName}
+          isOpen={!!selectedProfile}
+          onClose={() => setSelectedProfile(null)}
+        />
+      )}
     </div>
   )
 }
