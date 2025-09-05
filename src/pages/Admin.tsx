@@ -244,22 +244,6 @@ export default function Admin() {
     }
 
     try {
-      // Check if email or access code already exists
-      const { data: existingCode } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('access_code', newMemberCode)
-        .maybeSingle();
-
-      if (existingCode) {
-        toast({
-          title: "Fehler",
-          description: "Zugangscode bereits vergeben",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Create user via Edge Function with admin privileges
       const { data: result, error: functionError } = await supabase.functions.invoke('create-member', {
         body: {
