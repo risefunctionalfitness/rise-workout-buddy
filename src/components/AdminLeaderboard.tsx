@@ -189,7 +189,7 @@ export const AdminLeaderboard: React.FC = () => {
                 Leaderboard
               </CardTitle>
               <CardDescription>
-                Alle Teilnehmer {currentMonthName} (aktueller Monat)
+                Alle Teilnehmer {currentMonthName}
               </CardDescription>
             </div>
             <div className="flex gap-2 items-center">
