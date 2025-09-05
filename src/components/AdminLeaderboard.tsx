@@ -26,6 +26,7 @@ export const AdminLeaderboard: React.FC = () => {
   const [filteredLeaderboard, setFilteredLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [showSearch, setShowSearch] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const entriesPerPage = 30
@@ -193,14 +194,25 @@ export const AdminLeaderboard: React.FC = () => {
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-sm text-muted-foreground">{totalEntries}</span>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  className="pl-10 w-64"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              {showSearch ? (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    className="pl-10 w-48"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onBlur={() => !searchTerm && setShowSearch(false)}
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="p-2 border rounded-md hover:bg-muted cursor-pointer"
+                  onClick={() => setShowSearch(true)}
+                >
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
             </div>
           </div>
         </CardHeader>
