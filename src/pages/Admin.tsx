@@ -329,7 +329,8 @@ export default function Admin() {
           display_name: `${editedFirstName} ${editedLastName}`.trim() || editedFirstName || editedLastName,
           first_name: editedFirstName,
           last_name: editedLastName,
-          email: editedEmail // Also update in profiles for consistency
+          email: editedEmail, // Also update in profiles for consistency
+          access_code: editingMember.access_code
         })
         .eq('user_id', editingMember.user_id);
 
@@ -341,6 +342,25 @@ export default function Admin() {
           variant: "destructive",
         });
         return;
+      }
+
+      // Update the auth password to match the new access code
+      if (editingMember.access_code) {
+        const { error: accessCodeError } = await supabase.functions.invoke('update-access-code', {
+          body: { 
+            newAccessCode: editingMember.access_code,
+            targetUserId: editingMember.user_id
+          }
+        });
+
+        if (accessCodeError) {
+          console.error('Access code update error:', accessCodeError);
+          toast({
+            title: "Warnung",
+            description: "Profil aktualisiert, aber Zugangscode-Synchronisation fehlgeschlagen",
+            variant: "destructive",
+          });
+        }
       }
 
       toast({
