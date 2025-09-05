@@ -92,8 +92,15 @@ export const AdminLeaderboard: React.FC = () => {
       // Get challenge completion data for current month
       const { data: challengeData } = await supabase
         .from('user_challenge_progress')
-        .select('user_id, is_completed')
+        .select(`
+          user_id, 
+          is_completed,
+          challenge_id,
+          monthly_challenges!inner(year, month)
+        `)
         .eq('is_completed', true)
+        .eq('monthly_challenges.year', currentYear)
+        .eq('monthly_challenges.month', currentMonth)
 
       const challengeCompletedUsers = new Set(challengeData?.map(c => c.user_id) || [])
 
