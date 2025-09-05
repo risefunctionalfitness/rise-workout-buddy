@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Medal, Award, Dumbbell, Calendar, CheckCircle, Search } from "lucide-react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Trophy, Medal, Award, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/integrations/supabase/client"
 
 interface LeaderboardEntry {
@@ -26,7 +26,7 @@ export const AdminLeaderboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const entriesPerPage = 10
+  const entriesPerPage = 30
 
   useEffect(() => {
     loadLeaderboard()
@@ -124,13 +124,13 @@ export const AdminLeaderboard: React.FC = () => {
   const getRankIcon = (position: number) => {
     switch (position) {
       case 1:
-        return <Trophy className="w-4 h-4 text-yellow-500" />
+        return <Trophy className="w-6 h-6 text-yellow-500" />
       case 2:
-        return <Medal className="w-4 h-4 text-gray-400" />
+        return <Medal className="w-6 h-6 text-gray-400" />
       case 3:
-        return <Award className="w-4 h-4 text-amber-600" />
+        return <Award className="w-6 h-6 text-amber-600" />
       default:
-        return <span className="w-4 h-4 flex items-center justify-center text-sm font-bold text-muted-foreground">{position}</span>
+        return <span className="w-6 h-6 flex items-center justify-center text-lg font-bold text-muted-foreground">{position}</span>
     }
   }
 
@@ -150,8 +150,11 @@ export const AdminLeaderboard: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="w-5 h-5" />
-            Leaderboard {currentMonthName}
+            Leaderboard
           </CardTitle>
+          <CardDescription>
+            Top {entriesPerPage} im {currentMonthName}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center p-8">
@@ -173,13 +176,14 @@ export const AdminLeaderboard: React.FC = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="w-5 h-5" />
-                Leaderboard {currentMonthName}
+                Leaderboard
               </CardTitle>
               <CardDescription>
-                Alle {totalEntries} Teilnehmer des aktuellen Monats
+                Top {Math.min(entriesPerPage, totalEntries)} im {currentMonthName}
               </CardDescription>
             </div>
             <div className="flex gap-2 items-center">
+              <span className="text-sm text-muted-foreground">{totalEntries}</span>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -195,7 +199,7 @@ export const AdminLeaderboard: React.FC = () => {
         <CardContent>
           {totalEntries === 0 ? (
             <div className="text-center py-8">
-              <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold mb-2">Noch keine Einträge</h3>
               <p className="text-muted-foreground">
                 {searchTerm ? 'Keine Treffer für diese Suche gefunden.' : 'Für diesen Monat sind noch keine Trainingssessions eingetragen.'}
@@ -203,108 +207,59 @@ export const AdminLeaderboard: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Mobile View - Cards */}
-              <div className="block md:hidden space-y-4">
+              <div className="space-y-2">
                 {currentEntries.map((entry, index) => {
                   const globalRank = startIndex + index + 1
+                  const isTopThree = globalRank <= 3
+                  
                   return (
-                    <Card key={entry.id} className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-3">
-                            {getRankIcon(globalRank)}
-                            <div>
-                              <h3 className="font-medium text-sm">{entry.display_name}</h3>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Dumbbell className="w-3 h-3" />
-                                  <span>{entry.training_count}</span>
-                                </div>
-                                {entry.challenge_bonus_points > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <CheckCircle className="w-3 h-3" />
-                                    <span>+{entry.challenge_bonus_points}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-lg">{entry.total_score}</div>
-                            <div className="text-xs text-muted-foreground">Punkte</div>
-                          </div>
+                    <div
+                      key={entry.id}
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                        isTopThree 
+                          ? globalRank === 1 
+                            ? 'bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/20' 
+                            : globalRank === 2
+                            ? 'bg-gradient-to-r from-gray-400/10 to-transparent border-gray-400/20'
+                            : 'bg-gradient-to-r from-amber-600/10 to-transparent border-amber-600/20'
+                          : 'bg-card hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-center w-8">
+                          {getRankIcon(globalRank)}
                         </div>
-                        {entry.hasCompletedChallenge && (
-                          <Badge variant="secondary" className="text-xs">
-                            Challenge ✓
-                          </Badge>
-                        )}
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={entry.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {entry.display_name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-medium">{entry.display_name}</h3>
+                          {entry.hasCompletedChallenge && (
+                            <Badge variant="secondary" className="text-xs mt-1">
+                              Challenge ✓
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    </Card>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant="destructive" 
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1"
+                        >
+                          {entry.total_score}
+                        </Badge>
+                      </div>
+                    </div>
                   )
                 })}
               </div>
 
-              {/* Desktop View - Table */}
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Rang</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Training</TableHead>
-                      <TableHead>Challenge Bonus</TableHead>
-                      <TableHead>Gesamt</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentEntries.map((entry, index) => {
-                      const globalRank = startIndex + index + 1
-                      return (
-                        <TableRow key={entry.id}>
-                          <TableCell className="flex items-center gap-2">
-                            {getRankIcon(globalRank)}
-                          </TableCell>
-                          <TableCell className="font-medium">{entry.display_name}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Dumbbell className="w-4 h-4 text-muted-foreground" />
-                              <span>{entry.training_count}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {entry.challenge_bonus_points > 0 ? (
-                              <div className="flex items-center gap-1">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span>+{entry.challenge_bonus_points}</span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-bold text-lg">{entry.total_score}</div>
-                          </TableCell>
-                          <TableCell>
-                            {entry.hasCompletedChallenge ? (
-                              <Badge variant="secondary" className="text-xs">
-                                Challenge ✓
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">-</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center justify-between mt-6">
                   <p className="text-sm text-muted-foreground">
                     Zeige {startIndex + 1} bis {Math.min(endIndex, totalEntries)} von {totalEntries} Einträgen
                   </p>
