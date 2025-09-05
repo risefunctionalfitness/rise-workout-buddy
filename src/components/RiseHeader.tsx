@@ -197,6 +197,16 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
               <Trophy className="h-8 w-8 mb-2" />
               <span className="text-sm font-medium">Challenges</span>
             </div>
+            <div 
+              onClick={() => {
+                onPageChange?.('leaderboard');
+                setDropdownOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'leaderboard' ? 'bg-primary/10 text-primary' : ''}`}
+            >
+              <Trophy className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Leaderboard</span>
+            </div>
           </div>
           
           {onLogout && (
