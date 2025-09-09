@@ -15,6 +15,7 @@ interface NewsItem {
   content: string
   published_at: string
   author_id: string
+  link_url?: string | null
   profiles?: {
     display_name: string
   } | null
@@ -102,6 +103,16 @@ export default function News() {
                   <div className="prose prose-sm max-w-none">
                     <p className="whitespace-pre-wrap">{item.content}</p>
                   </div>
+                  {item.link_url && (
+                    <div className="mt-4">
+                      <Button 
+                        onClick={() => window.open(item.link_url, '_blank', 'noopener,noreferrer')}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        Hier Klicken
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

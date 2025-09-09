@@ -21,6 +21,7 @@ interface NewsItem {
   is_published: boolean
   created_at: string
   updated_at: string
+  link_url?: string | null
 }
 
 export const NewsManager = () => {
@@ -32,7 +33,8 @@ export const NewsManager = () => {
   // Form state
   const [newsForm, setNewsForm] = useState({
     title: '',
-    content: ''
+    content: '',
+    link_url: ''
   })
 
   useEffect(() => {
@@ -68,6 +70,7 @@ export const NewsManager = () => {
         .insert({
           title: newsForm.title,
           content: newsForm.content,
+          link_url: newsForm.link_url || null,
           author_id: user.id,
           is_published: true,
           published_at: new Date().toISOString()
@@ -78,7 +81,8 @@ export const NewsManager = () => {
       toast.success('Nachricht erfolgreich erstellt')
       setNewsForm({
         title: '',
-        content: ''
+        content: '',
+        link_url: ''
       })
       setCreateDialogOpen(false)
       await loadNews()
@@ -97,6 +101,7 @@ export const NewsManager = () => {
       const updates = {
         title: formData.get('title') as string,
         content: formData.get('content') as string,
+        link_url: (formData.get('link_url') as string) || null,
         is_published: true,
         published_at: new Date().toISOString()
       }
@@ -188,6 +193,15 @@ export const NewsManager = () => {
                       required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="link_url">Link (Optional)</Label>
+                    <Input
+                      value={newsForm.link_url}
+                      onChange={(e) => setNewsForm(prev => ({ ...prev, link_url: e.target.value }))}
+                      placeholder="Optional: Link-URL"
+                      type="url"
+                    />
+                  </div>
                   <Button type="submit" className="w-full">
                     Nachricht erstellen
                   </Button>
@@ -254,6 +268,10 @@ export const NewsManager = () => {
               <div>
                 <Label htmlFor="content">Inhalt</Label>
                 <Textarea name="content" defaultValue={editingNews.content} rows={6} required />
+              </div>
+              <div>
+                <Label htmlFor="link_url">Link (Optional)</Label>
+                <Input name="link_url" defaultValue={editingNews.link_url || ''} placeholder="Optional: Link-URL" type="url" />
               </div>
               <Button type="submit" className="w-full">
                 Nachricht aktualisieren
