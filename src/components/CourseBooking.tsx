@@ -458,18 +458,18 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       )}
       
       {/* Tab Navigation */}
-      <div className="bg-muted/30 p-1 rounded-xl mb-6">
+      <div className="bg-muted/20 p-0.5 rounded-lg mb-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto">
             <TabsTrigger 
               value="liste" 
-              className="transition-all duration-300 ease-out rounded-lg px-6 py-3 font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
+              className="transition-all duration-200 ease-out rounded-md px-4 py-2 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
             >
               Liste
             </TabsTrigger>
             <TabsTrigger 
               value="kalender" 
-              className="transition-all duration-300 ease-out rounded-lg px-6 py-3 font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
+              className="transition-all duration-200 ease-out rounded-md px-4 py-2 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
             >
               Kalender
             </TabsTrigger>
