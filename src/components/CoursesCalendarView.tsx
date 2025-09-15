@@ -148,13 +148,13 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
 
   return (
     <div className="space-y-6">
-      {/* Calendar with reduced margins */}
-      <div className="px-2">
+      {/* Calendar with centered layout and reduced mobile margins */}
+      <div className="flex justify-center px-1 sm:px-2">
         <Calendar
           mode="single"
           selected={selectedDate}
           onSelect={setSelectedDate}
-          className="mx-auto max-w-full"
+          className="w-full max-w-sm mx-auto"
           modifiers={{
             hasRegistration: (date) => {
               const dateString = format(date, 'yyyy-MM-dd')
@@ -169,7 +169,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
 
       {/* Courses for selected date */}
       {selectedDate && (
-        <div className="space-y-4">
+        <div className="space-y-4 px-1 sm:px-4">
           <h3 className="font-medium text-center">
             Kurse am {format(selectedDate, 'EEEE, dd.MM.yyyy', { locale: de })}
           </h3>
@@ -179,7 +179,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
               Keine Kurse an diesem Tag
             </p>
           ) : (
-            <div className="space-y-2 pb-24">
+            <div className="space-y-2 pb-24 px-1 sm:px-0">
               {coursesForSelectedDate.map(course => (
                 <Card 
                   key={course.id} 
