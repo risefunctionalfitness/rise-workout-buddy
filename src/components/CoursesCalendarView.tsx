@@ -1,0 +1,250 @@
+import { useState, useEffect, useMemo } from "react"
+import { User } from "@supabase/supabase-js"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Clock, MapPin } from "lucide-react"
+import { supabase } from "@/integrations/supabase/client"
+import { format, parseISO, isSameDay } from "date-fns"
+import { de } from "date-fns/locale"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+
+interface Course {
+  id: string
+  title: string
+  trainer: string
+  strength_exercise?: string
+  max_participants: number
+  course_date: string
+  start_time: string
+  end_time: string
+  duration_minutes: number
+  registration_deadline_minutes: number
+  cancellation_deadline_minutes: number
+  registered_count: number
+  waitlist_count: number
+  is_registered: boolean
+  is_waitlisted: boolean
+}
+
+interface CoursesCalendarViewProps {
+  user: User
+  onCourseClick: (course: Course) => void
+}
+
+export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarViewProps) => {
+  const [courses, setCourses] = useState<Course[]>([])
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [loading, setLoading] = useState(true)
+  const [userRegistrations, setUserRegistrations] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    loadCoursesData()
+  }, [user.id])
+
+  const loadCoursesData = async () => {
+    try {
+      setLoading(true)
+      
+      // Get next 3 months of courses
+      const now = new Date()
+      const threeMonthsLater = new Date()
+      threeMonthsLater.setMonth(now.getMonth() + 3)
+      
+      const nowDate = now.toISOString().split('T')[0]
+      const nowTime = now.toTimeString().slice(0, 8)
+      const endDate = threeMonthsLater.toISOString().split('T')[0]
+
+      const [coursesResult, userRegistrationsResult] = await Promise.all([
+        supabase
+          .from('courses')
+          .select(`
+            *,
+            course_registrations(status)
+          `)
+          .eq('is_cancelled', false)
+          .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
+          .lte('course_date', endDate)
+          .order('course_date', { ascending: true })
+          .order('start_time', { ascending: true }),
+        supabase
+          .from('course_registrations')
+          .select('course_id, status')
+          .eq('user_id', user.id)
+          .in('status', ['registered', 'waitlist'])
+      ])
+
+      if (coursesResult.error) throw coursesResult.error
+      if (userRegistrationsResult.error) throw userRegistrationsResult.error
+
+      // Process courses data
+      const processedCourses = (coursesResult.data || []).map(course => {
+        const registrations = course.course_registrations || []
+        const registered_count = registrations.filter(r => r.status === 'registered').length
+        const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
+        
+        const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
+        const is_registered = userReg?.status === 'registered'
+        const is_waitlisted = userReg?.status === 'waitlist'
+
+        return {
+          ...course,
+          registered_count,
+          waitlist_count,
+          is_registered,
+          is_waitlisted
+        }
+      })
+
+      setCourses(processedCourses)
+      
+      // Create set of dates where user is registered
+      const registeredDates = new Set<string>()
+      processedCourses.forEach(course => {
+        if (course.is_registered) {
+          registeredDates.add(course.course_date)
+        }
+      })
+      setUserRegistrations(registeredDates)
+      
+    } catch (error) {
+      console.error('Error loading courses:', error)
+      toast.error('Fehler beim Laden der Kurse')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Get courses for selected date
+  const coursesForSelectedDate = useMemo(() => {
+    if (!selectedDate) return []
+    
+    const selectedDateString = format(selectedDate, 'yyyy-MM-dd')
+    return courses.filter(course => course.course_date === selectedDateString)
+  }, [courses, selectedDate])
+
+  // Custom day styling for calendar
+  const getDayProps = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd')
+    const hasRegistration = userRegistrations.has(dateString)
+    
+    return {
+      className: cn(
+        hasRegistration && "relative after:absolute after:inset-0 after:rounded-md after:border-2 after:border-green-500 after:pointer-events-none"
+      )
+    }
+  }
+
+  const getStatusColor = (course: Course) => {
+    if (course.is_registered) return "bg-green-500"
+    if (course.is_waitlisted) return "bg-yellow-500"
+    if (course.registered_count >= course.max_participants) return "bg-red-500"
+    return "bg-blue-500"
+  }
+
+  const getStatusText = (course: Course) => {
+    if (course.is_registered) return "Angemeldet"
+    if (course.is_waitlisted) return "Warteliste"
+    if (course.registered_count >= course.max_participants) return "Ausgebucht"
+    return "Verfügbar"
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+        <p className="text-muted-foreground">Lade Kurse...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Calendar with reduced margins */}
+      <div className="px-2">
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          className="mx-auto max-w-full"
+          modifiers={{
+            hasRegistration: (date) => {
+              const dateString = format(date, 'yyyy-MM-dd')
+              return userRegistrations.has(dateString)
+            }
+          }}
+          modifiersClassNames={{
+            hasRegistration: "relative after:absolute after:inset-0 after:rounded-md after:border-2 after:border-green-500 after:pointer-events-none"
+          }}
+        />
+      </div>
+
+      {/* Courses for selected date */}
+      {selectedDate && (
+        <div className="space-y-4">
+          <h3 className="font-medium text-center">
+            Kurse am {format(selectedDate, 'EEEE, dd.MM.yyyy', { locale: de })}
+          </h3>
+          
+          {coursesForSelectedDate.length === 0 ? (
+            <p className="text-center text-muted-foreground">
+              Keine Kurse an diesem Tag
+            </p>
+          ) : (
+            <div className="space-y-2 pb-24">
+              {coursesForSelectedDate.map(course => (
+                <Card 
+                  key={course.id} 
+                  className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+                    course.is_registered 
+                      ? 'border-green-500 border-2' 
+                      : ''
+                  }`}
+                  onClick={() => onCourseClick(course)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
+                          <h4 className="font-medium truncate">{course.title}</h4>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {course.trainer}
+                          </div>
+                        </div>
+                        {course.strength_exercise && (
+                          <Badge variant="outline" className="text-xs mt-1 w-fit">
+                            {course.strength_exercise}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-1">
+                          <div className={`w-2 h-2 rounded-full ${getStatusColor(course)}`}></div>
+                          <span className="text-xs text-muted-foreground">
+                            {getStatusText(course)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {course.registered_count}/{course.max_participants}
+                          {course.waitlist_count > 0 && ` (+${course.waitlist_count})`}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

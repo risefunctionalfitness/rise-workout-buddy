@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
 import { ProfileImageViewer } from "@/components/ProfileImageViewer"
+import { CoursesCalendarView } from "@/components/CoursesCalendarView"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -46,6 +48,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [isAdmin, setIsAdmin] = useState(false)
   const [userMembershipType, setUserMembershipType] = useState<string>('')
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
+  const [activeTab, setActiveTab] = useState<string>("liste")
 
   useEffect(() => {
     let mounted = true
@@ -446,51 +449,59 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         />
       )}
       
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="font-semibold">Nächste 10 Kurstage</h2>
-      </div>
+      {/* Tab Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="liste">Liste</TabsTrigger>
+          <TabsTrigger value="kalender">Kalender</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="liste" className="space-y-4">
+          {/* Header */}
+          <div className="text-center">
+            <h2 className="font-semibold">Nächste 10 Kurstage</h2>
+          </div>
 
-      {/* Courses List */}
-      <div className="grid grid-cols-1 gap-4 pb-24">
-        {Object.entries(groupedCourses).map(([date, dayCourses]) => (
-          <div key={date} className="space-y-2">
-            <h3 className="font-medium text-sm text-muted-foreground">
-              {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
-            </h3>
-            <div className="space-y-2">
-              {dayCourses.map(course => (
-                <Card 
-                  key={course.id} 
-                  className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
-                    course.is_registered 
-                      ? 'border-green-500 border-2' 
-                      : ''
-                  }`}
-                  onClick={() => handleCourseClick(course)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
-                          <h4 className="font-medium truncate">{course.title}</h4>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+          {/* Courses List */}
+          <div className="grid grid-cols-1 gap-4 pb-24">
+            {Object.entries(groupedCourses).map(([date, dayCourses]) => (
+              <div key={date} className="space-y-2">
+                <h3 className="font-medium text-sm text-muted-foreground">
+                  {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
+                </h3>
+                <div className="space-y-2">
+                  {dayCourses.map(course => (
+                    <Card 
+                      key={course.id} 
+                      className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+                        course.is_registered 
+                          ? 'border-green-500 border-2' 
+                          : ''
+                      }`}
+                      onClick={() => handleCourseClick(course)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
+                              <h4 className="font-medium truncate">{course.title}</h4>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {course.trainer}
+                              </div>
+                            </div>
+                            {course.strength_exercise && (
+                              <Badge variant="outline" className="text-xs mt-1 w-fit">
+                                {course.strength_exercise}
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {course.trainer}
-                          </div>
-                        </div>
-                        {course.strength_exercise && (
-                          <Badge variant="outline" className="text-xs mt-1 w-fit">
-                            {course.strength_exercise}
-                          </Badge>
-                        )}
-                      </div>
                       <div className="flex flex-col items-end gap-1">
                         {(() => {
                           const percentage = (course.registered_count / course.max_participants) * 100;
@@ -517,12 +528,21 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
             </div>
           </div>
         ))}
-        {courses.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            Keine kommenden Kurse verfügbar
+          {courses.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              Keine kommenden Kurse verfügbar
+            </div>
+          )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="kalender">
+          <CoursesCalendarView 
+            user={user} 
+            onCourseClick={handleCourseClick}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Course Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
