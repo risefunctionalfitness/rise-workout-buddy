@@ -458,13 +458,24 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       )}
       
       {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="liste" className="transition-all">Liste</TabsTrigger>
-          <TabsTrigger value="kalender" className="transition-all">Kalender</TabsTrigger>
-        </TabsList>
+      <div className="bg-muted/30 p-1 rounded-xl mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto">
+            <TabsTrigger 
+              value="liste" 
+              className="transition-all duration-300 ease-out rounded-lg px-6 py-3 font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
+            >
+              Liste
+            </TabsTrigger>
+            <TabsTrigger 
+              value="kalender" 
+              className="transition-all duration-300 ease-out rounded-lg px-6 py-3 font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
+            >
+              Kalender
+            </TabsTrigger>
+          </TabsList>
         
-        <TabsContent value="liste" className="space-y-4 animate-in fade-in-50 duration-200">
+        <TabsContent value="liste" className="space-y-4 animate-in fade-in-50 slide-in-from-left-5 duration-300">
           {/* Header */}
           <div className="text-center">
             <h2 className="font-semibold">Nächste 10 Kurstage</h2>
@@ -544,13 +555,14 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           </div>
         </TabsContent>
         
-        <TabsContent value="kalender" className="animate-in fade-in-50 duration-200">
+        <TabsContent value="kalender" className="animate-in fade-in-50 slide-in-from-right-5 duration-300">
           <CoursesCalendarView 
             user={user} 
             onCourseClick={handleCourseClick}
           />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
 
       {/* Course Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
