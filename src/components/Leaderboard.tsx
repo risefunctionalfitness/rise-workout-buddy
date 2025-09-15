@@ -260,10 +260,10 @@ export const Leaderboard: React.FC = () => {
                       </div>
                       <div className="text-right flex items-center gap-2">
                         <div className="text-right">
-                          <div className="text-lg px-3 py-1 bg-rise-accent text-white flex items-center gap-1 rounded-md font-medium pointer-events-none select-none">
+                          <Badge variant="secondary" className="text-lg px-3 py-1 bg-rise-accent text-white flex items-center gap-1 pointer-events-none select-none">
                             <Dumbbell className="h-4 w-4" />
                             {entry.total_score}
-                          </div>
+                          </Badge>
                         </div>
                       </div>
                     </div>
