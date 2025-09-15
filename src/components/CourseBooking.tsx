@@ -451,12 +451,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="liste">Liste</TabsTrigger>
-          <TabsTrigger value="kalender">Kalender</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="liste" className="transition-all">Liste</TabsTrigger>
+          <TabsTrigger value="kalender" className="transition-all">Kalender</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="liste" className="space-y-4">
+        <TabsContent value="liste" className="space-y-4 animate-in fade-in-50 duration-200">
           {/* Header */}
           <div className="text-center">
             <h2 className="font-semibold">Nächste 10 Kurstage</h2>
@@ -536,7 +536,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           </div>
         </TabsContent>
         
-        <TabsContent value="kalender">
+        <TabsContent value="kalender" className="animate-in fade-in-50 duration-200">
           <CoursesCalendarView 
             user={user} 
             onCourseClick={handleCourseClick}

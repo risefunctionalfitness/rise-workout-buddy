@@ -136,19 +136,6 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
     }
   }
 
-  const getStatusColor = (course: Course) => {
-    if (course.is_registered) return "bg-green-500"
-    if (course.is_waitlisted) return "bg-yellow-500"
-    if (course.registered_count >= course.max_participants) return "bg-red-500"
-    return "bg-blue-500"
-  }
-
-  const getStatusText = (course: Course) => {
-    if (course.is_registered) return "Angemeldet"
-    if (course.is_waitlisted) return "Warteliste"
-    if (course.registered_count >= course.max_participants) return "Ausgebucht"
-    return "Verfügbar"
-  }
 
   if (loading) {
     return (
@@ -226,16 +213,23 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-1">
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(course)}`}></div>
-                          <span className="text-xs text-muted-foreground">
-                            {getStatusText(course)}
-                          </span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {course.registered_count}/{course.max_participants}
-                          {course.waitlist_count > 0 && ` (+${course.waitlist_count})`}
-                        </div>
+                        {(() => {
+                          const percentage = (course.registered_count / course.max_participants) * 100;
+                          let badgeColor = "bg-green-500";
+                          if (percentage >= 100) badgeColor = "bg-red-500";
+                          else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                          
+                          return (
+                            <Badge className={`text-white ${badgeColor}`}>
+                              {course.registered_count}/{course.max_participants}
+                            </Badge>
+                          );
+                        })()}
+                         {course.waitlist_count > 0 && (
+                           <span className="text-xs" style={{ color: '#ff914d' }}>
+                             {course.waitlist_count} Warteliste
+                           </span>
+                         )}
                       </div>
                     </div>
                   </CardContent>
