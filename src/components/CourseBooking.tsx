@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, List } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
 import { ProfileImageViewer } from "@/components/ProfileImageViewer"
+import { CoursesCalendarView } from "@/components/CoursesCalendarView"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -36,6 +38,7 @@ interface CourseBookingProps {
 }
 
 export const CourseBooking = ({ user }: CourseBookingProps) => {
+  const [activeTab, setActiveTab] = useState('list')
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -391,8 +394,6 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     }
   }
 
-  // Remove week navigation - we only show next 10 courses
-
   // Group courses by date for display
   const groupedCourses = courses.reduce((acc, course) => {
     const date = course.course_date
@@ -446,227 +447,236 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         />
       )}
       
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="font-semibold">Nächste 10 Kurstage</h2>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            Liste
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Kalender
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Courses List */}
-      <div className="grid grid-cols-1 gap-4 pb-24">
-        {Object.entries(groupedCourses).map(([date, dayCourses]) => (
-          <div key={date} className="space-y-2">
-            <h3 className="font-medium text-sm text-muted-foreground">
-              {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
-            </h3>
-            <div className="space-y-2">
-              {dayCourses.map(course => (
-                <Card 
-                  key={course.id} 
-                  className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
-                    course.is_registered 
-                      ? 'border-green-500 border-2' 
-                      : ''
-                  }`}
-                  onClick={() => handleCourseClick(course)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
-                          <h4 className="font-medium truncate">{course.title}</h4>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+        <TabsContent value="list" className="space-y-4">
+          {/* Header */}
+          <div className="text-center">
+            <h2 className="font-semibold">Nächste 10 Kurstage</h2>
+          </div>
+
+          {/* Courses List */}
+          <div className="grid grid-cols-1 gap-4 pb-24">
+            {Object.entries(groupedCourses).map(([date, dayCourses]) => (
+              <div key={date} className="space-y-2">
+                <h3 className="font-medium text-sm text-muted-foreground">
+                  {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
+                </h3>
+                <div className="space-y-2">
+                  {dayCourses.map(course => (
+                    <Card 
+                      key={course.id} 
+                      className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+                        course.is_registered 
+                          ? 'border-green-500 border-2' 
+                          : ''
+                      }`}
+                      onClick={() => handleCourseClick(course)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
+                              <h4 className="font-medium truncate">{course.title}</h4>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {course.trainer}
+                              </div>
+                            </div>
+                            {course.strength_exercise && (
+                              <Badge variant="outline" className="text-xs mt-1 w-fit">
+                                {course.strength_exercise}
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {course.trainer}
-                          </div>
-                        </div>
-                        {course.strength_exercise && (
-                          <Badge variant="outline" className="text-xs mt-1 w-fit">
-                            {course.strength_exercise}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {(() => {
-                          const percentage = (course.registered_count / course.max_participants) * 100;
-                          let badgeColor = "bg-green-500";
-                          if (percentage >= 100) badgeColor = "bg-red-500";
-                          else if (percentage >= 75) badgeColor = "bg-[#edb408]";
                           
-                          return (
-                            <Badge className={`text-white ${badgeColor}`}>
-                              {course.registered_count}/{course.max_participants}
-                            </Badge>
-                          );
-                        })()}
-                         {course.waitlist_count > 0 && (
-                           <span className="text-xs" style={{ color: '#ff914d' }}>
-                             {course.waitlist_count} Warteliste
-                           </span>
-                         )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ))}
-        {courses.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            Keine kommenden Kurse verfügbar
-          </div>
-        )}
-      </div>
-
-      {/* Course Detail Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{selectedCourse?.title}</DialogTitle>
-          </DialogHeader>
-          {selectedCourse && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4" />
-                  {format(parseISO(selectedCourse.course_date), 'EEEE, dd.MM.yyyy', { locale: de })}
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4" />
-                  {selectedCourse.start_time.slice(0, 5)} - {selectedCourse.end_time.slice(0, 5)}
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4" />
-                  Trainer: {selectedCourse.trainer}
-                </div>
-                {selectedCourse.strength_exercise && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Badge variant="outline">
-                      Kraftteil: {selectedCourse.strength_exercise}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
-              {/* Participants */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">
-                  Teilnehmer ({selectedCourse.registered_count}/{selectedCourse.max_participants})
-                </h4>
-                <div className="max-h-64 overflow-y-auto">
-                  {participants.filter(p => p.status === 'registered').length === 0 ? (
-                    <Card>
-                      <CardContent className="p-6 text-center">
-                        <p className="text-muted-foreground">Keine Anmeldungen</p>
+                          <div className="flex flex-col items-end gap-1">
+                            {(() => {
+                              const percentage = (course.registered_count / course.max_participants) * 100;
+                              let badgeColor = "bg-green-500";
+                              if (percentage >= 100) badgeColor = "bg-red-500";
+                              else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                              
+                              return (
+                                <Badge className={`text-white ${badgeColor}`}>
+                                  {course.registered_count}/{course.max_participants}
+                                </Badge>
+                              );
+                            })()}
+                             {course.waitlist_count > 0 && (
+                               <span className="text-xs" style={{ color: '#ff914d' }}>
+                                 {course.waitlist_count} Warteliste
+                               </span>
+                             )}
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
-                  ) : (
-                    <div className="space-y-3">
-                      {participants
-                        .filter(p => p.status === 'registered')
-                        .map((participant, index) => {
-                          const position = index + 1
-                           return (
-                             <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                               <div className="flex items-center gap-3">
-                                  <div 
-                                    className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                                    onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
-                                      imageUrl: participant.profiles.avatar_url, 
-                                      displayName: participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt' 
-                                    })}
-                                  >
-                                    {participant.profiles?.avatar_url ? (
-                                      <img 
-                                        src={participant.profiles.avatar_url} 
-                                        alt="Avatar" 
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <span className="text-xs font-medium">
-                                        {participant.profiles?.display_name?.charAt(0) || '?'}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="font-medium">
-                                    {(isTrainer || isAdmin) 
-                                      ? participant.profiles?.display_name || 'Unbekannt'
-                                      : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
-                                    }
-                                  </span>
-                                 <span className="text-xs text-muted-foreground">
-                                   Angemeldet
-                                 </span>
-                               </div>
-                               <div className="flex items-center gap-2">
-                                 {(isTrainer || isAdmin) && (
-                                   <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
-                                 )}
-                               </div>
-                            </div>
-                          )
-                        })}
-                    </div>
-                  )}
+                  ))}
                 </div>
-                
-                {participants.filter(p => p.status === 'waitlist').length > 0 && (
-                  <div className="space-y-3">
-                    <h5 className="font-medium text-sm text-muted-foreground">
-                      Warteliste ({selectedCourse.waitlist_count})
-                    </h5>
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-sm text-yellow-800">
-                        {selectedCourse.waitlist_count} Person(en) auf der Warteliste
-                      </p>
+              </div>
+            ))}
+            {courses.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                Keine kommenden Kurse verfügbar
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="calendar">
+          <CoursesCalendarView user={user} userRole={isAdmin ? 'admin' : isTrainer ? 'trainer' : 'member'} />
+        </TabsContent>
+      </Tabs>
+      
+      {/* Course details dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
+          {selectedCourse && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  {selectedCourse.title}
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong>Datum:</strong> {format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy')}
+                  </div>
+                  <div>
+                    <strong>Zeit:</strong> {selectedCourse.start_time.slice(0, 5)} - {selectedCourse.end_time.slice(0, 5)}
+                  </div>
+                  <div>
+                    <strong>Trainer:</strong> {selectedCourse.trainer}
+                  </div>
+                  <div>
+                    <strong>Teilnehmer:</strong> {selectedCourse.registered_count} / {selectedCourse.max_participants}
+                  </div>
+                </div>
+
+                {selectedCourse.strength_exercise && (
+                  <div>
+                    <strong>Kraftübung:</strong> {selectedCourse.strength_exercise}
+                  </div>
+                )}
+
+                {/* Course participants section */}
+                {(isTrainer || isAdmin) && participants.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Teilnehmer ({participants.filter(p => p.status === 'registered').length})</h4>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {participants.filter(p => p.status === 'registered').map((participant, index) => (
+                        <div key={participant.user_id} className="flex items-center justify-between bg-muted/50 p-2 rounded">
+                          <div className="flex items-center gap-2">
+                            {participant.profiles?.avatar_url ? (
+                              <img 
+                                src={participant.profiles.avatar_url} 
+                                alt="Avatar" 
+                                className="w-6 h-6 rounded-full object-cover cursor-pointer"
+                                onClick={() => setSelectedProfile({
+                                  imageUrl: participant.profiles.avatar_url,
+                                  displayName: participant.profiles?.display_name || participant.profiles?.nickname || 'Unbekannt'
+                                })}
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-gray-300"></div>
+                            )}
+                            <span className="text-sm">
+                              {participant.profiles?.display_name || participant.profiles?.nickname || 'Unbekannt'}
+                            </span>
+                            <MembershipBadge type={participant.profiles?.membership_type || 'Basic Member'} />
+                          </div>
+                          <span className="text-xs text-muted-foreground">#{index + 1}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                {selectedCourse.is_registered ? (
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => handleCancellation(selectedCourse.id)}
-                    disabled={!canCancelCourse(selectedCourse)}
-                    className="flex-1"
-                  >
-                    {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
-                  </Button>
-                ) : selectedCourse.is_waitlisted ? (
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => handleCancellation(selectedCourse.id)}
-                    disabled={!canCancelCourse(selectedCourse)}
-                    className="flex-1"
-                  >
-                    {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={() => handleRegistration(selectedCourse.id)}
-                    className="flex-1"
-                  >
-                    {selectedCourse.registered_count >= selectedCourse.max_participants 
-                      ? 'Auf Warteliste' 
-                      : 'Anmelden'
-                    }
-                  </Button>
+                {/* Waitlist section */}
+                {(isTrainer || isAdmin) && participants.filter(p => p.status === 'waitlist').length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Warteliste ({participants.filter(p => p.status === 'waitlist').length})</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {participants.filter(p => p.status === 'waitlist').map((participant, index) => (
+                        <div key={participant.user_id} className="flex items-center justify-between bg-yellow-50 p-2 rounded">
+                          <div className="flex items-center gap-2">
+                            {participant.profiles?.avatar_url ? (
+                              <img 
+                                src={participant.profiles.avatar_url} 
+                                alt="Avatar" 
+                                className="w-6 h-6 rounded-full object-cover cursor-pointer"
+                                onClick={() => setSelectedProfile({
+                                  imageUrl: participant.profiles.avatar_url,
+                                  displayName: participant.profiles?.display_name || participant.profiles?.nickname || 'Unbekannt'
+                                })}
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-gray-300"></div>
+                            )}
+                            <span className="text-sm">
+                              {participant.profiles?.display_name || participant.profiles?.nickname || 'Unbekannt'}
+                            </span>
+                            <MembershipBadge type={participant.profiles?.membership_type || 'Basic Member'} />
+                          </div>
+                          <span className="text-xs text-muted-foreground">#{index + 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
+
+                <div className="flex gap-2">
+                  {selectedCourse.is_registered || selectedCourse.is_waitlisted ? (
+                    <Button 
+                      onClick={() => handleCancellation(selectedCourse.id)}
+                      variant="destructive"
+                      className="flex-1"
+                      disabled={!canCancelCourse(selectedCourse)}
+                    >
+                      {canCancelCourse(selectedCourse) 
+                        ? 'Abmelden' 
+                        : `Stornierung ${selectedCourse.cancellation_deadline_minutes} Min vor Kursbeginn nicht mehr möglich`
+                      }
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => handleRegistration(selectedCourse.id)}
+                      className="flex-1"
+                    >
+                      {selectedCourse.registered_count >= selectedCourse.max_participants 
+                        ? 'Auf Warteliste' 
+                        : 'Anmelden'
+                      }
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
-      
+
+      {/* Profile image viewer */}
       <ProfileImageViewer
         isOpen={!!selectedProfile}
         onClose={() => setSelectedProfile(null)}
