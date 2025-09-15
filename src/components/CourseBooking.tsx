@@ -324,6 +324,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       }
 
       toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
+      
+      // Dispatch event to update other components
+      window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+      
       await loadCourses()
       if (selectedCourse?.id === courseId) {
         await loadParticipants(courseId)
@@ -384,6 +388,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       }
 
       toast.success('Anmeldung erfolgreich storniert')
+      
+      // Dispatch event to update other components  
+      window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+      
       await loadCourses()
       if (selectedCourse?.id === courseId) {
         await loadParticipants(courseId)
