@@ -18,6 +18,7 @@ interface LeaderboardEntry {
   month: number
   total_score: number
   hasCompletedChallenge: boolean
+  most_recent_training: string
 }
 
 export const Leaderboard: React.FC = () => {
@@ -98,21 +99,50 @@ export const Leaderboard: React.FC = () => {
         console.error('Error loading challenge progress:', challengeError)
       }
 
+      // Get most recent training session date for each user (for tie-breaking)
+      const { data: recentSessions, error: sessionsError } = await supabase
+        .from('training_sessions')
+        .select('user_id, date')
+        .in('user_id', userIds)
+        .eq('status', 'completed')
+        .order('date', { ascending: false })
+
+      if (sessionsError) {
+        console.error('Error loading recent sessions:', sessionsError)
+      }
+
+      // Create a map of user_id to most recent training date
+      const mostRecentTrainingMap = new Map<string, string>()
+      recentSessions?.forEach(session => {
+        if (!mostRecentTrainingMap.has(session.user_id)) {
+          mostRecentTrainingMap.set(session.user_id, session.date)
+        }
+      })
+
       // Combine leaderboard data with profile info and calculate total score
       const leaderboardWithProfiles = leaderboardData.map(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
         const hasCompletedChallenge = challengeProgress?.some(cp => cp.user_id === entry.user_id) || false
         const totalScore = entry.training_count + (entry.challenge_bonus_points || 0)
+        const mostRecentTraining = mostRecentTrainingMap.get(entry.user_id) || '1970-01-01'
+        
         return {
           ...entry,
           challenge_bonus_points: entry.challenge_bonus_points || 0,
           display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
           avatar_url: profile?.avatar_url || null,
           total_score: totalScore,
-          hasCompletedChallenge
+          hasCompletedChallenge,
+          most_recent_training: mostRecentTraining
         }
-      }).sort((a, b) => b.total_score - a.total_score) // Sort by total score
-        .slice(0, 30) // Limit to top 30 AFTER sorting
+      }).sort((a, b) => {
+        // Primary sort: by total score (descending)
+        if (a.total_score !== b.total_score) {
+          return b.total_score - a.total_score
+        }
+        // Secondary sort: by most recent training date (descending - more recent first)
+        return new Date(b.most_recent_training).getTime() - new Date(a.most_recent_training).getTime()
+      }).slice(0, 30) // Limit to top 30 AFTER sorting
 
       setLeaderboard(leaderboardWithProfiles)
     } catch (error) {
