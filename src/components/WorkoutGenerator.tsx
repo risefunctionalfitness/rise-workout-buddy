@@ -61,6 +61,41 @@ export const WorkoutGenerator = ({ user, wodStep: externalStep, onStepChange }: 
     }
   }, [user])
 
+  // Listen for workout type pre-selection from WorkoutOverview
+  useEffect(() => {
+    const handleWorkoutTypeSelection = (e: Event) => {
+      const customEvent = e as CustomEvent
+      const type = customEvent.detail
+      
+      if (type === 'crossfit') {
+        setWorkoutType('crossfit')
+        setStep(2)
+      } else if (type === 'bodybuilding') {
+        setWorkoutType('bodybuilding')
+        setStep(2)
+      }
+    }
+
+    // Check sessionStorage on mount
+    const storedType = sessionStorage.getItem('workout-type')
+    if (storedType) {
+      if (storedType === 'crossfit') {
+        setWorkoutType('crossfit')
+        setStep(2)
+      } else if (storedType === 'bodybuilding') {
+        setWorkoutType('bodybuilding')
+        setStep(2)
+      }
+      // Clear after reading
+      sessionStorage.removeItem('workout-type')
+    }
+
+    window.addEventListener('workout-type-selected', handleWorkoutTypeSelection)
+    return () => {
+      window.removeEventListener('workout-type-selected', handleWorkoutTypeSelection)
+    }
+  }, [])
+
   const loadUserProfile = async () => {
     if (!user) return
 

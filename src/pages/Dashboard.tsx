@@ -3,6 +3,7 @@ import { TrainingPathHeader } from "@/components/TrainingPathHeader"
 import { UserProfile } from "@/components/UserProfile"
 import { Leaderboard } from "@/components/Leaderboard"
 import WorkoutOverview from "@/pages/WorkoutOverview"
+import { WorkoutGenerator } from "@/components/WorkoutGenerator"
 import { CourseBooking } from "@/components/CourseBooking"
 import { NewsSection } from "@/components/NewsSection"
 import ChallengeDetail from "@/components/ChallengeDetail"
@@ -642,6 +643,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           </div>
         )
       case 'wod':
+        // Check if we should show WorkoutGenerator or WorkoutOverview
+        const showGenerator = wodStep > 1 || sessionStorage.getItem('show-workout-generator') === 'true'
+        
+        if (showGenerator) {
+          return (
+            <div className="flex-1 container mx-auto px-6 py-8">
+              <WorkoutGenerator user={user} wodStep={wodStep} onStepChange={(step) => {
+                setWodStep(step)
+                if (step === 1) {
+                  sessionStorage.removeItem('show-workout-generator')
+                } else {
+                  sessionStorage.setItem('show-workout-generator', 'true')
+                }
+              }} />
+            </div>
+          )
+        }
+        
         return <WorkoutOverview />
       case 'courses':
         return <CourseBooking user={user} />
