@@ -251,26 +251,26 @@ export const Leaderboard: React.FC = () => {
         <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
           
-          <div className="flex justify-center gap-8 mb-4">
+          <div className="flex justify-center gap-4 mb-4">
             <button
               onClick={() => setViewMode('month')}
-              className={`pb-1 font-medium transition-colors ${
+              className={`pb-1 text-sm transition-colors ${
                 viewMode === 'month'
-                  ? 'text-primary border-b-4 border-primary'
+                  ? 'text-foreground border-b-2 border-foreground font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Aktueller Monat
+              Month
             </button>
             <button
               onClick={() => setViewMode('year')}
-              className={`pb-1 font-medium transition-colors ${
+              className={`pb-1 text-sm transition-colors ${
                 viewMode === 'year'
-                  ? 'text-primary border-b-4 border-primary'
+                  ? 'text-foreground border-b-2 border-foreground font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Aktuelles Jahr
+              Year
             </button>
           </div>
 
@@ -317,16 +317,16 @@ export const Leaderboard: React.FC = () => {
                               displayName: entry.display_name 
                             })}
                           />
-                          <div className="flex items-center gap-2">
+                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-lg text-foreground">{entry.display_name}</h3>
-                            {entry.hasCompletedChallenge && (
+                            {viewMode === 'month' && entry.hasCompletedChallenge && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <CheckCircle className="h-5 w-5 text-green-500 cursor-help" />
                                   </TooltipTrigger>
                                    <TooltipContent>
-                                     <p>{viewMode === 'month' ? 'Monatschallenge abgeschlossen' : 'Challenge(s) in diesem Jahr abgeschlossen'}</p>
+                                     <p>Monatschallenge abgeschlossen</p>
                                    </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
