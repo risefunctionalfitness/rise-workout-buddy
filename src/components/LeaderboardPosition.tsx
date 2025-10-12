@@ -68,12 +68,9 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
   }
 
   return (
-    <button 
-      onClick={handleLeaderboardClick}
-      className="w-14 h-14 rounded-full bg-background border-2 border-yellow-400 shadow-lg flex flex-col items-center justify-center font-bold text-sm hover:scale-105 transition-transform"
-    >
-      <Trophy className="h-4 w-4 mb-0.5 text-yellow-500" />
-      <span className="text-xs leading-none text-[#B81243]">Platz {position}</span>
-    </button>
+    <div className="flex items-center gap-2">
+      <Trophy className="h-5 w-5 text-yellow-500" />
+      <span className="text-lg font-bold text-primary">{position}</span>
+    </div>
   )
 }

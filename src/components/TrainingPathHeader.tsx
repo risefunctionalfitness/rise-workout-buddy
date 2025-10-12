@@ -1,73 +1,56 @@
-import { Flame, User, Zap, Award, Crown, MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard } from "lucide-react"
+import { User, Grid3X3 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { useTheme } from "next-themes"
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { Logo } from "@/components/Logo"
+import { LeaderboardPosition } from "@/components/LeaderboardPosition"
 
 interface TrainingPathHeaderProps {
-  trainingDaysThisMonth: number
-  totalDaysInMonth: number
+  user: any
   userAvatar?: string | null
   onProfileClick: () => void
-  onLogout?: () => void
+  onAdminClick: () => void
 }
 
 export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
-  trainingDaysThisMonth,
-  totalDaysInMonth,
+  user,
   userAvatar,
   onProfileClick,
-  onLogout
+  onAdminClick
 }) => {
-  const { theme } = useTheme()
-  const navigate = useNavigate()
-  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [leaderboardVisible, setLeaderboardVisible] = useState(false)
 
-  // Check admin role
   useEffect(() => {
-    const checkAdminRole = async () => {
+    const checkRole = async () => {
+      if (!user?.id) return
+      
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-
-        // Special handling for admin email
-        if (user.email === 'admin@rise-fitness.com') {
-          setIsAdmin(true)
-          return
-        }
-
-        const { data, error } = await supabase
+        const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
           .eq('role', 'admin')
+          .maybeSingle()
+        
+        setIsAdmin(!!roleData)
+        
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('leaderboard_visible')
+          .eq('user_id', user.id)
           .single()
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error checking admin role:', error)
-          setIsAdmin(false)
-        } else {
-          setIsAdmin(!!data)
-        }
+        
+        setLeaderboardVisible(profileData?.leaderboard_visible || false)
       } catch (error) {
-        console.error('Error checking admin role:', error)
-        setIsAdmin(false)
+        console.error('Error checking role:', error)
       }
     }
+    
+    checkRole()
+  }, [user?.id])
 
-    checkAdminRole()
-  }, [])
-
-  const handleLogout = async () => {
-    if (onLogout) {
-      onLogout()
-    }
-    setDropdownOpen(false)
-  }
   return (
     <div className="flex items-center justify-between p-4 bg-background border-b">
       {/* Links: Avatar */}
@@ -88,16 +71,10 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
         />
       </div>
       
-      {/* Rechts: Trainingstage und Admin-Zugang */}
-      <div className="flex items-center gap-2 text-primary flex-1 justify-end">
-        {trainingDaysThisMonth >= 20 ? (
-          <Crown className="h-6 w-6 text-yellow-500 animate-bounce" />
-        ) : trainingDaysThisMonth >= 10 ? (
-          <Award className="h-6 w-6 text-orange-500 animate-pulse" />
-        ) : trainingDaysThisMonth >= 5 ? (
-          <Zap className="h-6 w-6 text-blue-500" />
-        ) : (
-          <Flame className="h-6 w-6 text-rise-accent" />
+      {/* Rechts: Leaderboard Position + Admin Grid */}
+      <div className="flex items-center gap-3 flex-1 justify-end">
+        {leaderboardVisible && user && (
+          <LeaderboardPosition user={user} />
         )}
         <span className="font-bold text-lg text-rise-accent">
           {trainingDaysThisMonth} / {totalDaysInMonth}
