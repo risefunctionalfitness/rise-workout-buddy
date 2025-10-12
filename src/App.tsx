@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import ProVersion from "./pages/ProVersion";
-import WorkoutOverview from "./pages/WorkoutOverview";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import News from "./pages/News";
@@ -47,7 +46,6 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Auth />} />
               <Route path="/pro" element={<ProVersion />} />
-              <Route path="/pro/workout" element={<WorkoutOverview />} />
               <Route path="/pro/strength-values" element={<StrengthValues />} />
               <Route path="/pro/percentage-calculator" element={<PercentageCalculator />} />
               <Route path="/pro/exercises" element={<ExerciseSelection />} />
