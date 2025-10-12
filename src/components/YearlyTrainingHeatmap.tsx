@@ -99,6 +99,7 @@ export const YearlyTrainingHeatmap: React.FC<YearlyTrainingHeatmapProps> = ({ us
               borderRadius: '8px'
             }}
             labelStyle={{ color: 'hsl(var(--foreground))' }}
+            formatter={(value: number) => [`${value}`, 'Trainingstage']}
           />
           <Line
             type="monotone"

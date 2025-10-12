@@ -3,11 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Plus, Trash2, Calculator } from "lucide-react"
+import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export const StrengthValues = () => {
   const navigate = useNavigate()
@@ -26,10 +25,6 @@ export const StrengthValues = () => {
   const [clean1rm, setClean1rm] = useState("")
   const [jerk1rm, setJerk1rm] = useState("")
   const [cleanAndJerk1rm, setCleanAndJerk1rm] = useState("")
-  
-  // Percentage calculator state
-  const [selectedLift, setSelectedLift] = useState("")
-  const [percentage, setPercentage] = useState("")
   
   // Zusätzliche Übungen
   const [extraLifts, setExtraLifts] = useState<{name: string, weight: string}[]>([])
@@ -115,35 +110,6 @@ export const StrengthValues = () => {
     setExtraLifts(newLifts)
   }
 
-  // Get all lifts with their values for the percentage calculator
-  const getLiftsData = () => {
-    const lifts = [
-      { name: "Front Squat", value: frontSquat1rm },
-      { name: "Back Squat", value: backSquat1rm },
-      { name: "Deadlift", value: deadlift1rm },
-      { name: "Bench Press", value: benchPress1rm },
-      { name: "Snatch", value: snatch1rm },
-      { name: "Clean", value: clean1rm },
-      { name: "Jerk", value: jerk1rm },
-      { name: "Clean & Jerk", value: cleanAndJerk1rm }
-    ]
-    
-    return lifts.filter(lift => lift.value && parseFloat(lift.value) > 0)
-  }
-
-  // Calculate percentage value
-  const calculatePercentage = () => {
-    const selectedLiftData = getLiftsData().find(lift => lift.name === selectedLift)
-    if (!selectedLiftData || !percentage) return null
-    
-    const oneRm = parseFloat(selectedLiftData.value)
-    const percentValue = parseFloat(percentage)
-    
-    if (isNaN(oneRm) || isNaN(percentValue)) return null
-    
-    return ((oneRm * percentValue) / 100).toFixed(1)
-  }
-
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
       <div className="max-w-2xl mx-auto p-4 pb-24">
@@ -188,55 +154,6 @@ export const StrengthValues = () => {
                 <span className="text-sm text-muted-foreground">kg</span>
               </div>
             ))}
-          </CardContent>
-        </Card>
-
-        {/* Prozentrechner */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              Prozentrechner
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Berechne Prozentsätze deiner 1RM Werte.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-              <div>
-                <Label>Übung</Label>
-                <Select value={selectedLift} onValueChange={setSelectedLift}>
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Übung wählen" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border shadow-lg z-50">
-                    {getLiftsData().map((lift) => (
-                      <SelectItem key={lift.name} value={lift.name} className="bg-background hover:bg-muted">
-                        {lift.name} ({lift.value}kg)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Prozent</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="150"
-                  value={percentage}
-                  onChange={(e) => setPercentage(e.target.value)}
-                  placeholder="%"
-                />
-              </div>
-              <div>
-                <Label>Ergebnis</Label>
-                <div className="h-10 flex items-center px-3 bg-muted rounded-md text-lg font-bold text-primary">
-                  {calculatePercentage() ? `${calculatePercentage()}kg` : '---'}
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
