@@ -39,22 +39,32 @@ export const MonthlyProgressCircle = ({ user }: MonthlyProgressCircleProps) => {
 
       const completedDays = sessions
         ?.filter((s) => s.status === "completed")
-        .map((s) => new Date(s.date)) || [];
+        .map((s) => new Date(s.date + 'T12:00:00')) || [];
 
-      // Get course registrations
+      // Get course registrations with proper join
       const { data: registrations, error: registrationsError } = await supabase
         .from("course_registrations")
-        .select("courses(course_date)")
+        .select("course_id")
         .eq("user_id", user.id)
-        .eq("status", "registered")
-        .gte("courses.course_date", format(monthStart, "yyyy-MM-dd"))
-        .lte("courses.course_date", format(monthEnd, "yyyy-MM-dd"));
+        .eq("status", "registered");
 
       if (registrationsError) throw registrationsError;
 
-      const regDays = registrations
-        ?.map((r: any) => new Date(r.courses.course_date))
-        .filter((d) => d) || [];
+      // Get course dates for registered courses
+      let regDays: Date[] = [];
+      if (registrations && registrations.length > 0) {
+        const courseIds = registrations.map((r) => r.course_id);
+        const { data: courses, error: coursesError } = await supabase
+          .from("courses")
+          .select("course_date")
+          .in("id", courseIds)
+          .gte("course_date", format(monthStart, "yyyy-MM-dd"))
+          .lte("course_date", format(monthEnd, "yyyy-MM-dd"));
+
+        if (coursesError) throw coursesError;
+
+        regDays = courses?.map((c) => new Date(c.course_date + 'T12:00:00')) || [];
+      }
 
       setTrainingDays(completedDays);
       setRegisteredDays(regDays);

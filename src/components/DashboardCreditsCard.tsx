@@ -16,7 +16,6 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
   const [credits, setCredits] = useState<number>(0);
   const [gymCode, setGymCode] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
     loadMembershipInfo();
@@ -99,54 +98,13 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
     };
   };
 
-  const handleClick = () => {
-    setShowContent(true);
-  };
-
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <div className="flex flex-col items-center justify-center gap-1">
-          <div className="animate-pulse text-muted-foreground">...</div>
-        </div>
-      );
+      return <span className="text-lg font-semibold text-foreground">...</span>;
     }
 
-    // If clicked and content should be shown
-    if (showContent) {
-      if (membershipType === "10er Karte") {
-        return (
-          <>
-            <span className="text-4xl font-bold text-primary">{credits}</span>
-            <span className="text-sm text-muted-foreground">Credits</span>
-          </>
-        );
-      } else if (gymCode) {
-        return (
-          <>
-            <span className="text-2xl font-mono font-bold text-primary">
-              {gymCode}
-            </span>
-            <span className="text-sm text-muted-foreground">Tür-Code</span>
-          </>
-        );
-      } else {
-        return (
-          <>
-            <span className="text-4xl font-bold text-muted-foreground">-</span>
-            <span className="text-sm text-muted-foreground">Kein Zugang</span>
-          </>
-        );
-      }
-    }
-
-    // Default view (before click)
-    return (
-      <>
-        <Key className="h-10 w-10 text-primary" />
-        <span className="text-sm text-muted-foreground">Tür-Code</span>
-      </>
-    );
+    // Always show same text regardless of membership type
+    return <span className="text-lg font-semibold text-foreground">Tür-Code</span>;
   };
 
   const popoverContent = () => {
@@ -172,19 +130,9 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
     } else if (gymCode) {
       return (
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Gym-Zugang</h3>
-          <div className="space-y-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Plan</p>
-              <p className="font-medium">{membershipType || "Member"}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Zugangscode</p>
-              <p className="font-mono text-3xl font-bold text-primary">{gymCode}</p>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Code für den Gym-Eingang
-            </p>
+          <h3 className="text-lg font-semibold">Tür-Code</h3>
+          <div className="text-center">
+            <p className="font-mono text-4xl font-bold text-primary">{gymCode}</p>
           </div>
         </div>
       );
@@ -203,15 +151,12 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          onClick={handleClick}
-          className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 h-24 hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] w-full"
-        >
-          {/* Icon top-right */}
-          <Dumbbell className="absolute top-3 right-3 h-5 w-5 text-primary" />
+        <button className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-24 hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] w-full">
+          {/* Key Icon top-right */}
+          <Key className="absolute top-4 right-4 h-5 w-5 text-primary" />
 
           {/* Center Content */}
-          <div className="flex flex-col items-center justify-center h-full text-center gap-1">
+          <div className="flex items-center justify-center h-full">
             {renderContent()}
           </div>
         </button>

@@ -15,7 +15,7 @@ export const DashboardNewsCard = ({
       className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-24 hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] w-full"
     >
       {/* Bell Icon */}
-      <Bell className="absolute top-4 right-4 h-5 w-5 text-muted-foreground" />
+      <Bell className="absolute top-4 right-4 h-5 w-5 text-primary" />
       
       {/* Unread Indicator */}
       {hasUnreadNews && (
