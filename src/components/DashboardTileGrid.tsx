@@ -1,6 +1,7 @@
 import { DashboardChallengeCard } from "./DashboardChallengeCard";
 import { DashboardNewsCard } from "./DashboardNewsCard";
 import { DashboardCreditsCard } from "./DashboardCreditsCard";
+import { DashboardWorkoutCard } from "./DashboardWorkoutCard";
 
 interface DashboardTileGridProps {
   userId: string;
@@ -28,12 +29,13 @@ export const DashboardTileGrid = ({
         />
       </div>
       
-      {/* Bottom Row - 50% height, 2 columns */}
-      <div className="flex-1 grid grid-cols-2 gap-2">
+      {/* Bottom Row - 50% height, 3 columns */}
+      <div className="flex-1 grid grid-cols-3 gap-2">
         <DashboardNewsCard
           hasUnreadNews={hasUnreadNews}
           onNewsClick={onNewsClick}
         />
+        <DashboardWorkoutCard />
         <DashboardCreditsCard userId={userId} />
       </div>
     </div>

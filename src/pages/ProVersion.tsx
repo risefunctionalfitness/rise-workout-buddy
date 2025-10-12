@@ -83,7 +83,6 @@ const ProVersion = () => {
     return null // Will redirect to auth
   }
 
-  // Show Dashboard when authenticated
   return (
     <div className="min-h-screen bg-background pb-20">
       <Dashboard user={user} userRole={userRole} />
