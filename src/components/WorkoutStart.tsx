@@ -315,9 +315,9 @@ export const WorkoutStart: React.FC = () => {
                 <Button
                   onClick={handleStart}
                   size="lg"
-                  className="w-40 h-40 rounded-full bg-[#B81243] hover:bg-[#B81243]/90 border-4 border-[#B81243]"
+                  className="w-40 h-40 rounded-full bg-primary hover:bg-primary/90 border-4 border-primary"
                 >
-                  <div className="w-20 h-20 bg-[#B81243] rounded-full flex items-center justify-center ml-2">
+                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center ml-2">
                     <div className="w-0 h-0 border-l-8 border-l-white border-t-6 border-t-transparent border-b-6 border-b-transparent ml-1"></div>
                   </div>
                 </Button>
@@ -330,7 +330,7 @@ export const WorkoutStart: React.FC = () => {
           {isCountingDown && (
             <div className="text-center space-y-8">
               <div className={`text-9xl font-bold transition-all duration-300 ${
-                countdown <= 3 ? 'animate-bounce text-[#B81243] scale-110' : 'animate-pulse'
+                countdown <= 3 ? 'animate-bounce text-primary scale-110' : 'animate-pulse'
               }`}>
                 {countdown}
               </div>
@@ -360,8 +360,8 @@ export const WorkoutStart: React.FC = () => {
                     </div>
                     <div className={`text-5xl font-bold px-6 py-3 rounded-2xl border-2 transition-all duration-300 ${
                       isWorkPhase 
-                        ? 'text-white bg-[#B81243] border-[#B81243] animate-pulse' 
-                        : 'text-[#B81243] bg-background border-[#B81243]'
+                        ? 'text-white bg-primary border-primary animate-pulse' 
+                        : 'text-primary bg-background border-primary'
                     }`}>
                       {isWorkPhase ? 'WORK' : 'REST'}
                     </div>

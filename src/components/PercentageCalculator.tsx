@@ -87,117 +87,123 @@ export const PercentageCalculator = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 overflow-auto">
-      <div className="max-w-2xl mx-auto p-4 pb-24">
-        <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/pro')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Zurück
-          </Button>
-        </div>
-
-        <h1 className="text-2xl font-bold mb-6">Percentage Calculator</h1>
-
-        {/* Mode Toggle Card */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+    <div className="mx-4 space-y-6">
+      {/* Header Card */}
+      <Card className="border-primary/20">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
                 <Calculator className="h-6 w-6 text-primary" />
-                <div>
-                  <h3 className="font-semibold">Percentage Calculator</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {useSavedValues 
-                      ? "Berechnung mit gespeicherten Kraftwerten" 
-                      : "Freie Berechnung mit eigenen Werten"}
-                  </p>
-                </div>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-sm font-medium">{useSavedValues ? "Gespeichert" : "Frei"}</span>
-                <Switch 
-                  checked={!useSavedValues} 
-                  onCheckedChange={(checked) => setUseSavedValues(!checked)}
-                />
+              <div>
+                <CardTitle className="text-xl">Prozentrechner</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {useSavedValues 
+                    ? "Berechne mit gespeicherten Kraftwerten" 
+                    : "Freie Berechnung mit eigenen Werten"}
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center justify-between sm:justify-end space-x-3 bg-muted/30 rounded-lg p-3">
+              <span className="text-sm font-medium">{useSavedValues ? "Gespeichert" : "Frei"}</span>
+              <Switch 
+                checked={!useSavedValues} 
+                onCheckedChange={(checked) => setUseSavedValues(!checked)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
 
-        {/* Saved Values Mode */}
-        {useSavedValues && (
-          <Card>
-            <CardContent className="pt-6">
-              {!hasStrengthValues ? (
-                <div className="text-center py-8">
-                  <Calculator className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="font-semibold mb-2">Keine Kraftwerte gefunden</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Gib deine 1RM Werte in den Kraftwerten ein, um den Prozentrechner zu nutzen.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/pro/strength-values')}
-                  >
-                    Zu den Kraftwerten
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <Label className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Übung
-                    </Label>
-                    <Select value={selectedLift} onValueChange={setSelectedLift}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Übung wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {savedLifts.map((lift) => (
-                          <SelectItem key={lift.name} value={lift.name}>
-                            {lift.name} ({lift.value}kg)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+      {/* Calculator Card */}
+      <Card className="border-primary/20">
+        <CardContent className="p-6">
+          {/* Saved Values Mode */}
+          {useSavedValues && !hasStrengthValues && (
+            <div className="text-center py-12">
+              <div className="p-4 bg-muted/30 rounded-2xl mb-4 inline-block">
+                <Calculator className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                Keine Kraftwerte gefunden
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Trage deine 1RM Werte in den Kraftwerten ein, um den Prozentrechner zu nutzen.
+              </p>
+            </div>
+          )}
 
-                  <div>
-                    <Label className="flex items-center gap-2 mb-2">
-                      <Calculator className="h-4 w-4" />
-                      Prozent (%)
-                    </Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="150"
-                      value={percentage}
-                      onChange={(e) => setPercentage(e.target.value)}
-                      placeholder="z.B. 75"
-                    />
-                  </div>
-
-                  <div className="bg-primary/10 rounded-lg p-6 text-center">
-                    <div className="text-sm text-muted-foreground mb-2">RESULT</div>
-                    <div className="text-4xl font-bold text-primary">
-                      {calculateResult() ? `${calculateResult()} kg` : '---'}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Free Values Mode */}
-        {!useSavedValues && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
+          {/* Saved Values Mode - With Data */}
+          {useSavedValues && hasStrengthValues && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Lift Select */}
                 <div>
-                  <Label className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4" />
+                  <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Übung auswählen
+                  </Label>
+                  <Select value={selectedLift} onValueChange={setSelectedLift}>
+                    <SelectTrigger className="h-12 text-lg border-primary/30 focus:border-primary">
+                      <SelectValue placeholder="Wähle eine Übung" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      {savedLifts.map((lift) => (
+                        <SelectItem key={lift.name} value={lift.name} className="text-lg py-3">
+                          <div className="flex justify-between items-center w-full">
+                            <span>{lift.name}</span>
+                            <span className="text-primary font-semibold ml-4">{lift.value}kg</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Percentage Input */}
+                <div>
+                  <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
+                    <Calculator className="h-4 w-4 text-primary" />
+                    Prozent (%)
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="150"
+                    value={percentage}
+                    onChange={(e) => setPercentage(e.target.value)}
+                    placeholder="z.B. 75"
+                    className="h-12 text-lg border-primary/30 focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Result Display */}
+              <div className="mt-8 p-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl border border-primary/20">
+                <div className="text-center">
+                  <span className="text-sm font-semibold text-muted-foreground mb-2 block">ERGEBNIS</span>
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    {calculateResult() ? `${calculateResult()} kg` : '---'}
+                  </div>
+                  {calculateResult() && selectedLift && (
+                    <p className="text-sm text-muted-foreground">
+                      {percentage}% von {savedLifts.find(l => l.name === selectedLift)?.value}kg ({selectedLift})
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Free Mode */}
+          {!useSavedValues && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Weight Input */}
+                <div>
+                  <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
                     Gewicht (kg)
                   </Label>
                   <Input
@@ -206,12 +212,14 @@ export const PercentageCalculator = () => {
                     value={freeWeight}
                     onChange={(e) => setFreeWeight(e.target.value)}
                     placeholder="z.B. 100"
+                    className="h-12 text-lg border-primary/30 focus:border-primary"
                   />
                 </div>
 
+                {/* Percentage Input */}
                 <div>
-                  <Label className="flex items-center gap-2 mb-2">
-                    <Calculator className="h-4 w-4" />
+                  <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
+                    <Calculator className="h-4 w-4 text-primary" />
                     Prozent (%)
                   </Label>
                   <Input
@@ -221,20 +229,29 @@ export const PercentageCalculator = () => {
                     value={freePercent}
                     onChange={(e) => setFreePercent(e.target.value)}
                     placeholder="z.B. 75"
+                    className="h-12 text-lg border-primary/30 focus:border-primary"
                   />
                 </div>
+              </div>
 
-                <div className="bg-primary/10 rounded-lg p-6 text-center">
-                  <div className="text-sm text-muted-foreground mb-2">RESULT</div>
-                  <div className="text-4xl font-bold text-primary">
+              {/* Result Display */}
+              <div className="mt-8 p-6 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl border border-primary/20">
+                <div className="text-center">
+                  <span className="text-sm font-semibold text-muted-foreground mb-2 block">ERGEBNIS</span>
+                  <div className="text-4xl font-bold text-primary mb-2">
                     {calculateResult() ? `${calculateResult()} kg` : '---'}
                   </div>
+                  {calculateResult() && (
+                    <p className="text-sm text-muted-foreground">
+                      {freePercent}% von {freeWeight}kg
+                    </p>
+                  )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
