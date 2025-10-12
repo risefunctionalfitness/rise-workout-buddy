@@ -101,32 +101,35 @@ export const MonthlyProgressCircle = ({ user }: MonthlyProgressCircleProps) => {
 
   const getDotColor = (day: Date) => {
     const today = new Date();
-    const isPast = day < today && !isSameDay(day, today);
-    const isFuture = day > today;
+    today.setHours(0, 0, 0, 0);
+    const dayDate = new Date(day);
+    dayDate.setHours(0, 0, 0, 0);
+    
+    const isPast = dayDate < today;
+    const isFuture = dayDate > today;
 
-    // Check if has completed training
+    // Check if has completed training (past or today)
     const hasTraining = trainingDays.some((d) => isSameDay(d, day));
     if (hasTraining) {
-      return "fill-green-500"; // Completed training
+      return "fill-green-500"; // Completed training - filled green
     }
 
-    // Check if has course registration
+    // Check if has future course registration (only for future dates)
     const hasRegistration = registeredDays.some((d) => isSameDay(d, day));
-    if (hasRegistration) {
-      return "fill-none stroke-green-500 stroke-2"; // Course registration (ring)
+    if (hasRegistration && (isFuture || isSameDay(dayDate, today))) {
+      return "fill-none stroke-green-500 stroke-2"; // Future course registration - green ring
     }
 
     // Past day without training
     if (isPast) {
-      return "fill-foreground"; // Black/white
+      return "fill-foreground"; // Black/white filled
     }
 
     // Future day
-    if (isFuture) {
-      return "fill-gray-300 dark:fill-gray-600"; // Gray
+    if (isFuture || isSameDay(dayDate, today)) {
+      return "fill-gray-300 dark:fill-gray-600"; // Gray filled
     }
 
-    // Today
     return "fill-gray-300 dark:fill-gray-600";
   };
 
