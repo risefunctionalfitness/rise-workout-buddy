@@ -458,27 +458,34 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       )}
       
       {/* Tab Navigation */}
-      <div className="bg-muted/20 p-0.5 rounded-lg mb-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-auto">
-            <TabsTrigger 
-              value="liste" 
-              className="transition-all duration-200 ease-out rounded-md px-4 py-2 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
-            >
-              Liste
-            </TabsTrigger>
-            <TabsTrigger 
-              value="kalender" 
-              className="transition-all duration-200 ease-out rounded-md px-4 py-2 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground"
-            >
-              Kalender
-            </TabsTrigger>
-          </TabsList>
-        
-        <TabsContent value="liste" className="space-y-4 animate-in fade-in-50 slide-in-from-left-5 duration-300">
+      <div className="flex justify-center items-center gap-8 mb-6">
+        <button
+          onClick={() => setActiveTab("liste")}
+          className={`text-base font-medium pb-1 transition-colors ${
+            activeTab === "liste"
+              ? "text-primary border-b-2 border-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Liste
+        </button>
+        <button
+          onClick={() => setActiveTab("kalender")}
+          className={`text-base font-medium pb-1 transition-colors ${
+            activeTab === "kalender"
+              ? "text-primary border-b-2 border-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Kalender
+        </button>
+      </div>
+      
+      {activeTab === "liste" ? (
+        <div className="space-y-4 animate-in fade-in-50 slide-in-from-left-5 duration-300">
           {/* Header */}
           <div className="text-center">
-            <h2 className="font-semibold">Nächste 10 Kurstage</h2>
+            <h2 className="text-xl font-semibold">Kurse</h2>
           </div>
 
           {/* Courses List */}
@@ -521,48 +528,47 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                               </Badge>
                             )}
                           </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {(() => {
-                          const percentage = (course.registered_count / course.max_participants) * 100;
-                          let badgeColor = "bg-green-500";
-                          if (percentage >= 100) badgeColor = "bg-red-500";
-                          else if (percentage >= 75) badgeColor = "bg-[#edb408]";
-                          
-                          return (
-                            <Badge className={`text-white ${badgeColor}`}>
-                              {course.registered_count}/{course.max_participants}
-                            </Badge>
-                          );
-                        })()}
-                         {course.waitlist_count > 0 && (
-                           <span className="text-xs" style={{ color: '#ff914d' }}>
-                             {course.waitlist_count} Warteliste
-                           </span>
-                         )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                          <div className="flex flex-col items-end gap-1">
+                            {(() => {
+                              const percentage = (course.registered_count / course.max_participants) * 100;
+                              let badgeColor = "bg-green-500";
+                              if (percentage >= 100) badgeColor = "bg-red-500";
+                              else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                              
+                              return (
+                                <Badge className={`text-white ${badgeColor}`}>
+                                  {course.registered_count}/{course.max_participants}
+                                </Badge>
+                              );
+                            })()}
+                            {course.waitlist_count > 0 && (
+                              <span className="text-xs" style={{ color: '#ff914d' }}>
+                                {course.waitlist_count} Warteliste
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {courses.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                Keine kommenden Kurse verfügbar
+              </div>
+            )}
           </div>
-        ))}
-          {courses.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              Keine kommenden Kurse verfügbar
-            </div>
-          )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="kalender" className="animate-in fade-in-50 slide-in-from-right-5 duration-300">
+        </div>
+      ) : (
+        <div className="animate-in fade-in-50 slide-in-from-right-5 duration-300">
           <CoursesCalendarView 
             user={user} 
             onCourseClick={handleCourseClick}
           />
-        </TabsContent>
-        </Tabs>
-      </div>
+        </div>
+      )}
 
       {/* Course Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

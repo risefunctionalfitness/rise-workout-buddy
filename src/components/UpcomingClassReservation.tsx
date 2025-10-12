@@ -84,15 +84,32 @@ export const UpcomingClassReservation = ({
     if (!upcomingCourse?.id) return;
 
     try {
-      const { data, error } = await supabase
+      // First load registrations
+      const { data: registrations, error: regError } = await supabase
         .from("course_registrations")
-        .select("status, profiles(display_name, first_name, nickname, avatar_url, membership_type)")
+        .select("status, user_id, registered_at")
         .eq("course_id", upcomingCourse.id)
         .in("status", ["registered", "waitlist"])
         .order("registered_at", { ascending: true });
 
-      if (error) throw error;
-      setParticipants(data || []);
+      if (regError) throw regError;
+
+      // Then load profiles separately
+      const userIds = registrations?.map(r => r.user_id) || [];
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, first_name, nickname, avatar_url, membership_type")
+        .in("user_id", userIds);
+
+      if (profileError) throw profileError;
+
+      // Merge registrations with profiles
+      const participantsWithProfiles = registrations?.map(reg => ({
+        ...reg,
+        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: "Unbekannt" }
+      })) || [];
+
+      setParticipants(participantsWithProfiles);
     } catch (error) {
       console.error("Error loading participants:", error);
     }
