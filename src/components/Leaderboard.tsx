@@ -256,21 +256,21 @@ export const Leaderboard: React.FC = () => {
               onClick={() => setViewMode('month')}
               className={`pb-1 text-sm transition-colors ${
                 viewMode === 'month'
-                  ? 'text-foreground border-b-2 border-foreground font-semibold'
+                  ? 'text-primary border-b-2 border-primary font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Month
+              Monat
             </button>
             <button
               onClick={() => setViewMode('year')}
               className={`pb-1 text-sm transition-colors ${
                 viewMode === 'year'
-                  ? 'text-foreground border-b-2 border-foreground font-semibold'
+                  ? 'text-primary border-b-2 border-primary font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Year
+              Jahr
             </button>
           </div>
 
