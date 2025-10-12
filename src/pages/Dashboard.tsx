@@ -643,25 +643,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           </div>
         )
       case 'wod':
-        // Check if we should show WorkoutGenerator or WorkoutOverview
-        const showGenerator = wodStep > 1 || sessionStorage.getItem('show-workout-generator') === 'true'
-        
-        if (showGenerator) {
-          return (
-            <div className="flex-1 container mx-auto px-6 py-8">
-              <WorkoutGenerator user={user} wodStep={wodStep} onStepChange={(step) => {
-                setWodStep(step)
-                if (step === 1) {
-                  sessionStorage.removeItem('show-workout-generator')
-                } else {
-                  sessionStorage.setItem('show-workout-generator', 'true')
-                }
-              }} />
-            </div>
-          )
-        }
-        
-        return <WorkoutOverview />
+        return (
+          <div className="flex-1 overflow-y-auto">
+            <WorkoutOverview user={user} />
+          </div>
+        )
       case 'courses':
         return <CourseBooking user={user} />
       case 'leaderboard':

@@ -1,76 +1,86 @@
-import { Dumbbell, Target, Clock, Calculator } from "lucide-react"
+import { useState } from "react"
+import { WorkoutGenerator } from "@/components/WorkoutGenerator"
+import { User } from "@supabase/supabase-js"
 
-const WorkoutOverview = () => {
-  const handleFunctionalFitnessClick = () => {
-    // Store preference for workout type
-    sessionStorage.setItem('workout-type', 'crossfit')
-    sessionStorage.setItem('show-workout-generator', 'true')
-    // Dispatch custom event to switch to WOD tab with crossfit pre-selected
-    window.dispatchEvent(new CustomEvent('changeTab', { detail: 'wod' }))
-    // Trigger refresh of workout generator
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('workout-type-selected', { detail: 'crossfit' }))
-    }, 100)
-  }
+interface WorkoutOverviewProps {
+  user?: User | null
+}
 
-  const handleBodybuildingClick = () => {
-    // Store preference for workout type
-    sessionStorage.setItem('workout-type', 'bodybuilding')
-    sessionStorage.setItem('show-workout-generator', 'true')
-    // Dispatch custom event to switch to WOD tab with bodybuilding pre-selected
-    window.dispatchEvent(new CustomEvent('changeTab', { detail: 'wod' }))
-    // Trigger refresh of workout generator
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('workout-type-selected', { detail: 'bodybuilding' }))
-    }, 100)
+const WorkoutOverview = ({ user }: WorkoutOverviewProps) => {
+  const [workoutType, setWorkoutType] = useState<'crossfit' | 'bodybuilding' | null>(null)
+  const [step, setStep] = useState(1)
+
+  // If user selected a workout type, show WorkoutGenerator
+  if (step > 1 && workoutType) {
+    return (
+      <WorkoutGenerator 
+        user={user}
+        initialWorkoutType={workoutType}
+        initialStep={2}
+        onBack={() => {
+          setStep(1)
+          setWorkoutType(null)
+        }}
+      />
+    )
   }
 
   const workoutOptions = [
     {
       title: "Functional Fitness",
-      icon: Dumbbell,
-      onClick: handleFunctionalFitnessClick
+      description: "Hochintensive,\nfunktionelle Workouts\nund Gewichtheben",
+      onClick: () => {
+        setWorkoutType('crossfit')
+        setStep(2)
+      }
     },
     {
       title: "Bodybuilding",
-      icon: Target,
-      onClick: handleBodybuildingClick
+      description: "Gezielter Muskelaufbau\nund Kraftsteigerung",
+      onClick: () => {
+        setWorkoutType('bodybuilding')
+        setStep(2)
+      }
     },
     {
       title: "Workout-Timer",
-      icon: Clock,
-      onClick: () => window.location.href = '/workout-timer'
+      description: "Timer für deine Workouts",
+      onClick: () => {
+        window.location.href = '/workout-timer'
+      }
     },
     {
-      title: "Percentage Calculator",
-      icon: Calculator,
-      onClick: () => window.location.href = '/pro/percentage-calculator'
+      title: "Prozentrechner",
+      description: "Berechne deine\nTrainingsgewichte",
+      onClick: () => {
+        window.location.href = '/pro/percentage-calculator'
+      }
     }
   ]
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="grid grid-cols-2 gap-3">
-        {workoutOptions.map((option) => {
-          const Icon = option.icon
-          return (
-            <button
-              key={option.title}
-              onClick={option.onClick}
-              className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 h-32 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] w-full"
-            >
-              {/* Icon */}
-              <Icon className="absolute top-4 right-4 h-6 w-6 text-primary" />
-              
-              {/* Center Content */}
-              <div className="flex items-center justify-center h-full">
-                <span className="text-lg font-semibold text-foreground text-center">
-                  {option.title}
-                </span>
-              </div>
-            </button>
-          )
-        })}
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header */}
+      <div className="text-center py-6">
+        <h1 className="text-3xl font-bold text-foreground">Workout</h1>
+      </div>
+
+      {/* Vertical Stack of Options */}
+      <div className="container mx-auto px-4 space-y-4">
+        {workoutOptions.map((option) => (
+          <button
+            key={option.title}
+            onClick={option.onClick}
+            className="w-full bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 min-h-[120px] hover:bg-gray-200 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer"
+          >
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-bold text-foreground">{option.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {option.description}
+              </p>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   )

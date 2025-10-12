@@ -14,8 +14,9 @@ import { Plus, Dumbbell, ArrowLeft, Clock } from "lucide-react"
 
 interface WorkoutGeneratorProps {
   user?: User | null
-  wodStep?: number
-  onStepChange?: (step: number) => void
+  initialWorkoutType?: 'crossfit' | 'bodybuilding'
+  initialStep?: number
+  onBack?: () => void
 }
 
 interface CrossfitWorkout {
@@ -40,10 +41,10 @@ interface BodybuildingWorkout {
   notes?: string
 }
 
-export const WorkoutGenerator = ({ user, wodStep: externalStep, onStepChange }: WorkoutGeneratorProps) => {
+export const WorkoutGenerator = ({ user, initialWorkoutType, initialStep, onBack }: WorkoutGeneratorProps) => {
   const navigate = useNavigate()
-  const [step, setStep] = useState(externalStep || 1)
-  const [workoutType, setWorkoutType] = useState<WorkoutType>(null)
+  const [step, setStep] = useState(initialStep || 1)
+  const [workoutType, setWorkoutType] = useState<WorkoutType>(initialWorkoutType || null)
   const [crossfitType, setCrossfitType] = useState<CrossfitType>(null)
   const [bodybuilding, setBodybuilding] = useState<{
     focus: BodybuildingFocus
@@ -61,40 +62,7 @@ export const WorkoutGenerator = ({ user, wodStep: externalStep, onStepChange }: 
     }
   }, [user])
 
-  // Listen for workout type pre-selection from WorkoutOverview
-  useEffect(() => {
-    const handleWorkoutTypeSelection = (e: Event) => {
-      const customEvent = e as CustomEvent
-      const type = customEvent.detail
-      
-      if (type === 'crossfit') {
-        setWorkoutType('crossfit')
-        setStep(2)
-      } else if (type === 'bodybuilding') {
-        setWorkoutType('bodybuilding')
-        setStep(2)
-      }
-    }
-
-    // Check sessionStorage on mount
-    const storedType = sessionStorage.getItem('workout-type')
-    if (storedType) {
-      if (storedType === 'crossfit') {
-        setWorkoutType('crossfit')
-        setStep(2)
-      } else if (storedType === 'bodybuilding') {
-        setWorkoutType('bodybuilding')
-        setStep(2)
-      }
-      // Clear after reading
-      sessionStorage.removeItem('workout-type')
-    }
-
-    window.addEventListener('workout-type-selected', handleWorkoutTypeSelection)
-    return () => {
-      window.removeEventListener('workout-type-selected', handleWorkoutTypeSelection)
-    }
-  }, [])
+  // No longer needed - props handle initial state
 
   const loadUserProfile = async () => {
     if (!user) return
@@ -226,66 +194,59 @@ export const WorkoutGenerator = ({ user, wodStep: externalStep, onStepChange }: 
   }
 
   const resetSelection = () => {
-    const newStep = 1
-    setStep(newStep)
-    setWorkoutType(null)
-    setCrossfitType(null)
-    setBodybuilding({ focus: null, difficulty: null })
-    setGeneratedWorkout(null)
-    setShowCreationForm(false)
-    onStepChange?.(newStep)
+    if (onBack) {
+      onBack()
+    } else {
+      setStep(1)
+      setWorkoutType(null)
+      setCrossfitType(null)
+      setBodybuilding({ focus: null, difficulty: null })
+      setGeneratedWorkout(null)
+      setShowCreationForm(false)
+    }
   }
 
   const handleWorkoutTypeSelect = (type: WorkoutType) => {
     setWorkoutType(type)
-    const newStep = 2
-    setStep(newStep)
-    onStepChange?.(newStep)
+    setStep(2)
   }
 
   const handleCrossfitTypeSelect = (type: CrossfitType) => {
     setCrossfitType(type)
-    const newStep = 3
-    setStep(newStep)
-    onStepChange?.(newStep)
+    setStep(3)
   }
 
   const handleBodybuildingFocusSelect = (focus: BodybuildingFocus) => {
     setBodybuilding(prev => ({ ...prev, focus }))
-    const newStep = 3
-    setStep(newStep)
-    onStepChange?.(newStep)
+    setStep(3)
   }
 
   const handleBodybuildingDifficultySelect = (difficulty: BodybuildingDifficulty) => {
     setBodybuilding(prev => ({ ...prev, difficulty }))
-    const newStep = 4
-    setStep(newStep)
-    onStepChange?.(newStep)
+    setStep(4)
   }
 
   const goBack = () => {
-    let newStep = step
-    if (step === 2) {
-      newStep = 1
-      setStep(newStep)
+    if (step === 2 && onBack) {
+      // Back to WorkoutOverview
+      onBack()
+    } else if (step === 2) {
+      // Fallback: local step 1
+      setStep(1)
       setWorkoutType(null)
       setCrossfitType(null)
       setBodybuilding({ focus: null, difficulty: null })
     } else if (step === 3) {
-      newStep = 2
-      setStep(newStep)
+      setStep(2)
       if (workoutType === "crossfit") {
         setCrossfitType(null)
       } else if (workoutType === "bodybuilding") {
         setBodybuilding(prev => ({ ...prev, focus: null }))
       }
     } else if (step === 4) {
-      newStep = 3
-      setStep(newStep)
+      setStep(3)
       setBodybuilding(prev => ({ ...prev, difficulty: null }))
     }
-    onStepChange?.(newStep)
   }
 
   const canGenerate = () => {

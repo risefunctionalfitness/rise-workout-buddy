@@ -12,7 +12,7 @@ import Admin from "./pages/Admin";
 import News from "./pages/News";
 import NotFound from "./pages/NotFound";
 import { StrengthValues } from "@/components/StrengthValues";
-import { PercentageCalculator } from "@/components/PercentageCalculator";
+import PercentageCalculatorPage from "./pages/PercentageCalculatorPage";
 import { ExerciseSelection } from "@/components/ExerciseSelection";
 import { WorkoutTimer } from "@/components/WorkoutTimer";
 import { ForTimeTimer } from "@/components/ForTimeTimer";
@@ -47,7 +47,7 @@ const App = () => (
               <Route path="/" element={<Auth />} />
               <Route path="/pro" element={<ProVersion />} />
               <Route path="/pro/strength-values" element={<StrengthValues />} />
-              <Route path="/pro/percentage-calculator" element={<PercentageCalculator />} />
+              <Route path="/pro/percentage-calculator" element={<PercentageCalculatorPage />} />
               <Route path="/pro/exercises" element={<ExerciseSelection />} />
               <Route path="/news" element={<News />} />
               <Route path="/workout-timer" element={<WorkoutTimer />} />
