@@ -1,18 +1,36 @@
 import { useState, useEffect } from "react"
-import { Home, Calendar, Trophy, Weight, Award, Clock } from "lucide-react"
 import { TrainingPathHeader } from "@/components/TrainingPathHeader"
-import { TrainingPath } from "@/components/TrainingPath"
-import { BottomNavigation } from "@/components/BottomNavigation"
-import type { TabType as AdminTabType } from "@/components/BottomNavigation"
 import { UserProfile } from "@/components/UserProfile"
 import { Leaderboard } from "@/components/Leaderboard"
 import { WorkoutGenerator } from "@/components/WorkoutGenerator"
 import { CourseBooking } from "@/components/CourseBooking"
 import { NewsSection } from "@/components/NewsSection"
-import { LeaderboardPosition } from "@/components/LeaderboardPosition"
-import ChallengeCard from "@/components/ChallengeCard"
 import ChallengeDetail from "@/components/ChallengeDetail"
 import { FirstLoginDialog } from "@/components/FirstLoginDialog"
+import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
+import { MonthlyProgressCircle } from "@/components/MonthlyProgressCircle"
+import { WeekPreview } from "@/components/WeekPreview"
+import { UpcomingClassReservation } from "@/components/UpcomingClassReservation"
+import { DashboardTileGrid } from "@/components/DashboardTileGrid"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { 
+  Home, 
+  Calendar, 
+  Users, 
+  Newspaper, 
+  Dumbbell, 
+  CreditCard,
+  Grid3X3,
+  Weight,
+  Trophy,
+  Award
+} from "lucide-react"
 
 import { supabase } from "@/integrations/supabase/client"
 import { User } from "@supabase/supabase-js"
@@ -53,6 +71,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [currentChallenge, setCurrentChallenge] = useState<any>(null)
   const [wodStep, setWodStep] = useState(1)
   const [showFirstLoginDialog, setShowFirstLoginDialog] = useState(false)
+  const [showAdminNav, setShowAdminNav] = useState(false)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
   
@@ -559,17 +578,67 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="p-4 space-y-6">
+          <div className="flex-1 flex flex-col gap-4 p-4 pb-24 overflow-y-auto">
+            {/* 50% Height - MonthlyProgressCircle */}
+            <div className="flex-1 min-h-0">
+              <MonthlyProgressCircle 
+                user={user}
+              />
+            </div>
             
+            {/* Auto Height - WeekPreview */}
+            <div className="flex-shrink-0">
+              <WeekPreview user={user} userRole={userRole} />
+            </div>
             
+            {/* Auto Height - UpcomingClassReservation */}
+            <div className="flex-shrink-0">
+              <UpcomingClassReservation user={user} />
+            </div>
             
-            <TrainingPath 
-              trainingDays={trainingDays} 
-              onAddTraining={handleAddTraining}
-              onRemoveTraining={handleRemoveTraining}
-              user={user}
-              userRole={userRole}
-            />
+            {/* 50% Height - DashboardTileGrid */}
+            <div className="flex-1 min-h-0">
+              <DashboardTileGrid
+                userId={user.id}
+                currentChallenge={currentChallenge}
+                hasUnreadNews={hasUnreadNews}
+                onChallengeClick={async () => {
+                  if (currentChallenge && user?.id) {
+                    let { data: progress, error } = await supabase
+                      .from("user_challenge_progress")
+                      .select("*")
+                      .eq("user_id", user.id)
+                      .eq("challenge_id", currentChallenge.id)
+                      .single()
+
+                    if (error && error.code === 'PGRST116') {
+                      const { data: newProgress, error: createError } = await supabase
+                        .from("user_challenge_progress")
+                        .insert({
+                          user_id: user.id,
+                          challenge_id: currentChallenge.id,
+                          completed_checkpoints: 0,
+                          is_completed: false
+                        })
+                        .select()
+                        .single()
+
+                      if (createError) {
+                        console.error("Error creating progress:", createError)
+                        return
+                      }
+                      progress = newProgress
+                    }
+
+                    setSelectedChallenge({ challenge: currentChallenge, progress })
+                  }
+                }}
+                onNewsClick={() => {
+                  markNewsAsRead()
+                  navigate('/news')
+                }}
+              />
+            </div>
           </div>
         )
       case 'wod':
@@ -593,10 +662,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     <div className="h-screen flex flex-col bg-background">
       <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
         <TrainingPathHeader
-          trainingDaysThisMonth={trainingCount}
-          totalDaysInMonth={totalDaysInMonth}
+          user={user}
           userAvatar={userAvatar}
           onProfileClick={() => setShowProfile(true)}
+          onAdminClick={() => setShowAdminNav(true)}
         />
       </div>
       
@@ -641,52 +710,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         </div>
       </div>
 
-      {/* Buttons nur auf der Home-Ansicht anzeigen */}
-      {activeTab === 'home' && (
-        <div className="fixed top-24 right-4 z-50 flex flex-col gap-4">
-          <LeaderboardPosition user={user} />
-          <button 
-            onClick={async () => {
-              if (currentChallenge && user?.id) {
-                // Load or create challenge progress
-                let { data: progress, error } = await supabase
-                  .from("user_challenge_progress")
-                  .select("*")
-                  .eq("user_id", user.id)
-                  .eq("challenge_id", currentChallenge.id)
-                  .single()
-
-                if (error && error.code === 'PGRST116') {
-                  // Create new progress if it doesn't exist
-                  const { data: newProgress, error: createError } = await supabase
-                    .from("user_challenge_progress")
-                    .insert({
-                      user_id: user.id,
-                      challenge_id: currentChallenge.id,
-                      completed_checkpoints: 0,
-                      is_completed: false
-                    })
-                    .select()
-                    .single()
-
-                  if (createError) {
-                    console.error("Error creating progress:", createError)
-                    return
-                  }
-                  progress = newProgress
-                }
-
-                setSelectedChallenge({ challenge: currentChallenge, progress })
-              }
-            }}
-            className="w-14 h-14 rounded-full bg-[hsl(var(--challenge-button))] hover:bg-[hsl(173_27%_40%)] border border-border shadow-lg flex items-center justify-center text-white hover:scale-105 transition-all duration-200"
-            disabled={!currentChallenge}
-          >
-            <Award className="h-6 w-6 text-gray-100 dark:text-gray-100 light:text-white" />
-          </button>
-        </div>
-      )}
-
 
       {showProfile && (
         <UserProfile onClose={() => setShowProfile(false)} />
@@ -704,21 +727,97 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         />
       )}
 
-        <FirstLoginDialog 
-          open={showFirstLoginDialog} 
-          onClose={async () => {
-            setShowFirstLoginDialog(false)
-            // Mark dialog as shown in database
-            try {
-              await supabase
-                .from('profiles')
-                .update({ welcome_dialog_shown: true })
-                .eq('user_id', user.id)
-            } catch (error) {
-              console.error('Error updating welcome dialog status:', error)
-            }
-          }} 
-        />
+      <FirstLoginDialog 
+        open={showFirstLoginDialog} 
+        onClose={async () => {
+          setShowFirstLoginDialog(false)
+          try {
+            await supabase
+              .from('profiles')
+              .update({ welcome_dialog_shown: true })
+              .eq('user_id', user.id)
+          } catch (error) {
+            console.error('Error updating welcome dialog status:', error)
+          }
+        }} 
+      />
+
+      {/* Admin Navigation Dialog */}
+      <Dialog open={showAdminNav} onOpenChange={setShowAdminNav}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Admin Navigation</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col gap-2"
+              onClick={() => {
+                setShowAdminNav(false)
+                navigate('/admin')
+              }}
+            >
+              <Home className="h-6 w-6" />
+              <span>Dashboard</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col gap-2"
+              onClick={() => {
+                setShowAdminNav(false)
+                navigate('/admin')
+              }}
+            >
+              <Users className="h-6 w-6" />
+              <span>Mitglieder</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col gap-2"
+              onClick={() => {
+                setShowAdminNav(false)
+                navigate('/admin')
+              }}
+            >
+              <Calendar className="h-6 w-6" />
+              <span>Kurse</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col gap-2"
+              onClick={() => {
+                setShowAdminNav(false)
+                navigate('/admin/workouts')
+              }}
+            >
+              <Dumbbell className="h-6 w-6" />
+              <span>Workouts</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col gap-2"
+              onClick={() => {
+                setShowAdminNav(false)
+                navigate('/admin')
+              }}
+            >
+              <Newspaper className="h-6 w-6" />
+              <span>News</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col gap-2"
+              onClick={() => {
+                setShowAdminNav(false)
+                navigate('/admin')
+              }}
+            >
+              <CreditCard className="h-6 w-6" />
+              <span>Credits</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
