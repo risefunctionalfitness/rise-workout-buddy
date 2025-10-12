@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useNavigate } from "react-router-dom"
-import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
+import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 import { ArrowLeft } from "lucide-react"
 
 export const TabataTimer: React.FC = () => {
@@ -102,7 +102,16 @@ export const TabataTimer: React.FC = () => {
           </div>
         </div>
       </div>
-      <TimerBottomNavigation />
+      <MemberBottomNavigation 
+        activeTab="wod" 
+        showCoursesTab={true}
+        onTabChange={(tab) => {
+          navigate('/pro')
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('changeTab', { detail: tab }))
+          }, 100)
+        }}
+      />
     </div>
   )
 }

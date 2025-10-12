@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Play, Pause, RotateCcw, ArrowLeft } from "lucide-react"
-import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
+import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 
 interface LocationState {
   type: 'fortime' | 'amrap' | 'emom' | 'tabata'
@@ -422,7 +422,16 @@ export const WorkoutStart: React.FC = () => {
           )}
         </div>
       </div>
-      <TimerBottomNavigation />
+      <MemberBottomNavigation 
+        activeTab="wod" 
+        showCoursesTab={true}
+        onTabChange={(tab) => {
+          navigate('/pro')
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('changeTab', { detail: tab }))
+          }, 100)
+        }}
+      />
     </div>
   )
 }

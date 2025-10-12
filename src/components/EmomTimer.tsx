@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
-import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
+import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 import { ArrowLeft } from "lucide-react"
 
 export const EmomTimer: React.FC = () => {
@@ -94,7 +94,16 @@ export const EmomTimer: React.FC = () => {
           </div>
         </div>
       </div>
-      <TimerBottomNavigation />
+      <MemberBottomNavigation 
+        activeTab="wod" 
+        showCoursesTab={true}
+        onTabChange={(tab) => {
+          navigate('/pro')
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('changeTab', { detail: tab }))
+          }, 100)
+        }}
+      />
     </div>
   )
 }

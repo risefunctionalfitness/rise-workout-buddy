@@ -26,6 +26,11 @@ const PercentageCalculatorPage = () => {
         </Button>
       </div>
       
+      {/* Header */}
+      <div className="text-center py-6">
+        <h1 className="text-3xl font-bold text-foreground">Prozentrechner</h1>
+      </div>
+      
       {/* Calculator */}
       <div className="flex-1">
         <PercentageCalculator />
@@ -34,7 +39,7 @@ const PercentageCalculatorPage = () => {
       {/* Bottom Navigation */}
       <MemberBottomNavigation 
         activeTab="wod" 
-        showCoursesTab={false}
+        showCoursesTab={true}
         onTabChange={(tab) => {
           navigate('/pro')
           setTimeout(() => {

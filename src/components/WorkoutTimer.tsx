@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { TimerBottomNavigation } from "@/components/TimerBottomNavigation"
+import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 import { ArrowLeft } from "lucide-react"
 
 interface WorkoutTimerProps {
@@ -87,7 +87,16 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
           </div>
         </div>
       </div>
-      <TimerBottomNavigation />
+      <MemberBottomNavigation 
+        activeTab="wod" 
+        showCoursesTab={true}
+        onTabChange={(tab) => {
+          navigate('/pro')
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('changeTab', { detail: tab }))
+          }, 100)
+        }}
+      />
     </div>
   )
 }
