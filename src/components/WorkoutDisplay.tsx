@@ -86,7 +86,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
       
       {/* Workout Type Heading */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-black mb-6">
+        <h1 className="text-3xl font-bold text-foreground mb-6">
           {workoutType === 'crossfit' ? 'Functional Fitness' : 'Bodybuilding'}
         </h1>
       </div>
@@ -186,7 +186,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
               </Button>
             </div>
             
-            {/* Second row: RISE KI-Coach centered */}
+            {/* Second row: KI-Coach centered */}
             <div className="flex justify-center">
               <Button 
                 onClick={() => setShowAIChat(true)}
@@ -195,7 +195,7 @@ export const WorkoutDisplay = ({ workout, workoutType, onNewWorkout, onReset, is
                 className="flex flex-col items-center p-4 h-auto min-w-[120px]"
               >
                 <Lightbulb className="h-6 w-6 mb-1" />
-                <span className="text-xs">RISE KI-Coach</span>
+                <span className="text-xs">KI-Coach</span>
               </Button>
             </div>
           </div>

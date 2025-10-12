@@ -23,17 +23,17 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
         <div className="p-6">
           <div className="max-w-md w-full mx-auto">
             <div className="text-center mb-4">
-              <h1 className="text-6xl font-bold mb-1">WOD</h1>
+              <h1 className="text-4xl font-bold mb-1">WOD</h1>
               <h2 className="text-2xl text-muted-foreground">Timer</h2>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {timerTypes.map((type) => (
                 <Button
                   key={type.id}
                   variant="outline"
                   onClick={() => navigate(type.route)}
-                  className="w-full h-20 text-2xl border-2 border-[#B81243] bg-background text-[#B81243] hover:bg-[#B81243] hover:text-white rounded-2xl font-medium transition-all duration-200"
+                  className="w-full h-12 text-lg border-2 border-primary bg-background text-primary hover:bg-primary hover:text-primary-foreground rounded-xl font-medium transition-all duration-200"
                 >
                   {type.title}
                 </Button>
@@ -69,17 +69,17 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ embedded = false }) 
       <div className="flex-1 flex items-center justify-center p-6 pb-20">
         <div className="max-w-md w-full">
           <div className="text-center mb-4">
-            <h1 className="text-6xl font-bold mb-1">WOD</h1>
+            <h1 className="text-4xl font-bold mb-1">WOD</h1>
             <h2 className="text-2xl text-muted-foreground">Timer</h2>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {timerTypes.map((type) => (
               <Button
                 key={type.id}
                 variant="outline"
                 onClick={() => navigate(type.route)}
-                className="w-full h-20 text-2xl border-2 border-[#B81243] bg-background text-[#B81243] hover:bg-[#B81243] hover:text-white rounded-2xl font-medium transition-all duration-200"
+                className="w-full h-12 text-lg border-2 border-primary bg-background text-primary hover:bg-primary hover:text-primary-foreground rounded-xl font-medium transition-all duration-200"
               >
                 {type.title}
               </Button>

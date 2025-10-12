@@ -29,10 +29,10 @@ export const CrossfitTypeSelector = ({ selectedType, onTypeSelect }: CrossfitTyp
         <Card 
           key={type}
           className={cn(
-            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-rise-accent",
+            "bg-gray-100 dark:bg-gray-800 rounded-2xl h-32 shadow-sm p-6 cursor-pointer transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-[1.02]",
             selectedType === type 
-              ? "bg-rise-accent/5 border-rise-accent shadow-md" 
-              : "hover:border-rise-accent"
+              ? "bg-primary/10 dark:bg-primary/20 border-2 border-primary" 
+              : ""
           )}
           onClick={() => onTypeSelect(type)}
         >

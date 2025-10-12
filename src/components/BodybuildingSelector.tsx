@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { Dumbbell, ArrowUp, ArrowDown, User, Zap } from "lucide-react"
 
 export type BodybuildingFocus = "Push" | "Pull" | "Unterkörper" | "Oberkörper" | "Ganzkörper" | null
 export type BodybuildingDifficulty = "Leicht" | "Mittel" | "Schwer" | null
@@ -19,11 +18,11 @@ export const BodybuildingSelector = ({
   onDifficultySelect 
 }: BodybuildingSelectorProps) => {
   const focusOptions = [
-    { type: "Push" as const, icon: ArrowUp, title: "Push", description: "Brust, Schultern, Trizeps" },
-    { type: "Pull" as const, icon: ArrowDown, title: "Pull", description: "Rücken, Bizeps" },
-    { type: "Unterkörper" as const, icon: Dumbbell, title: "Unterkörper", description: "Quadrizeps, Hamstrings, Glutes" },
-    { type: "Oberkörper" as const, icon: User, title: "Oberkörper", description: "Kompletter Oberkörper" },
-    { type: "Ganzkörper" as const, icon: Zap, title: "Ganzkörper", description: "Komplettes Training" }
+    { type: "Push" as const, title: "Push", description: "Brust, Schultern, Trizeps" },
+    { type: "Pull" as const, title: "Pull", description: "Rücken, Bizeps" },
+    { type: "Unterkörper" as const, title: "Unterkörper", description: "Quadrizeps, Hamstrings, Glutes" },
+    { type: "Oberkörper" as const, title: "Oberkörper", description: "Kompletter Oberkörper" },
+    { type: "Ganzkörper" as const, title: "Ganzkörper", description: "Komplettes Training" }
   ]
 
   const difficultyOptions = [
@@ -40,10 +39,10 @@ export const BodybuildingSelector = ({
           <Card 
             key={type}
             className={cn(
-              "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-rise-accent",
+              "bg-gray-100 dark:bg-gray-800 rounded-2xl h-32 shadow-sm p-6 cursor-pointer transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-[1.02]",
               selectedFocus === type 
-                ? "bg-rise-accent/5 border-rise-accent shadow-md" 
-                : "hover:border-rise-accent"
+                ? "bg-primary/10 dark:bg-primary/20 border-2 border-primary" 
+                : ""
             )}
             onClick={() => onFocusSelect(type)}
           >
@@ -66,10 +65,10 @@ export const BodybuildingSelector = ({
         <Card 
           key={type}
           className={cn(
-            "p-6 cursor-pointer transition-all duration-300 border-2 hover:shadow-lg rounded-3xl border-rise-accent",
+            "bg-gray-100 dark:bg-gray-800 rounded-2xl h-32 shadow-sm p-6 cursor-pointer transition-all duration-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-[1.02]",
             selectedDifficulty === type 
-              ? "bg-rise-accent/5 border-rise-accent shadow-md" 
-              : "hover:border-rise-accent"
+              ? "bg-primary/10 dark:bg-primary/20 border-2 border-primary" 
+              : ""
           )}
           onClick={() => onDifficultySelect(type)}
         >
