@@ -25,6 +25,7 @@ export const Leaderboard: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
+  const [viewMode, setViewMode] = useState<'month' | 'year'>('month')
 
   useEffect(() => {
     let mounted = true
@@ -40,7 +41,7 @@ export const Leaderboard: React.FC = () => {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [viewMode])
 
   const loadLeaderboard = async () => {
     try {
@@ -49,12 +50,17 @@ export const Leaderboard: React.FC = () => {
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
 
-      // Get all leaderboard entries (no limit initially)
-      const { data: leaderboardData, error: leaderboardError } = await supabase
+      // Get leaderboard entries based on view mode
+      let query = supabase
         .from('leaderboard_entries')
         .select('*')
         .eq('year', currentYear)
-        .eq('month', currentMonth)
+      
+      if (viewMode === 'month') {
+        query = query.eq('month', currentMonth)
+      }
+
+      const { data: leaderboardData, error: leaderboardError } = await query
 
       if (leaderboardError) {
         console.error('Error loading leaderboard:', leaderboardError)
@@ -67,8 +73,30 @@ export const Leaderboard: React.FC = () => {
         return
       }
 
+      // Aggregate by user_id if in year mode
+      let aggregatedData: typeof leaderboardData = leaderboardData
+      if (viewMode === 'year') {
+        const userAggregates = new Map<string, typeof leaderboardData[0]>()
+
+        leaderboardData.forEach(entry => {
+          const existing = userAggregates.get(entry.user_id)
+          if (existing) {
+            existing.training_count += entry.training_count || 0
+            existing.challenge_bonus_points += entry.challenge_bonus_points || 0
+          } else {
+            userAggregates.set(entry.user_id, {
+              ...entry,
+              training_count: entry.training_count || 0,
+              challenge_bonus_points: entry.challenge_bonus_points || 0
+            })
+          }
+        })
+
+        aggregatedData = Array.from(userAggregates.values())
+      }
+
       // Get all user IDs from leaderboard
-      const userIds = leaderboardData.map(entry => entry.user_id)
+      const userIds = aggregatedData.map(entry => entry.user_id)
 
       // Get user profiles for display names and avatars
       const { data: profiles, error: profilesError } = await supabase
@@ -82,8 +110,8 @@ export const Leaderboard: React.FC = () => {
         return
       }
 
-      // Get challenge completion status for current month
-      const { data: challengeProgress, error: challengeError } = await supabase
+      // Get challenge completion status based on view mode
+      let challengeQuery = supabase
         .from('user_challenge_progress')
         .select(`
           user_id,
@@ -91,9 +119,14 @@ export const Leaderboard: React.FC = () => {
           monthly_challenges!inner(year, month)
         `)
         .eq('monthly_challenges.year', currentYear)
-        .eq('monthly_challenges.month', currentMonth)
         .eq('is_completed', true)
         .in('user_id', userIds)
+      
+      if (viewMode === 'month') {
+        challengeQuery = challengeQuery.eq('monthly_challenges.month', currentMonth)
+      }
+
+      const { data: challengeProgress, error: challengeError } = await challengeQuery
 
       if (challengeError) {
         console.error('Error loading challenge progress:', challengeError)
@@ -120,17 +153,21 @@ export const Leaderboard: React.FC = () => {
       })
 
       // Combine leaderboard data with profile info and calculate total score
-      const leaderboardWithProfiles = leaderboardData.map(entry => {
+      const leaderboardWithProfiles = aggregatedData.map(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
         const hasCompletedChallenge = challengeProgress?.some(cp => cp.user_id === entry.user_id) || false
         const totalScore = entry.training_count + (entry.challenge_bonus_points || 0)
         const mostRecentTraining = mostRecentTrainingMap.get(entry.user_id) || '1970-01-01'
         
         return {
-          ...entry,
+          id: entry.user_id,
+          user_id: entry.user_id,
+          training_count: entry.training_count,
           challenge_bonus_points: entry.challenge_bonus_points || 0,
           display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
           avatar_url: profile?.avatar_url || null,
+          year: currentYear,
+          month: currentMonth,
           total_score: totalScore,
           hasCompletedChallenge,
           most_recent_training: mostRecentTraining
@@ -191,6 +228,13 @@ export const Leaderboard: React.FC = () => {
     return remainingDays
   }
 
+  const getRemainingDaysInYear = () => {
+    const today = new Date()
+    const endOfYear = new Date(today.getFullYear(), 11, 31)
+    const remainingDays = Math.ceil((endOfYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    return remainingDays
+  }
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -206,9 +250,39 @@ export const Leaderboard: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6 relative">
           <h1 className="text-2xl font-bold mb-2">Leaderboard</h1>
-          <p className="text-muted-foreground">Top 30 im {new Date().toLocaleDateString('de-DE', { month: 'long' })}</p>
+          
+          <div className="flex justify-center gap-8 mb-4">
+            <button
+              onClick={() => setViewMode('month')}
+              className={`pb-1 font-medium transition-colors ${
+                viewMode === 'month'
+                  ? 'text-primary border-b-4 border-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Aktueller Monat
+            </button>
+            <button
+              onClick={() => setViewMode('year')}
+              className={`pb-1 font-medium transition-colors ${
+                viewMode === 'year'
+                  ? 'text-primary border-b-4 border-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Aktuelles Jahr
+            </button>
+          </div>
+
+          <p className="text-muted-foreground">
+            Top 30 {viewMode === 'month' 
+              ? `im ${new Date().toLocaleDateString('de-DE', { month: 'long' })}` 
+              : `in ${new Date().getFullYear()}`}
+          </p>
           <div className="absolute top-0 right-0 flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="font-medium">{getRemainingDaysInMonth()}</span>
+            <span className="font-medium">
+              {viewMode === 'month' ? getRemainingDaysInMonth() : getRemainingDaysInYear()}
+            </span>
             <Calendar className="h-4 w-4" />
           </div>
         </div>
@@ -217,7 +291,9 @@ export const Leaderboard: React.FC = () => {
           {leaderboard.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">Noch keine Trainings in diesem Monat</p>
+                <p className="text-muted-foreground">
+                  Noch keine Trainings {viewMode === 'month' ? 'in diesem Monat' : 'in diesem Jahr'}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -249,9 +325,9 @@ export const Leaderboard: React.FC = () => {
                                   <TooltipTrigger asChild>
                                     <CheckCircle className="h-5 w-5 text-green-500 cursor-help" />
                                   </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Monatschallenge abgeschlossen</p>
-                                  </TooltipContent>
+                                   <TooltipContent>
+                                     <p>{viewMode === 'month' ? 'Monatschallenge abgeschlossen' : 'Challenge(s) in diesem Jahr abgeschlossen'}</p>
+                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
                             )}
