@@ -69,8 +69,8 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
 
   return (
     <div className="flex items-center gap-2">
-      <Trophy className="h-5 w-5 text-yellow-500" />
-      <span className="text-lg font-bold text-primary">{position}</span>
+      <Trophy className="h-5 w-5 text-foreground" />
+      <span className="text-lg font-bold text-foreground">{position}</span>
     </div>
   )
 }
