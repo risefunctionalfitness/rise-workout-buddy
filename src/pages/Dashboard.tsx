@@ -678,8 +678,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         <div className="flex justify-around max-w-md mx-auto">
           {[
             { id: 'home', icon: Home, label: 'Übersicht' },
-            { id: 'wod', icon: Weight, label: 'WOD' },
             ...(isOpenGym ? [] : [{ id: 'courses', icon: Calendar, label: 'Kurse' }]),
+            { id: 'wod', icon: Weight, label: 'WOD' },
             { id: 'leaderboard', icon: Trophy, label: 'Leaderboard' }
           ].map((tab) => {
             const Icon = tab.icon
