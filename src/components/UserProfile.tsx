@@ -214,17 +214,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             </div>
 
             <div>
-              <Label htmlFor="name">Name (vergeben vom Admin)</Label>
-              <Input
-                id="name"
-                value={displayName}
-                disabled
-                className="bg-muted"
-                placeholder="Name wird vom Admin vergeben"
-              />
-            </div>
-
-            <div>
               <Label htmlFor="nickname">Spitzname (für andere sichtbar) *</Label>
               <Input
                 id="nickname"
