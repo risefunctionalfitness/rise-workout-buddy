@@ -6,6 +6,11 @@ import { Calendar, Users, ChevronDown, ChevronUp, Trophy, TrendingUp, ChevronLef
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/integrations/supabase/client"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { CourseUtilizationCard } from "@/components/CourseUtilizationCard"
+import { PopularCoursesCard } from "@/components/PopularCoursesCard"
+import { CancellationRateCard } from "@/components/CancellationRateCard"
+import { BookingPatternsCard } from "@/components/BookingPatternsCard"
+import { InactiveMembersCard } from "@/components/InactiveMembersCard"
 
 interface AdminStatsProps {
   onStatsLoad?: (stats: any) => void
@@ -463,6 +468,15 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Course Analytics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <CourseUtilizationCard />
+        <PopularCoursesCard />
+        <CancellationRateCard />
+        <BookingPatternsCard />
+        <InactiveMembersCard />
+      </div>
 
       {/* Extended Stats */}
       <Collapsible open={extendedStatsOpen} onOpenChange={toggleExtendedStats}>
