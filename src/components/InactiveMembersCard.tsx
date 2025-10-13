@@ -26,34 +26,23 @@ export const InactiveMembersCard = () => {
 
   const loadInactiveMembers = async () => {
     try {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('display_name, first_name, last_name, last_login_at, user_id, status, membership_type')
-        .eq('status', 'inactive')
-        .order('last_login_at', { ascending: true, nullsFirst: true });
+      const { data, error } = await supabase.rpc('get_inactive_members', {
+        days_threshold: 21
+      });
 
       if (error) throw error;
 
-      const currentDate = new Date();
-      const members: InactiveMember[] = (profiles || []).map(profile => {
-        let daysSinceLogin = 999;
-        if (profile.last_login_at) {
-          const lastLogin = new Date(profile.last_login_at);
-          daysSinceLogin = Math.floor((currentDate.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
-        }
-
-        const displayName = profile.first_name && profile.last_name
-          ? `${profile.first_name} ${profile.last_name}`
-          : profile.display_name || 'Unbekannt';
-
-        const membershipType = profile.membership_type || 'Kein Abo';
+      const members: InactiveMember[] = (data || []).map(member => {
+        const displayName = member.first_name && member.last_name
+          ? `${member.first_name} ${member.last_name}`
+          : member.display_name || 'Unbekannt';
 
         return {
-          userId: profile.user_id,
+          userId: member.user_id,
           displayName,
-          lastLoginAt: profile.last_login_at,
-          daysSinceLogin,
-          membershipType,
+          lastLoginAt: member.last_activity,
+          daysSinceLogin: member.days_since_activity,
+          membershipType: member.membership_type || 'Kein Abo',
         };
       });
 
@@ -65,13 +54,13 @@ export const InactiveMembersCard = () => {
     }
   };
 
-  const formatLastLogin = (lastLoginAt: string | null, daysSinceLogin: number): string => {
-    if (!lastLoginAt) return 'Nie eingeloggt';
-    if (daysSinceLogin === 0) return 'Heute';
-    if (daysSinceLogin === 1) return 'Gestern';
-    if (daysSinceLogin < 7) return `vor ${daysSinceLogin} Tagen`;
-    if (daysSinceLogin < 30) return `vor ${Math.floor(daysSinceLogin / 7)} Wo.`;
-    return `vor ${Math.floor(daysSinceLogin / 30)} Mon.`;
+  const formatLastActivity = (lastActivity: string | null, daysSinceActivity: number): string => {
+    if (!lastActivity) return 'Keine Aktivität';
+    if (daysSinceActivity === 0) return 'Heute';
+    if (daysSinceActivity === 1) return 'Gestern';
+    if (daysSinceActivity < 7) return `vor ${daysSinceActivity} Tagen`;
+    if (daysSinceActivity < 30) return `vor ${Math.floor(daysSinceActivity / 7)} Wo.`;
+    return `vor ${Math.floor(daysSinceActivity / 30)} Mon.`;
   };
 
   if (loading) {
@@ -101,6 +90,7 @@ export const InactiveMembersCard = () => {
           <UserX className="h-5 w-5 text-primary" />
           <CardTitle>Schläfermitglieder</CardTitle>
         </div>
+        <p className="text-sm text-muted-foreground">Keine Aktivität seit 21+ Tagen</p>
       </CardHeader>
       <CardContent className="space-y-3">
         {currentMembers.length === 0 ? (
@@ -111,7 +101,7 @@ export const InactiveMembersCard = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{member.displayName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatLastLogin(member.lastLoginAt, member.daysSinceLogin)}
+                  Letzte Aktivität: {formatLastActivity(member.lastLoginAt, member.daysSinceLogin)}
                 </p>
               </div>
               <Badge variant="outline" className="ml-2">

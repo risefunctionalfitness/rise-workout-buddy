@@ -840,6 +840,18 @@ export type Database = {
           waitlist_count: number
         }[]
       }
+      get_inactive_members: {
+        Args: { days_threshold?: number }
+        Returns: {
+          days_since_activity: number
+          display_name: string
+          first_name: string
+          last_activity: string
+          last_name: string
+          membership_type: string
+          user_id: string
+        }[]
+      }
       get_weekly_registrations_count: {
         Args: { check_date?: string; user_id_param: string }
         Returns: number

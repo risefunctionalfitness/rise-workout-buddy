@@ -29,6 +29,7 @@ export const BookingPatternsCard = () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
 
       const { data: registrations, error } = await supabase
         .from('course_registrations')
@@ -37,7 +38,8 @@ export const BookingPatternsCard = () => {
           courses!inner(course_date, start_time)
         `)
         .eq('status', 'registered')
-        .gte('courses.course_date', thirtyDaysAgoStr);
+        .gte('courses.course_date', thirtyDaysAgoStr)
+        .lt('courses.course_date', today);
 
       if (error) throw error;
 
@@ -111,6 +113,7 @@ export const BookingPatternsCard = () => {
           <Clock className="h-5 w-5 text-primary" />
           <CardTitle>Buchungsmuster</CardTitle>
         </div>
+        <p className="text-sm text-muted-foreground">Vergangene 30 Tage</p>
       </CardHeader>
       <CardContent className="space-y-2">
         {displayPatterns.length === 0 ? (

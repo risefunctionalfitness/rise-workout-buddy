@@ -27,6 +27,7 @@ export const PopularCoursesCard = () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
 
       const { data: coursesData, error } = await supabase
         .from('courses')
@@ -38,7 +39,8 @@ export const PopularCoursesCard = () => {
         `)
         .eq('is_cancelled', false)
         .eq('course_registrations.status', 'registered')
-        .gte('course_date', thirtyDaysAgoStr);
+        .gte('course_date', thirtyDaysAgoStr)
+        .lt('course_date', today);
 
       if (error) throw error;
 
@@ -106,6 +108,7 @@ export const PopularCoursesCard = () => {
           <Star className="h-5 w-5 text-primary" />
           <CardTitle>Beliebteste Kurse</CardTitle>
         </div>
+        <p className="text-sm text-muted-foreground">Vergangene 30 Tage</p>
       </CardHeader>
       <CardContent className="space-y-3">
         {popularCourses.length === 0 ? (
