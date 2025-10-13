@@ -850,6 +850,7 @@ export type Database = {
           last_name: string
           membership_type: string
           user_id: string
+          was_ever_active: boolean
         }[]
       }
       get_weekly_registrations_count: {

@@ -12,6 +12,7 @@ interface InactiveMember {
   lastLoginAt: string | null;
   daysSinceLogin: number;
   membershipType: string;
+  wasEverActive?: boolean;
 }
 
 export const InactiveMembersCard = () => {
@@ -43,6 +44,7 @@ export const InactiveMembersCard = () => {
           lastLoginAt: member.last_activity,
           daysSinceLogin: member.days_since_activity,
           membershipType: member.membership_type || 'Kein Abo',
+          wasEverActive: member.was_ever_active,
         };
       });
 
@@ -55,7 +57,21 @@ export const InactiveMembersCard = () => {
   };
 
   const formatLastActivity = (lastActivity: string | null, daysSinceActivity: number): string => {
-    if (!lastActivity) return 'Keine Aktivität';
+    // Über 12 Monate (365 Tage): Zeige 12+ Mon.
+    if (daysSinceActivity >= 365) {
+      return '12+ Mon.';
+    }
+    
+    // Prüfe auf '1970-01-01' → Nie aktiv
+    if (!lastActivity || lastActivity === '1970-01-01T00:00:00+00:00' || lastActivity.startsWith('1970-01-01')) {
+      if (daysSinceActivity === 0) return 'Nie aktiv (heute registriert)';
+      if (daysSinceActivity === 1) return 'Nie aktiv (gestern registriert)';
+      if (daysSinceActivity < 7) return `Nie aktiv (vor ${daysSinceActivity} Tagen registriert)`;
+      if (daysSinceActivity < 30) return `Nie aktiv (vor ${Math.floor(daysSinceActivity / 7)} Wo. registriert)`;
+      return `Nie aktiv (vor ${Math.floor(daysSinceActivity / 30)} Mon. registriert)`;
+    }
+    
+    // Normale Aktivität
     if (daysSinceActivity === 0) return 'Heute';
     if (daysSinceActivity === 1) return 'Gestern';
     if (daysSinceActivity < 7) return `vor ${daysSinceActivity} Tagen`;
