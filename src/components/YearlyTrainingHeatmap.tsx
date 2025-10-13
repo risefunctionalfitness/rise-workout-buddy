@@ -75,8 +75,8 @@ export const YearlyTrainingHeatmap: React.FC<YearlyTrainingHeatmapProps> = ({ us
   }
 
   return (
-    <div className="min-h-[300px] bg-muted/30 rounded-lg p-4">
-      <ResponsiveContainer width="100%" height={300}>
+    <div className="min-h-[200px] bg-muted/30 rounded-lg p-4">
+      <ResponsiveContainer width="100%" height={200}>
         <LineChart
           data={monthlyData}
           margin={{ left: -20, right: 20, top: 5, bottom: 5 }}
