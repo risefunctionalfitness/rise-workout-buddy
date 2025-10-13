@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, ChevronDown, ChevronUp, Trophy, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -32,6 +33,7 @@ interface LeaderboardStats {
 }
 
 export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
+  const { toast } = useToast()
   const [stats, setStats] = useState<LeaderboardStats>({
     totalEntries: 0,
     memberStats: {},
@@ -64,19 +66,22 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     loadStats()
   }, [])
 
-  const sendTestWebhook = async () => {
+  const triggerInactiveCheck = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('send-test-reactivation-webhook', {
-        body: {}
-      })
+      const { data, error } = await supabase.rpc('update_member_status')
       
       if (error) throw error
       
-      console.log('Test webhook response:', data)
-      alert(`✅ Test-Webhook erfolgreich gesendet!\n\nAntwort: ${JSON.stringify(data, null, 2)}`)
+      toast({
+        title: "✅ Inaktivitätsprüfung durchgeführt",
+        description: "Alle inaktiven Mitglieder wurden geprüft und Webhooks versendet."
+      })
     } catch (error: any) {
-      console.error('Error sending test webhook:', error)
-      alert(`❌ Fehler beim Senden des Test-Webhooks:\n\n${error.message}`)
+      toast({
+        title: "❌ Fehler",
+        description: error.message,
+        variant: "destructive"
+      })
     }
   }
 
@@ -416,16 +421,16 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Test Webhook Button */}
+      {/* Inactive Members Check */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Webhook-Test</p>
-              <p className="text-xs text-muted-foreground">Sendet einen Test-Webhook für Reaktivierung an Make.com</p>
+              <p className="text-sm font-medium text-gray-600 mb-1">Inaktivitätsprüfung</p>
+              <p className="text-xs text-muted-foreground">Prüft alle Mitglieder auf Inaktivität und versendet Webhooks</p>
             </div>
-            <Button onClick={sendTestWebhook} variant="outline">
-              Test-Webhook senden
+            <Button onClick={triggerInactiveCheck} variant="outline">
+              Jetzt prüfen
             </Button>
           </div>
         </CardContent>
