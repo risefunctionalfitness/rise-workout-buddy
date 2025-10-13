@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface BookingPattern {
   dayOfWeek: string;
@@ -15,8 +14,6 @@ interface BookingPattern {
 export const BookingPatternsCard = () => {
   const [loading, setLoading] = useState(true);
   const [patterns, setPatterns] = useState<BookingPattern[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -92,10 +89,7 @@ export const BookingPatternsCard = () => {
     );
   }
 
-  const totalPages = Math.ceil(patterns.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPatterns = patterns.slice(startIndex, endIndex);
+  const displayPatterns = patterns.slice(0, 10);
 
   const mostPopular = patterns.reduce((max, pattern) =>
     pattern.registrations > max.registrations ? pattern : max,
@@ -113,50 +107,32 @@ export const BookingPatternsCard = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        {currentPatterns.length === 0 ? (
+        {displayPatterns.length === 0 ? (
           <p className="text-sm text-muted-foreground">Keine Daten verfügbar</p>
         ) : (
-          <>
-            {currentPatterns.map((pattern) => (
-              <div key={`${pattern.dayOfWeek}-${pattern.hour}`} className="flex justify-between items-center text-sm">
-                <span className="font-medium">
-                  {pattern.dayOfWeek} {pattern.hour}:00
-                </span>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 bg-primary rounded-full"
-                    style={{ width: `${(pattern.registrations / maxRegistrations) * 80}px` }}
-                  />
-                  <span className="text-muted-foreground w-8 text-right">{pattern.registrations}</span>
-                </div>
+          displayPatterns.map((pattern) => (
+            <div key={`${pattern.dayOfWeek}-${pattern.hour}`} className="flex justify-between items-center text-sm">
+              <span className="font-medium">
+                {pattern.dayOfWeek} {pattern.hour}:00
+              </span>
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-2 bg-primary rounded-full"
+                  style={{ width: `${(pattern.registrations / maxRegistrations) * 80}px` }}
+                />
+                <span className="text-muted-foreground w-8 text-right">{pattern.registrations}</span>
               </div>
-            ))}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  Seite {currentPage} von {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </>
+            </div>
+          ))
         )}
       </CardContent>
+      {patterns.length > 10 && (
+        <CardFooter className="pb-4">
+          <p className="text-xs text-muted-foreground">
+            ... und {patterns.length - 10} weitere Buchungsmuster
+          </p>
+        </CardFooter>
+      )}
       <CardFooter>
         <p className="text-xs text-muted-foreground">
           Meiste Buchungen: {mostPopular.dayOfWeek} {mostPopular.hour}:00 ({mostPopular.registrations} Buchungen)

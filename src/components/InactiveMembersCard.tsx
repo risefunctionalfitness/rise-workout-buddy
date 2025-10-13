@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { UserX } from "lucide-react";
+import { UserX, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface InactiveMember {
   userId: string;
@@ -16,7 +17,8 @@ interface InactiveMember {
 export const InactiveMembersCard = () => {
   const [loading, setLoading] = useState(true);
   const [inactiveMembers, setInactiveMembers] = useState<InactiveMember[]>([]);
-  const [totalInactive, setTotalInactive] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     loadInactiveMembers();
@@ -55,8 +57,7 @@ export const InactiveMembersCard = () => {
         };
       });
 
-      setTotalInactive(members.length);
-      setInactiveMembers(members.slice(0, 10));
+      setInactiveMembers(members);
     } catch (error) {
       console.error('Error loading inactive members:', error);
     } finally {
@@ -88,6 +89,11 @@ export const InactiveMembersCard = () => {
     );
   }
 
+  const totalPages = Math.ceil(inactiveMembers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentMembers = inactiveMembers.slice(startIndex, endIndex);
+
   return (
     <Card>
       <CardHeader>
@@ -97,10 +103,10 @@ export const InactiveMembersCard = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {inactiveMembers.length === 0 ? (
+        {currentMembers.length === 0 ? (
           <p className="text-sm text-muted-foreground">Keine inaktiven Mitglieder</p>
         ) : (
-          inactiveMembers.map((member) => (
+          currentMembers.map((member) => (
             <div key={member.userId} className="flex justify-between items-center">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{member.displayName}</p>
@@ -115,11 +121,29 @@ export const InactiveMembersCard = () => {
           ))
         )}
       </CardContent>
-      {totalInactive > 10 && (
+      {totalPages > 1 && (
         <CardFooter>
-          <p className="text-xs text-muted-foreground">
-            ... und {totalInactive - 10} weitere inaktive Mitglieder
-          </p>
+          <div className="flex items-center justify-between w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Seite {currentPage} von {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </CardFooter>
       )}
     </Card>
