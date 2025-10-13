@@ -75,11 +75,11 @@ export const YearlyTrainingHeatmap: React.FC<YearlyTrainingHeatmapProps> = ({ us
   }
 
   return (
-    <div className="min-h-[200px] bg-muted/30 rounded-lg p-4">
+    <div className="min-h-[200px] bg-muted/30 rounded-lg p-2">
       <ResponsiveContainer width="100%" height={200}>
         <LineChart
           data={monthlyData}
-          margin={{ left: -20, right: 20, top: 5, bottom: 5 }}
+          margin={{ left: 0, right: 10, top: 10, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
           <XAxis 
