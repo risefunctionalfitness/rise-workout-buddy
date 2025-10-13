@@ -21,19 +21,21 @@ export const CourseUtilizationCard = () => {
 
   const loadUtilizationStats = async () => {
     try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
 
-      const { data: courses, error } = await supabase
-        .from('courses')
-        .select(`
-          id,
-          max_participants,
-          course_registrations!inner(status)
-        `)
-        .gte('course_date', thirtyDaysAgoStr)
-        .eq('is_cancelled', false);
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select(`
+        id,
+        max_participants,
+        course_registrations!inner(status)
+      `)
+      .gte('course_date', thirtyDaysAgoStr)
+      .lt('course_date', today)
+      .eq('is_cancelled', false);
 
       if (error) throw error;
 
@@ -85,7 +87,7 @@ export const CourseUtilizationCard = () => {
           <TrendingUp className="h-5 w-5 text-primary" />
           <CardTitle>Kursauslastung</CardTitle>
         </div>
-        <CardDescription>30 Tage</CardDescription>
+        <CardDescription>Vergangene 30 Tage</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Progress value={stats.utilizationRate} className="h-2" />
