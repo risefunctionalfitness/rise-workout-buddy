@@ -26,6 +26,7 @@ interface Course {
   waitlist_count: number
   is_registered: boolean
   is_waitlisted: boolean
+  color?: string
 }
 
 interface CoursesCalendarViewProps {
@@ -185,18 +186,21 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
               {coursesForSelectedDate.map(course => (
                 <Card 
                   key={course.id} 
-                  className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+                  className={`rounded-2xl p-4 cursor-pointer hover:scale-[1.02] transition-all duration-200 shadow-md bg-card border-l-8 ${
                     course.is_registered 
-                      ? 'border-green-500 border-2' 
+                      ? 'ring-2 ring-green-500' 
                       : ''
                   }`}
+                  style={{
+                    borderLeftColor: course.color || '#f3f4f6'
+                  }}
                   onClick={() => onCourseClick(course)}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-0">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
-                          <h4 className="font-medium truncate">{course.title}</h4>
+                          <h4 className="font-medium truncate text-foreground">{course.title}</h4>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">

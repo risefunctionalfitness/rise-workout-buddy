@@ -27,6 +27,7 @@ interface CourseTemplate {
   cancellation_deadline_minutes: number
   duration_minutes: number
   created_at: string
+  color?: string
 }
 
 interface Course {
@@ -43,6 +44,7 @@ interface Course {
   cancellation_deadline_minutes: number
   registered_count: number
   waitlist_count: number
+  color?: string
 }
 
 interface ScheduleEntry {
@@ -64,7 +66,8 @@ export const CourseTemplateManager = () => {
     max_participants: 16,
     registration_deadline_minutes: 30,
     cancellation_deadline_minutes: 60,
-    duration_minutes: 60
+    duration_minutes: 60,
+    color: '#f3f4f6'
   })
 
   // Schedule form state
@@ -151,7 +154,8 @@ export const CourseTemplateManager = () => {
         max_participants: 16,
         registration_deadline_minutes: 30,
         cancellation_deadline_minutes: 60,
-        duration_minutes: 60
+        duration_minutes: 60,
+        color: '#f3f4f6'
       })
       await loadTemplates()
     } catch (error) {
@@ -228,7 +232,7 @@ export const CourseTemplateManager = () => {
               trainer: template.trainer,
               strength_exercise: template.strength_exercise,
               max_participants: template.max_participants,
-              
+              color: template.color || '#f3f4f6',
               registration_deadline_minutes: template.registration_deadline_minutes,
               cancellation_deadline_minutes: template.cancellation_deadline_minutes,
               duration_minutes: template.duration_minutes,
@@ -485,6 +489,21 @@ export const CourseTemplateManager = () => {
                       required
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="color">Kursfarbe</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        id="color"
+                        type="color"
+                        value={templateForm.color}
+                        onChange={(e) => setTemplateForm(prev => ({ ...prev, color: e.target.value }))}
+                        className="h-10 w-20 cursor-pointer"
+                      />
+                      <span className="text-sm text-muted-foreground font-mono">
+                        {templateForm.color.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full">
                   Vorlage erstellen
@@ -502,27 +521,34 @@ export const CourseTemplateManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Titel</TableHead>
-                    <TableHead>Trainer</TableHead>
-                    <TableHead>Kraftübung</TableHead>
-                    <TableHead>Max. Teilnehmer</TableHead>
-                    <TableHead>Dauer</TableHead>
+                    <TableHead className="hidden sm:table-cell">Trainer</TableHead>
+                    <TableHead className="hidden md:table-cell">Max. Teilnehmer</TableHead>
+                    <TableHead className="hidden lg:table-cell">Dauer</TableHead>
+                    <TableHead className="hidden xl:table-cell">Farbe</TableHead>
                     <TableHead>Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {templates.map((template) => (
                     <TableRow key={template.id}>
-                      <TableCell className="font-medium">{template.title}</TableCell>
-                      <TableCell>{template.trainer}</TableCell>
-                      <TableCell>
-                        {template.strength_exercise ? (
-                          <Badge variant="outline">{template.strength_exercise}</Badge>
-                        ) : (
-                          '-'
-                        )}
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-1 h-8 rounded" 
+                            style={{ backgroundColor: template.color || '#f3f4f6' }}
+                          />
+                          {template.title}
+                        </div>
                       </TableCell>
-                      <TableCell>{template.max_participants}</TableCell>
-                      <TableCell>{template.duration_minutes} min</TableCell>
+                      <TableCell className="hidden sm:table-cell">{template.trainer}</TableCell>
+                      <TableCell className="hidden md:table-cell">{template.max_participants}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{template.duration_minutes} min</TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        <div 
+                          className="w-8 h-8 rounded border border-border" 
+                          style={{ backgroundColor: template.color || '#f3f4f6' }}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="outline"

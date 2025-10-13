@@ -18,6 +18,7 @@ interface Course {
   max_participants: number
   registered_count: number
   waitlisted_count: number
+  color?: string
 }
 
 export const CourseParticipants = () => {
@@ -48,7 +49,8 @@ export const CourseParticipants = () => {
           course_date,
           start_time,
           end_time,
-          max_participants
+          max_participants,
+          color
         `)
         .eq('is_cancelled', false)
         // Only future courses by date and time
@@ -143,7 +145,10 @@ export const CourseParticipants = () => {
               {dayCourses.map(course => (
                 <Card 
                   key={course.id}
-                  className="cursor-pointer transition-all duration-200 hover:shadow-md"
+                  className="cursor-pointer transition-all duration-200 hover:shadow-md shadow-md border-l-8"
+                  style={{
+                    borderLeftColor: course.color || '#f3f4f6'
+                  }}
                   onClick={() => setSelectedCourse(course)}
                 >
                   <CardContent className="p-4">
