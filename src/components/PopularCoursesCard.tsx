@@ -7,6 +7,7 @@ import { Star } from "lucide-react";
 
 interface CourseStats {
   title: string;
+  trainer: string;
   registrations: number;
   totalCapacity: number;
   courseCount: number;
@@ -31,6 +32,7 @@ export const PopularCoursesCard = () => {
         .from('courses')
         .select(`
           title,
+          trainer,
           max_participants,
           course_registrations!inner(status)
         `)
@@ -47,6 +49,7 @@ export const PopularCoursesCard = () => {
         const title = course.title;
         const existing = courseMap.get(title) || {
           title,
+          trainer: course.trainer || '',
           registrations: 0,
           totalCapacity: 0,
           courseCount: 0,
@@ -109,14 +112,21 @@ export const PopularCoursesCard = () => {
           <p className="text-sm text-muted-foreground">Keine Daten verfügbar</p>
         ) : (
           popularCourses.map((course, index) => (
-            <div key={course.title} className="flex justify-between items-center">
+            <div key={course.title} className="flex justify-between items-center gap-2">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
                   #{index + 1} {course.title}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {course.avgUtilization}% Auslastung
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    {course.avgUtilization}% Auslastung
+                  </p>
+                  {course.trainer && (
+                    <Badge variant="outline" className="text-xs">
+                      {course.trainer}
+                    </Badge>
+                  )}
+                </div>
               </div>
               <Badge variant="secondary" className="ml-2">
                 {course.registrations}x

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock } from "lucide-react";
+import { Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface BookingPattern {
   dayOfWeek: string;
@@ -14,6 +15,8 @@ interface BookingPattern {
 export const BookingPatternsCard = () => {
   const [loading, setLoading] = useState(true);
   const [patterns, setPatterns] = useState<BookingPattern[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 18;
 
   const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -89,7 +92,10 @@ export const BookingPatternsCard = () => {
     );
   }
 
-  const displayPatterns = patterns.slice(0, 10);
+  const totalPages = Math.ceil(patterns.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayPatterns = patterns.slice(startIndex, endIndex);
 
   const mostPopular = patterns.reduce((max, pattern) =>
     pattern.registrations > max.registrations ? pattern : max,
@@ -126,11 +132,29 @@ export const BookingPatternsCard = () => {
           ))
         )}
       </CardContent>
-      {patterns.length > 10 && (
+      {totalPages > 1 && (
         <CardFooter className="pb-4">
-          <p className="text-xs text-muted-foreground">
-            ... und {patterns.length - 10} weitere Buchungsmuster
-          </p>
+          <div className="flex items-center justify-between w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Seite {currentPage} von {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </CardFooter>
       )}
       <CardFooter>
