@@ -33,9 +33,36 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
 
       if (error) throw error
 
+      // Get profiles for all users in leaderboard to check visibility
+      const userIds = leaderboardData?.map(entry => entry.user_id) || []
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, show_in_leaderboard')
+        .in('user_id', userIds)
+
+      // Create a map for quick lookup
+      const profileMap = new Map(
+        profilesData?.map(p => [p.user_id, p.show_in_leaderboard]) || []
+      )
+
+      // Check if current user should be visible in leaderboard
+      const currentUserVisible = profileMap.get(user.id) ?? true
+      if (!currentUserVisible) {
+        setPosition(null)
+        setTotalUsers(0)
+        setLoading(false)
+        return
+      }
+
       if (leaderboardData && leaderboardData.length > 0) {
+        // Filter to only include users with show_in_leaderboard = true
+        const visibleLeaderboardData = leaderboardData.filter(entry => {
+          const isVisible = profileMap.get(entry.user_id)
+          return isVisible !== false // Include if true or undefined (default true)
+        })
+        
         // Calculate total scores and sort by total score
-        const sortedData = leaderboardData
+        const sortedData = visibleLeaderboardData
           .map(entry => ({
             ...entry,
             total_score: entry.training_count + (entry.challenge_bonus_points || 0)
