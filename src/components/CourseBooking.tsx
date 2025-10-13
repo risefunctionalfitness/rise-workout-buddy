@@ -117,6 +117,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           .from('courses')
           .select(`
             *,
+            color,
             course_registrations(status)
           `)
           .eq('is_cancelled', false)
