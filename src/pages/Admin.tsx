@@ -323,15 +323,17 @@ export default function Admin() {
         }
       }
 
-      // Update profile data (display_name, first_name, last_name, etc.)
+      // Update profile data (display_name, first_name, last_name, membership_type, authors, etc.)
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
           display_name: `${editedFirstName} ${editedLastName}`.trim() || editedFirstName || editedLastName,
           first_name: editedFirstName,
           last_name: editedLastName,
-          email: editedEmail, // Also update in profiles for consistency
-          access_code: editingMember.access_code
+          email: editedEmail,
+          access_code: editingMember.access_code,
+          membership_type: editingMember.membership_type,
+          authors: editingMember.authors
         })
         .eq('user_id', editingMember.user_id);
 
@@ -343,6 +345,34 @@ export default function Admin() {
           variant: "destructive",
         });
         return;
+      }
+
+      // Handle "10er Karte" membership credits
+      if (editingMember.membership_type === '10er Karte') {
+        const { data: existingCredits } = await supabase
+          .from('membership_credits')
+          .select('id')
+          .eq('user_id', editingMember.user_id)
+          .maybeSingle();
+
+        if (!existingCredits) {
+          const { error: creditsError } = await supabase
+            .from('membership_credits')
+            .insert({
+              user_id: editingMember.user_id,
+              credits_remaining: 0,
+              credits_total: 0
+            });
+
+          if (creditsError) {
+            console.error('Error creating credits entry:', creditsError);
+            toast({
+              title: "Warnung",
+              description: "Mitgliedschaft aktualisiert, aber Credits-Eintrag konnte nicht erstellt werden",
+              variant: "destructive",
+            });
+          }
+        }
       }
 
       // Update the auth password to match the new access code

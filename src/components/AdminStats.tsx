@@ -66,24 +66,6 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     loadStats()
   }, [])
 
-  const triggerInactiveCheck = async () => {
-    try {
-      const { data, error } = await supabase.rpc('update_member_status')
-      
-      if (error) throw error
-      
-      toast({
-        title: "✅ Inaktivitätsprüfung durchgeführt",
-        description: "Alle inaktiven Mitglieder wurden geprüft und Webhooks versendet."
-      })
-    } catch (error: any) {
-      toast({
-        title: "❌ Fehler",
-        description: error.message,
-        variant: "destructive"
-      })
-    }
-  }
 
   const loadStats = async () => {
     try {
@@ -421,21 +403,6 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Inactive Members Check */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Inaktivitätsprüfung</p>
-              <p className="text-xs text-muted-foreground">Prüft alle Mitglieder auf Inaktivität und versendet Webhooks</p>
-            </div>
-            <Button onClick={triggerInactiveCheck} variant="outline">
-              Jetzt prüfen
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Main Stats */}
       <div className="grid grid-cols-1 gap-4">
         <Card>
