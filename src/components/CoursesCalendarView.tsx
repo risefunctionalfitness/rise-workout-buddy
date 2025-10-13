@@ -196,11 +196,11 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                   }}
                   onClick={() => onCourseClick(course)}
                 >
-                  <CardContent className="p-0">
+                  <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
-                          <h4 className="font-medium truncate text-foreground">{course.title}</h4>
+                          <h4 className="font-medium truncate">{course.title}</h4>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">

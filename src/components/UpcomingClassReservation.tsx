@@ -62,7 +62,7 @@ export const UpcomingClassReservation = ({
     try {
       const { data, error } = await supabase
         .from("courses")
-        .select("*, course_registrations!inner(id)")
+        .select("*, course_registrations!inner(id), color")
         .eq("course_registrations.user_id", user.id)
         .eq("course_registrations.status", "registered")
         .gte("course_date", format(new Date(), "yyyy-MM-dd"))
@@ -210,7 +210,10 @@ export const UpcomingClassReservation = ({
     <>
       <button
         onClick={handleCardClick}
-        className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-auto hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer w-full"
+        className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-auto hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer w-full border-l-8"
+        style={{
+          borderLeftColor: upcomingCourse.color || '#f3f4f6'
+        }}
       >
         <Calendar className="absolute top-3 right-3 h-4 w-4 text-gray-600 dark:text-gray-400" />
         
