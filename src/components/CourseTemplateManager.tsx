@@ -462,18 +462,14 @@ export const CourseTemplateManager = () => {
               <form onSubmit={editingTemplate ? handleUpdateTemplate : handleCreateTemplate} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="title">Titel</Label>
-                    <Select value={templateForm.title} onValueChange={(value) => setTemplateForm(prev => ({ ...prev, title: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Kurstyp wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Functional Fitness">Functional Fitness</SelectItem>
-                        <SelectItem value="Strength">Strength</SelectItem>
-                        <SelectItem value="Mobility">Mobility</SelectItem>
-                        <SelectItem value="Fundamentals">Fundamentals</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="title">Kurstitel</Label>
+                    <Input
+                      id="title"
+                      value={templateForm.title}
+                      onChange={(e) => setTemplateForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="z.B. Functional Fitness, Strength, Mobility"
+                      required
+                    />
                   </div>
                   <div>
                     <Label htmlFor="trainer">Trainer</Label>
