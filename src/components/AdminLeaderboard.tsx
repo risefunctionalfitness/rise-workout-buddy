@@ -109,19 +109,22 @@ export const AdminLeaderboard: React.FC = () => {
       const challengeCompletedUsers = new Set(challengeData?.map(c => c.user_id) || [])
 
       // Combine leaderboard data with profile info and calculate total score
-      const leaderboardWithProfiles = leaderboardData.map(entry => {
+    const leaderboardWithProfiles = leaderboardData
+      .map(entry => {
         const profile = profileMap.get(entry.user_id)
+        // Nur Einträge behalten, für die ein Profil gefunden wurde
+        if (!profile) return null
+        
         return {
           ...entry,
-          display_name: profile?.display_name || 'Unbekannt',
-          avatar_url: profile?.avatar_url || null,
+          display_name: profile.display_name,
+          avatar_url: profile.avatar_url || null,
           total_score: entry.training_count + entry.challenge_bonus_points,
           hasCompletedChallenge: challengeCompletedUsers.has(entry.user_id)
         }
       })
-
-      // Sort by total score descending
-      leaderboardWithProfiles.sort((a, b) => b.total_score - a.total_score)
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+      .sort((a, b) => b.total_score - a.total_score)
 
       setLeaderboard(leaderboardWithProfiles)
     } catch (error) {

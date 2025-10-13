@@ -154,8 +154,12 @@ export const Leaderboard: React.FC = () => {
       })
 
       // Combine leaderboard data with profile info and calculate total score
-      const leaderboardWithProfiles = aggregatedData.map(entry => {
+    const leaderboardWithProfiles = aggregatedData
+      .map(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
+        // Nur Einträge behalten, für die ein Profil gefunden wurde
+        if (!profile) return null
+        
         const hasCompletedChallenge = challengeProgress?.some(cp => cp.user_id === entry.user_id) || false
         const totalScore = entry.training_count + (entry.challenge_bonus_points || 0)
         const mostRecentTraining = mostRecentTrainingMap.get(entry.user_id) || '1970-01-01'
@@ -165,15 +169,17 @@ export const Leaderboard: React.FC = () => {
           user_id: entry.user_id,
           training_count: entry.training_count,
           challenge_bonus_points: entry.challenge_bonus_points || 0,
-          display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
-          avatar_url: profile?.avatar_url || null,
+          display_name: profile.nickname || profile.display_name,
+          avatar_url: profile.avatar_url || null,
           year: currentYear,
           month: currentMonth,
           total_score: totalScore,
           hasCompletedChallenge,
           most_recent_training: mostRecentTraining
         }
-      }).sort((a, b) => {
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+      .sort((a, b) => {
         // Primary sort: by total score (descending)
         if (a.total_score !== b.total_score) {
           return b.total_score - a.total_score
