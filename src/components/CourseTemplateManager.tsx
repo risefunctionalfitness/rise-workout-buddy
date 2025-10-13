@@ -85,6 +85,7 @@ export const CourseTemplateManager = () => {
   const [endDate, setEndDate] = useState<Date>()
 
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState<CourseTemplate | null>(null)
 
   useEffect(() => {
     loadData()
@@ -315,6 +316,51 @@ export const CourseTemplateManager = () => {
     }
   }
 
+  const handleEditTemplate = (template: CourseTemplate) => {
+    setEditingTemplate(template)
+    setTemplateForm({
+      title: template.title,
+      trainer: template.trainer,
+      strength_exercise: template.strength_exercise || '',
+      max_participants: template.max_participants,
+      registration_deadline_minutes: template.registration_deadline_minutes,
+      cancellation_deadline_minutes: template.cancellation_deadline_minutes,
+      duration_minutes: template.duration_minutes,
+      color: template.color || '#f3f4f6'
+    })
+  }
+
+  const handleUpdateTemplate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingTemplate) return
+
+    try {
+      const { error } = await supabase
+        .from('course_templates')
+        .update(templateForm)
+        .eq('id', editingTemplate.id)
+
+      if (error) throw error
+
+      toast.success('Vorlage erfolgreich aktualisiert')
+      setEditingTemplate(null)
+      setTemplateForm({
+        title: '',
+        trainer: '',
+        strength_exercise: '',
+        max_participants: 16,
+        registration_deadline_minutes: 30,
+        cancellation_deadline_minutes: 60,
+        duration_minutes: 60,
+        color: '#f3f4f6'
+      })
+      await loadTemplates()
+    } catch (error) {
+      console.error('Error updating template:', error)
+      toast.error('Fehler beim Aktualisieren der Vorlage')
+    }
+  }
+
   const handleDeleteTemplate = async (templateId: string) => {
     if (!confirm('Sind Sie sicher, dass Sie diese Vorlage löschen möchten?')) return
 
@@ -407,13 +453,13 @@ export const CourseTemplateManager = () => {
         <TabsContent value="templates" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Neue Kursvorlage erstellen</CardTitle>
+              <CardTitle>{editingTemplate ? 'Vorlage bearbeiten' : 'Neue Kursvorlage erstellen'}</CardTitle>
               <CardDescription>
-                Erstellen Sie wiederverwendbare Vorlagen für Ihre Kurse
+                {editingTemplate ? 'Bearbeiten Sie die Kursvorlage' : 'Erstellen Sie wiederverwendbare Vorlagen für Ihre Kurse'}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleCreateTemplate} className="space-y-4">
+              <form onSubmit={editingTemplate ? handleUpdateTemplate : handleCreateTemplate} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="title">Titel</Label>
@@ -505,9 +551,32 @@ export const CourseTemplateManager = () => {
                     </div>
                   </div>
                 </div>
-                <Button type="submit" className="w-full">
-                  Vorlage erstellen
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1">
+                    {editingTemplate ? 'Vorlage aktualisieren' : 'Vorlage erstellen'}
+                  </Button>
+                  {editingTemplate && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setEditingTemplate(null)
+                        setTemplateForm({
+                          title: '',
+                          trainer: '',
+                          strength_exercise: '',
+                          max_participants: 16,
+                          registration_deadline_minutes: 30,
+                          cancellation_deadline_minutes: 60,
+                          duration_minutes: 60,
+                          color: '#f3f4f6'
+                        })
+                      }}
+                    >
+                      Abbrechen
+                    </Button>
+                  )}
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -550,13 +619,22 @@ export const CourseTemplateManager = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteTemplate(template.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditTemplate(template)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteTemplate(template.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
