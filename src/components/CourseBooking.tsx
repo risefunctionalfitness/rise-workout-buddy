@@ -31,6 +31,7 @@ interface Course {
   waitlist_count: number
   is_registered: boolean
   is_waitlisted: boolean
+  color?: string
 }
 
 interface CourseBookingProps {
@@ -505,6 +506,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                           ? 'border-green-500 border-2' 
                           : ''
                       }`}
+                      style={{
+                        borderLeft: `8px solid ${course.color || '#f3f4f6'}`
+                      }}
                       onClick={() => handleCourseClick(course)}
                     >
                       <CardContent className="p-4">
