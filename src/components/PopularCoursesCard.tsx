@@ -46,10 +46,10 @@ export const PopularCoursesCard = () => {
       const courseMap = new Map<string, CourseStats>();
 
       coursesData?.forEach((course: any) => {
-        const title = course.title;
+        const title = course.title.trim();
         const existing = courseMap.get(title) || {
           title,
-          trainer: course.trainer || '',
+          trainer: (course.trainer || '').trim(),
           registrations: 0,
           totalCapacity: 0,
           courseCount: 0,
