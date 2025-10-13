@@ -64,6 +64,22 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     loadStats()
   }, [])
 
+  const sendTestWebhook = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-test-reactivation-webhook', {
+        body: {}
+      })
+      
+      if (error) throw error
+      
+      console.log('Test webhook response:', data)
+      alert(`✅ Test-Webhook erfolgreich gesendet!\n\nAntwort: ${JSON.stringify(data, null, 2)}`)
+    } catch (error: any) {
+      console.error('Error sending test webhook:', error)
+      alert(`❌ Fehler beim Senden des Test-Webhooks:\n\n${error.message}`)
+    }
+  }
+
   const loadStats = async () => {
     try {
       setLoading(true)
@@ -400,6 +416,21 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Test Webhook Button */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">Webhook-Test</p>
+              <p className="text-xs text-muted-foreground">Sendet einen Test-Webhook für Reaktivierung an Make.com</p>
+            </div>
+            <Button onClick={sendTestWebhook} variant="outline">
+              Test-Webhook senden
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Main Stats */}
       <div className="grid grid-cols-1 gap-4">
         <Card>
