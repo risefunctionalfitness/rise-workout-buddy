@@ -37,6 +37,7 @@ interface Member {
   status: string;
   last_login_at: string | null;
   authors?: boolean;
+  show_in_leaderboard?: boolean;
 }
 
 export default function Admin() {
@@ -51,6 +52,7 @@ export default function Admin() {
   const [newMemberCode, setNewMemberCode] = useState("");
   const [newMembershipType, setNewMembershipType] = useState("Premium Member");
   const [newMemberIsAuthor, setNewMemberIsAuthor] = useState(false);
+  const [newMemberShowInLeaderboard, setNewMemberShowInLeaderboard] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -160,7 +162,7 @@ export default function Admin() {
       // Build query with search filter - removed email from profiles query
       let query = supabase
         .from('profiles')
-        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors', { count: 'exact' });
+        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors, show_in_leaderboard', { count: 'exact' });
       
       if (searchTerm) {
         query = query.or(`display_name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
@@ -256,7 +258,8 @@ export default function Admin() {
             last_name: newMemberLastName,
             access_code: newMemberCode,
             membership_type: newMembershipType,
-            authors: newMemberIsAuthor
+            authors: newMemberIsAuthor,
+            show_in_leaderboard: newMemberShowInLeaderboard
           }
         }
       });
@@ -279,6 +282,7 @@ export default function Admin() {
         setNewMemberCode("");
         setNewMembershipType("Premium Member");
         setNewMemberIsAuthor(false);
+        setNewMemberShowInLeaderboard(true);
         setDialogOpen(false);
         setCurrentPage(1);
         loadMembers();
@@ -333,7 +337,8 @@ export default function Admin() {
           email: editedEmail,
           access_code: editingMember.access_code,
           membership_type: editingMember.membership_type,
-          authors: editingMember.authors
+          authors: editingMember.authors,
+          show_in_leaderboard: editingMember.show_in_leaderboard ?? true
         })
         .eq('user_id', editingMember.user_id);
 
@@ -629,6 +634,18 @@ export default function Admin() {
                         Autor (kann WODs erstellen)
                       </label>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="leaderboard-checkbox"
+                        checked={newMemberShowInLeaderboard}
+                        onChange={(e) => setNewMemberShowInLeaderboard(e.target.checked)}
+                        className="rounded"
+                      />
+                      <label htmlFor="leaderboard-checkbox" className="text-sm">
+                        Im Leaderboard anzeigen
+                      </label>
+                    </div>
                     <div className="flex gap-2">
                       <Button type="submit" className="flex-1">
                         Mitglied erstellen
@@ -722,6 +739,21 @@ export default function Admin() {
                          />
                          <label htmlFor="edit-author-checkbox" className="text-sm">
                            Autor (kann WODs erstellen)
+                         </label>
+                       </div>
+                       <div className="flex items-center space-x-2">
+                         <input
+                           type="checkbox"
+                           id="edit-leaderboard-checkbox"
+                           checked={editingMember.show_in_leaderboard ?? true}
+                           onChange={(e) => setEditingMember({
+                             ...editingMember,
+                             show_in_leaderboard: e.target.checked
+                           })}
+                           className="rounded"
+                         />
+                         <label htmlFor="edit-leaderboard-checkbox" className="text-sm">
+                           Im Leaderboard anzeigen
                          </label>
                        </div>
                       <div className="flex gap-2">

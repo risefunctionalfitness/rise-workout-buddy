@@ -73,11 +73,12 @@ export const AdminLeaderboard: React.FC = () => {
       // Get all user IDs from leaderboard
       const userIds = leaderboardData.map(entry => entry.user_id)
 
-      // Get profiles for all users in leaderboard
+      // Get profiles for all users in leaderboard (only those who should be shown)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
         .in('user_id', userIds)
+        .eq('show_in_leaderboard', true)
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError)

@@ -469,6 +469,7 @@ export type Database = {
           membership_type: string | null
           nickname: string | null
           preferred_exercises: Json | null
+          show_in_leaderboard: boolean
           snatch_1rm: number | null
           status: string | null
           updated_at: string
@@ -497,6 +498,7 @@ export type Database = {
           membership_type?: string | null
           nickname?: string | null
           preferred_exercises?: Json | null
+          show_in_leaderboard?: boolean
           snatch_1rm?: number | null
           status?: string | null
           updated_at?: string
@@ -525,6 +527,7 @@ export type Database = {
           membership_type?: string | null
           nickname?: string | null
           preferred_exercises?: Json | null
+          show_in_leaderboard?: boolean
           snatch_1rm?: number | null
           status?: string | null
           updated_at?: string
