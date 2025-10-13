@@ -103,7 +103,15 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
       return <span className="text-lg font-semibold text-foreground">...</span>;
     }
 
-    // Always show same text regardless of membership type
+    if (membershipType === "10er Karte") {
+      return (
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground mb-1">Credits</p>
+          <p className="text-2xl font-bold text-primary">{credits}</p>
+        </div>
+      );
+    }
+
     return <span className="text-lg font-semibold text-foreground">Tür-Code</span>;
   };
 
@@ -152,8 +160,12 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
     <Popover>
       <PopoverTrigger asChild>
         <button className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-24 hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] w-full">
-          {/* Key Icon top-right */}
-          <Key className="absolute top-4 right-4 h-5 w-5 text-primary" />
+          {/* Icon top-right - different for 10er Karte */}
+          {membershipType === "10er Karte" ? (
+            <Dumbbell className="absolute top-4 right-4 h-5 w-5 text-primary" />
+          ) : (
+            <Key className="absolute top-4 right-4 h-5 w-5 text-primary" />
+          )}
 
           {/* Center Content */}
           <div className="flex items-center justify-center h-full">
