@@ -62,6 +62,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
           .from('courses')
           .select(`
             *,
+            color,
             course_registrations(status)
           `)
           .eq('is_cancelled', false)

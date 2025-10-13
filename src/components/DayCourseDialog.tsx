@@ -102,6 +102,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         .from('courses')
         .select(`
           *,
+          color,
           course_registrations(status)
         `)
         .eq('is_cancelled', false)
