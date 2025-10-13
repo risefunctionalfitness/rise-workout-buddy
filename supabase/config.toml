@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.get-member-email]
 verify_jwt = false
+
+[functions.send-test-reactivation-webhook]
+verify_jwt = false
