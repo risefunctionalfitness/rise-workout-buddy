@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button"
 import { format, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
 import { CourseParticipantsList } from "@/components/CourseParticipantsList"
+import { AdminCoursesCalendarView } from "@/components/AdminCoursesCalendarView"
 import { useToast } from "@/hooks/use-toast"
+import { Calendar, List } from "lucide-react"
 
 interface Course {
   id: string
@@ -25,6 +27,7 @@ export const CourseParticipants = () => {
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -132,65 +135,89 @@ export const CourseParticipants = () => {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Kurs-Teilnehmer verwalten</h1>
+        <div className="flex gap-2">
+          <Button 
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            onClick={() => setViewMode('list')}
+            size="sm"
+          >
+            <List className="h-4 w-4 mr-2" />
+            Listen-Ansicht
+          </Button>
+          <Button 
+            variant={viewMode === 'calendar' ? 'default' : 'outline'}
+            onClick={() => setViewMode('calendar')}
+            size="sm"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Kalender-Ansicht
+          </Button>
+        </div>
       </div>
 
-      {/* Courses List */}
-      <div className="grid grid-cols-1 gap-4">
-        {Object.entries(groupedCourses).map(([date, dayCourses]) => (
-          <div key={date} className="space-y-2">
-            <h3 className="font-medium text-sm text-muted-foreground">
-              {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
-            </h3>
-            <div className="space-y-2">
-              {dayCourses.map(course => (
-                <Card 
-                  key={course.id}
-                  className="cursor-pointer transition-all duration-200 hover:shadow-md shadow-md border-l-8"
-                  style={{
-                    borderLeftColor: course.color || '#f3f4f6'
-                  }}
-                  onClick={() => setSelectedCourse(course)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">{course.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {course.trainer} • {course.start_time} - {course.end_time}
-                        </p>
-                      </div>
-                      <div className="text-right space-y-1">
-                        {(() => {
-                          const percentage = (course.registered_count / course.max_participants) * 100;
-                          let badgeColor = "bg-green-500";
-                          if (percentage >= 100) badgeColor = "bg-red-500";
-                          else if (percentage >= 75) badgeColor = "bg-[#edb408]";
-                          
-                          return (
-                            <Badge variant="secondary" className={`text-white ${badgeColor}`}>
-                              {course.registered_count}/{course.max_participants}
+      {viewMode === 'list' ? (
+        /* Courses List */
+        <div className="grid grid-cols-1 gap-4">
+          {Object.entries(groupedCourses).map(([date, dayCourses]) => (
+            <div key={date} className="space-y-2">
+              <h3 className="font-medium text-sm text-muted-foreground">
+                {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
+              </h3>
+              <div className="space-y-2">
+                {dayCourses.map(course => (
+                  <Card 
+                    key={course.id}
+                    className="cursor-pointer transition-all duration-200 hover:shadow-md shadow-md border-l-8"
+                    style={{
+                      borderLeftColor: course.color || '#f3f4f6'
+                    }}
+                    onClick={() => setSelectedCourse(course)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold">{course.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {course.trainer} • {course.start_time} - {course.end_time}
+                          </p>
+                        </div>
+                        <div className="text-right space-y-1">
+                          {(() => {
+                            const percentage = (course.registered_count / course.max_participants) * 100;
+                            let badgeColor = "bg-green-500";
+                            if (percentage >= 100) badgeColor = "bg-red-500";
+                            else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                            
+                            return (
+                              <Badge variant="secondary" className={`text-white ${badgeColor}`}>
+                                {course.registered_count}/{course.max_participants}
+                              </Badge>
+                            );
+                          })()}
+                          {course.waitlisted_count > 0 && (
+                            <Badge variant="outline" className="bg-yellow-500 text-white block">
+                              Warteliste: {course.waitlisted_count}
                             </Badge>
-                          );
-                        })()}
-                        {course.waitlisted_count > 0 && (
-                          <Badge variant="outline" className="bg-yellow-500 text-white block">
-                            Warteliste: {course.waitlisted_count}
-                          </Badge>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-        {courses.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            Keine kommenden Kurse verfügbar
-          </div>
-        )}
-      </div>
+          ))}
+          {courses.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              Keine kommenden Kurse verfügbar
+            </div>
+          )}
+        </div>
+      ) : (
+        <AdminCoursesCalendarView 
+          onCourseClick={(course) => setSelectedCourse(course)}
+        />
+      )}
     </div>
   )
 }
