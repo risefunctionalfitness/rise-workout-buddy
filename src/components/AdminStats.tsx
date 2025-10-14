@@ -372,21 +372,21 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
     )
   }
 
-  // Get colors for membership types
+  // Get colors for membership types (matching MonthlyRegistrationsChart)
   const getMembershipColor = (type: string) => {
     switch (type) {
       case 'Basic Member':
-        return 'hsl(334, 87%, 40%)' // #bd114a (RISE Red)
+        return 'hsl(142, 76%, 36%)' // Green for Basic
       case 'Premium Member': 
-        return 'hsl(334, 87%, 30%)' // Darker red for Premium
+        return 'hsl(45, 93%, 47%)' // Gold for Premium
       case 'Wellpass':
-        return 'hsl(185, 100%, 33%)' // #00a8b5
+        return 'hsl(185, 100%, 33%)' // Cyan for Wellpass
       case '10er Karte':
-        return 'hsl(0, 0%, 0%)' // #000000
+        return 'hsl(0, 0%, 0%)' // Black for 10er Karte
       case 'Open Gym':
-        return 'hsl(0, 0%, 65%)' // #a5a5a5
+        return 'hsl(0, 0%, 50%)' // Gray for Open Gym
       default:
-        return 'hsl(334, 87%, 40%)'
+        return 'hsl(var(--primary))'
     }
   }
 

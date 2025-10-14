@@ -166,9 +166,9 @@ export const MonthlyRegistrationsChart = () => {
               type="monotone" 
               dataKey="Basic Member" 
               name="Basic Member"
-              stroke="hsl(334, 87%, 40%)" 
+              stroke="hsl(142, 76%, 36%)" 
               strokeWidth={2}
-              dot={{ fill: "hsl(334, 87%, 40%)", r: 3 }}
+              dot={{ fill: "hsl(142, 76%, 36%)", r: 3 }}
               activeDot={{ r: 5 }}
             />
             
