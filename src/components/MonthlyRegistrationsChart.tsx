@@ -53,9 +53,10 @@ export const MonthlyRegistrationsChart = () => {
       // Create array of last 12 months (oldest to newest, so current month is on the right)
       const months: MonthlyData[] = []
       for (let i = 11; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-        const year = date.getFullYear()
-        const month = date.getMonth() + 1
+        // Get first day of the target month
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const year = monthStart.getFullYear()
+        const month = monthStart.getMonth() + 1
         
         // Get all entries for this month
         const monthEntries = leaderboardData?.filter(entry => 
@@ -90,7 +91,7 @@ export const MonthlyRegistrationsChart = () => {
         const total = monthEntries.reduce((sum, e) => sum + e.training_count, 0)
         
         // Format month name (e.g., "Okt '25")
-        const monthName = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
+        const monthName = monthStart.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
         
         months.push({
           month: monthName,
