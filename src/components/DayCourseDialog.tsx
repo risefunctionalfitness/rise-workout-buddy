@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, MapPin, Calendar, X } from "lucide-react"
+import { Clock, MapPin, Calendar, X, Dumbbell } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { User } from "@supabase/supabase-js"
@@ -11,6 +11,7 @@ import { format, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
 import { ProfileImageViewer } from "./ProfileImageViewer"
 import { MembershipBadge } from "./MembershipBadge"
+import { OpenGymCheckin } from "./OpenGymCheckin"
 
 interface Course {
   id: string
@@ -55,6 +56,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [isTrainer, setIsTrainer] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
+  const [showQRScanner, setShowQRScanner] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -332,6 +334,31 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
     }
   }
 
+  const handleQRCheckinComplete = async () => {
+    try {
+      const { error } = await supabase
+        .from('training_sessions')
+        .insert({
+          user_id: user.id,
+          date: date,
+          workout_type: 'free_training',
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+
+      if (error) throw error
+
+      toast.success('Open Gym Check-In erfolgreich!')
+      
+      window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+      
+      setShowQRScanner(false)
+    } catch (error) {
+      console.error('Error saving open gym check-in:', error)
+      toast.error('Fehler beim Speichern des Check-Ins')
+    }
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -406,6 +433,24 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                   </Card>
                 )
               })
+            )}
+
+            {!loading && userMembershipType !== '10er Karte' && (
+              <div className="mt-4 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowQRScanner(true)}
+                  className="w-full h-16 flex items-center gap-4 justify-start"
+                >
+                  <Dumbbell className="h-6 w-6 text-primary" />
+                  <div className="text-left">
+                    <div className="font-medium">Open Gym Check-In</div>
+                    <div className="text-sm text-muted-foreground">
+                      QR Code scannen fürs Leaderboard
+                    </div>
+                  </div>
+                </Button>
+              </div>
             )}
           </div>
         </DialogContent>
@@ -556,6 +601,13 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         onClose={() => setSelectedProfile(null)}
         imageUrl={selectedProfile?.imageUrl || null}
         displayName={selectedProfile?.displayName || ''}
+      />
+
+      <OpenGymCheckin
+        open={showQRScanner}
+        onOpenChange={setShowQRScanner}
+        onCheckinComplete={handleQRCheckinComplete}
+        date={new Date(date)}
       />
     </>
   )
