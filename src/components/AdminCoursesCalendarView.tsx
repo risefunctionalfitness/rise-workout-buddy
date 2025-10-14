@@ -106,12 +106,6 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
           selected={selectedDate}
           onSelect={(date) => date && setSelectedDate(date)}
           locale={de}
-          modifiers={{
-            hasCourses: datesWithCourses,
-          }}
-          modifiersClassNames={{
-            hasCourses: "border-2 border-primary font-bold",
-          }}
           className="rounded-md border"
         />
       </div>

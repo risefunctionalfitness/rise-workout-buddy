@@ -18,6 +18,17 @@ export const WeekPreview = ({ user, userRole }: WeekPreviewProps) => {
     if (user?.id) {
       loadRegistrations();
     }
+
+    // Listen for course registration changes
+    const handleRegistrationChange = () => {
+      loadRegistrations();
+    };
+
+    window.addEventListener('courseRegistrationChanged', handleRegistrationChange);
+
+    return () => {
+      window.removeEventListener('courseRegistrationChanged', handleRegistrationChange);
+    };
   }, [user?.id]);
 
   const loadRegistrations = async () => {
