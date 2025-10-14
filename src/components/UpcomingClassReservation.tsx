@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
+import { timezone } from "@/lib/timezone";
 import {
   Dialog,
   DialogContent,
@@ -60,19 +61,29 @@ export const UpcomingClassReservation = ({
     if (!user?.id) return;
 
     try {
+      const now = timezone.nowInBerlin();
+      const today = format(now, "yyyy-MM-dd");
+      const currentTime = format(now, "HH:mm:ss");
+
       const { data, error } = await supabase
         .from("courses")
         .select("*, course_registrations!inner(id), color")
         .eq("course_registrations.user_id", user.id)
         .eq("course_registrations.status", "registered")
-        .gte("course_date", format(new Date(), "yyyy-MM-dd"))
+        .gte("course_date", today)
         .order("course_date", { ascending: true })
-        .order("start_time", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order("start_time", { ascending: true });
 
       if (error) throw error;
-      setUpcomingCourse(data);
+
+      // Filter out courses that have already started today
+      const upcomingCourses = data?.filter(course => {
+        if (course.course_date > today) return true;
+        if (course.course_date === today && course.start_time > currentTime) return true;
+        return false;
+      });
+
+      setUpcomingCourse(upcomingCourses?.[0] || null);
     } catch (error) {
       console.error("Error loading upcoming reservation:", error);
     } finally {
