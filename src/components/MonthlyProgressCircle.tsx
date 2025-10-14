@@ -15,7 +15,19 @@ export const MonthlyProgressCircle = ({ user }: MonthlyProgressCircleProps) => {
   useEffect(() => {
     if (user?.id) {
       loadMonthlyData();
-      setupRealtimeUpdates();
+      const cleanup = setupRealtimeUpdates();
+      
+      // Event Listener für sofortige Updates bei An-/Abmeldungen
+      const handleCourseRegistrationChanged = () => {
+        loadMonthlyData();
+      };
+      
+      window.addEventListener('courseRegistrationChanged', handleCourseRegistrationChanged);
+      
+      return () => {
+        cleanup();
+        window.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged);
+      };
     }
   }, [user?.id]);
 
@@ -103,6 +115,7 @@ export const MonthlyProgressCircle = ({ user }: MonthlyProgressCircleProps) => {
       )
       .subscribe();
 
+    // Return cleanup function
     return () => {
       supabase.removeChannel(channel1);
       supabase.removeChannel(channel2);
