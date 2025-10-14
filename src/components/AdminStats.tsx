@@ -12,6 +12,7 @@ import { PopularCoursesCard } from "@/components/PopularCoursesCard"
 import { CancellationRateCard } from "@/components/CancellationRateCard"
 import { BookingPatternsCard } from "@/components/BookingPatternsCard"
 import { InactiveMembersCard } from "@/components/InactiveMembersCard"
+import { MonthlyRegistrationsChart } from "@/components/MonthlyRegistrationsChart"
 
 interface AdminStatsProps {
   onStatsLoad?: (stats: any) => void
@@ -417,6 +418,9 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Monthly Registrations Line Chart */}
+      <MonthlyRegistrationsChart />
 
       {/* Chart */}
       <Card>
