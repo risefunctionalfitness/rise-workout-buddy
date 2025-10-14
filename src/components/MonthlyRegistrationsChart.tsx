@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/integrations/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
+import { timezone } from "@/lib/timezone"
 
 interface MonthlyData {
   month: string
@@ -21,30 +22,45 @@ export const MonthlyRegistrationsChart = () => {
     try {
       setLoading(true)
       
-      // Get the last 12 months
-      const months: MonthlyData[] = []
-      const currentDate = new Date()
+      // Get current date in Berlin timezone
+      const now = timezone.nowInBerlin()
       
+      // Calculate date 12 months ago
+      const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+      const startDate = timezone.formatInBerlin(twelveMonthsAgo, 'yyyy-MM-dd')
+      
+      // Get all registrations from the last 12 months with a single query
+      const { data: registrations, error } = await supabase
+        .from('course_registrations')
+        .select('registered_at')
+        .gte('registered_at', startDate)
+      
+      if (error) throw error
+      
+      // Create array of last 12 months (oldest to newest, so current month is on the right)
+      const months: MonthlyData[] = []
       for (let i = 11; i >= 0; i--) {
-        const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
         const year = date.getFullYear()
         const month = date.getMonth() + 1
         
-        // Get course registrations for this month
-        const { data: registrations, error } = await supabase
-          .from('course_registrations')
-          .select('id, registered_at')
-          .gte('registered_at', `${year}-${String(month).padStart(2, '0')}-01`)
-          .lt('registered_at', `${year}-${String(month + 1).padStart(2, '0')}-01`)
+        // Count registrations for this month
+        const monthStart = `${year}-${String(month).padStart(2, '0')}-01`
+        const nextMonth = month === 12 ? 1 : month + 1
+        const nextYear = month === 12 ? year + 1 : year
+        const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
         
-        if (error) throw error
+        const count = registrations?.filter(r => {
+          const regDate = r.registered_at
+          return regDate >= monthStart && regDate < monthEnd
+        }).length || 0
         
-        // Format month name
+        // Format month name (e.g., "Okt '25")
         const monthName = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
         
         months.push({
           month: monthName,
-          registrations: registrations?.length || 0
+          registrations: count
         })
       }
       
