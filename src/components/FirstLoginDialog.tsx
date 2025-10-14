@@ -10,7 +10,7 @@ interface FirstLoginDialogProps {
 
 export const FirstLoginDialog = ({ open, onClose }: FirstLoginDialogProps) => {
   const handleYouTubeClick = () => {
-    window.open("https://youtube.com/shorts/QhQK-PpL3l8?feature=shared", "_blank")
+    window.open("https://youtube.com/shorts/m596TQWRb6A?feature=share", "_blank")
   }
 
   return (
@@ -38,7 +38,7 @@ export const FirstLoginDialog = ({ open, onClose }: FirstLoginDialogProps) => {
           {/* Video Thumbnail */}
           <div className="relative rounded-lg overflow-hidden">
             <img 
-              src="/lovable-uploads/04e0becf-e7d7-4124-b9fd-be009e142294.png" 
+              src="/lovable-uploads/erklaerungsvideo-4.jpg" 
               alt="RISE App Erklärungsvideo" 
               className="w-full h-auto"
             />
