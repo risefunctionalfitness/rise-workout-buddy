@@ -412,6 +412,7 @@ export type Database = {
       }
       news: {
         Row: {
+          attachments: Json | null
           author_id: string
           content: string
           created_at: string
@@ -423,6 +424,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attachments?: Json | null
           author_id: string
           content: string
           created_at?: string
@@ -434,6 +436,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attachments?: Json | null
           author_id?: string
           content?: string
           created_at?: string

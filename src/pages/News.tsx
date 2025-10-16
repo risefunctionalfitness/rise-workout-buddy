@@ -8,6 +8,15 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import { useNavigate } from "react-router-dom"
+import { NewsAttachments } from "@/components/NewsAttachments"
+
+interface Attachment {
+  name: string
+  path: string
+  type: string
+  size: number
+  url: string
+}
 
 interface NewsItem {
   id: string
@@ -16,6 +25,7 @@ interface NewsItem {
   published_at: string
   author_id: string
   link_url?: string | null
+  attachments?: Attachment[]
   profiles?: {
     display_name: string
   } | null
@@ -40,7 +50,7 @@ export default function News() {
         .order('published_at', { ascending: false })
 
       if (error) throw error
-      setNews(data || [])
+      setNews((data || []) as unknown as NewsItem[])
     } catch (error) {
       console.error('Error loading news:', error)
       toast.error('Fehler beim Laden der Nachrichten')
@@ -103,6 +113,7 @@ export default function News() {
                   <div className="prose prose-sm max-w-none">
                     <p className="whitespace-pre-wrap">{item.content}</p>
                   </div>
+                  <NewsAttachments attachments={item.attachments || []} />
                   {item.link_url && (
                     <div className="mt-4">
                       <Button 
