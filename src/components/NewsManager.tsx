@@ -432,6 +432,7 @@ export const NewsManager = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Titel</TableHead>
+                <TableHead>Anhänge</TableHead>
                 <TableHead>Erstellt</TableHead>
                 <TableHead>Aktionen</TableHead>
               </TableRow>
@@ -441,6 +442,33 @@ export const NewsManager = () => {
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
                     {item.title}
+                  </TableCell>
+                  <TableCell>
+                    {item.attachments && item.attachments.length > 0 ? (
+                      <div className="flex gap-1">
+                        {item.attachments.slice(0, 3).map((att, idx) => (
+                          att.type.startsWith('image/') ? (
+                            <img
+                              key={idx}
+                              src={att.url}
+                              alt={att.name}
+                              className="w-8 h-8 object-cover rounded border border-border"
+                            />
+                          ) : (
+                            <div key={idx} className="w-8 h-8 flex items-center justify-center rounded border border-border bg-muted">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )
+                        ))}
+                        {item.attachments.length > 3 && (
+                          <div className="w-8 h-8 flex items-center justify-center rounded border border-border bg-muted text-xs">
+                            +{item.attachments.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {format(new Date(item.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}
