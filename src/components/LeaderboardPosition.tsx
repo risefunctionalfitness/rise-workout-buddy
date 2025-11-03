@@ -40,6 +40,22 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
         .select('user_id, show_in_leaderboard')
         .in('user_id', userIds)
 
+      // Get most recent training session for each user in current month
+      const { data: recentSessions } = await supabase
+        .from('training_sessions')
+        .select('user_id, date')
+        .in('user_id', userIds)
+        .eq('status', 'completed')
+        .order('date', { ascending: false })
+
+      // Create a map of user_id to most recent training date
+      const mostRecentTrainingMap = new Map<string, string>()
+      recentSessions?.forEach(session => {
+        if (!mostRecentTrainingMap.has(session.user_id)) {
+          mostRecentTrainingMap.set(session.user_id, session.date)
+        }
+      })
+
       // Create a map for quick lookup
       const profileMap = new Map(
         profilesData?.map(p => [p.user_id, p.show_in_leaderboard]) || []
@@ -61,13 +77,21 @@ export const LeaderboardPosition: React.FC<LeaderboardPositionProps> = ({ user }
           return isVisible !== false // Include if true or undefined (default true)
         })
         
-        // Calculate total scores and sort by total score
+        // Calculate total scores and sort by total score, then by most recent training
         const sortedData = visibleLeaderboardData
           .map(entry => ({
             ...entry,
-            total_score: entry.training_count + (entry.challenge_bonus_points || 0)
+            total_score: entry.training_count + (entry.challenge_bonus_points || 0),
+            most_recent_training: mostRecentTrainingMap.get(entry.user_id) || '1970-01-01'
           }))
-          .sort((a, b) => b.total_score - a.total_score)
+          .sort((a, b) => {
+            // Primary sort: by total score (descending)
+            if (a.total_score !== b.total_score) {
+              return b.total_score - a.total_score
+            }
+            // Secondary sort: by most recent training date (descending - more recent first)
+            return new Date(b.most_recent_training).getTime() - new Date(a.most_recent_training).getTime()
+          })
         
         const userPosition = sortedData.findIndex(entry => entry.user_id === user.id) + 1
         setPosition(userPosition > 0 ? userPosition : null)

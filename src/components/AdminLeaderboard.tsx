@@ -19,6 +19,7 @@ interface LeaderboardEntry {
   month: number
   total_score: number
   hasCompletedChallenge: boolean
+  most_recent_training: string
 }
 
 export const AdminLeaderboard: React.FC = () => {
@@ -108,6 +109,22 @@ export const AdminLeaderboard: React.FC = () => {
 
       const challengeCompletedUsers = new Set(challengeData?.map(c => c.user_id) || [])
 
+      // Get most recent training session for each user
+      const { data: recentSessions } = await supabase
+        .from('training_sessions')
+        .select('user_id, date')
+        .in('user_id', userIds)
+        .eq('status', 'completed')
+        .order('date', { ascending: false })
+
+      // Create a map of user_id to most recent training date
+      const mostRecentTrainingMap = new Map<string, string>()
+      recentSessions?.forEach(session => {
+        if (!mostRecentTrainingMap.has(session.user_id)) {
+          mostRecentTrainingMap.set(session.user_id, session.date)
+        }
+      })
+
       // Combine leaderboard data with profile info and calculate total score
     const leaderboardWithProfiles = leaderboardData
       .map(entry => {
@@ -115,16 +132,26 @@ export const AdminLeaderboard: React.FC = () => {
         // Nur Einträge behalten, für die ein Profil gefunden wurde
         if (!profile) return null
         
+        const mostRecentTraining = mostRecentTrainingMap.get(entry.user_id) || '1970-01-01'
+        
         return {
           ...entry,
           display_name: profile.display_name,
           avatar_url: profile.avatar_url || null,
           total_score: entry.training_count + entry.challenge_bonus_points,
-          hasCompletedChallenge: challengeCompletedUsers.has(entry.user_id)
+          hasCompletedChallenge: challengeCompletedUsers.has(entry.user_id),
+          most_recent_training: mostRecentTraining
         }
       })
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
-      .sort((a, b) => b.total_score - a.total_score)
+      .sort((a, b) => {
+        // Primary sort: by total score (descending)
+        if (a.total_score !== b.total_score) {
+          return b.total_score - a.total_score
+        }
+        // Secondary sort: by most recent training date (descending - more recent first)
+        return new Date(b.most_recent_training).getTime() - new Date(a.most_recent_training).getTime()
+      })
 
       setLeaderboard(leaderboardWithProfiles)
     } catch (error) {
