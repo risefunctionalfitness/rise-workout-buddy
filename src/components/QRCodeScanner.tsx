@@ -175,11 +175,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       stopAll()
       onScanSuccess(content)
       onOpenChange(false)
-      toast({
-        title: "QR-Code gescannt",
-        description: "Open Gym Check-In erfolgreich!",
-        variant: "default"
-      })
+      // Success toast is now shown after successful save in the parent component
     } else {
       console.log("QR-Code Inhalt stimmt nicht überein")
       toast({

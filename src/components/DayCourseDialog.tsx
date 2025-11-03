@@ -336,7 +336,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
   const handleQRCheckinComplete = async () => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('training_sessions')
         .insert({
           user_id: user.id,
@@ -345,17 +345,38 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           status: 'completed',
           completed_at: new Date().toISOString()
         })
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
 
+      console.log('Open Gym Check-In gespeichert:', data)
       toast.success('Open Gym Check-In erfolgreich!')
       
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       
       setShowQRScanner(false)
-    } catch (error) {
-      console.error('Error saving open gym check-in:', error)
-      toast.error('Fehler beim Speichern des Check-Ins')
+    } catch (error: any) {
+      console.error('Error saving open gym check-in:', {
+        error,
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      })
+      
+      // Spezifischere Fehlermeldungen
+      if (error?.code === '23505') {
+        toast.error('Du hast heute bereits ein Open Gym Check-In!')
+      } else if (error?.message?.includes('timeout')) {
+        toast.error('Zeitüberschreitung - bitte versuche es erneut')
+      } else if (error?.message?.includes('network')) {
+        toast.error('Netzwerkfehler - bitte Verbindung prüfen')
+      } else {
+        toast.error(`Fehler beim Speichern: ${error?.message || 'Unbekannter Fehler'}`)
+      }
     }
   }
 
