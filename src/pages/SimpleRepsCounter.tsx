@@ -112,7 +112,7 @@ const SimpleRepsCounter = () => {
         </p>
       </div>
 
-      <div className="flex-1 px-4 flex items-center justify-center pb-8">
+      <div className="flex-1 px-4 flex items-center justify-center">
         <Card 
           className="w-full border-2 cursor-pointer active:scale-95 transition-transform"
           style={{ minHeight: '60vh' }}
