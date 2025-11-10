@@ -22,6 +22,9 @@ import { TabataTimer } from "@/components/TabataTimer";
 import WorkoutManagement from "./pages/WorkoutManagement";
 import { WorkoutStart } from "@/components/WorkoutStart";
 import { AuthKeeper } from "@/components/AuthKeeper";
+import RepsCounter from "./pages/RepsCounter";
+import SimpleRepsCounter from "./pages/SimpleRepsCounter";
+import ProRepsCounter from "./pages/ProRepsCounter";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +59,9 @@ const App = () => (
               <Route path="/workout-timer/emom" element={<EmomTimer />} />
               <Route path="/workout-timer/tabata" element={<TabataTimer />} />
               <Route path="/workout-timer/start" element={<WorkoutStart />} />
+              <Route path="/rep-counter" element={<RepsCounter />} />
+              <Route path="/rep-counter/simple" element={<SimpleRepsCounter />} />
+              <Route path="/rep-counter/pro" element={<ProRepsCounter />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/workouts" element={<WorkoutManagement />} />
               <Route path="*" element={<NotFound />} />
