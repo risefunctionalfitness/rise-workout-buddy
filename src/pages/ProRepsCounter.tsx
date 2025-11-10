@@ -424,7 +424,7 @@ const ProRepsCounter = () => {
           />
           <Check className="relative z-10 h-5 w-5 mr-2" />
           <span className="relative z-10 text-lg font-semibold">
-            Finish
+            Beenden
           </span>
         </Button>
       </div>
