@@ -119,7 +119,7 @@ const SimpleRepsCounter = () => {
           onClick={handleTap}
         >
           <CardContent className="relative h-full p-0">
-            <div className="absolute inset-0 flex flex-col items-center justify-center pb-16">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="text-8xl md:text-9xl font-bold text-primary">
                 {rounds}
               </div>
@@ -155,8 +155,9 @@ const SimpleRepsCounter = () => {
             className="absolute inset-0 bg-primary-foreground/20 transition-all duration-100 origin-left"
             style={{ transform: `scaleX(${holdProgress / 100})` }}
           />
+          <Check className="relative z-10 h-5 w-5 mr-2" />
           <span className="relative z-10 text-lg font-semibold">
-            Finish halten
+            Finish
           </span>
         </Button>
       </div>
