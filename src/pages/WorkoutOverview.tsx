@@ -50,6 +50,13 @@ const WorkoutOverview = ({ user }: WorkoutOverviewProps) => {
       }
     },
     {
+      title: "Rep Counter",
+      description: "Zähle Runden und\nWiederholungen",
+      onClick: () => {
+        window.location.href = '/rep-counter'
+      }
+    },
+    {
       title: "Prozentrechner",
       description: "Berechne deine\nTrainingsgewichte",
       onClick: () => {
