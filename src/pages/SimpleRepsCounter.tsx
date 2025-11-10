@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { ArrowLeft, Minus, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 
 const SimpleRepsCounter = () => {
   const navigate = useNavigate()
@@ -119,7 +120,7 @@ const SimpleRepsCounter = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pb-20">
       <div className="px-4 py-4">
         <Button
           variant="ghost"
@@ -185,6 +186,12 @@ const SimpleRepsCounter = () => {
           </span>
         </Button>
       </div>
+
+      <MemberBottomNavigation 
+        activeTab="wod"
+        onTabChange={() => {}}
+        showCoursesTab={false}
+      />
     </div>
   )
 }

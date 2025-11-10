@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
+import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 
 interface Round {
   id: string
@@ -351,6 +352,12 @@ const ProRepsCounter = () => {
             Workout starten
           </Button>
         </div>
+
+        <MemberBottomNavigation 
+          activeTab="wod"
+          onTabChange={() => {}}
+          showCoursesTab={false}
+        />
       </div>
     )
   }
@@ -358,7 +365,7 @@ const ProRepsCounter = () => {
   const currentRound = rounds[currentRoundIndex]
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pb-20">
       <div className="px-4 py-4">
         <Button
           variant="ghost"
@@ -462,6 +469,12 @@ const ProRepsCounter = () => {
           </span>
         </Button>
       </div>
+
+      <MemberBottomNavigation 
+        activeTab="wod"
+        onTabChange={() => {}}
+        showCoursesTab={false}
+      />
     </div>
   )
 }
