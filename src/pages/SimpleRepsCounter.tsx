@@ -114,20 +114,18 @@ const SimpleRepsCounter = () => {
 
       <div className="flex-1 px-4 flex items-center justify-center">
         <Card 
-          className="w-full border-2 cursor-pointer active:scale-95 transition-transform"
+          className="w-full border-2 cursor-pointer active:scale-95 transition-transform flex items-center justify-center"
           style={{ minHeight: '60vh' }}
           onClick={handleTap}
         >
-          <CardContent className="relative h-full p-0">
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-8xl md:text-9xl font-bold text-primary">
-                {rounds}
-              </div>
-              <div className="text-2xl text-muted-foreground mt-4">
-                Runden
-              </div>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="text-8xl md:text-9xl font-bold text-primary">
+              {rounds}
             </div>
-          </CardContent>
+            <div className="text-2xl text-muted-foreground mt-4">
+              Runden
+            </div>
+          </div>
         </Card>
       </div>
 

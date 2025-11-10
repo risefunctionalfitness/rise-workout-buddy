@@ -353,23 +353,21 @@ const ProRepsCounter = () => {
 
       <div className="flex-1 px-4 flex flex-col items-center justify-center">
         <Card 
-          className="w-full border-2 cursor-pointer active:scale-95 transition-transform mb-6"
+          className="w-full border-2 cursor-pointer active:scale-95 transition-transform mb-6 flex items-center justify-center"
           style={{ minHeight: '40vh' }}
           onClick={handleTap}
         >
-          <CardContent className="relative h-full p-0">
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-7xl md:text-8xl font-bold text-primary">
-                {currentRound.completedReps}
-                <span className="text-4xl text-muted-foreground">
-                  /{currentRound.targetReps}
-                </span>
-              </div>
-              <div className="text-xl text-muted-foreground mt-4">
-                Wiederholungen
-              </div>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="text-7xl md:text-8xl font-bold text-primary">
+              {currentRound.completedReps}
+              <span className="text-4xl text-muted-foreground">
+                /{currentRound.targetReps}
+              </span>
             </div>
-          </CardContent>
+            <div className="text-xl text-muted-foreground mt-4">
+              Wiederholungen
+            </div>
+          </div>
         </Card>
 
         <div className="flex flex-wrap gap-3 justify-center mb-6">
