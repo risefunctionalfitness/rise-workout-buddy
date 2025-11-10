@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, Undo2, Check } from "lucide-react"
+import { ArrowLeft, Minus, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -112,14 +112,14 @@ const SimpleRepsCounter = () => {
         </p>
       </div>
 
-      <div className="flex-1 px-4 flex items-center justify-center">
+      <div className="flex-1 px-4 flex items-center justify-center pb-8">
         <Card 
           className="w-full border-2 cursor-pointer active:scale-95 transition-transform"
           style={{ minHeight: '60vh' }}
           onClick={handleTap}
         >
           <CardContent className="relative h-full p-0">
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center pb-16">
               <div className="text-8xl md:text-9xl font-bold text-primary">
                 {rounds}
               </div>
@@ -139,7 +139,7 @@ const SimpleRepsCounter = () => {
           onClick={handleUndo}
           disabled={rounds === 0}
         >
-          <Undo2 className="h-6 w-6" />
+          <Minus className="h-6 w-6" />
         </Button>
         
         <Button

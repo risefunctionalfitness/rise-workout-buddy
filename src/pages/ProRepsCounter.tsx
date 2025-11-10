@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, GripVertical, Plus, Play, Trash2, Undo2, Check } from "lucide-react"
+import { ArrowLeft, GripVertical, Plus, Play, Trash2, Minus, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -73,6 +73,13 @@ const ProRepsCounter = () => {
 
   const handleTap = () => {
     const currentRound = rounds[currentRoundIndex]
+    
+    // Nicht weiter zählen, wenn bereits alle Runden komplett sind
+    const allRoundsComplete = rounds.every(r => r.completedReps >= r.targetReps)
+    if (allRoundsComplete) {
+      return
+    }
+
     const newCompletedReps = currentRound.completedReps + 1
 
     const updatedRounds = [...rounds]
@@ -87,11 +94,18 @@ const ProRepsCounter = () => {
     }
 
     if (newCompletedReps >= currentRound.targetReps) {
-      setTimeout(() => {
-        if (currentRoundIndex < rounds.length - 1) {
+      // Prüfen ob das die letzte Runde war
+      if (currentRoundIndex === rounds.length - 1) {
+        // Automatisch beenden nach 500ms
+        setTimeout(() => {
+          setShowSummary(true)
+        }, 500)
+      } else {
+        // Zur nächsten Runde
+        setTimeout(() => {
           setCurrentRoundIndex(currentRoundIndex + 1)
-        }
-      }, 300)
+        }, 300)
+      }
     }
   }
 
@@ -337,14 +351,14 @@ const ProRepsCounter = () => {
         />
       </div>
 
-      <div className="flex-1 px-4 flex flex-col items-center justify-center">
+      <div className="flex-1 px-4 flex flex-col items-center justify-center pb-8">
         <Card 
           className="w-full border-2 cursor-pointer active:scale-95 transition-transform mb-6"
           style={{ minHeight: '40vh' }}
           onClick={handleTap}
         >
           <CardContent className="relative h-full p-0">
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center pb-12">
               <div className="text-7xl md:text-8xl font-bold text-primary">
                 {currentRound.completedReps}
                 <span className="text-4xl text-muted-foreground">
@@ -394,7 +408,7 @@ const ProRepsCounter = () => {
           onClick={handleUndo}
           disabled={currentRoundIndex === 0 && currentRound.completedReps === 0}
         >
-          <Undo2 className="h-6 w-6" />
+          <Minus className="h-6 w-6" />
         </Button>
         
         <Button
