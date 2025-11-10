@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, Minus, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,32 @@ const SimpleRepsCounter = () => {
   const [isHoldingFinish, setIsHoldingFinish] = useState(false)
   const [holdProgress, setHoldProgress] = useState(0)
   const [showSummary, setShowSummary] = useState(false)
+  const wakeLockRef = useRef<any>(null)
+
+  // Wake Lock aktivieren, um Bildschirm eingeschaltet zu halten
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
+          console.log('Wake Lock aktiviert')
+        }
+      } catch (err) {
+        console.error('Wake Lock Fehler:', err)
+      }
+    }
+
+    requestWakeLock()
+
+    // Cleanup: Wake Lock freigeben
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release()
+        wakeLockRef.current = null
+        console.log('Wake Lock freigegeben')
+      }
+    }
+  }, [])
 
   const handleTap = () => {
     setRounds(prev => prev + 1)

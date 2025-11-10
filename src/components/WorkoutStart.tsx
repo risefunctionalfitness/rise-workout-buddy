@@ -21,6 +21,7 @@ export const WorkoutStart: React.FC = () => {
   const location = useLocation()
   const { type, settings } = (location.state as LocationState) || {}
   const audioContextRef = useRef<AudioContext | null>(null)
+  const wakeLockRef = useRef<any>(null)
   const [audioInitialized, setAudioInitialized] = useState(false)
   
   const [countdown, setCountdown] = useState(10)
@@ -31,6 +32,39 @@ export const WorkoutStart: React.FC = () => {
   const [roundTime, setRoundTime] = useState(0)
   const [isWorkPhase, setIsWorkPhase] = useState(true)
   const [isFinished, setIsFinished] = useState(false)
+
+  // Wake Lock aktivieren während des Workouts
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && (isCountingDown || isRunning)) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
+          console.log('Wake Lock aktiviert')
+        }
+      } catch (err) {
+        console.error('Wake Lock Fehler:', err)
+      }
+    }
+
+    const releaseWakeLock = () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release()
+        wakeLockRef.current = null
+        console.log('Wake Lock freigegeben')
+      }
+    }
+
+    if (isCountingDown || isRunning) {
+      requestWakeLock()
+    } else {
+      releaseWakeLock()
+    }
+
+    // Cleanup
+    return () => {
+      releaseWakeLock()
+    }
+  }, [isCountingDown, isRunning])
 
   // Initialize audio context after user interaction (iOS requirement)
   const initializeAudio = useCallback(() => {
