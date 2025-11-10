@@ -91,8 +91,13 @@ const RepsCounter = () => {
 
       <MemberBottomNavigation 
         activeTab="wod"
-        onTabChange={() => {}}
-        showCoursesTab={false}
+        showCoursesTab={true}
+        onTabChange={(tab) => {
+          navigate('/pro')
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('changeTab', { detail: tab }))
+          }, 100)
+        }}
       />
     </div>
   )
