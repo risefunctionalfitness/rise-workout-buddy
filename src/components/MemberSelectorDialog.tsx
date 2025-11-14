@@ -234,40 +234,42 @@ export const MemberSelectorDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Mitglieder einladen</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            {courseName} · {courseDate} · {courseTime}
-          </p>
-        </DialogHeader>
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0">
+        <div className="px-6 pt-6">
+          <DialogHeader>
+            <DialogTitle>Mitglieder einladen</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {courseName} · {courseDate} · {courseTime}
+            </p>
+          </DialogHeader>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Mitglieder suchen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Mitglieder suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
-        <Tabs defaultValue="all" className="flex-1 flex flex-col min-h-0">
+        <Tabs defaultValue="all" className="flex-1 flex flex-col min-h-0 px-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="favorites" className="gap-2">
               <Star className="h-4 w-4" />
-              Favoriten ({favorites.size})
+              Favoriten {favorites.size > 0 && `(${favorites.size})`}
             </TabsTrigger>
-            <TabsTrigger value="all">Alle</TabsTrigger>
+            <TabsTrigger value="all">
+              Alle
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="favorites" className="flex-1 min-h-0 mt-4">
             <ScrollArea className="h-[300px] pr-4">
               {filteredFavorites.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
-                  {favorites.size === 0 
-                    ? "Noch keine Favoriten hinzugefügt" 
-                    : "Keine Favoriten gefunden"}
+                  {searchQuery ? "Keine Favoriten gefunden" : "Noch keine Favoriten"}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -292,7 +294,7 @@ export const MemberSelectorDialog = ({
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t mt-auto">
           <Button
             onClick={sendInvitations}
             disabled={selectedMembers.size === 0 || loading}
