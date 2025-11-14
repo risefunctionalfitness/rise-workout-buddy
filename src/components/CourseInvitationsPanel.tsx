@@ -273,7 +273,7 @@ export const CourseInvitationsPanel = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
-        <SheetHeader>
+        <SheetHeader className="mt-6">
           <div className="flex items-center justify-between">
             <SheetTitle>Kurseinladungen</SheetTitle>
             <Button
