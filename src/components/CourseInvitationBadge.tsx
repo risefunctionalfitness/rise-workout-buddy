@@ -33,7 +33,7 @@ export const CourseInvitationBadge = ({
         <Users className="h-5 w-5 text-primary" />
         <Badge 
           variant="destructive" 
-          className="absolute -top-2 -right-2 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-bold"
+          className="absolute -top-3 -right-3 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-bold"
         >
           {invitationCount > 99 ? '99+' : invitationCount}
         </Badge>
