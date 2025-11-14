@@ -234,77 +234,87 @@ export const MemberSelectorDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0">
-        <div className="px-6 pt-6">
-          <DialogHeader>
-            <DialogTitle>Mitglieder einladen</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {courseName} · {courseDate} · {courseTime}
-            </p>
-          </DialogHeader>
+      <DialogContent className="max-w-md p-0 overflow-hidden">
+        <div className="flex flex-col h-[85vh]">
+          <div className="px-6 pt-6 pb-4 border-b bg-background">
+            <DialogHeader>
+              <DialogTitle>Mitglieder einladen</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {courseName} · {courseDate} · {courseTime}
+              </p>
+            </DialogHeader>
 
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Mitglieder suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Mitglieder suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-hidden px-6">
+            <Tabs defaultValue="all" className="h-full flex flex-col">
+              <TabsList className="grid w-full grid-cols-2 mt-4">
+                <TabsTrigger value="favorites" className="gap-2">
+                  <Star className="h-4 w-4" />
+                  Favoriten {favorites.size > 0 && `(${favorites.size})`}
+                </TabsTrigger>
+                <TabsTrigger value="all">
+                  Alle
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="favorites" className="flex-1 min-h-0 mt-4">
+                <ScrollArea className="h-[400px] pr-4">
+                  {filteredFavorites.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      {searchQuery ? "Keine Favoriten gefunden" : "Noch keine Favoriten"}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredFavorites.map(renderMember)}
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent value="all" className="flex-1 min-h-0 mt-4">
+                <ScrollArea className="h-[400px] pr-4">
+                  {filteredAllMembers.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      Keine Mitglieder gefunden
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredAllMembers.map(renderMember)}
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="px-6 py-4 border-t bg-background z-10 pointer-events-auto">
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Button clicked! Selected:', selectedMembers.size, 'Loading:', loading);
+                sendInvitations();
+              }}
+              disabled={selectedMembers.size === 0 || loading}
+              className="w-full relative z-20"
+            >
+              {loading 
+                ? "Wird gesendet..." 
+                : `${selectedMembers.size} Mitglied${selectedMembers.size !== 1 ? 'er' : ''} einladen`}
+            </Button>
           </div>
         </div>
-
-        <Tabs defaultValue="all" className="flex-1 flex flex-col min-h-0 px-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="favorites" className="gap-2">
-              <Star className="h-4 w-4" />
-              Favoriten {favorites.size > 0 && `(${favorites.size})`}
-            </TabsTrigger>
-            <TabsTrigger value="all">
-              Alle
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="favorites" className="flex-1 min-h-0 mt-4">
-            <ScrollArea className="h-[300px] pr-4">
-              {filteredFavorites.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  {searchQuery ? "Keine Favoriten gefunden" : "Noch keine Favoriten"}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredFavorites.map(renderMember)}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="all" className="flex-1 min-h-0 mt-4">
-            <ScrollArea className="h-[300px] pr-4">
-              {filteredAllMembers.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  Keine Mitglieder gefunden
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredAllMembers.map(renderMember)}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-
-        <DialogFooter className="px-6 py-4 border-t mt-auto">
-          <Button
-            onClick={sendInvitations}
-            disabled={selectedMembers.size === 0 || loading}
-            className="w-full"
-          >
-            {loading 
-              ? "Wird gesendet..." 
-              : `${selectedMembers.size} Mitglied${selectedMembers.size !== 1 ? 'er' : ''} einladen`}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
