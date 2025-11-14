@@ -36,9 +36,26 @@ export const UpcomingClassReservation = ({
     if (user?.id) {
       loadUpcomingReservation();
       loadUserInfo();
-      setupRealtimeUpdates();
+      
+      // Handle custom event from course booking/cancellation
+      const handleCourseChange = () => {
+        loadUpcomingReservation();
+        if (showDialog && upcomingCourse) {
+          loadParticipants();
+        }
+      };
+      
+      window.addEventListener('courseRegistrationChanged', handleCourseChange);
+      
+      // Setup realtime updates and store cleanup function
+      const cleanup = setupRealtimeUpdates();
+      
+      return () => {
+        window.removeEventListener('courseRegistrationChanged', handleCourseChange);
+        cleanup();
+      };
     }
-  }, [user?.id]);
+  }, [user?.id, showDialog, upcomingCourse]);
 
   const loadUserInfo = async () => {
     try {
