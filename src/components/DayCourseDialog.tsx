@@ -490,12 +490,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
       {/* Course Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{selectedCourse?.title}</DialogTitle>
           </DialogHeader>
           {selectedCourse && (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
               {/* Share Button - positioned below title */}
               <div className="flex justify-end -mt-2">
                 <CourseInvitationButton
