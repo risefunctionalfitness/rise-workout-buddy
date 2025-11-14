@@ -63,7 +63,7 @@ export const MemberSelectorDialog = ({
     const { data, error } = await supabase
       .from("profiles")
       .select("user_id, nickname, display_name, avatar_url")
-      .eq("show_in_leaderboard", true)
+      .eq("status", "active")
       .order("nickname", { ascending: true });
 
     if (error) {
