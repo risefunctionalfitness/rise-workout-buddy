@@ -491,18 +491,18 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       {/* Course Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-          <DialogHeader className="relative">
-            <DialogTitle>{selectedCourse?.title}</DialogTitle>
-            {selectedCourse && (
-              <div className="absolute top-0 right-8">
+          <DialogHeader>
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle>{selectedCourse?.title}</DialogTitle>
+              {selectedCourse && (
                 <CourseInvitationButton
                   courseId={selectedCourse.id}
                   courseName={selectedCourse.title}
                   courseDate={format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
                   courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
                 />
-              </div>
-            )}
+              )}
+            </div>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 overflow-y-auto">
