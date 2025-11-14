@@ -95,6 +95,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     
     const loadData = async () => {
       if (!mounted) return
+      
+      // Verify session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      console.log("=== SESSION CHECK ===")
+      console.log("Session user ID:", session?.user?.id)
+      console.log("Props user ID:", user.id)
+      console.log("Session error:", sessionError)
+      console.log("Match:", session?.user?.id === user.id)
+      
       await loadUserProfile()
       if (!mounted) return
       await generateTrainingDays()
@@ -116,7 +125,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         schema: 'public',
         table: 'course_invitations',
         filter: `recipient_id=eq.${user.id}`
-      }, () => {
+      }, (payload) => {
+        console.log("New invitation received (Realtime):", payload)
         loadInvitationCount()
         toast({
           title: "Neue Kurseinladung!",
@@ -128,10 +138,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         schema: 'public',
         table: 'course_invitations',
         filter: `recipient_id=eq.${user.id}`
-      }, () => {
+      }, (payload) => {
+        console.log("Invitation updated (Realtime):", payload)
         loadInvitationCount()
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.log("Realtime channel status:", status)
+      })
 
     // Check if we should open profile from navigation state
     const urlParams = new URLSearchParams(window.location.search)
@@ -285,17 +298,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   }
 
   const loadInvitationCount = async () => {
-    const { count, error } = await supabase
+    console.log("=== LOADING INVITATION COUNT ===")
+    console.log("User ID:", user.id)
+    console.log("User Email:", user.email)
+    
+    const { count, error, data } = await supabase
       .from("course_invitations")
-      .select("*", { count: 'exact', head: true })
+      .select("*", { count: 'exact' })
       .eq("recipient_id", user.id)
       .eq("status", "pending")
 
+    console.log("Raw invitation data:", data)
+    console.log("Invitation count:", count)
+    console.log("Error:", error)
+
     if (error) {
       console.error("Error loading invitation count:", error)
+      toast({
+        title: "Fehler beim Laden der Einladungen",
+        description: error.message,
+        variant: "destructive"
+      })
       return
     }
 
+    console.log("Setting invitation count to:", count || 0)
     setInvitationCount(count || 0)
   }
 
@@ -647,6 +674,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
                 invitationCount={invitationCount}
                 onClick={() => setShowInvitations(true)}
               />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  console.log("Manual refresh triggered - Current count:", invitationCount)
+                  loadInvitationCount()
+                }}
+                className="absolute top-2 left-2 z-10 text-xs"
+              >
+                🔄 Debug ({invitationCount})
+              </Button>
             </div>
             
             {/* Auto Height - WeekPreview */}

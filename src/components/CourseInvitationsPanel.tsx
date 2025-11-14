@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Clock, Check, X } from "lucide-react";
+import { Calendar, Clock, Check, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -55,6 +55,8 @@ export const CourseInvitationsPanel = ({
 
   const loadInvitations = async () => {
     setLoading(true);
+    console.log("=== LOADING INVITATIONS ===")
+    console.log("User ID:", user.id)
 
     const { data, error } = await supabase
       .from("course_invitations")
@@ -76,8 +78,12 @@ export const CourseInvitationsPanel = ({
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
+    console.log("Invitations loaded:", data)
+    console.log("Error:", error)
+
     if (error) {
       console.error("Error loading invitations:", error);
+      toast.error("Fehler beim Laden der Einladungen: " + error.message)
       setLoading(false);
       return;
     }
@@ -98,6 +104,7 @@ export const CourseInvitationsPanel = ({
       })
     );
 
+    console.log("Invitations with profiles:", invitationsWithProfiles)
     setInvitations(invitationsWithProfiles);
     setLoading(false);
   };
@@ -216,7 +223,26 @@ export const CourseInvitationsPanel = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
         <SheetHeader>
-          <SheetTitle>Kurseinladungen</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle>Kurseinladungen</SheetTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                console.log("Manual panel refresh triggered")
+                loadInvitations()
+              }}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {invitations.length > 0 
+              ? `Du hast ${invitations.length} ausstehende Einladung${invitations.length !== 1 ? 'en' : ''}`
+              : 'Keine offenen Einladungen'
+            }
+          </p>
         </SheetHeader>
 
         {loading ? (
