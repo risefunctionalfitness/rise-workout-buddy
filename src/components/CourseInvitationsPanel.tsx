@@ -110,28 +110,65 @@ export const CourseInvitationsPanel = ({
   };
 
   const handleAccept = async (invitation: Invitation) => {
-    const { error } = await supabase
-      .from("course_invitations")
-      .update({ 
-        status: "accepted", 
-        responded_at: new Date().toISOString() 
-      })
-      .eq("id", invitation.id);
+    try {
+      // Check if user can register for this course
+      const { data: canRegister, error: checkError } = await supabase
+        .rpc('can_user_register_for_course', {
+          user_id_param: user.id,
+          course_id_param: invitation.course_id
+        });
 
-    if (error) {
-      toast.error("Fehler beim Annehmen der Einladung");
-      console.error("Error accepting invitation:", error);
-      return;
+      if (checkError) {
+        console.error("Error checking registration eligibility:", checkError);
+        // Continue anyway - let the database constraints handle it
+      }
+
+      if (canRegister === false) {
+        toast.error("Du kannst dich nicht für diesen Kurs anmelden (Credits/Limit erreicht)");
+        return;
+      }
+
+      // Try to register for the course
+      const { error: registrationError } = await supabase
+        .from("course_registrations")
+        .insert({
+          user_id: user.id,
+          course_id: invitation.course_id,
+          status: "registered"
+        });
+
+      if (registrationError) {
+        // Check if already registered
+        if (registrationError.code === '23505') {
+          toast.error("Du bist bereits für diesen Kurs angemeldet");
+        } else {
+          toast.error("Fehler bei der Kursanmeldung: " + registrationError.message);
+          console.error("Error registering for course:", registrationError);
+        }
+        return;
+      }
+
+      // Update invitation status
+      const { error: invitationError } = await supabase
+        .from("course_invitations")
+        .update({ 
+          status: "accepted", 
+          responded_at: new Date().toISOString() 
+        })
+        .eq("id", invitation.id);
+
+      if (invitationError) {
+        console.error("Error updating invitation:", invitationError);
+      }
+
+      toast.success("Du bist jetzt für den Kurs angemeldet!");
+      
+      // Reload invitations
+      loadInvitations();
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      toast.error("Ein unerwarteter Fehler ist aufgetreten");
     }
-
-    toast.success("Einladung angenommen");
-    
-    // Close panel and trigger course dialog
-    onOpenChange(false);
-    onAcceptInvitation(invitation.course_id, invitation.courses.course_date);
-    
-    // Reload invitations
-    loadInvitations();
   };
 
   const handleDecline = async (invitationId: string) => {
@@ -151,6 +188,11 @@ export const CourseInvitationsPanel = ({
 
     toast.success("Einladung abgelehnt");
     loadInvitations();
+  };
+
+  const handleCardClick = (invitation: Invitation) => {
+    onOpenChange(false);
+    onAcceptInvitation(invitation.course_id, invitation.courses.course_date);
   };
 
   const renderInvitation = (invitation: Invitation) => {
@@ -177,8 +219,11 @@ export const CourseInvitationsPanel = ({
             </div>
           </div>
 
-          {/* Course Info */}
-          <div className="space-y-2">
+          {/* Course Info - Clickable */}
+          <div 
+            className="space-y-2 cursor-pointer hover:bg-accent/50 -mx-2 px-2 py-2 rounded-md transition-colors"
+            onClick={() => handleCardClick(invitation)}
+          >
             <h3 className="font-bold text-lg">{invitation.courses.title}</h3>
             
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -199,14 +244,20 @@ export const CourseInvitationsPanel = ({
           {/* Action Buttons */}
           <div className="flex gap-2">
             <Button
-              onClick={() => handleAccept(invitation)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAccept(invitation);
+              }}
               className="flex-1 bg-green-600 hover:bg-green-700"
             >
               <Check className="h-4 w-4 mr-2" />
-              Annehmen
+              Annehmen & Anmelden
             </Button>
             <Button
-              onClick={() => handleDecline(invitation.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDecline(invitation.id);
+              }}
               variant="outline"
               className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
             >
