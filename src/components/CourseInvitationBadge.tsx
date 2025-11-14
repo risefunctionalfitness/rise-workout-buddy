@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ export const CourseInvitationBadge = ({
       aria-label={`${invitationCount} neue Kurseinladung${invitationCount > 1 ? 'en' : ''}`}
     >
       <div className="relative">
-        <Users className="h-5 w-5 text-primary" />
+        <Mail className="h-5 w-5 text-primary" />
         <Badge 
           variant="destructive" 
           className="absolute -top-2 -right-2 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-bold animate-pulse"
