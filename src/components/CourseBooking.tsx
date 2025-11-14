@@ -11,6 +11,7 @@ import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
 import { ProfileImageViewer } from "@/components/ProfileImageViewer"
 import { CoursesCalendarView } from "@/components/CoursesCalendarView"
+import { CourseInvitationButton } from "@/components/CourseInvitationButton"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -577,12 +578,21 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
       {/* Course Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{selectedCourse?.title}</DialogTitle>
           </DialogHeader>
           {selectedCourse && (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
+              {/* Share Button - positioned below title */}
+              <div className="flex justify-end -mt-2">
+                <CourseInvitationButton
+                  courseId={selectedCourse.id}
+                  courseName={selectedCourse.title}
+                  courseDate={format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
+                  courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
+                />
+              </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4" />
