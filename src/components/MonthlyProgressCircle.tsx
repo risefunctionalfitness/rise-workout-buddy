@@ -167,7 +167,7 @@ export const MonthlyProgressCircle = ({ user }: MonthlyProgressCircleProps) => {
   const angleStep = 360 / daysInMonth.length;
 
   return (
-    <div className="h-full flex items-center justify-center">
+    <div className="h-full flex items-center justify-center relative">
       <svg
         viewBox="0 0 360 360"
         className="w-full h-full max-w-[360px] max-h-[360px]"
