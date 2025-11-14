@@ -579,13 +579,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       {/* Course Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-          <DialogHeader>
+          <DialogHeader className="relative">
             <DialogTitle>{selectedCourse?.title}</DialogTitle>
-          </DialogHeader>
-          {selectedCourse && (
-            <div className="space-y-4 overflow-y-auto">
-              {/* Share Button - positioned below title */}
-              <div className="flex justify-end -mt-2">
+            {selectedCourse && (
+              <div className="absolute top-0 right-0">
                 <CourseInvitationButton
                   courseId={selectedCourse.id}
                   courseName={selectedCourse.title}
@@ -593,6 +590,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
                 />
               </div>
+            )}
+          </DialogHeader>
+          {selectedCourse && (
+            <div className="space-y-4 overflow-y-auto">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4" />
