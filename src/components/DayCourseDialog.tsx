@@ -12,6 +12,7 @@ import { de } from "date-fns/locale"
 import { ProfileImageViewer } from "./ProfileImageViewer"
 import { MembershipBadge } from "./MembershipBadge"
 import { OpenGymCheckin } from "./OpenGymCheckin"
+import { CourseInvitationButton } from "./CourseInvitationButton"
 
 interface Course {
   id: string
@@ -38,6 +39,7 @@ interface DayCourseDialogProps {
   date: string
   user: User
   userRole?: string
+  preselectedCourseId?: string
 }
 
 export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
@@ -45,7 +47,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   onOpenChange,
   date,
   user,
-  userRole
+  userRole,
+  preselectedCourseId
 }) => {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(false)
@@ -63,7 +66,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       loadCoursesForDay()
       loadUserInfo()
     }
-  }, [open, date])
+  }, [open, date, preselectedCourseId])
 
   const loadUserInfo = async () => {
     try {
@@ -146,6 +149,14 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       })
 
       setCourses(processedCourses)
+      
+      // Auto-select course if preselectedCourseId is provided
+      if (preselectedCourseId) {
+        const preselectedCourse = processedCourses.find(c => c.id === preselectedCourseId)
+        if (preselectedCourse) {
+          handleCourseClick(preselectedCourse)
+        }
+      }
     } catch (error) {
       console.error('Error loading courses:', error)
       toast.error('Fehler beim Laden der Kurse')
@@ -481,7 +492,17 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{selectedCourse?.title}</DialogTitle>
+            <div className="flex items-center justify-between gap-2">
+              <DialogTitle>{selectedCourse?.title}</DialogTitle>
+              {selectedCourse && (isAdmin || isTrainer || selectedCourse.is_registered) && (
+                <CourseInvitationButton
+                  courseId={selectedCourse.id}
+                  courseName={selectedCourse.title}
+                  courseDate={format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
+                  courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
+                />
+              )}
+            </div>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4">

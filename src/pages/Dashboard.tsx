@@ -13,6 +13,9 @@ import { MonthlyProgressCircle } from "@/components/MonthlyProgressCircle"
 import { WeekPreview } from "@/components/WeekPreview"
 import { UpcomingClassReservation } from "@/components/UpcomingClassReservation"
 import { DashboardTileGrid } from "@/components/DashboardTileGrid"
+import { CourseInvitationBadge } from "@/components/CourseInvitationBadge"
+import { CourseInvitationsPanel } from "@/components/CourseInvitationsPanel"
+import { DayCourseDialog } from "@/components/DayCourseDialog"
 import {
   Dialog,
   DialogContent,
@@ -73,6 +76,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [wodStep, setWodStep] = useState(1)
   const [showFirstLoginDialog, setShowFirstLoginDialog] = useState(false)
   const [showAdminNav, setShowAdminNav] = useState(false)
+  const [showInvitations, setShowInvitations] = useState(false)
+  const [invitationCount, setInvitationCount] = useState(0)
+  const [selectedCourseFromInvitation, setSelectedCourseFromInvitation] = useState<{
+    courseId: string
+    courseDate: string
+  } | null>(null)
+  const [showDayCoursesFromInvitation, setShowDayCoursesFromInvitation] = useState(false)
   const { toast } = useToast()
   const { hasUnreadNews, markNewsAsRead } = useNewsNotification(user)
   
@@ -92,10 +102,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       await loadCurrentChallenge()
       if (!mounted) return
       await checkFirstLogin()
+      if (!mounted) return
+      await loadInvitationCount()
     }
     
     loadData()
     
+    // Setup realtime updates for invitations
+    const channel = supabase
+      .channel('course_invitations_updates')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'course_invitations',
+        filter: `recipient_id=eq.${user.id}`
+      }, () => {
+        loadInvitationCount()
+        toast({
+          title: "Neue Kurseinladung!",
+          description: "Du wurdest zu einem Kurs eingeladen."
+        })
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'course_invitations',
+        filter: `recipient_id=eq.${user.id}`
+      }, () => {
+        loadInvitationCount()
+      })
+      .subscribe()
+
     // Check if we should open profile from navigation state
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('openProfile') === 'true') {
@@ -127,6 +164,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     
     return () => {
       mounted = false
+      supabase.removeChannel(channel)
       window.removeEventListener('changeTab', handleTabChange as EventListener)
       window.removeEventListener('courseRegistrationChanged', handleCourseRegistrationChanged)
     }
@@ -244,6 +282,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     } catch (error) {
       console.error("Error loading current challenge:", error)
     }
+  }
+
+  const loadInvitationCount = async () => {
+    const { count, error } = await supabase
+      .from("course_invitations")
+      .select("*", { count: 'exact', head: true })
+      .eq("recipient_id", user.id)
+      .eq("status", "pending")
+
+    if (error) {
+      console.error("Error loading invitation count:", error)
+      return
+    }
+
+    setInvitationCount(count || 0)
+  }
+
+  const handleAcceptInvitation = (courseId: string, courseDate: string) => {
+    setSelectedCourseFromInvitation({ courseId, courseDate })
+    setShowDayCoursesFromInvitation(true)
   }
 
   const generateTrainingDays = async () => {
@@ -581,9 +639,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         return (
           <div className="flex-1 flex flex-col gap-4 p-4 pb-24 overflow-y-auto">
             {/* 50% Height - MonthlyProgressCircle */}
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 relative">
               <MonthlyProgressCircle 
                 user={user}
+              />
+              <CourseInvitationBadge 
+                invitationCount={invitationCount}
+                onClick={() => setShowInvitations(true)}
               />
             </div>
             
@@ -742,6 +804,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           }
         }} 
       />
+
+      {/* Course Invitations Panel */}
+      <CourseInvitationsPanel
+        open={showInvitations}
+        onOpenChange={setShowInvitations}
+        user={user}
+        onAcceptInvitation={handleAcceptInvitation}
+      />
+
+      {/* DayCourseDialog from Invitation */}
+      {selectedCourseFromInvitation && (
+        <DayCourseDialog
+          open={showDayCoursesFromInvitation}
+          onOpenChange={(open) => {
+            setShowDayCoursesFromInvitation(open)
+            if (!open) {
+              setSelectedCourseFromInvitation(null)
+            }
+          }}
+          date={selectedCourseFromInvitation.courseDate}
+          user={user}
+          userRole={userRole}
+          preselectedCourseId={selectedCourseFromInvitation.courseId}
+        />
+      )}
 
       {/* Admin Navigation Dialog */}
       <Dialog open={showAdminNav} onOpenChange={setShowAdminNav}>
