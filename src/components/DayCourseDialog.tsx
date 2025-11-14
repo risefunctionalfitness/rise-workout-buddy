@@ -492,20 +492,19 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <div className="flex items-center justify-between gap-2">
-              <DialogTitle>{selectedCourse?.title}</DialogTitle>
-              {selectedCourse && (isAdmin || isTrainer || selectedCourse.is_registered) && (
+            <DialogTitle>{selectedCourse?.title}</DialogTitle>
+          </DialogHeader>
+          {selectedCourse && (
+            <div className="space-y-4">
+              {/* Share Button - positioned below title */}
+              <div className="flex justify-end -mt-2">
                 <CourseInvitationButton
                   courseId={selectedCourse.id}
                   courseName={selectedCourse.title}
                   courseDate={format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
                   courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
                 />
-              )}
-            </div>
-          </DialogHeader>
-          {selectedCourse && (
-            <div className="space-y-4">
+              </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4" />

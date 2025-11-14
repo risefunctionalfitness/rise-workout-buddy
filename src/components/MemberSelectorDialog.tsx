@@ -50,7 +50,7 @@ export const MemberSelectorDialog = ({
       setSelectedMembers(new Set());
       setSearchQuery("");
     }
-  }, [open]);
+  }, [open, currentUserId]);
 
   const loadCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -58,6 +58,8 @@ export const MemberSelectorDialog = ({
   };
 
   const loadMembers = async () => {
+    if (!currentUserId) return;
+    
     const { data, error } = await supabase
       .from("profiles")
       .select("user_id, nickname, display_name, avatar_url")
@@ -75,10 +77,12 @@ export const MemberSelectorDialog = ({
   };
 
   const loadFavorites = async () => {
+    if (!currentUserId) return;
+    
     const { data, error } = await supabase
       .from("member_favorites")
       .select("favorite_user_id")
-      .eq("user_id", currentUserId!);
+      .eq("user_id", currentUserId);
 
     if (error) {
       console.error("Error loading favorites:", error);
@@ -149,6 +153,11 @@ export const MemberSelectorDialog = ({
   const sendInvitations = async () => {
     if (selectedMembers.size === 0) return;
 
+    if (!currentUserId) {
+      toast.error("Benutzer-ID nicht gefunden");
+      return;
+    }
+
     setLoading(true);
 
     const invitations = Array.from(selectedMembers).map(recipientId => ({
@@ -157,6 +166,8 @@ export const MemberSelectorDialog = ({
       recipient_id: recipientId,
       status: 'pending'
     }));
+
+    console.log('Sending invitations:', invitations);
 
     const { error } = await supabase
       .from("course_invitations")
