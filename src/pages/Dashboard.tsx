@@ -674,17 +674,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
                 invitationCount={invitationCount}
                 onClick={() => setShowInvitations(true)}
               />
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  console.log("Manual refresh triggered - Current count:", invitationCount)
-                  loadInvitationCount()
-                }}
-                className="absolute top-2 left-2 z-10 text-xs"
-              >
-                🔄 Debug ({invitationCount})
-              </Button>
             </div>
             
             {/* Auto Height - WeekPreview */}
