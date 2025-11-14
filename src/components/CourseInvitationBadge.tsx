@@ -20,7 +20,7 @@ export const CourseInvitationBadge = ({
         "absolute top-2 right-2 z-10",
         "flex items-center justify-center",
         "w-10 h-10 rounded-lg",
-        "bg-primary",
+        "bg-white",
         "transition-all duration-200",
         "hover:scale-110 active:scale-95",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
@@ -30,7 +30,7 @@ export const CourseInvitationBadge = ({
       aria-label={`${invitationCount} neue Kurseinladung${invitationCount > 1 ? 'en' : ''}`}
     >
       <div className="relative">
-        <Users className="h-5 w-5 text-white" />
+        <Users className="h-5 w-5 text-primary" />
         <Badge 
           variant="destructive" 
           className="absolute -top-2 -right-2 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-bold"
