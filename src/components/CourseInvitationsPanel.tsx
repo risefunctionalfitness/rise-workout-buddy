@@ -221,7 +221,7 @@ export const CourseInvitationsPanel = ({
 
           {/* Course Info - Clickable */}
           <div 
-            className="space-y-2 cursor-pointer hover:bg-accent/50 -mx-2 px-2 py-2 rounded-md transition-colors"
+            className="space-y-2 cursor-pointer hover:bg-gray-100 -mx-2 px-2 py-2 rounded-md transition-colors"
             onClick={() => handleCardClick(invitation)}
           >
             <h3 className="font-bold text-lg">{invitation.courses.title}</h3>
