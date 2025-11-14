@@ -494,7 +494,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           <DialogHeader className="relative">
             <DialogTitle>{selectedCourse?.title}</DialogTitle>
             {selectedCourse && (
-              <div className="absolute top-0 right-0">
+              <div className="absolute top-0 right-8">
                 <CourseInvitationButton
                   courseId={selectedCourse.id}
                   courseName={selectedCourse.title}
