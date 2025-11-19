@@ -596,7 +596,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                         .map((participant, index) => {
                           const position = index + 1
                           return (
-                            <div key={index} className="flex items-center justify-between p-3 bg-yellow-50/50 rounded-lg border border-yellow-200">
+                            <div key={index} className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: '#ff914d20', borderColor: '#ff914d40' }}>
                               <div className="flex items-center gap-3">
                                 <div 
                                   className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"

@@ -20,10 +20,10 @@ export const CourseInvitationBadge = ({
         "absolute top-2 right-2 z-10",
         "flex items-center justify-center",
         "w-10 h-10 rounded-lg",
-        "bg-white border-2 border-primary",
+        "bg-card border-2 border-primary",
         "transition-all duration-200",
         "hover:scale-110 active:scale-95",
-        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        "focus:outline-none",
         "shadow-lg",
         "animate-in fade-in zoom-in duration-300"
       )}
