@@ -153,13 +153,25 @@ serve(async (req) => {
     if (!webhookResponse.ok) {
       const errorText = await webhookResponse.text();
       console.error('Webhook failed:', webhookResponse.status, errorText);
-      throw new Error(`Webhook request failed: ${webhookResponse.status}`);
+      
+      // Return success even if webhook fails - invitation was already created
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          invitation_id,
+          webhook_status: 'failed',
+          webhook_error: `${webhookResponse.status}: ${errorText}`
+        }),
+        {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     console.log('Webhook sent successfully for invitation:', invitation_id);
 
     return new Response(
-      JSON.stringify({ success: true, invitation_id }),
+      JSON.stringify({ success: true, invitation_id, webhook_status: 'sent' }),
       {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
