@@ -106,7 +106,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
       {/* Navigation Overlay */}
       {dropdownOpen && (showAdminAccess && isAdmin) && (
         <div className="fixed inset-0 z-50 bg-background flex flex-col items-center p-8 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-6 max-w-md w-full my-auto">
+          <div className="grid grid-cols-3 gap-4 max-w-3xl w-full my-auto">
             <div 
               onClick={() => {
                 onPageChange?.('home');
@@ -217,10 +217,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
               <Mail className="h-8 w-8 mb-2" />
               <span className="text-sm font-medium">Emails</span>
             </div>
-          </div>
-          
-          {onLogout && (
-            <div className="mt-8">
+            {onLogout && (
               <div 
                 onClick={handleLogout}
                 className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-destructive/10 cursor-pointer transition-colors"
@@ -228,8 +225,8 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
                 <LogOut className="h-8 w-8 text-destructive mb-2" />
                 <span className="text-sm font-medium text-destructive">Abmelden</span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           
           {/* Close button */}
           <div className="absolute top-6 right-6">
