@@ -28,7 +28,7 @@ export const CourseInvitationButton = ({
           "bg-background border-2 border-primary",
           "transition-all duration-200",
           "hover:scale-110 active:scale-95",
-          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+          "focus:outline-none",
           "shadow-md"
         )}
         aria-label="Mitglieder einladen"
