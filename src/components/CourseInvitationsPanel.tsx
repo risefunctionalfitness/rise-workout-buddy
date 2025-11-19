@@ -205,7 +205,7 @@ export const CourseInvitationsPanel = ({
     const formattedDate = format(courseDate, "EEEE, dd.MM.yyyy", { locale: de });
 
     return (
-      <Card key={invitation.id} className="p-4">
+      <Card key={invitation.id} className="p-4 border-none">
         <div className="space-y-4">
           {/* Sender Info */}
           <div className="flex items-center gap-3">
