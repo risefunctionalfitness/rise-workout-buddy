@@ -492,17 +492,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <div className="flex items-center justify-between pr-8">
-              <DialogTitle>{selectedCourse?.title}</DialogTitle>
-              {selectedCourse && (
-                <CourseInvitationButton
-                  courseId={selectedCourse.id}
-                  courseName={selectedCourse.title}
-                  courseDate={format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
-                  courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
-                />
-              )}
-            </div>
+            <DialogTitle>{selectedCourse?.title}</DialogTitle>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 overflow-y-auto">
@@ -530,9 +520,17 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
               {/* Participants */}
               <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">
-                  Teilnehmer ({selectedCourse.registered_count}/{selectedCourse.max_participants})
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm text-muted-foreground">
+                    Teilnehmer ({selectedCourse.registered_count}/{selectedCourse.max_participants})
+                  </h4>
+                  <CourseInvitationButton
+                    courseId={selectedCourse.id}
+                    courseName={selectedCourse.title}
+                    courseDate={format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
+                    courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
+                  />
+                </div>
                 <div className="max-h-64 overflow-y-auto">
                   {participants.filter(p => p.status === 'registered').length === 0 ? (
                     <Card>
