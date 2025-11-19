@@ -145,17 +145,30 @@ serve(async (req) => {
 
     console.log(`Found ${profiles.length} profiles`)
 
-    // Fetch emails from auth.users
+    // Fetch emails from auth.users for specific user IDs only
     const userIds = profiles.map(p => p.user_id)
-    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+    const emailMap = new Map<string, string>()
 
-    if (authError) {
-      console.error('Error fetching auth users:', authError)
-      throw authError
+    console.log(`Fetching emails for ${userIds.length} users`)
+
+    // Fetch each user individually to avoid pagination issues
+    for (const userId of userIds) {
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
+      
+      if (userError) {
+        console.error(`Error fetching user ${userId}:`, userError)
+        continue // Skip this user but continue with others
+      }
+      
+      if (userData?.user?.email) {
+        emailMap.set(userId, userData.user.email)
+        console.log(`Found email for user ${userId}`)
+      } else {
+        console.warn(`No email found for user ${userId}`)
+      }
     }
 
-    // Create email map
-    const emailMap = new Map(authUsers.users.map(u => [u.id, u.email]))
+    console.log(`Email map contains ${emailMap.size} entries`)
 
     // Prepare email recipients with replaced variables
     const recipients: EmailRecipient[] = profiles
