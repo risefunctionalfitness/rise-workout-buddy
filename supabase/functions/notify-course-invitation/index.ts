@@ -110,8 +110,8 @@ serve(async (req) => {
     // Format course time
     const courseTime = `${course.start_time.slice(0, 5)} - ${course.end_time.slice(0, 5)}`;
 
-    // Get the app URL (fallback to a default if not set)
-    const appUrl = Deno.env.get('APP_URL') || 'https://your-app-url.lovable.app';
+    // Get the app URL
+    const appUrl = 'https://rise-ff.lovable.app';
 
     // Construct webhook payload
     const webhookData = {
