@@ -405,7 +405,11 @@ export default function AdminEmailManager() {
                             className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                           >
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{member.display_name}</p>
+                              <p className="font-medium text-sm truncate">
+                                {member.first_name && member.last_name 
+                                  ? `${member.first_name} ${member.last_name}`
+                                  : member.display_name || 'Unbekannt'}
+                              </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <MembershipBadge type={member.membership_type as any} className="text-xs" />
                                 <Badge variant="outline" className="text-xs">
@@ -465,7 +469,11 @@ export default function AdminEmailManager() {
                               className="flex items-center justify-between p-3 rounded-lg border bg-background"
                             >
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{member.display_name}</p>
+                                <p className="font-medium text-sm truncate">
+                                  {member.first_name && member.last_name 
+                                    ? `${member.first_name} ${member.last_name}`
+                                    : member.display_name || 'Unbekannt'}
+                                </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <MembershipBadge type={member.membership_type as any} className="text-xs" />
                                 <Badge variant="outline" className="text-xs">
@@ -667,7 +675,11 @@ export default function AdminEmailManager() {
               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div>
                   <p className="text-sm text-muted-foreground">Empfänger:</p>
-                  <p className="font-medium">{selectedMembers[previewMemberIndex]?.display_name}</p>
+                  <p className="font-medium">
+                    {selectedMembers[previewMemberIndex]?.first_name && selectedMembers[previewMemberIndex]?.last_name
+                      ? `${selectedMembers[previewMemberIndex].first_name} ${selectedMembers[previewMemberIndex].last_name}`
+                      : selectedMembers[previewMemberIndex]?.display_name || 'Unbekannt'}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button
