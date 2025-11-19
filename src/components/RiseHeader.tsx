@@ -105,8 +105,8 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
       
       {/* Navigation Overlay */}
       {dropdownOpen && (showAdminAccess && isAdmin) && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col justify-center items-center p-8">
-          <div className="grid grid-cols-2 gap-6 max-w-md w-full">
+        <div className="fixed inset-0 z-50 bg-background flex flex-col items-center p-8 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-6 max-w-md w-full my-auto">
             <div 
               onClick={() => {
                 onPageChange?.('home');

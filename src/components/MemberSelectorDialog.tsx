@@ -43,12 +43,20 @@ export const MemberSelectorDialog = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      loadCurrentUser();
+    const initDialog = async () => {
+      if (open) {
+        await loadCurrentUser();
+        setSelectedMembers(new Set());
+        setSearchQuery("");
+      }
+    };
+    initDialog();
+  }, [open]);
+
+  useEffect(() => {
+    if (open && currentUserId) {
       loadMembers();
       loadFavorites();
-      setSelectedMembers(new Set());
-      setSearchQuery("");
     }
   }, [open, currentUserId]);
 
