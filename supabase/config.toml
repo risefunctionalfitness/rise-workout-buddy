@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.send-test-reactivation-webhook]
 verify_jwt = false
+
+[functions.notify-course-invitation]
+verify_jwt = false
