@@ -8,9 +8,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { Mail, Users, AlertTriangle, Loader2, Eye, Filter, ChevronDown } from "lucide-react"
+import { Mail, Users, AlertTriangle, Loader2, Eye, Filter, ChevronDown, Search, Plus, X, Tag, FileText } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { MembershipBadge } from "@/components/MembershipBadge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,12 +39,15 @@ interface Profile {
   first_name: string | null
   last_name: string | null
   display_name: string | null
+  email: string | null
+  access_code: string | null
   membership_type: string | null
   status: string | null
 }
 
 export default function AdminEmailManager() {
   const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState<'recipients' | 'compose'>('recipients')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [membershipTypes, setMembershipTypes] = useState<MembershipType[]>([
     'Basic Member',
@@ -55,11 +61,14 @@ export default function AdminEmailManager() {
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [selectedMembers, setSelectedMembers] = useState<Profile[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(true)
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [previewMemberIndex, setPreviewMemberIndex] = useState(0)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // Load profiles
   useEffect(() => {
@@ -70,7 +79,7 @@ export default function AdminEmailManager() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, first_name, last_name, display_name, membership_type, status')
+        .select('id, user_id, first_name, last_name, display_name, email, access_code, membership_type, status')
         .not('user_id', 'is', null)
 
       if (error) throw error
@@ -87,19 +96,32 @@ export default function AdminEmailManager() {
     }
   }
 
-  // Filter profiles based on selected filters
-  const filteredProfiles = useMemo(() => {
+  // Filter available members (not yet selected, and matching filters)
+  const availableMembers = useMemo(() => {
+    const selectedIds = new Set(selectedMembers.map(m => m.id))
     return profiles.filter(profile => {
+      if (selectedIds.has(profile.id)) return false
+      
       // Status filter
       if (statusFilter === 'active' && profile.status !== 'active') return false
       if (statusFilter === 'inactive' && profile.status !== 'inactive') return false
-
+      
       // Membership type filter
       if (!membershipTypes.includes(profile.membership_type as MembershipType)) return false
-
+      
+      // Search filter
+      if (searchTerm && !profile.display_name?.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false
+      }
+      
       return true
     })
-  }, [profiles, statusFilter, membershipTypes])
+  }, [profiles, selectedMembers, statusFilter, membershipTypes, searchTerm])
+
+  // Combine selected members with filtered ones for sending
+  const recipientProfiles = useMemo(() => {
+    return selectedMembers.length > 0 ? selectedMembers : availableMembers
+  }, [selectedMembers, availableMembers])
 
   // Toggle membership type
   const toggleMembershipType = (type: MembershipType) => {
@@ -108,6 +130,18 @@ export default function AdminEmailManager() {
         ? prev.filter(t => t !== type)
         : [...prev, type]
     )
+  }
+
+  const addMember = (member: Profile) => {
+    setSelectedMembers(prev => [...prev, member])
+  }
+
+  const removeMember = (memberId: string) => {
+    setSelectedMembers(prev => prev.filter(m => m.id !== memberId))
+  }
+
+  const clearAllMembers = () => {
+    setSelectedMembers([])
   }
 
   // Insert variable at cursor position
@@ -128,16 +162,12 @@ export default function AdminEmailManager() {
   }
 
   // Get example preview with replaced variables
-  const getPreviewText = (text: string) => {
-    const exampleProfile = filteredProfiles[0]
-    if (!exampleProfile) return text
-
+  const getPreviewText = (text: string, profile: Profile) => {
     return text
-      .replace(/\{\{first_name\}\}/g, exampleProfile.first_name || 'Max')
-      .replace(/\{\{last_name\}\}/g, exampleProfile.last_name || 'Mustermann')
-      .replace(/\{\{full_name\}\}/g, `${exampleProfile.first_name || 'Max'} ${exampleProfile.last_name || 'Mustermann'}`)
-      .replace(/\{\{display_name\}\}/g, exampleProfile.display_name || 'Max Mustermann')
-      .replace(/\{\{membership_type\}\}/g, exampleProfile.membership_type || 'Premium Member')
+      .replace(/\{\{first_name\}\}/g, profile.first_name || 'Max')
+      .replace(/\{\{last_name\}\}/g, profile.last_name || 'Mustermann')
+      .replace(/\{\{membership_type\}\}/g, profile.membership_type || 'Premium Member')
+      .replace(/\{\{email_and_code\}\}/g, `Email: ${profile.email || 'user@example.com'}\nZugangscode: ${profile.access_code || 'N/A'}`)
   }
 
   const handleSend = async () => {
@@ -150,10 +180,10 @@ export default function AdminEmailManager() {
       return
     }
 
-    if (filteredProfiles.length === 0) {
+    if (recipientProfiles.length === 0) {
       toast({
         title: "Fehler",
-        description: "Keine Empfänger gefunden",
+        description: "Keine Empfänger ausgewählt",
         variant: "destructive"
       })
       return
@@ -190,10 +220,11 @@ export default function AdminEmailManager() {
       
       const { data, error } = await supabase.functions.invoke('send-bulk-emails', {
         body: {
-          statusFilter,
-          membershipTypes,
+          statusFilter: selectedMembers.length > 0 ? 'all' : statusFilter,
+          membershipTypes: selectedMembers.length > 0 ? ['Basic Member', 'Premium Member', '10er Karte', 'Administrator', 'Trainer', 'Wellpass', 'Open Gym'] : membershipTypes,
           subject,
-          body
+          body,
+          selectedUserIds: selectedMembers.length > 0 ? selectedMembers.map(m => m.user_id).filter(Boolean) : undefined
         }
       })
 
@@ -206,12 +237,13 @@ export default function AdminEmailManager() {
 
       toast({
         title: "Erfolgreich",
-        description: `${filteredProfiles.length} Emails wurden erfolgreich versendet`,
+        description: `${recipientProfiles.length} Emails wurden erfolgreich versendet`,
       })
 
       // Reset form
       setSubject('')
       setBody('')
+      setSelectedMembers([])
     } catch (error: any) {
       console.error('Error sending emails:', error)
       toast({
@@ -233,7 +265,7 @@ export default function AdminEmailManager() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <Card className="border-border/50 shadow-lg">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="flex items-center gap-3 text-2xl">
@@ -243,248 +275,433 @@ export default function AdminEmailManager() {
             Bulk-Emails versenden
           </CardTitle>
           <CardDescription className="text-base">
-            Sende personalisierte Emails an mehrere Mitglieder gleichzeitig
+            Wähle Empfänger aus und verfasse personalisierte Emails
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Filters - Collapsible */}
-          <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="w-full justify-between group hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-primary" />
-                  <span className="font-medium">Filter & Empfänger</span>
-                  <Badge variant="secondary" className="ml-2">
-                    {filteredProfiles.length}
-                  </Badge>
-                </div>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-6 pt-6">
-              <div className="grid gap-6 p-6 rounded-lg border bg-card">
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold flex items-center gap-2">
-                    Status Filter
-                  </Label>
-                  <RadioGroup 
-                    value={statusFilter} 
-                    onValueChange={(value) => setStatusFilter(value as StatusFilter)}
-                    className="space-y-2"
-                  >
-                    <div className="flex items-center space-x-3 p-3 rounded-md hover:bg-accent/50 transition-colors cursor-pointer">
-                      <RadioGroupItem value="all" id="all" />
-                      <Label htmlFor="all" className="font-normal cursor-pointer flex-1">Alle Mitglieder</Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-md hover:bg-accent/50 transition-colors cursor-pointer">
-                      <RadioGroupItem value="active" id="active" />
-                      <Label htmlFor="active" className="font-normal cursor-pointer flex-1">Nur aktive</Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-md hover:bg-accent/50 transition-colors cursor-pointer">
-                      <RadioGroupItem value="inactive" id="inactive" />
-                      <Label htmlFor="inactive" className="font-normal cursor-pointer flex-1">Nur inaktive</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'recipients' | 'compose')}>
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="recipients" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Empfänger auswählen
+                {recipientProfiles.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">{recipientProfiles.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="compose" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Email verfassen
+              </TabsTrigger>
+            </TabsList>
 
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">Mitgliedschaftsarten</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['Basic Member', 'Premium Member', '10er Karte', 'Administrator', 'Trainer', 'Wellpass', 'Open Gym'].map((type) => (
-                      <div 
-                        key={type} 
-                        className="flex items-center space-x-3 p-3 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
-                      >
-                        <Checkbox
-                          id={type}
-                          checked={membershipTypes.includes(type as MembershipType)}
-                          onCheckedChange={() => toggleMembershipType(type as MembershipType)}
-                        />
-                        <Label htmlFor={type} className="font-normal cursor-pointer flex-1">{type}</Label>
+            {/* Tab 1: Recipients Selection */}
+            <TabsContent value="recipients" className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Left Panel: Available Members */}
+                <Card className="border-muted/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center justify-between">
+                      Verfügbare Mitglieder
+                      <Badge variant="outline">{availableMembers.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Suche nach Namen..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {/* Collapsible Filters */}
+                    <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between" size="sm">
+                          <div className="flex items-center gap-2">
+                            <Filter className="h-3 w-3" />
+                            Filter
+                          </div>
+                          <ChevronDown className={`h-3 w-3 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="space-y-4 pt-4">
+                        {/* Status Filter */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Status</Label>
+                          <RadioGroup value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="all" id="all-status" />
+                              <Label htmlFor="all-status" className="font-normal">Alle</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="active" id="active-status" />
+                              <Label htmlFor="active-status" className="font-normal">Aktiv</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="inactive" id="inactive-status" />
+                              <Label htmlFor="inactive-status" className="font-normal">Inaktiv</Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+
+                        {/* Membership Filter */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Mitgliedschaft</Label>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {['Basic Member', 'Premium Member', '10er Karte', 'Administrator', 'Trainer', 'Wellpass', 'Open Gym'].map((type) => (
+                              <div key={type} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`filter-${type}`}
+                                  checked={membershipTypes.includes(type as MembershipType)}
+                                  onCheckedChange={() => toggleMembershipType(type as MembershipType)}
+                                />
+                                <Label htmlFor={`filter-${type}`} className="font-normal text-sm">{type}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+
+                    {/* Available Members List */}
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                      {availableMembers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          Keine Mitglieder gefunden
+                        </p>
+                      ) : (
+                        availableMembers.map((member) => (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{member.display_name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <MembershipBadge type={member.membership_type as any} className="text-xs" />
+                                <Badge variant="outline" className="text-xs">
+                                  {member.status === 'active' ? '✓ Aktiv' : '○ Inaktiv'}
+                                </Badge>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => addMember(member)}
+                              className="ml-2"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Right Panel: Selected Members */}
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center justify-between">
+                      Ausgewählt
+                      <Badge className="bg-primary">{selectedMembers.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {selectedMembers.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          Wähle Mitglieder aus oder verwende Filter
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Ohne Auswahl werden alle gefilterten Mitglieder verwendet
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recipient count */}
-                <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                  <div className="p-2 rounded-md bg-primary/10">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-lg">{filteredProfiles.length} Empfänger</div>
-                    <div className="text-sm text-muted-foreground">werden diese Email erhalten</div>
-                  </div>
-                  {filteredProfiles.length > 100 && (
-                    <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      Große Anzahl
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Email editor */}
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="subject" className="text-base font-semibold">Email-Betreff</Label>
-              <Input
-                id="subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="z.B. Neue Kurse für diesen Monat"
-                className="h-11"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="email-body" className="text-base font-semibold">Nachricht</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowPreview(!showPreview)}
-                  className="hover:bg-accent"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  {showPreview ? 'Editor' : 'Vorschau'}
-                </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearAllMembers}
+                          className="w-full"
+                        >
+                          Alle entfernen
+                        </Button>
+                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                          {selectedMembers.map((member) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center justify-between p-3 rounded-lg border bg-background"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{member.display_name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <MembershipBadge type={member.membership_type as any} className="text-xs" />
+                                <Badge variant="outline" className="text-xs">
+                                  {member.status === 'active' ? '✓ Aktiv' : '○ Inaktiv'}
+                                </Badge>
+                              </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeMember(member.id)}
+                                className="ml-2 hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
 
-              {!showPreview ? (
-                <div className="space-y-3">
-                  <Textarea
-                    id="email-body"
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder="Schreibe deine Nachricht hier..."
-                    rows={12}
-                    className="resize-none"
-                  />
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">Personalisierungs-Variablen:</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => insertVariable('{{first_name}}')}
-                        className="hover:bg-secondary/80"
-                      >
-                        Vorname
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => insertVariable('{{last_name}}')}
-                        className="hover:bg-secondary/80"
-                      >
-                        Nachname
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => insertVariable('{{full_name}}')}
-                        className="hover:bg-secondary/80"
-                      >
-                        Voller Name
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => insertVariable('{{display_name}}')}
-                        className="hover:bg-secondary/80"
-                      >
-                        Anzeigename
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => insertVariable('{{membership_type}}')}
-                        className="hover:bg-secondary/80"
-                      >
-                        Mitgliedschaft
-                      </Button>
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={() => setActiveTab('compose')}
+              >
+                Weiter zur Email-Erstellung
+              </Button>
+            </TabsContent>
+
+            {/* Tab 2: Email Composition */}
+            <TabsContent value="compose" className="space-y-6">
+              {/* Recipients Summary */}
+              <Card className="bg-muted/30 border-muted">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Users className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">
+                          {recipientProfiles.length} Empfänger
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedMembers.length > 0 
+                            ? 'Manuell ausgewählte Mitglieder' 
+                            : `Gefilterte Mitglieder (Status: ${statusFilter})`}
+                        </p>
+                      </div>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab('recipients')}
+                    >
+                      Ändern
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Subject */}
+              <div className="space-y-2">
+                <Label htmlFor="email-subject" className="text-base font-semibold">Betreff</Label>
+                <Input
+                  id="email-subject"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="z.B. Neue Kurse verfügbar"
+                  className="h-11"
+                />
+              </div>
+
+              {/* Body */}
+              <div className="space-y-3">
+                <Label htmlFor="email-body" className="text-base font-semibold">Nachricht</Label>
+                <Textarea
+                  id="email-body"
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Schreibe deine Nachricht hier..."
+                  rows={12}
+                  className="resize-none"
+                />
+                
+                {/* Variables */}
+                <div className="space-y-2">
+                  <Label className="text-sm flex items-center gap-2">
+                    <Tag className="h-3 w-3" />
+                    Personalisierungs-Variablen:
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertVariable('{{first_name}}')}
+                      className="hover:bg-primary/10"
+                    >
+                      {'{{first_name}}'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertVariable('{{last_name}}')}
+                      className="hover:bg-primary/10"
+                    >
+                      {'{{last_name}}'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertVariable('{{membership_type}}')}
+                      className="hover:bg-primary/10"
+                    >
+                      {'{{membership_type}}'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertVariable('{{email_and_code}}')}
+                      className="hover:bg-primary/10"
+                    >
+                      {'{{email_and_code}}'}
+                    </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="p-6 bg-muted/50 rounded-lg border border-border space-y-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Betreff:</div>
-                    <div className="font-semibold text-lg">{getPreviewText(subject) || 'Kein Betreff'}</div>
-                  </div>
-                  <div className="border-t pt-4">
-                    <div className="whitespace-pre-wrap">{getPreviewText(body) || 'Keine Nachricht'}</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground pt-2 border-t">
-                    💡 Vorschau mit Beispieldaten vom ersten Empfänger
-                  </div>
-                </div>
+              </div>
+
+              {/* Preview Button */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  if (recipientProfiles.length > 0) {
+                    setPreviewMemberIndex(0)
+                    setPreviewDialogOpen(true)
+                  }
+                }}
+                disabled={recipientProfiles.length === 0}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Vorschau anzeigen
+              </Button>
+
+              {/* Warning for large batches */}
+              {recipientProfiles.length > 50 && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Du versendest an {recipientProfiles.length} Empfänger. Dies kann einige Minuten dauern.
+                  </AlertDescription>
+                </Alert>
               )}
-            </div>
-          </div>
 
-          {/* Warning for large sends */}
-          {filteredProfiles.length > 100 && (
-            <Alert className="border-warning/20 bg-warning/5">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              <AlertDescription className="text-warning-foreground">
-                Sie versenden an mehr als 100 Empfänger. Die Emails werden in Batches versendet, dies kann einige Minuten dauern.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Send button */}
-          <Button
-            onClick={handleSend}
-            disabled={sending || filteredProfiles.length === 0 || !subject.trim() || !body.trim()}
-            className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
-            size="lg"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Sende Emails...
-              </>
-            ) : (
-              <>
-                <Mail className="h-5 w-5 mr-2" />
-                Emails versenden ({filteredProfiles.length})
-              </>
-            )}
-          </Button>
+              {/* Send Button */}
+              <Button
+                onClick={handleSend}
+                disabled={!subject.trim() || !body.trim() || sending || recipientProfiles.length === 0}
+                size="lg"
+                className="w-full shadow-lg"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Versende...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-5 w-5" />
+                    Email versenden ({recipientProfiles.length} Empfänger)
+                  </>
+                )}
+              </Button>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
-      {/* Confirmation dialog */}
+      {/* Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Email-Vorschau
+            </DialogTitle>
+          </DialogHeader>
+          {recipientProfiles.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="text-sm text-muted-foreground">Empfänger:</p>
+                  <p className="font-medium">{recipientProfiles[previewMemberIndex]?.display_name}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPreviewMemberIndex(Math.max(0, previewMemberIndex - 1))}
+                    disabled={previewMemberIndex === 0}
+                  >
+                    ← Vorheriger
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPreviewMemberIndex(Math.min(recipientProfiles.length - 1, previewMemberIndex + 1))}
+                    disabled={previewMemberIndex === recipientProfiles.length - 1}
+                  >
+                    Nächster →
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm text-muted-foreground">Betreff:</Label>
+                  <p className="font-semibold mt-1">{getPreviewText(subject, recipientProfiles[previewMemberIndex])}</p>
+                </div>
+                <div className="h-px bg-border" />
+                <div>
+                  <Label className="text-sm text-muted-foreground">Nachricht:</Label>
+                  <div className="mt-2 p-4 bg-muted/30 rounded-lg whitespace-pre-wrap">
+                    {getPreviewText(body, recipientProfiles[previewMemberIndex])}
+                  </div>
+                </div>
+              </div>
+              
+              <Alert>
+                <AlertDescription className="text-sm">
+                  💡 Dies ist eine Vorschau mit Beispieldaten des ausgewählten Empfängers.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Emails versenden?</AlertDialogTitle>
+            <AlertDialogTitle>Email versenden bestätigen</AlertDialogTitle>
             <AlertDialogDescription>
-              Sie sind dabei, <strong>{filteredProfiles.length} Emails</strong> zu versenden.
-              <br />
-              <br />
-              Betreff: <strong>{subject}</strong>
-              <br />
-              <br />
-              Möchten Sie fortfahren?
+              Möchtest du die Email wirklich an {recipientProfiles.length} Empfänger versenden?
+              Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSend}>Ja, senden</AlertDialogAction>
+            <AlertDialogAction onClick={confirmSend}>
+              Jetzt versenden
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
