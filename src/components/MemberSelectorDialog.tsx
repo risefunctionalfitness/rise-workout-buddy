@@ -168,44 +168,120 @@ export const MemberSelectorDialog = ({
 
     setLoading(true);
 
-    const invitations = Array.from(selectedMembers).map(recipientId => ({
-      course_id: courseId,
-      sender_id: currentUserId,
-      recipient_id: recipientId,
-      status: 'pending'
-    }));
+    try {
+      const recipientIds = Array.from(selectedMembers);
+      
+      // Check for existing invitations
+      const { data: existingInvitations, error: checkError } = await supabase
+        .from("course_invitations")
+        .select("id, recipient_id, status")
+        .eq("course_id", courseId)
+        .eq("sender_id", currentUserId)
+        .in("recipient_id", recipientIds);
 
-    console.log('Sending invitations:', invitations);
+      if (checkError) {
+        console.error("Error checking existing invitations:", checkError);
+        toast.error("Fehler beim Prüfen bestehender Einladungen");
+        setLoading(false);
+        return;
+      }
 
-    const { data: createdInvitations, error } = await supabase
-      .from("course_invitations")
-      .insert(invitations)
-      .select('id');
+      // Build a map of existing invitations by recipient_id
+      const existingMap = new Map(
+        existingInvitations?.map(inv => [inv.recipient_id, inv]) || []
+      );
 
-    setLoading(false);
+      const toReactivate: string[] = [];
+      const toCreate: string[] = [];
+      const alreadyPending: string[] = [];
 
-    if (error) {
-      toast.error("Fehler beim Versenden der Einladungen");
-      console.error("Error sending invitations:", error);
-      return;
-    }
-
-    // Send webhook notifications for each invitation (in background, don't wait)
-    if (createdInvitations) {
-      createdInvitations.forEach(invitation => {
-        supabase.functions
-          .invoke('notify-course-invitation', {
-            body: { invitation_id: invitation.id }
-          })
-          .catch(err => {
-            console.error('Webhook notification error:', err);
-            // Don't show error to user - webhook is optional
-          });
+      // Categorize recipients
+      recipientIds.forEach(recipientId => {
+        const existing = existingMap.get(recipientId);
+        if (!existing) {
+          toCreate.push(recipientId);
+        } else if (existing.status === 'pending') {
+          alreadyPending.push(recipientId);
+        } else {
+          // declined or accepted - reactivate
+          toReactivate.push(existing.id);
+        }
       });
-    }
 
-    toast.success(`${selectedMembers.size} Mitglied${selectedMembers.size > 1 ? 'er' : ''} eingeladen`);
-    onOpenChange(false);
+      // Reactivate declined/accepted invitations
+      if (toReactivate.length > 0) {
+        const { error: reactivateError } = await supabase
+          .from("course_invitations")
+          .update({ 
+            status: 'pending',
+            responded_at: null 
+          })
+          .in("id", toReactivate);
+
+        if (reactivateError) {
+          console.error("Error reactivating invitations:", reactivateError);
+          toast.error("Fehler beim Reaktivieren von Einladungen");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Create new invitations
+      let createdInvitations = null;
+      if (toCreate.length > 0) {
+        const newInvitations = toCreate.map(recipientId => ({
+          course_id: courseId,
+          sender_id: currentUserId,
+          recipient_id: recipientId,
+          status: 'pending'
+        }));
+
+        const { data, error: createError } = await supabase
+          .from("course_invitations")
+          .insert(newInvitations)
+          .select('id');
+
+        if (createError) {
+          console.error("Error creating invitations:", createError);
+          toast.error("Fehler beim Erstellen neuer Einladungen");
+          setLoading(false);
+          return;
+        }
+
+        createdInvitations = data;
+      }
+
+      setLoading(false);
+
+      // Show appropriate success message
+      const totalSent = toCreate.length + toReactivate.length;
+      if (totalSent > 0) {
+        toast.success(`${totalSent} Einladung${totalSent > 1 ? 'en' : ''} versendet`);
+      }
+      
+      if (alreadyPending.length > 0) {
+        toast.info(`${alreadyPending.length} Mitglied${alreadyPending.length > 1 ? 'er' : ''} bereits eingeladen`);
+      }
+
+      // Send webhook notifications for newly created invitations
+      if (createdInvitations) {
+        createdInvitations.forEach(invitation => {
+          supabase.functions
+            .invoke('notify-course-invitation', {
+              body: { invitation_id: invitation.id }
+            })
+            .catch(err => {
+              console.error('Webhook notification error:', err);
+            });
+        });
+      }
+
+      onOpenChange(false);
+    } catch (err) {
+      console.error("Unexpected error sending invitations:", err);
+      toast.error("Unerwarteter Fehler beim Versenden");
+      setLoading(false);
+    }
   };
 
   const filterMembers = (memberList: Member[]) => {
