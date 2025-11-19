@@ -95,16 +95,16 @@ serve(async (req) => {
       console.warn(`Failed to fetch recipient email: ${recipientUserError.message}`);
     }
 
-    // Format sender name
-    const senderName = senderProfile?.display_name || 
+    // Format sender name - prioritize nickname
+    const senderName = senderProfile?.nickname ||
+                      senderProfile?.display_name || 
                       `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim() ||
-                      senderProfile?.nickname ||
                       'Ein Mitglied';
 
-    // Format recipient name
-    const recipientName = recipientProfile?.display_name ||
+    // Format recipient name - prioritize nickname
+    const recipientName = recipientProfile?.nickname ||
+                         recipientProfile?.display_name ||
                          `${recipientProfile?.first_name || ''} ${recipientProfile?.last_name || ''}`.trim() ||
-                         recipientProfile?.nickname ||
                          'Mitglied';
 
     // Format course time
