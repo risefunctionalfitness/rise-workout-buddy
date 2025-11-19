@@ -161,32 +161,42 @@ export default function AdminEmailManager() {
     setSending(true)
 
     try {
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession()
+      // Refresh session to ensure token is valid
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      if (!session) {
+      console.log('Session check:', { 
+        hasSession: !!session, 
+        hasAccessToken: !!session?.access_token,
+        sessionError 
+      })
+      
+      if (sessionError || !session?.access_token) {
         toast({
           title: "Fehler",
-          description: "Keine aktive Sitzung gefunden. Bitte neu anmelden.",
+          description: "Keine gültige Sitzung. Bitte neu anmelden.",
           variant: "destructive"
         })
         setSending(false)
         return
       }
 
+      console.log('Invoking send-bulk-emails function...')
+      
       const { data, error } = await supabase.functions.invoke('send-bulk-emails', {
         body: {
           statusFilter,
           membershipTypes,
           subject,
           body
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
         }
       })
 
-      if (error) throw error
+      console.log('Function response:', { data, error })
+
+      if (error) {
+        console.error('Edge function error:', error)
+        throw error
+      }
 
       toast({
         title: "Erfolgreich",
