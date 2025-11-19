@@ -169,9 +169,10 @@ export const MemberSelectorDialog = ({
 
     console.log('Sending invitations:', invitations);
 
-    const { error } = await supabase
+    const { data: createdInvitations, error } = await supabase
       .from("course_invitations")
-      .insert(invitations);
+      .insert(invitations)
+      .select('id');
 
     setLoading(false);
 
@@ -179,6 +180,20 @@ export const MemberSelectorDialog = ({
       toast.error("Fehler beim Versenden der Einladungen");
       console.error("Error sending invitations:", error);
       return;
+    }
+
+    // Send webhook notifications for each invitation (in background, don't wait)
+    if (createdInvitations) {
+      createdInvitations.forEach(invitation => {
+        supabase.functions
+          .invoke('notify-course-invitation', {
+            body: { invitation_id: invitation.id }
+          })
+          .catch(err => {
+            console.error('Webhook notification error:', err);
+            // Don't show error to user - webhook is optional
+          });
+      });
     }
 
     toast.success(`${selectedMembers.size} Mitglied${selectedMembers.size > 1 ? 'er' : ''} eingeladen`);
