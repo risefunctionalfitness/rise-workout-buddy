@@ -70,24 +70,27 @@ serve(async (req) => {
       }
     )
 
-    // Admin API client for fetching emails
+    // Admin API client for fetching emails and validating JWT
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Check if user is authenticated - pass token directly to getUser()
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    // Use supabaseAdmin to validate JWT token directly
+    // This avoids session-related auth errors by using SERVICE_ROLE_KEY
+    console.log('Validating token with admin client...')
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
     
     if (userError || !user) {
-      console.error('Auth error:', userError)
+      console.error('Auth error:', userError?.message || 'Unknown error')
+      console.error('Full auth error:', JSON.stringify(userError))
       return new Response(
         JSON.stringify({ error: 'Unauthorized - invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('User authenticated:', user.id)
+    console.log('User authenticated successfully:', user.id, 'Email:', user.email)
 
     const { data: roles, error: roleError } = await supabaseClient
       .from('user_roles')
