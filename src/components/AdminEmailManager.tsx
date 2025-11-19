@@ -161,12 +161,28 @@ export default function AdminEmailManager() {
     setSending(true)
 
     try {
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        toast({
+          title: "Fehler",
+          description: "Keine aktive Sitzung gefunden. Bitte neu anmelden.",
+          variant: "destructive"
+        })
+        setSending(false)
+        return
+      }
+
       const { data, error } = await supabase.functions.invoke('send-bulk-emails', {
         body: {
           statusFilter,
           membershipTypes,
           subject,
           body
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       })
 
