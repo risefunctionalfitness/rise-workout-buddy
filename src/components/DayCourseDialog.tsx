@@ -590,10 +590,51 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     <h5 className="font-medium text-sm text-muted-foreground">
                       Warteliste ({selectedCourse.waitlist_count})
                     </h5>
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-sm text-yellow-800">
-                        {selectedCourse.waitlist_count} Person(en) auf der Warteliste
-                      </p>
+                    <div className="space-y-3">
+                      {participants
+                        .filter(p => p.status === 'waitlist')
+                        .map((participant, index) => {
+                          const position = index + 1
+                          return (
+                            <div key={index} className="flex items-center justify-between p-3 bg-yellow-50/50 rounded-lg border border-yellow-200">
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
+                                    imageUrl: participant.profiles.avatar_url, 
+                                    displayName: participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt' 
+                                  })}
+                                >
+                                  {participant.profiles?.avatar_url ? (
+                                    <img 
+                                      src={participant.profiles.avatar_url} 
+                                      alt="Avatar" 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-xs font-medium">
+                                      {participant.profiles?.display_name?.charAt(0) || '?'}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="font-medium">
+                                  {(isTrainer || isAdmin) 
+                                    ? participant.profiles?.display_name || 'Unbekannt'
+                                    : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
+                                  }
+                                </span>
+                                <span className="text-xs text-yellow-700">
+                                  Warteliste #{position}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {(isTrainer || isAdmin) && (
+                                  <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
                     </div>
                   </div>
                 )}
