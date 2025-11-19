@@ -455,9 +455,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                             {course.registered_count}/{course.max_participants}
                           </Badge>
                           {course.waitlist_count > 0 && (
-                            <span className="text-xs" style={{ color: '#ff914d' }}>
-                              {course.waitlist_count} Warteliste
-                            </span>
+                            <Badge style={{ backgroundColor: '#ff914d' }} className="text-white">
+                              WL {course.waitlist_count}
+                            </Badge>
                           )}
                         </div>
                       </div>
