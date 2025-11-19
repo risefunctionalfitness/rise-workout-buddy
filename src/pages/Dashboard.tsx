@@ -41,7 +41,7 @@ import { User } from "@supabase/supabase-js"
 import { useToast } from "@/hooks/use-toast"
 import { useNewsNotification } from "@/hooks/useNewsNotification"
 
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { timezone } from "@/lib/timezone"
 
 type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
@@ -66,6 +66,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<DashboardTabType>('home')
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([])
   const [trainingCount, setTrainingCount] = useState(0)
@@ -88,6 +89,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   
   // Check if user is Open Gym (should not see courses)
   const isOpenGym = userRole === 'open_gym'
+
+  // Check URL parameters to open invitations panel
+  useEffect(() => {
+    if (searchParams.get('invitations') === 'open') {
+      setShowInvitations(true)
+      // Remove the parameter from URL after opening
+      searchParams.delete('invitations')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   // Generate training days for current month and load training sessions
   useEffect(() => {
