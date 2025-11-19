@@ -53,6 +53,10 @@ serve(async (req) => {
       )
     }
 
+    // Extract token from Bearer header
+    const token = authHeader.replace('Bearer ', '')
+    console.log('Token extracted, length:', token.length)
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -72,8 +76,8 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Check if user is admin
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
+    // Check if user is authenticated - pass token directly to getUser()
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
     
     if (userError || !user) {
       console.error('Auth error:', userError)
@@ -82,6 +86,8 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('User authenticated:', user.id)
 
     const { data: roles, error: roleError } = await supabaseClient
       .from('user_roles')
