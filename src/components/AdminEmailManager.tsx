@@ -118,10 +118,10 @@ export default function AdminEmailManager() {
     })
   }, [profiles, selectedMembers, statusFilter, membershipTypes, searchTerm])
 
-  // Combine selected members with filtered ones for sending
+  // Only use explicitly selected members
   const recipientProfiles = useMemo(() => {
-    return selectedMembers.length > 0 ? selectedMembers : availableMembers
-  }, [selectedMembers, availableMembers])
+    return selectedMembers
+  }, [selectedMembers])
 
   // Toggle membership type
   const toggleMembershipType = (type: MembershipType) => {
@@ -142,6 +142,13 @@ export default function AdminEmailManager() {
 
   const clearAllMembers = () => {
     setSelectedMembers([])
+  }
+
+  const addAllFiltered = () => {
+    const newMembers = availableMembers.filter(
+      m => !selectedMembers.some(sm => sm.id === m.id)
+    )
+    setSelectedMembers(prev => [...prev, ...newMembers])
   }
 
   // Insert variable at cursor position
@@ -171,19 +178,28 @@ export default function AdminEmailManager() {
   }
 
   const handleSend = async () => {
-    if (!subject.trim() || !body.trim()) {
+    if (selectedMembers.length === 0) {
       toast({
-        title: "Fehler",
-        description: "Betreff und Nachricht dürfen nicht leer sein",
+        title: "Keine Empfänger ausgewählt",
+        description: "Bitte wähle mindestens einen Empfänger aus.",
         variant: "destructive"
       })
       return
     }
 
-    if (recipientProfiles.length === 0) {
+    if (!subject.trim()) {
       toast({
         title: "Fehler",
-        description: "Keine Empfänger ausgewählt",
+        description: "Bitte gib einen Betreff ein",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!body.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Bitte gib eine Nachricht ein",
         variant: "destructive"
       })
       return
@@ -220,11 +236,9 @@ export default function AdminEmailManager() {
       
       const { data, error } = await supabase.functions.invoke('send-bulk-emails', {
         body: {
-          statusFilter: selectedMembers.length > 0 ? 'all' : statusFilter,
-          membershipTypes: selectedMembers.length > 0 ? ['Basic Member', 'Premium Member', '10er Karte', 'Administrator', 'Trainer', 'Wellpass', 'Open Gym'] : membershipTypes,
           subject,
           body,
-          selectedUserIds: selectedMembers.length > 0 ? selectedMembers.map(m => m.user_id).filter(Boolean) : undefined
+          selectedUserIds: selectedMembers.map(m => m.user_id).filter(Boolean)
         }
       })
 
@@ -237,7 +251,7 @@ export default function AdminEmailManager() {
 
       toast({
         title: "Erfolgreich",
-        description: `${recipientProfiles.length} Emails wurden erfolgreich versendet`,
+        description: `${selectedMembers.length} Emails wurden erfolgreich versendet`,
       })
 
       // Reset form
@@ -284,8 +298,8 @@ export default function AdminEmailManager() {
               <TabsTrigger value="recipients" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Empfänger auswählen
-                {recipientProfiles.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">{recipientProfiles.length}</Badge>
+                {selectedMembers.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">{selectedMembers.length}</Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="compose" className="flex items-center gap-2">
@@ -368,13 +382,24 @@ export default function AdminEmailManager() {
                     </Collapsible>
 
                     {/* Available Members List */}
-                    <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                      {availableMembers.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-8">
-                          Keine Mitglieder gefunden
-                        </p>
-                      ) : (
-                        availableMembers.map((member) => (
+                    <div className="space-y-3">
+                      {availableMembers.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addAllFiltered}
+                          className="w-full"
+                        >
+                          Alle gefilterten hinzufügen ({availableMembers.length})
+                        </Button>
+                      )}
+                      <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                        {availableMembers.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-8">
+                            Keine Mitglieder gefunden
+                          </p>
+                        ) : (
+                          availableMembers.map((member) => (
                           <div
                             key={member.id}
                             className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
@@ -397,8 +422,9 @@ export default function AdminEmailManager() {
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
-                        ))
-                      )}
+                          ))
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -416,10 +442,10 @@ export default function AdminEmailManager() {
                       <div className="text-center py-12">
                         <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
                         <p className="text-sm text-muted-foreground">
-                          Wähle Mitglieder aus oder verwende Filter
+                          Keine Mitglieder ausgewählt
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Ohne Auswahl werden alle gefilterten Mitglieder verwendet
+                          Wähle Mitglieder manuell aus oder nutze "Alle gefilterten hinzufügen"
                         </p>
                       </div>
                     ) : (
@@ -485,12 +511,12 @@ export default function AdminEmailManager() {
                       </div>
                       <div>
                         <p className="font-semibold">
-                          {recipientProfiles.length} Empfänger
+                          {selectedMembers.length} Empfänger
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {selectedMembers.length > 0 
                             ? 'Manuell ausgewählte Mitglieder' 
-                            : `Gefilterte Mitglieder (Status: ${statusFilter})`}
+                            : 'Keine Mitglieder ausgewählt'}
                         </p>
                       </div>
                     </div>
@@ -582,23 +608,23 @@ export default function AdminEmailManager() {
                 variant="outline"
                 className="w-full"
                 onClick={() => {
-                  if (recipientProfiles.length > 0) {
+                  if (selectedMembers.length > 0) {
                     setPreviewMemberIndex(0)
                     setPreviewDialogOpen(true)
                   }
                 }}
-                disabled={recipientProfiles.length === 0}
+                disabled={selectedMembers.length === 0}
               >
                 <Eye className="h-4 w-4 mr-2" />
                 Vorschau anzeigen
               </Button>
 
               {/* Warning for large batches */}
-              {recipientProfiles.length > 50 && (
+              {selectedMembers.length > 50 && (
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Du versendest an {recipientProfiles.length} Empfänger. Dies kann einige Minuten dauern.
+                    Du versendest an {selectedMembers.length} Empfänger. Dies kann einige Minuten dauern.
                   </AlertDescription>
                 </Alert>
               )}
@@ -606,7 +632,7 @@ export default function AdminEmailManager() {
               {/* Send Button */}
               <Button
                 onClick={handleSend}
-                disabled={!subject.trim() || !body.trim() || sending || recipientProfiles.length === 0}
+                disabled={!subject.trim() || !body.trim() || sending || selectedMembers.length === 0}
                 size="lg"
                 className="w-full shadow-lg"
               >
@@ -618,7 +644,7 @@ export default function AdminEmailManager() {
                 ) : (
                   <>
                     <Mail className="mr-2 h-5 w-5" />
-                    Email versenden ({recipientProfiles.length} Empfänger)
+                    Email versenden ({selectedMembers.length} Empfänger)
                   </>
                 )}
               </Button>
@@ -636,12 +662,12 @@ export default function AdminEmailManager() {
               Email-Vorschau
             </DialogTitle>
           </DialogHeader>
-          {recipientProfiles.length > 0 && (
+          {selectedMembers.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div>
                   <p className="text-sm text-muted-foreground">Empfänger:</p>
-                  <p className="font-medium">{recipientProfiles[previewMemberIndex]?.display_name}</p>
+                  <p className="font-medium">{selectedMembers[previewMemberIndex]?.display_name}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -655,8 +681,8 @@ export default function AdminEmailManager() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setPreviewMemberIndex(Math.min(recipientProfiles.length - 1, previewMemberIndex + 1))}
-                    disabled={previewMemberIndex === recipientProfiles.length - 1}
+                    onClick={() => setPreviewMemberIndex(Math.min(selectedMembers.length - 1, previewMemberIndex + 1))}
+                    disabled={previewMemberIndex === selectedMembers.length - 1}
                   >
                     Nächster →
                   </Button>
@@ -666,13 +692,13 @@ export default function AdminEmailManager() {
               <div className="space-y-3">
                 <div>
                   <Label className="text-sm text-muted-foreground">Betreff:</Label>
-                  <p className="font-semibold mt-1">{getPreviewText(subject, recipientProfiles[previewMemberIndex])}</p>
+                  <p className="font-semibold mt-1">{getPreviewText(subject, selectedMembers[previewMemberIndex])}</p>
                 </div>
                 <div className="h-px bg-border" />
                 <div>
                   <Label className="text-sm text-muted-foreground">Nachricht:</Label>
                   <div className="mt-2 p-4 bg-muted/30 rounded-lg whitespace-pre-wrap">
-                    {getPreviewText(body, recipientProfiles[previewMemberIndex])}
+                    {getPreviewText(body, selectedMembers[previewMemberIndex])}
                   </div>
                 </div>
               </div>
@@ -693,7 +719,7 @@ export default function AdminEmailManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Email versenden bestätigen</AlertDialogTitle>
             <AlertDialogDescription>
-              Möchtest du die Email wirklich an {recipientProfiles.length} Empfänger versenden?
+              Möchtest du die Email wirklich an {selectedMembers.length} Empfänger versenden?
               Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>

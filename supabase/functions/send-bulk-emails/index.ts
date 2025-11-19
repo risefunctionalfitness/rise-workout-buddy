@@ -7,10 +7,11 @@ const corsHeaders = {
 }
 
 interface EmailRequest {
-  statusFilter: 'all' | 'active' | 'inactive'
-  membershipTypes: string[]
   subject: string
   body: string
+  selectedUserIds: string[]
+  statusFilter?: 'all' | 'active' | 'inactive'
+  membershipTypes?: string[]
 }
 
 interface Profile {
@@ -21,15 +22,16 @@ interface Profile {
   display_name: string | null
   membership_type: string | null
   status: string | null
+  email: string | null
+  access_code: string | null
 }
 
 interface EmailRecipient {
   email: string
   first_name: string
   last_name: string
-  full_name: string
-  display_name: string
   membership_type: string
+  email_and_code: string
   subject: string
   body: string
 }
@@ -106,26 +108,25 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { statusFilter, membershipTypes, subject, body }: EmailRequest = await req.json()
+    const { selectedUserIds, subject, body }: EmailRequest = await req.json()
 
-    console.log('Sending bulk emails with filters:', { statusFilter, membershipTypes })
+    console.log('Sending bulk emails to selected users:', { count: selectedUserIds?.length || 0 })
 
     // Build query for profiles
     let query = supabaseClient
       .from('profiles')
-      .select('id, user_id, first_name, last_name, display_name, membership_type, status')
+      .select('id, user_id, first_name, last_name, display_name, membership_type, status, email, access_code')
       .not('user_id', 'is', null)
 
-    // Apply status filter
-    if (statusFilter === 'active') {
-      query = query.eq('status', 'active')
-    } else if (statusFilter === 'inactive') {
-      query = query.eq('status', 'inactive')
-    }
-
-    // Apply membership type filter
-    if (membershipTypes && membershipTypes.length > 0) {
-      query = query.in('membership_type', membershipTypes)
+    // Filter by selected user IDs
+    if (selectedUserIds && selectedUserIds.length > 0) {
+      query = query.in('user_id', selectedUserIds)
+    } else {
+      // If no users selected, return empty result
+      return new Response(
+        JSON.stringify({ error: 'No recipients selected' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const { data: profiles, error: profilesError } = await query
@@ -163,32 +164,29 @@ serve(async (req) => {
         const email = emailMap.get(p.user_id)!
         const firstName = p.first_name || ''
         const lastName = p.last_name || ''
-        const fullName = `${firstName} ${lastName}`.trim() || 'Mitglied'
-        const displayName = p.display_name || fullName
         const membershipType = p.membership_type || ''
+        const accessCode = p.access_code || 'Kein Code'
+        const emailAndCode = `Email: ${email}\nZugangscode: ${accessCode}`
 
         // Replace variables in subject and body
         const personalizedSubject = subject
           .replace(/\{\{first_name\}\}/g, firstName)
           .replace(/\{\{last_name\}\}/g, lastName)
-          .replace(/\{\{full_name\}\}/g, fullName)
-          .replace(/\{\{display_name\}\}/g, displayName)
           .replace(/\{\{membership_type\}\}/g, membershipType)
+          .replace(/\{\{email_and_code\}\}/g, emailAndCode)
 
         const personalizedBody = body
           .replace(/\{\{first_name\}\}/g, firstName)
           .replace(/\{\{last_name\}\}/g, lastName)
-          .replace(/\{\{full_name\}\}/g, fullName)
-          .replace(/\{\{display_name\}\}/g, displayName)
           .replace(/\{\{membership_type\}\}/g, membershipType)
+          .replace(/\{\{email_and_code\}\}/g, emailAndCode)
 
         return {
           email,
           first_name: firstName,
           last_name: lastName,
-          full_name: fullName,
-          display_name: displayName,
           membership_type: membershipType,
+          email_and_code: emailAndCode,
           subject: personalizedSubject,
           body: personalizedBody
         }
