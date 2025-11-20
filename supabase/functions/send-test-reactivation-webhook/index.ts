@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,39 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    // Get webhook type from request body (default to reactivation)
-    const body = await req.json().catch(() => ({}))
-    const webhookType = body.webhook_type || 'member_reactivation'
-
-    // Get webhook URL from database
-    const { data: webhookSettings, error: webhookError } = await supabaseAdmin
-      .from('webhook_settings')
-      .select('webhook_url, is_active')
-      .eq('webhook_type', webhookType)
-      .single()
-
-    if (webhookError || !webhookSettings?.webhook_url) {
-      return new Response(
-        JSON.stringify({ error: `Webhook ${webhookType} is not configured` }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    const webhookUrl = webhookSettings.webhook_url
+    const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL')
     
     if (!mainWebhookUrl) {
       return new Response(
@@ -71,9 +38,9 @@ serve(async (req) => {
       days_inactive: 25
     }
     
-    console.log('Sending test webhook to Make.com:', webhookData)
+    console.log('Sending test reactivation webhook to Make.com:', webhookData)
     
-    const webhookResponse = await fetch(webhookUrl, {
+    const webhookResponse = await fetch(mainWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
