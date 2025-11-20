@@ -529,6 +529,7 @@ export type Database = {
           front_squat_1rm: number | null
           id: string
           jerk_1rm: number | null
+          last_inactivity_webhook_sent_at: string | null
           last_login_at: string | null
           last_name: string | null
           membership_type: string | null
@@ -558,6 +559,7 @@ export type Database = {
           front_squat_1rm?: number | null
           id?: string
           jerk_1rm?: number | null
+          last_inactivity_webhook_sent_at?: string | null
           last_login_at?: string | null
           last_name?: string | null
           membership_type?: string | null
@@ -587,6 +589,7 @@ export type Database = {
           front_squat_1rm?: number | null
           id?: string
           jerk_1rm?: number | null
+          last_inactivity_webhook_sent_at?: string | null
           last_login_at?: string | null
           last_name?: string | null
           membership_type?: string | null
@@ -834,6 +837,36 @@ export type Database = {
           payload?: Json | null
           registration_id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          webhook_type: string
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          webhook_type: string
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          webhook_type?: string
+          webhook_url?: string
         }
         Relationships: []
       }

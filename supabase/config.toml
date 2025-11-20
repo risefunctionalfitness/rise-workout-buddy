@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.notify-course-invitation]
 verify_jwt = false
+
+[functions.check-member-inactivity]
+verify_jwt = false
