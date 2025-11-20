@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun, Trophy, Mail } from "lucide-react"
+import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun, Trophy, Mail, Zap } from "lucide-react"
 import { useTheme } from "next-themes"
 import { supabase } from "@/integrations/supabase/client"
 import { Logo } from "@/components/Logo"
@@ -216,6 +216,16 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
             >
               <Mail className="h-8 w-8 mb-2" />
               <span className="text-sm font-medium">Emails</span>
+            </div>
+            <div 
+              onClick={() => {
+                onPageChange?.('webhooks');
+                setDropdownOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'webhooks' ? 'bg-primary/10 text-primary' : ''}`}
+            >
+              <Zap className="h-8 w-8 mb-2" />
+              <span className="text-sm font-medium">Webhooks</span>
             </div>
             {onLogout && (
               <div 
