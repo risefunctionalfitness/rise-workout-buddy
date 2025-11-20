@@ -22,6 +22,7 @@ import WorkoutManagement from "./WorkoutManagement";
 import AdminChallengeManager from "@/components/AdminChallengeManager";
 import { AdminLeaderboard } from "@/components/AdminLeaderboard";
 import AdminEmailManager from "@/components/AdminEmailManager";
+import { WebhookManager } from "@/components/WebhookManager";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -61,7 +62,7 @@ export default function Admin() {
   const [editedDisplayName, setEditedDisplayName] = useState('')
   const [editedFirstName, setEditedFirstName] = useState('')
   const [editedLastName, setEditedLastName] = useState('')
-  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'webhooks'>('home');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
@@ -969,6 +970,8 @@ export default function Admin() {
         return <AdminLeaderboard />;
       case 'emails':
         return <AdminEmailManager />;
+      case 'webhooks':
+        return <WebhookManager />;
       default:
         return <AdminStats />;
     }
@@ -980,7 +983,7 @@ export default function Admin() {
         showAdminAccess={true}
         onLogout={handleLogout}
         activePage={activePage}
-        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails')}
+        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'webhooks')}
       />
       
       <div className="container mx-auto px-4 py-6">
