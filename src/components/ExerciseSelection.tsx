@@ -249,7 +249,7 @@ export const ExerciseSelection = () => {
                     <Badge
                       key={exercise.name}
                       variant={selectedExercises.includes(exercise.name) ? "default" : "secondary"}
-                      className={`cursor-pointer hover:opacity-80 transition-colors text-base py-2.5 px-4 ${
+                      className={`cursor-pointer hover:opacity-80 transition-colors text-sm py-2 px-3 ${
                         selectedExercises.includes(exercise.name) 
                           ? "bg-green-600 hover:bg-green-700 text-white" 
                           : "bg-gray-300 hover:bg-gray-400 text-gray-700"
