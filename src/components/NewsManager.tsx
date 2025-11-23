@@ -55,7 +55,7 @@ export const NewsManager = () => {
   const [sendEmail, setSendEmail] = useState(false)
   const [emailFilters, setEmailFilters] = useState({
     statusFilter: 'active' as 'all' | 'active' | 'inactive',
-    membershipTypes: [] as string[]
+    membershipTypes: ['Premium Member', '10er Karte', 'Wellpass', 'Open Gym', 'Basic Member'] as string[]
   })
   const [showPreview, setShowPreview] = useState(false)
   const [previewRecipients, setPreviewRecipients] = useState<any[]>([])
@@ -199,7 +199,7 @@ export const NewsManager = () => {
       })
       setSelectedFiles([])
       setSendEmail(false)
-      setEmailFilters({ statusFilter: 'active', membershipTypes: [] })
+      setEmailFilters({ statusFilter: 'active', membershipTypes: ['Premium Member', '10er Karte', 'Wellpass', 'Open Gym', 'Basic Member'] })
       setPreviewRecipients([])
       setCreateDialogOpen(false)
       await loadNews()
@@ -365,6 +365,13 @@ export const NewsManager = () => {
     try {
       setLoadingPreview(true)
       
+      // Wenn keine Mitgliedschaften ausgewählt sind, 0 Empfänger anzeigen
+      if (emailFilters.membershipTypes.length === 0) {
+        setPreviewRecipients([])
+        setLoadingPreview(false)
+        return
+      }
+
       let query = supabase
         .from('profiles')
         .select('display_name, first_name, last_name, user_id, membership_type, status')
@@ -375,10 +382,8 @@ export const NewsManager = () => {
         query = query.eq('status', emailFilters.statusFilter)
       }
 
-      // Membership-Type Filter
-      if (emailFilters.membershipTypes.length > 0) {
-        query = query.in('membership_type', emailFilters.membershipTypes)
-      }
+      // Membership-Type Filter - immer filtern da wir oben prüfen ob leer
+      query = query.in('membership_type', emailFilters.membershipTypes)
 
       const { data: profiles, error } = await query
 
