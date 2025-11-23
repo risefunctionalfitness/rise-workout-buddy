@@ -10,7 +10,9 @@ import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { Edit, Trash2, Plus, Upload, X, FileText, Image as ImageIcon } from "lucide-react"
+import { Edit, Trash2, Plus, Upload, X, FileText, Image as ImageIcon, Mail, Eye } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface Attachment {
   name: string
@@ -48,6 +50,16 @@ export const NewsManager = () => {
   })
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [editFiles, setEditFiles] = useState<File[]>([])
+  
+  // Email state
+  const [sendEmail, setSendEmail] = useState(false)
+  const [emailFilters, setEmailFilters] = useState({
+    statusFilter: 'active' as 'all' | 'active' | 'inactive',
+    membershipTypes: [] as string[]
+  })
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewRecipients, setPreviewRecipients] = useState<any[]>([])
+  const [loadingPreview, setLoadingPreview] = useState(false)
 
   useEffect(() => {
     loadNews()
@@ -139,13 +151,47 @@ export const NewsManager = () => {
         if (updateError) throw updateError
       }
 
-      toast.success('Nachricht erfolgreich erstellt')
+      // Send email if checkbox is active
+      if (sendEmail && newNews.id) {
+        try {
+          console.log('Sending news email via edge function...')
+          const { data: emailResponse, error: emailError } = await supabase.functions.invoke(
+            'send-news-email',
+            {
+              body: {
+                newsId: newNews.id,
+                title: newsForm.title,
+                content: newsForm.content,
+                statusFilter: emailFilters.statusFilter,
+                membershipTypes: emailFilters.membershipTypes
+              }
+            }
+          )
+
+          if (emailError) {
+            console.error('Email sending error:', emailError)
+            toast.error('News erstellt, aber E-Mail-Versand fehlgeschlagen')
+          } else {
+            toast.success(`News erstellt und E-Mail an ${emailResponse.sent} Empfänger versendet`)
+          }
+        } catch (error) {
+          console.error('Email function error:', error)
+          toast.error('News erstellt, aber E-Mail-Versand fehlgeschlagen')
+        }
+      } else {
+        toast.success('Nachricht erfolgreich erstellt')
+      }
+
+      // Reset all form state
       setNewsForm({
         title: '',
         content: '',
         link_url: ''
       })
       setSelectedFiles([])
+      setSendEmail(false)
+      setEmailFilters({ statusFilter: 'active', membershipTypes: [] })
+      setPreviewRecipients([])
       setCreateDialogOpen(false)
       await loadNews()
     } catch (error) {
@@ -306,6 +352,38 @@ export const NewsManager = () => {
     }
   }
 
+  const loadPreviewRecipients = async () => {
+    try {
+      setLoadingPreview(true)
+      let query = supabase
+        .from('profiles')
+        .select('display_name, first_name, last_name, user_id, membership_type')
+        .not('user_id', 'is', null)
+
+      // Status-Filter
+      if (emailFilters.statusFilter !== 'all') {
+        query = query.eq('status', emailFilters.statusFilter)
+      }
+
+      // Membership-Type Filter
+      if (emailFilters.membershipTypes.length > 0) {
+        query = query.in('membership_type', emailFilters.membershipTypes)
+      }
+
+      const { data: profiles, error } = await query
+
+      if (error) throw error
+
+      setPreviewRecipients(profiles || [])
+      setShowPreview(true)
+    } catch (error) {
+      console.error('Error loading preview:', error)
+      toast.error('Fehler beim Laden der Vorschau')
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
 
   if (loading) {
     return (
@@ -367,6 +445,88 @@ export const NewsManager = () => {
                       type="url"
                     />
                   </div>
+
+                  {/* Email Section */}
+                  <div className="space-y-4 border-t pt-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="sendEmail"
+                        checked={sendEmail}
+                        onCheckedChange={(checked) => setSendEmail(!!checked)}
+                      />
+                      <Label htmlFor="sendEmail" className="font-medium flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        E-Mail an Mitglieder senden
+                      </Label>
+                    </div>
+
+                    {sendEmail && (
+                      <div className="space-y-3 pl-6 border-l-2 border-primary/30">
+                        {/* Status-Filter */}
+                        <div>
+                          <Label>Empfänger-Status</Label>
+                          <Select 
+                            value={emailFilters.statusFilter}
+                            onValueChange={(value) => setEmailFilters(prev => ({
+                              ...prev, 
+                              statusFilter: value as 'all' | 'active' | 'inactive'
+                            }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Nur aktive Mitglieder</SelectItem>
+                              <SelectItem value="inactive">Nur inaktive Mitglieder</SelectItem>
+                              <SelectItem value="all">Alle Mitglieder</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Membership-Type Multi-Select */}
+                        <div>
+                          <Label>Mitgliedschaftstypen (Optional)</Label>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            {['Premium Member', '10er Karte', 'Wellpass', 'Open Gym', 'Basic Member'].map(type => (
+                              <div key={type} className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`type-${type}`}
+                                  checked={emailFilters.membershipTypes.includes(type)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setEmailFilters(prev => ({
+                                        ...prev,
+                                        membershipTypes: [...prev.membershipTypes, type]
+                                      }))
+                                    } else {
+                                      setEmailFilters(prev => ({
+                                        ...prev,
+                                        membershipTypes: prev.membershipTypes.filter(t => t !== type)
+                                      }))
+                                    }
+                                  }}
+                                />
+                                <Label htmlFor={`type-${type}`} className="text-sm font-normal">{type}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Vorschau-Button */}
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={loadPreviewRecipients}
+                          disabled={loadingPreview}
+                          className="w-full"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          {loadingPreview ? 'Lädt...' : `Empfänger-Vorschau anzeigen (${previewRecipients.length})`}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <Label>Bilder & Dateien (Optional)</Label>
                     <div className="mt-2 space-y-2">
@@ -600,6 +760,44 @@ export const NewsManager = () => {
               </Button>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>E-Mail Vorschau</DialogTitle>
+            <CardDescription>
+              Diese E-Mail wird an {previewRecipients.length} Mitglieder gesendet
+            </CardDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* E-Mail Vorschau */}
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <div className="font-semibold mb-2">Betreff:</div>
+              <div className="mb-4">{newsForm.title}</div>
+              
+              <div className="font-semibold mb-2">Inhalt:</div>
+              <div className="whitespace-pre-wrap">{newsForm.content}</div>
+            </div>
+
+            {/* Empfänger-Liste */}
+            <div className="max-h-60 overflow-y-auto border rounded-lg">
+              <div className="p-3 bg-muted/30 font-semibold sticky top-0">
+                Empfänger ({previewRecipients.length})
+              </div>
+              <div className="divide-y">
+                {previewRecipients.map((recipient, idx) => (
+                  <div key={idx} className="p-2 text-sm flex justify-between">
+                    <span>{recipient.display_name || `${recipient.first_name} ${recipient.last_name}`}</span>
+                    <span className="text-muted-foreground text-xs">{recipient.membership_type}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -478,6 +478,7 @@ export type Database = {
           author_id: string
           content: string
           created_at: string
+          email_sent_at: string | null
           id: string
           is_published: boolean
           link_url: string | null
@@ -490,6 +491,7 @@ export type Database = {
           author_id: string
           content: string
           created_at?: string
+          email_sent_at?: string | null
           id?: string
           is_published?: boolean
           link_url?: string | null
@@ -502,6 +504,7 @@ export type Database = {
           author_id?: string
           content?: string
           created_at?: string
+          email_sent_at?: string | null
           id?: string
           is_published?: boolean
           link_url?: string | null
