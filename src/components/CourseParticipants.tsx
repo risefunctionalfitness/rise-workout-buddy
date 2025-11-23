@@ -135,24 +135,29 @@ export const CourseParticipants = () => {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Kurs-Teilnehmer verwalten</h1>
-        <div className="flex gap-2">
-          <Button 
-            variant={viewMode === 'list' ? 'default' : 'ghost'}
+        <div className="flex gap-6">
+          <button
             onClick={() => setViewMode('list')}
-            size="lg"
-            className={viewMode === 'list' ? 'bg-primary hover:bg-primary/90' : ''}
+            className={`pb-1 transition-colors flex items-center gap-2 ${
+              viewMode === 'list'
+                ? 'text-primary border-b-2 border-primary font-semibold'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
-            <List className="h-5 w-5 mr-2" />
+            <List className="h-4 w-4" />
             Listen-Ansicht
-          </Button>
-          <Button 
-            variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+          </button>
+          <button
             onClick={() => setViewMode('calendar')}
-            size="icon"
-            className={viewMode === 'calendar' ? 'bg-primary hover:bg-primary/90' : ''}
+            className={`pb-1 transition-colors flex items-center gap-2 ${
+              viewMode === 'calendar'
+                ? 'text-primary border-b-2 border-primary font-semibold'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
-            <Calendar className="h-5 w-5" />
-          </Button>
+            <Calendar className="h-4 w-4" />
+            Kalender
+          </button>
         </div>
       </div>
 
