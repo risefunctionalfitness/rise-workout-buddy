@@ -355,10 +355,10 @@ export const NewsManager = () => {
   const loadPreviewRecipients = async () => {
     try {
       setLoadingPreview(true)
-      let query = supabase
-        .from('profiles')
-        .select('display_name, first_name, last_name, user_id, membership_type')
-        .not('user_id', 'is', null)
+    let query = supabase
+      .from('profiles')
+      .select('display_name, first_name, last_name, user_id, membership_type, status')
+      .not('user_id', 'is', null)
 
       // Status-Filter
       if (emailFilters.statusFilter !== 'all') {
@@ -428,13 +428,14 @@ export const NewsManager = () => {
                   </div>
                   <div>
                     <Label htmlFor="content">Inhalt</Label>
-                    <Textarea
-                      value={newsForm.content}
-                      onChange={(e) => setNewsForm(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder="Nachrichteninhalt..."
-                      rows={6}
-                      required
-                    />
+                  <Textarea
+                    value={newsForm.content}
+                    onChange={(e) => setNewsForm(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="Nachrichteninhalt..."
+                    rows={6}
+                    required
+                    className="max-h-[300px] overflow-y-auto"
+                  />
                   </div>
                   <div>
                     <Label htmlFor="link_url">Link (Optional)</Label>
@@ -672,7 +673,7 @@ export const NewsManager = () => {
               </div>
               <div>
                 <Label htmlFor="content">Inhalt</Label>
-                <Textarea name="content" defaultValue={editingNews.content} rows={6} required />
+                <Textarea name="content" defaultValue={editingNews.content} rows={6} required className="max-h-[300px] overflow-y-auto" />
               </div>
               <div>
                 <Label htmlFor="link_url">Link (Optional)</Label>
