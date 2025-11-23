@@ -385,7 +385,6 @@ export const NewsManager = () => {
       if (error) throw error
 
       setPreviewRecipients(profiles || [])
-      setShowPreview(true)
     } catch (error) {
       console.error('Error loading preview:', error)
       toast.error('Fehler beim Laden der Vorschau')
