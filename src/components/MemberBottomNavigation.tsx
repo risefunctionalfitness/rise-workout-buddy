@@ -31,7 +31,7 @@ export const MemberBottomNavigation = ({
   const tabs = [
     { id: "home", label: "Übersicht", icon: Home },
     ...(showCoursesTab ? [{ id: "courses", label: "Kurse", icon: Calendar }] : []),
-    { id: "wod", label: "WOD", icon: Weight },
+    { id: "wod", label: "Workout", icon: Weight },
     { id: "leaderboard", label: "Leaderboard", icon: Trophy },
   ];
 
