@@ -460,6 +460,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         />
       )}
       
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="text-xl font-semibold mb-4">Kurse</h2>
+      </div>
+      
       {/* Tab Navigation */}
       <div className="flex justify-center items-center gap-8 mb-6">
         <button
@@ -486,11 +491,6 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       
       {activeTab === "liste" ? (
         <div className="space-y-4 animate-in fade-in-50 slide-in-from-left-5 duration-300">
-          {/* Header */}
-          <div className="text-center">
-            <h2 className="text-xl font-semibold">Kurse</h2>
-          </div>
-
           {/* Courses List */}
           <div className="grid grid-cols-1 gap-4 pb-24">
             {Object.entries(groupedCourses).map(([date, dayCourses]) => (
