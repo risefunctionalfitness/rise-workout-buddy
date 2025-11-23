@@ -133,29 +133,30 @@ export const CourseParticipants = () => {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="space-y-4 mb-6">
         <h1 className="text-2xl font-bold">Kurs-Teilnehmer verwalten</h1>
-        <div className="flex gap-6">
+        
+        {/* View Mode Tabs */}
+        <div className="flex justify-center gap-6">
           <button
             onClick={() => setViewMode('list')}
-            className={`pb-1 transition-colors flex items-center gap-2 ${
+            className={`pb-1 transition-colors ${
               viewMode === 'list'
                 ? 'text-primary border-b-2 border-primary font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <List className="h-4 w-4" />
-            Listen-Ansicht
+            Liste
           </button>
           <button
             onClick={() => setViewMode('calendar')}
-            className={`pb-1 transition-colors flex items-center gap-2 ${
+            className={`pb-1 transition-colors ${
               viewMode === 'calendar'
                 ? 'text-primary border-b-2 border-primary font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Calendar className="h-4 w-4" />
             Kalender
           </button>
         </div>

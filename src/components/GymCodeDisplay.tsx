@@ -157,19 +157,19 @@ export const GymCodeDisplay = () => {
       {/* Ausfahrendes Textfeld - nach links */}
       <div 
         className={`absolute top-0 right-14 bg-white border-2 border-[#B81243] rounded-l-lg shadow-lg h-14 flex items-center justify-center transition-all duration-500 overflow-hidden ${
-          isVisible ? 'w-64 opacity-100' : 'w-0 opacity-0'
+          isVisible ? 'w-80 opacity-100' : 'w-0 opacity-0'
         }`}
       >
-        <div className="px-4 text-center whitespace-nowrap flex items-center gap-2">
-          <LockOpen className="h-5 w-5 text-[#B81243]" />
-          <div>
+        <div className="px-4 text-center flex items-center gap-3 justify-center w-full">
+          <LockOpen className="h-6 w-6 text-[#B81243] flex-shrink-0" />
+          <div className="flex-shrink-0">
             <p className="text-xs text-[#B81243] font-medium">Tür-Code</p>
             <p className="text-lg font-mono font-bold text-black">{getDisplayText()}</p>
             {hasError && gymCode && (
               <p className="text-xs text-orange-600">Cache</p>
             )}
           </div>
-          <LockOpen className="h-5 w-5 text-[#B81243]" />
+          <LockOpen className="h-6 w-6 text-[#B81243] flex-shrink-0" />
         </div>
       </div>
 
