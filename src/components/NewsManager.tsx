@@ -65,6 +65,15 @@ export const NewsManager = () => {
     loadNews()
   }, [])
 
+  // Automatisches Laden der Empfänger-Vorschau bei Filter-Änderungen
+  useEffect(() => {
+    if (sendEmail) {
+      loadPreviewRecipients()
+    } else {
+      setPreviewRecipients([])
+    }
+  }, [sendEmail, emailFilters.statusFilter, emailFilters.membershipTypes.length])
+
   const loadNews = async () => {
     try {
       setLoading(true)
@@ -413,7 +422,7 @@ export const NewsManager = () => {
                   Neue Nachricht
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Neue Nachricht erstellen</DialogTitle>
                 </DialogHeader>
@@ -514,16 +523,23 @@ export const NewsManager = () => {
                           </div>
                         </div>
 
+                        {/* Empfänger-Anzeige */}
+                        <div className="p-3 bg-muted rounded-md">
+                          <p className="text-sm font-medium">
+                            {loadingPreview ? 'Lädt Empfänger...' : `${previewRecipients.length} Empfänger`}
+                          </p>
+                        </div>
+
                         {/* Vorschau-Button */}
                         <Button 
                           type="button" 
                           variant="outline" 
-                          onClick={loadPreviewRecipients}
-                          disabled={loadingPreview}
+                          onClick={() => setShowPreview(true)}
+                          disabled={loadingPreview || previewRecipients.length === 0}
                           className="w-full"
                         >
                           <Eye className="h-4 w-4 mr-2" />
-                          {loadingPreview ? 'Lädt...' : `Empfänger-Vorschau anzeigen (${previewRecipients.length})`}
+                          Detaillierte Empfänger-Liste anzeigen
                         </Button>
                       </div>
                     )}
