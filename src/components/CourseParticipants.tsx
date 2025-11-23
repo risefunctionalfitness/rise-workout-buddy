@@ -137,20 +137,21 @@ export const CourseParticipants = () => {
         <h1 className="text-2xl font-bold">Kurs-Teilnehmer verwalten</h1>
         <div className="flex gap-2">
           <Button 
-            variant={viewMode === 'list' ? 'default' : 'outline'}
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
             onClick={() => setViewMode('list')}
-            size="sm"
+            size="lg"
+            className={viewMode === 'list' ? 'bg-primary hover:bg-primary/90' : ''}
           >
-            <List className="h-4 w-4 mr-2" />
+            <List className="h-5 w-5 mr-2" />
             Listen-Ansicht
           </Button>
           <Button 
-            variant={viewMode === 'calendar' ? 'default' : 'outline'}
+            variant={viewMode === 'calendar' ? 'default' : 'ghost'}
             onClick={() => setViewMode('calendar')}
-            size="sm"
+            size="icon"
+            className={viewMode === 'calendar' ? 'bg-primary hover:bg-primary/90' : ''}
           >
-            <Calendar className="h-4 w-4 mr-2" />
-            Kalender-Ansicht
+            <Calendar className="h-5 w-5" />
           </Button>
         </div>
       </div>
