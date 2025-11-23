@@ -574,6 +574,15 @@ export const CourseInvitationsPanel = ({
                       {sentInvitations.map(renderSentInvitation)}
                     </div>
                   </ScrollArea>
+                  <div className="flex justify-center pt-4 mt-4 border-t">
+                    <Button
+                      onClick={handleNavigateToCourses}
+                      variant="outline"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Weitere Einladungen senden
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
