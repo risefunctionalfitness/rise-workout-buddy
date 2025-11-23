@@ -1,4 +1,4 @@
-import { Key, Dumbbell, Infinity } from "lucide-react";
+import { Key, Dumbbell, Infinity, LockOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -139,8 +139,10 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
       return (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">Tür-Code</h3>
-          <div className="text-center">
+          <div className="flex items-center justify-center gap-4">
+            <LockOpen className="h-8 w-8 text-primary" />
             <p className="font-mono text-4xl font-bold text-primary">{gymCode}</p>
+            <LockOpen className="h-8 w-8 text-primary" />
           </div>
         </div>
       );
