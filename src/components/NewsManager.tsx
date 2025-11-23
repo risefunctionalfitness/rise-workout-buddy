@@ -13,6 +13,161 @@ import { de } from "date-fns/locale"
 import { Edit, Trash2, Plus, Upload, X, FileText, Image as ImageIcon, Mail, Eye } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const EMAIL_HTML_TEMPLATE = `<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>{{2.subject}}</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f4;">
+    
+    <!-- Preheader -->
+    <div style="display:none; font-size:1px; color:#f4f4f4; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+      Neue News in deiner RISE App: {{2.subject}}
+    </div>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f4f4f4">
+      <tr>
+        <td align="center" style="padding:24px 12px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+                 width="600"
+                 style="max-width:600px; width:100%; background:#ffffff; border-radius:8px; overflow:hidden;">
+
+            <!-- Header -->
+            <tr>
+              <td align="center" style="background:#000000; padding:24px;">
+                <img src="https://vdpeyaphtsbrhygupfbc.supabase.co/storage/v1/object/public/logo/RISE%20Black%20Canva.png"
+                     alt="RISE Functional Fitness"
+                     width="160"
+                     style="display:block; width:160px; height:auto; border:0;">
+              </td>
+            </tr>
+
+            <!-- Begrüßung -->
+            <tr>
+              <td style="padding:28px 24px 8px 24px; font-family:Arial, sans-serif;">
+                <h1 style="margin:0 0 16px 0; font-size:22px; font-weight:bold; color:#000000;">
+                  Neue News in deiner RISE App
+                </h1>
+                <p style="margin:0 0 4px 0; font-size:16px; color:#333333; line-height:1.6;">
+                  Hallo {{2.first_name}},
+                </p>
+                <p style="margin:0; font-size:16px; color:#333333; line-height:1.6;">
+                  es gibt neue News in der App.
+                </p>
+              </td>
+            </tr>
+
+            <!-- News-Karte -->
+            <tr>
+              <td style="padding:16px 24px 12px 24px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                       style="border:1px solid #e3e3e3; border-radius:10px;">
+                  <tr>
+                    <td style="padding:16px; font-family:Arial, sans-serif;">
+
+                      <!-- Titel & Timestamp -->
+                      <table role="presentation" width="100%">
+                        <tr>
+                          <td style="font-size:18px; font-weight:bold; color:#000000;">
+                            {{2.subject}}
+                          </td>
+                          <td style="text-align:right;">
+                            <span style="display:inline-flex; align-items:center; padding:6px 12px; border:1px solid #e3e3e3; border-radius:999px; font-size:13px; color:#333333;">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                   stroke="#777777" fill="none" stroke-width="2"
+                                   stroke-linecap="round" stroke-linejoin="round"
+                                   viewBox="0 0 24 24"
+                                   style="margin-right:6px;">
+                                <rect width="18" height="18" x="3" y="4" rx="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                              </svg>
+                              <span>{{1.timestamp}}</span>
+                            </span>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Autor -->
+                      <p style="margin:10px 0 12px 0; font-size:13px; color:#777777;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                             stroke="#777777" fill="none" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round"
+                             viewBox="0 0 24 24"
+                             style="vertical-align:middle; margin-right:6px;">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        RISE Team
+                      </p>
+
+                      <!-- Body -->
+                      <p style="margin:0; font-size:15px; line-height:1.6; color:#333333;">
+                        {{2.body}}
+                      </p>
+
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Hinweis + App-Link -->
+            <tr>
+              <td style="padding:20px 24px 0 24px; font-family:Arial, sans-serif;">
+                <p style="margin:0 0 16px 0; font-size:16px; color:#333333; line-height:1.6;">
+                  Die News und eventuell weitere Infos findest du direkt in der App:
+                </p>
+              </td>
+            </tr>
+
+            <!-- Button -->
+            <tr>
+              <td style="padding:0 24px 24px 24px;">
+                <table role="presentation">
+                  <tr>
+                    <td style="border-radius:4px; background:#c63661;" align="center">
+                      <a href="https://rise-ff.lovable.app"
+                         style="display:inline-block; padding:14px 24px; font-family:Arial, sans-serif;
+                                font-size:16px; color:#ffffff; text-decoration:none; font-weight:bold;">
+                        App öffnen
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Grüße -->
+            <tr>
+              <td style="padding:0 24px 24px 24px; font-family:Arial, sans-serif;">
+                <p style="margin:24px 0 4px 0; font-size:16px; color:#333333; line-height:1.6;">
+                  Viele Grüße,<br>
+                  <strong>RISE Functional Fitness</strong>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f7f7f7; padding:14px 24px; font-family:Arial, sans-serif; font-size:12px; color:#777777;" align="center">
+                © 2025 RISE Functional Fitness · Diese E-Mail wurde automatisch versendet.
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+
+  </body>
+</html>`
 
 interface Attachment {
   name: string
@@ -396,6 +551,18 @@ export const NewsManager = () => {
     } finally {
       setLoadingPreview(false)
     }
+  }
+
+  const generateEmailPreviewHTML = () => {
+    const firstRecipient = previewRecipients[0]
+    const firstName = firstRecipient?.first_name || 'Max'
+    const timestamp = format(new Date(), "d. MMMM yyyy", { locale: de })
+    
+    return EMAIL_HTML_TEMPLATE
+      .replace(/\{\{2\.subject\}\}/g, newsForm.title || 'Titel der News')
+      .replace(/\{\{2\.first_name\}\}/g, firstName)
+      .replace(/\{\{2\.body\}\}/g, newsForm.content || 'Inhalt der News...')
+      .replace(/\{\{1\.timestamp\}\}/g, timestamp)
   }
 
 
@@ -787,7 +954,7 @@ export const NewsManager = () => {
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>E-Mail Vorschau</DialogTitle>
             <CardDescription>
@@ -795,31 +962,42 @@ export const NewsManager = () => {
             </CardDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            {/* E-Mail Vorschau */}
-            <div className="border rounded-lg p-4 bg-muted/50">
-              <div className="font-semibold mb-2">Betreff:</div>
-              <div className="mb-4">{newsForm.title}</div>
-              
-              <div className="font-semibold mb-2">Inhalt:</div>
-              <div className="whitespace-pre-wrap">{newsForm.content}</div>
-            </div>
-
-            {/* Empfänger-Liste */}
-            <div className="max-h-60 overflow-y-auto border rounded-lg">
-              <div className="p-3 bg-muted/30 font-semibold sticky top-0">
-                Empfänger ({previewRecipients.length})
+          <Tabs defaultValue="preview" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="preview">E-Mail Vorschau</TabsTrigger>
+              <TabsTrigger value="recipients">Empfänger-Liste</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="preview" className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Dies ist eine Vorschau mit Beispieldaten des ersten Empfängers
+              </p>
+              <div className="border rounded-lg overflow-hidden bg-muted/20">
+                <iframe
+                  srcDoc={generateEmailPreviewHTML()}
+                  className="w-full h-[600px] border-0"
+                  title="E-Mail Vorschau"
+                  sandbox="allow-same-origin"
+                />
               </div>
-              <div className="divide-y">
-                {previewRecipients.map((recipient, idx) => (
-                  <div key={idx} className="p-2 text-sm flex justify-between">
-                    <span>{recipient.display_name || `${recipient.first_name} ${recipient.last_name}`}</span>
-                    <span className="text-muted-foreground text-xs">{recipient.membership_type}</span>
-                  </div>
-                ))}
+            </TabsContent>
+            
+            <TabsContent value="recipients" className="space-y-2">
+              <div className="max-h-[600px] overflow-y-auto border rounded-lg">
+                <div className="p-3 bg-muted/30 font-semibold sticky top-0">
+                  Empfänger ({previewRecipients.length})
+                </div>
+                <div className="divide-y">
+                  {previewRecipients.map((recipient, idx) => (
+                    <div key={idx} className="p-2 text-sm flex justify-between">
+                      <span>{recipient.display_name || `${recipient.first_name} ${recipient.last_name}`}</span>
+                      <span className="text-muted-foreground text-xs">{recipient.membership_type}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
