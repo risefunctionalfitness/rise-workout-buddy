@@ -145,30 +145,50 @@ serve(async (req) => {
 
     console.log(`Found ${profiles.length} profiles`)
 
-    // Fetch emails from auth.users for specific user IDs only
+    // Fetch emails from auth.users with pagination
     const userIds = profiles.map(p => p.user_id)
-    const emailMap = new Map<string, string>()
+    const allAuthUsers = []
+    let page = 1
+    const perPage = 1000
 
-    console.log(`Fetching emails for ${userIds.length} users`)
+    console.log(`Fetching emails for ${userIds.length} users with pagination`)
 
-    // Fetch each user individually to avoid pagination issues
-    for (const userId of userIds) {
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
-      
-      if (userError) {
-        console.error(`Error fetching user ${userId}:`, userError)
-        continue // Skip this user but continue with others
+    while (true) {
+      const { data: authUsersPage, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers({
+        page: page,
+        perPage: perPage
+      })
+
+      if (authUsersError) {
+        console.error('Error fetching auth users:', authUsersError)
+        throw authUsersError
       }
-      
-      if (userData?.user?.email) {
-        emailMap.set(userId, userData.user.email)
-        console.log(`Found email for user ${userId}`)
-      } else {
-        console.warn(`No email found for user ${userId}`)
+
+      if (!authUsersPage || authUsersPage.users.length === 0) {
+        break
       }
+
+      allAuthUsers.push(...authUsersPage.users)
+      
+      console.log(`Fetched page ${page}: ${authUsersPage.users.length} users (total so far: ${allAuthUsers.length})`)
+
+      if (authUsersPage.users.length < perPage) {
+        break
+      }
+
+      page++
     }
 
-    console.log(`Email map contains ${emailMap.size} entries`)
+    console.log(`Total auth users fetched: ${allAuthUsers.length}`)
+
+    // Map user_id to email
+    const emailMap = new Map<string, string>(
+      allAuthUsers
+        .filter(u => userIds.includes(u.id))
+        .map(u => [u.id, u.email!])
+    )
+
+    console.log(`Email map contains ${emailMap.size} entries for ${userIds.length} selected users`)
 
     // Prepare email recipients with replaced variables
     const recipients: EmailRecipient[] = profiles

@@ -154,21 +154,49 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Fetch email addresses for all users from auth.users
+    // Fetch email addresses for all users from auth.users with pagination
     const userIds = profiles.map((p: Profile) => p.user_id);
-    const { data: authUsers, error: authUsersError } = await supabaseClient.auth.admin.listUsers();
+    const allAuthUsers = [];
+    let page = 1;
+    const perPage = 1000; // Maximum per page
 
-    if (authUsersError) {
-      console.error('Error fetching auth users:', authUsersError);
-      throw authUsersError;
+    while (true) {
+      const { data: authUsersPage, error: authUsersError } = await supabaseClient.auth.admin.listUsers({
+        page: page,
+        perPage: perPage
+      });
+
+      if (authUsersError) {
+        console.error('Error fetching auth users:', authUsersError);
+        throw authUsersError;
+      }
+
+      if (!authUsersPage || authUsersPage.users.length === 0) {
+        break; // No more users
+      }
+
+      allAuthUsers.push(...authUsersPage.users);
+      
+      console.log(`Fetched page ${page}: ${authUsersPage.users.length} users (total so far: ${allAuthUsers.length})`);
+
+      // If we got less than perPage, we've reached the end
+      if (authUsersPage.users.length < perPage) {
+        break;
+      }
+
+      page++;
     }
+
+    console.log(`Total auth users fetched: ${allAuthUsers.length}`);
 
     // Map user_id to email
     const emailMap = new Map(
-      authUsers.users
+      allAuthUsers
         .filter(u => userIds.includes(u.id))
         .map(u => [u.id, u.email])
     );
+
+    console.log(`Mapped ${emailMap.size} email addresses for ${userIds.length} profiles`);
 
     // Create recipient list with emails
     const recipients: EmailRecipient[] = profiles
