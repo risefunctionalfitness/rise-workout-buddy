@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import { MemberSelectorDialog } from "./MemberSelectorDialog";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ export const CourseInvitationButton = ({
         )}
         aria-label="Mitglieder einladen"
       >
-        <Users className="h-5 w-5 text-primary" />
+        <UserPlus className="h-5 w-5 text-primary" />
       </button>
 
       <MemberSelectorDialog
