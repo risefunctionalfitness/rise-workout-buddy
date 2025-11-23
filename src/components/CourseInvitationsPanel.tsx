@@ -89,61 +89,67 @@ export const CourseInvitationsPanel = ({
     console.log("=== LOADING RECEIVED INVITATIONS ===")
     console.log("User ID:", user.id)
 
-    // Get current time in Berlin timezone
-    const nowInBerlin = timezone.nowInBerlin()
-    const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
-    const nowTime = format(nowInBerlin, 'HH:mm:ss')
+    try {
+      // Get current time in Berlin timezone
+      const nowInBerlin = timezone.nowInBerlin()
+      const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
+      const nowTime = format(nowInBerlin, 'HH:mm:ss')
 
-    const { data, error } = await supabase
-      .from("course_invitations")
-      .select(`
-        id,
-        course_id,
-        sender_id,
-        status,
-        created_at,
-        courses!inner (
-          title,
-          course_date,
-          start_time,
-          end_time,
-          trainer
-        )
-      `)
-      .eq("recipient_id", user.id)
-      .eq("status", "pending")
-      .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
-      .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("course_invitations")
+        .select(`
+          id,
+          course_id,
+          sender_id,
+          status,
+          created_at,
+          courses!inner (
+            title,
+            course_date,
+            start_time,
+            end_time,
+            trainer
+          )
+        `)
+        .eq("recipient_id", user.id)
+        .eq("status", "pending")
+        .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
+        .order("created_at", { ascending: false });
 
-    console.log("Received invitations loaded:", data)
-    console.log("Error:", error)
+      console.log("Received invitations loaded:", data)
+      console.log("Error:", error)
 
-    if (error) {
-      console.error("Error loading received invitations:", error);
-      toast.error("Fehler beim Laden der Einladungen: " + error.message)
+      if (error) {
+        console.error("Error loading received invitations:", error);
+        toast.error("Fehler beim Laden der Einladungen: " + error.message)
+        setLoading(false);
+        return;
+      }
+
+      // Load sender profiles
+      const invitationsWithProfiles = await Promise.all(
+        (data || []).map(async (invitation) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("nickname, display_name, avatar_url")
+            .eq("user_id", invitation.sender_id)
+            .single();
+
+          return {
+            ...invitation,
+            sender_profile: profile || { nickname: null, display_name: null, avatar_url: null }
+          };
+        })
+      );
+
+      console.log("Received invitations with profiles:", invitationsWithProfiles)
+      setReceivedInvitations(invitationsWithProfiles);
+    } catch (error) {
+      console.error("Unexpected error loading received invitations:", error);
+      toast.error("Fehler beim Laden der Einladungen");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Load sender profiles
-    const invitationsWithProfiles = await Promise.all(
-      (data || []).map(async (invitation) => {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("nickname, display_name, avatar_url")
-          .eq("user_id", invitation.sender_id)
-          .single();
-
-        return {
-          ...invitation,
-          sender_profile: profile || { nickname: null, display_name: null, avatar_url: null }
-        };
-      })
-    );
-
-    console.log("Received invitations with profiles:", invitationsWithProfiles)
-    setReceivedInvitations(invitationsWithProfiles);
-    setLoading(false);
   };
 
   const loadSentInvitations = async () => {
@@ -151,61 +157,67 @@ export const CourseInvitationsPanel = ({
     console.log("=== LOADING SENT INVITATIONS ===")
     console.log("User ID:", user.id)
 
-    // Get current time in Berlin timezone
-    const nowInBerlin = timezone.nowInBerlin()
-    const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
-    const nowTime = format(nowInBerlin, 'HH:mm:ss')
+    try {
+      // Get current time in Berlin timezone
+      const nowInBerlin = timezone.nowInBerlin()
+      const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
+      const nowTime = format(nowInBerlin, 'HH:mm:ss')
 
-    const { data, error } = await supabase
-      .from("course_invitations")
-      .select(`
-        id,
-        course_id,
-        recipient_id,
-        status,
-        created_at,
-        responded_at,
-        courses!inner (
-          title,
-          course_date,
-          start_time,
-          end_time,
-          trainer
-        )
-      `)
-      .eq("sender_id", user.id)
-      .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
-      .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("course_invitations")
+        .select(`
+          id,
+          course_id,
+          recipient_id,
+          status,
+          created_at,
+          responded_at,
+          courses!inner (
+            title,
+            course_date,
+            start_time,
+            end_time,
+            trainer
+          )
+        `)
+        .eq("sender_id", user.id)
+        .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
+        .order("created_at", { ascending: false });
 
-    console.log("Sent invitations loaded:", data)
-    console.log("Error:", error)
+      console.log("Sent invitations loaded:", data)
+      console.log("Error:", error)
 
-    if (error) {
-      console.error("Error loading sent invitations:", error);
-      toast.error("Fehler beim Laden der gesendeten Einladungen: " + error.message)
+      if (error) {
+        console.error("Error loading sent invitations:", error);
+        toast.error("Fehler beim Laden der gesendeten Einladungen: " + error.message)
+        setLoading(false);
+        return;
+      }
+
+      // Load recipient profiles
+      const invitationsWithProfiles = await Promise.all(
+        (data || []).map(async (invitation) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("nickname, display_name, avatar_url")
+            .eq("user_id", invitation.recipient_id)
+            .single();
+
+          return {
+            ...invitation,
+            recipient_profile: profile || { nickname: null, display_name: null, avatar_url: null }
+          };
+        })
+      );
+
+      console.log("Sent invitations with profiles:", invitationsWithProfiles)
+      setSentInvitations(invitationsWithProfiles);
+    } catch (error) {
+      console.error("Unexpected error loading sent invitations:", error);
+      toast.error("Fehler beim Laden der gesendeten Einladungen");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Load recipient profiles
-    const invitationsWithProfiles = await Promise.all(
-      (data || []).map(async (invitation) => {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("nickname, display_name, avatar_url")
-          .eq("user_id", invitation.recipient_id)
-          .single();
-
-        return {
-          ...invitation,
-          recipient_profile: profile || { nickname: null, display_name: null, avatar_url: null }
-        };
-      })
-    );
-
-    console.log("Sent invitations with profiles:", invitationsWithProfiles)
-    setSentInvitations(invitationsWithProfiles);
-    setLoading(false);
   };
 
   const handleAccept = async (invitation: Invitation) => {
