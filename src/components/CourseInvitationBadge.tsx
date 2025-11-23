@@ -11,8 +11,6 @@ export const CourseInvitationBadge = ({
   invitationCount, 
   onClick 
 }: CourseInvitationBadgeProps) => {
-  if (invitationCount === 0) return null;
-
   return (
     <button
       onClick={onClick}
@@ -27,16 +25,18 @@ export const CourseInvitationBadge = ({
         "shadow-lg",
         "animate-in fade-in zoom-in duration-300"
       )}
-      aria-label={`${invitationCount} neue Kurseinladung${invitationCount > 1 ? 'en' : ''}`}
+      aria-label={invitationCount > 0 ? `${invitationCount} neue Kurseinladung${invitationCount > 1 ? 'en' : ''}` : 'Kurseinladungen'}
     >
       <div className="relative">
         <Users className="h-5 w-5 text-primary" />
-        <Badge 
-          variant="destructive" 
-          className="absolute -top-3 -right-3 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-bold"
-        >
-          {invitationCount > 99 ? '99+' : invitationCount}
-        </Badge>
+        {invitationCount > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="absolute -top-3 -right-3 h-5 min-w-[20px] flex items-center justify-center px-1 text-xs font-bold"
+          >
+            {invitationCount > 99 ? '99+' : invitationCount}
+          </Badge>
+        )}
       </div>
     </button>
   );
