@@ -628,6 +628,59 @@ export const NewsManager = () => {
                     />
                   </div>
 
+                  <div>
+                    <Label>Bilder & Dateien (Optional)</Label>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          multiple
+                          onChange={(e) => handleFileSelect(e, false)}
+                          className="hidden"
+                          id="create-file-upload"
+                        />
+                        <Label
+                          htmlFor="create-file-upload"
+                          className="flex items-center gap-2 px-4 py-2 border border-border rounded-md cursor-pointer hover:bg-accent transition-colors"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Dateien auswählen
+                        </Label>
+                        <span className="text-sm text-muted-foreground">
+                          Max 10MB pro Datei
+                        </span>
+                      </div>
+                      {selectedFiles.length > 0 && (
+                        <div className="space-y-2">
+                          {selectedFiles.map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 border border-border rounded-md">
+                              <div className="flex items-center gap-2">
+                                {file.type.startsWith('image/') ? (
+                                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <span className="text-sm">{file.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({(file.size / 1024).toFixed(1)} KB)
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeSelectedFile(idx, false)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Email Section */}
                   <div className="space-y-4 border-t pt-4">
                     <div className="flex items-center space-x-2">
@@ -714,59 +767,6 @@ export const NewsManager = () => {
                         </Button>
                       </div>
                     )}
-                  </div>
-
-                  <div>
-                    <Label>Bilder & Dateien (Optional)</Label>
-                    <div className="mt-2 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          multiple
-                          onChange={(e) => handleFileSelect(e, false)}
-                          className="hidden"
-                          id="create-file-upload"
-                        />
-                        <Label
-                          htmlFor="create-file-upload"
-                          className="flex items-center gap-2 px-4 py-2 border border-border rounded-md cursor-pointer hover:bg-accent transition-colors"
-                        >
-                          <Upload className="h-4 w-4" />
-                          Dateien auswählen
-                        </Label>
-                        <span className="text-sm text-muted-foreground">
-                          Max 10MB pro Datei
-                        </span>
-                      </div>
-                      {selectedFiles.length > 0 && (
-                        <div className="space-y-2">
-                          {selectedFiles.map((file, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 border border-border rounded-md">
-                              <div className="flex items-center gap-2">
-                                {file.type.startsWith('image/') ? (
-                                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <FileText className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <span className="text-sm">{file.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  ({(file.size / 1024).toFixed(1)} KB)
-                                </span>
-                              </div>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => removeSelectedFile(idx, false)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={uploading}>
                     {uploading ? 'Wird hochgeladen...' : 'Nachricht erstellen'}
@@ -972,12 +972,10 @@ export const NewsManager = () => {
               <p className="text-sm text-muted-foreground">
                 Dies ist eine Vorschau mit Beispieldaten des ersten Empfängers
               </p>
-              <div className="border rounded-lg overflow-hidden bg-muted/20">
-                <iframe
-                  srcDoc={generateEmailPreviewHTML()}
-                  className="w-full h-[600px] border-0"
-                  title="E-Mail Vorschau"
-                  sandbox="allow-same-origin"
+              <div className="border rounded-lg overflow-auto bg-muted/20 max-h-[70vh]">
+                <div 
+                  dangerouslySetInnerHTML={{ __html: generateEmailPreviewHTML() }}
+                  className="min-h-[600px]"
                 />
               </div>
             </TabsContent>
