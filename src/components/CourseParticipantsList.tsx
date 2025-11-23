@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MembershipBadge } from "@/components/MembershipBadge"
-import { Trash2, Plus, ArrowUp } from "lucide-react"
+import { Trash2, Plus, ArrowUp, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { AdminParticipantManager } from "@/components/AdminParticipantManager"
@@ -176,17 +176,16 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         <div className="flex gap-2">
           {isAdmin && (
             <Button 
-              variant="outline" 
-              size="default"
+              variant="ghost" 
+              size="icon"
               onClick={() => setShowAddDialog(true)}
-              className="font-medium"
+              className="hover:bg-muted"
             >
-              <Plus className="h-5 w-5 mr-2" />
-              Hinzufügen
+              <Plus className="h-5 w-5" />
             </Button>
           )}
-          <Button variant="ghost" size="default" onClick={onClose}>
-            Schließen
+          <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-muted">
+            <X className="h-5 w-5" />
           </Button>
         </div>
       </div>
