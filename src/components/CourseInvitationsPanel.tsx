@@ -108,6 +108,11 @@ export const CourseInvitationsPanel = ({
           start_time,
           end_time,
           trainer
+        ),
+        sender_profile:profiles!course_invitations_sender_id_fkey (
+          nickname,
+          display_name,
+          avatar_url
         )
       `)
       .eq("recipient_id", user.id)
@@ -125,24 +130,16 @@ export const CourseInvitationsPanel = ({
       return;
     }
 
-    // Load sender profiles
-    const invitationsWithProfiles = await Promise.all(
-      (data || []).map(async (invitation) => {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("nickname, display_name, avatar_url")
-          .eq("user_id", invitation.sender_id)
-          .single();
+    // Transform data to match expected structure
+    const transformedData = (data || []).map(invitation => ({
+      ...invitation,
+      sender_profile: Array.isArray(invitation.sender_profile) 
+        ? invitation.sender_profile[0] || { nickname: null, display_name: null, avatar_url: null }
+        : invitation.sender_profile || { nickname: null, display_name: null, avatar_url: null }
+    }));
 
-        return {
-          ...invitation,
-          sender_profile: profile || { nickname: null, display_name: null, avatar_url: null }
-        };
-      })
-    );
-
-    console.log("Received invitations with profiles:", invitationsWithProfiles)
-    setReceivedInvitations(invitationsWithProfiles);
+    console.log("Received invitations with profiles:", transformedData)
+    setReceivedInvitations(transformedData);
     setLoading(false);
   };
 
@@ -171,6 +168,11 @@ export const CourseInvitationsPanel = ({
           start_time,
           end_time,
           trainer
+        ),
+        recipient_profile:profiles!course_invitations_recipient_id_fkey (
+          nickname,
+          display_name,
+          avatar_url
         )
       `)
       .eq("sender_id", user.id)
@@ -187,24 +189,16 @@ export const CourseInvitationsPanel = ({
       return;
     }
 
-    // Load recipient profiles
-    const invitationsWithProfiles = await Promise.all(
-      (data || []).map(async (invitation) => {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("nickname, display_name, avatar_url")
-          .eq("user_id", invitation.recipient_id)
-          .single();
+    // Transform data to match expected structure
+    const transformedData = (data || []).map(invitation => ({
+      ...invitation,
+      recipient_profile: Array.isArray(invitation.recipient_profile)
+        ? invitation.recipient_profile[0] || { nickname: null, display_name: null, avatar_url: null }
+        : invitation.recipient_profile || { nickname: null, display_name: null, avatar_url: null }
+    }));
 
-        return {
-          ...invitation,
-          recipient_profile: profile || { nickname: null, display_name: null, avatar_url: null }
-        };
-      })
-    );
-
-    console.log("Sent invitations with profiles:", invitationsWithProfiles)
-    setSentInvitations(invitationsWithProfiles);
+    console.log("Sent invitations with profiles:", transformedData)
+    setSentInvitations(transformedData);
     setLoading(false);
   };
 
@@ -489,13 +483,12 @@ export const CourseInvitationsPanel = ({
           </button>
           <button
             onClick={() => setActiveTab("sent")}
-            className={`text-base font-medium pb-1 transition-colors flex items-center gap-2 ${
+            className={`text-base font-medium pb-1 transition-colors ${
               activeTab === "sent"
                 ? "text-primary border-b-2 border-primary"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Send className="h-4 w-4" />
             Gesendet
           </button>
         </div>
