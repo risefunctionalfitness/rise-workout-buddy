@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, Check, X, RefreshCw, Send } from "lucide-react";
+import { Calendar, Clock, Check, X, RefreshCw, Send, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -60,13 +59,15 @@ interface CourseInvitationsPanelProps {
   onOpenChange: (open: boolean) => void;
   user: User;
   onAcceptInvitation: (courseId: string, courseDate: string) => void;
+  onNavigateToCourses?: () => void;
 }
 
 export const CourseInvitationsPanel = ({
   open,
   onOpenChange,
   user,
-  onAcceptInvitation
+  onAcceptInvitation,
+  onNavigateToCourses
 }: CourseInvitationsPanelProps) => {
   const [receivedInvitations, setReceivedInvitations] = useState<Invitation[]>([]);
   const [sentInvitations, setSentInvitations] = useState<SentInvitation[]>([]);
@@ -450,6 +451,13 @@ export const CourseInvitationsPanel = ({
     }
   };
 
+  const handleNavigateToCourses = () => {
+    onOpenChange(false);
+    if (onNavigateToCourses) {
+      onNavigateToCourses();
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
@@ -467,67 +475,99 @@ export const CourseInvitationsPanel = ({
           </div>
         </SheetHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "received" | "sent")} className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="received">Empfangen</TabsTrigger>
-            <TabsTrigger value="sent">
-              <Send className="h-4 w-4 mr-2" />
-              Gesendet
-            </TabsTrigger>
-          </TabsList>
+        {/* Custom Tab Navigation */}
+        <div className="flex justify-center items-center gap-8 my-6">
+          <button
+            onClick={() => setActiveTab("received")}
+            className={`text-base font-medium pb-1 transition-colors ${
+              activeTab === "received"
+                ? "text-primary border-b-2 border-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Empfangen
+          </button>
+          <button
+            onClick={() => setActiveTab("sent")}
+            className={`text-base font-medium pb-1 transition-colors flex items-center gap-2 ${
+              activeTab === "sent"
+                ? "text-primary border-b-2 border-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Send className="h-4 w-4" />
+            Gesendet
+          </button>
+        </div>
 
-          <TabsContent value="received" className="flex-1 mt-4">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground">Lädt...</p>
-              </div>
-            ) : receivedInvitations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="rounded-full bg-muted p-3 mb-4">
-                  <Calendar className="h-6 w-6 text-muted-foreground" />
+        {/* Tab Content */}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === "received" ? (
+            <div className="h-full flex flex-col animate-in fade-in-50 slide-in-from-left-5 duration-300">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-muted-foreground">Lädt...</p>
                 </div>
-                <p className="text-muted-foreground">Keine offenen Einladungen</p>
-              </div>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {receivedInvitations.length} ausstehende Einladung{receivedInvitations.length !== 1 ? 'en' : ''}
-                </p>
-                <ScrollArea className="flex-1 -mx-6 px-6">
-                  <div className="space-y-4">
-                    {receivedInvitations.map(renderReceivedInvitation)}
+              ) : receivedInvitations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="rounded-full bg-muted p-3 mb-4">
+                    <Calendar className="h-6 w-6 text-muted-foreground" />
                   </div>
-                </ScrollArea>
-              </>
-            )}
-          </TabsContent>
-
-          <TabsContent value="sent" className="flex-1 mt-4">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground">Lädt...</p>
-              </div>
-            ) : sentInvitations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="rounded-full bg-muted p-3 mb-4">
-                  <Send className="h-6 w-6 text-muted-foreground" />
+                  <p className="text-muted-foreground">Keine offenen Einladungen</p>
                 </div>
-                <p className="text-muted-foreground">Keine gesendeten Einladungen</p>
-              </div>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {sentInvitations.length} gesendete Einladung{sentInvitations.length !== 1 ? 'en' : ''}
-                </p>
-                <ScrollArea className="flex-1 -mx-6 px-6">
-                  <div className="space-y-4">
-                    {sentInvitations.map(renderSentInvitation)}
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {receivedInvitations.length} ausstehende Einladung{receivedInvitations.length !== 1 ? 'en' : ''}
+                  </p>
+                  <ScrollArea className="flex-1 -mx-6 px-6">
+                    <div className="space-y-4">
+                      {receivedInvitations.map(renderReceivedInvitation)}
+                    </div>
+                  </ScrollArea>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="h-full flex flex-col animate-in fade-in-50 slide-in-from-right-5 duration-300">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-muted-foreground">Lädt...</p>
+                </div>
+              ) : sentInvitations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                  <div className="rounded-full bg-muted p-3">
+                    <Send className="h-6 w-6 text-muted-foreground" />
                   </div>
-                </ScrollArea>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground">Keine gesendeten Einladungen</p>
+                    <p className="text-sm text-muted-foreground">
+                      Lade Freunde zu einem Kurs ein!
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleNavigateToCourses}
+                    className="mt-4"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Einladung senden
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {sentInvitations.length} gesendete Einladung{sentInvitations.length !== 1 ? 'en' : ''}
+                  </p>
+                  <ScrollArea className="flex-1 -mx-6 px-6">
+                    <div className="space-y-4">
+                      {sentInvitations.map(renderSentInvitation)}
+                    </div>
+                  </ScrollArea>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );

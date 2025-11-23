@@ -856,6 +856,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         onOpenChange={setShowInvitations}
         user={user}
         onAcceptInvitation={handleAcceptInvitation}
+        onNavigateToCourses={() => {
+          setShowInvitations(false)
+          setActiveTab('courses')
+        }}
       />
 
       {/* DayCourseDialog from Invitation */}
