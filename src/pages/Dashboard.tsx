@@ -43,6 +43,7 @@ import { useNewsNotification } from "@/hooks/useNewsNotification"
 
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { timezone } from "@/lib/timezone"
+import { format } from "date-fns"
 
 type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
 
@@ -313,11 +314,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     console.log("User ID:", user.id)
     console.log("User Email:", user.email)
     
+    // Get current time in Berlin timezone
+    const nowInBerlin = timezone.nowInBerlin()
+    const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
+    const nowTime = format(nowInBerlin, 'HH:mm:ss')
+    
     const { count, error, data } = await supabase
       .from("course_invitations")
-      .select("*", { count: 'exact' })
+      .select("*, courses!inner(course_date, end_time)", { count: 'exact' })
       .eq("recipient_id", user.id)
       .eq("status", "pending")
+      .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
 
     console.log("Raw invitation data:", data)
     console.log("Invitation count:", count)
