@@ -176,12 +176,30 @@ export const ExerciseSelection = () => {
     }
   }
 
-  const toggleExercise = (exerciseName: string) => {
-    setSelectedExercises(prev => 
-      prev.includes(exerciseName)
-        ? prev.filter(name => name !== exerciseName)
-        : [...prev, exerciseName]
-    )
+  const toggleExercise = async (exerciseName: string) => {
+    const newSelection = selectedExercises.includes(exerciseName)
+      ? selectedExercises.filter(name => name !== exerciseName)
+      : [...selectedExercises, exerciseName]
+    
+    setSelectedExercises(newSelection)
+    
+    // Direkt speichern
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      await supabase
+        .from('profiles')
+        .update({ preferred_exercises: newSelection })
+        .eq('user_id', user.id)
+    } catch (error) {
+      console.error('Error saving exercise preferences:', error)
+      toast({
+        title: "Fehler",
+        description: "Übung konnte nicht gespeichert werden.",
+        variant: "destructive"
+      })
+    }
   }
 
   const groupedExercises = useMemo(() => {
@@ -217,7 +235,7 @@ export const ExerciseSelection = () => {
           <CardHeader>
             <CardTitle>Bevorzugte Übungen</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Grüne Übungen werden bevorzugt in deinen Workouts verwendet. Klicke auf eine Übung, um sie zu deaktivieren.
+              Grüne Übungen werden bevorzugt in deinen Workouts verwendet. Deine Auswahl wird automatisch gespeichert.
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -231,7 +249,7 @@ export const ExerciseSelection = () => {
                     <Badge
                       key={exercise.name}
                       variant={selectedExercises.includes(exercise.name) ? "default" : "secondary"}
-                      className={`cursor-pointer hover:opacity-80 transition-colors ${
+                      className={`cursor-pointer hover:opacity-80 transition-colors text-base py-2.5 px-4 ${
                         selectedExercises.includes(exercise.name) 
                           ? "bg-green-600 hover:bg-green-700 text-white" 
                           : "bg-gray-300 hover:bg-gray-400 text-gray-700"
@@ -246,10 +264,6 @@ export const ExerciseSelection = () => {
             ))}
           </CardContent>
         </Card>
-
-        <Button onClick={saveExercisePreferences} className="w-full">
-          Übungspräferenzen speichern
-        </Button>
       </div>
     </div>
   )
