@@ -177,14 +177,15 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           {isAdmin && (
             <Button 
               variant="outline" 
-              size="sm"
+              size="default"
               onClick={() => setShowAddDialog(true)}
+              className="font-medium"
             >
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="h-5 w-5 mr-2" />
               Hinzufügen
             </Button>
           )}
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="ghost" size="default" onClick={onClose}>
             Schließen
           </Button>
         </div>
@@ -239,11 +240,11 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                       {isAdmin && (
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() => removeParticipant(participant.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </Button>
                       )}
                     </div>
@@ -292,11 +293,11 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() => removeParticipant(participant.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
