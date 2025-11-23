@@ -577,7 +577,7 @@ export const CourseInvitationsPanel = ({
                   <div className="flex justify-center pt-4 mt-4 border-t">
                     <Button
                       onClick={handleNavigateToCourses}
-                      variant="outline"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
                     >
                       <UserPlus className="h-4 w-4 mr-2" />
                       Weitere Einladungen senden
