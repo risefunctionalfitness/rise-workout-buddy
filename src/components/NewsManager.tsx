@@ -355,10 +355,11 @@ export const NewsManager = () => {
   const loadPreviewRecipients = async () => {
     try {
       setLoadingPreview(true)
-    let query = supabase
-      .from('profiles')
-      .select('display_name, first_name, last_name, user_id, membership_type, status')
-      .not('user_id', 'is', null)
+      
+      let query = supabase
+        .from('profiles')
+        .select('display_name, first_name, last_name, user_id, membership_type, status')
+        .not('user_id', 'is', null)
 
       // Status-Filter
       if (emailFilters.statusFilter !== 'all') {
@@ -434,7 +435,7 @@ export const NewsManager = () => {
                     placeholder="Nachrichteninhalt..."
                     rows={6}
                     required
-                    className="max-h-[300px] overflow-y-auto"
+                    className="max-h-[300px] overflow-y-auto resize-none"
                   />
                   </div>
                   <div>
@@ -673,7 +674,7 @@ export const NewsManager = () => {
               </div>
               <div>
                 <Label htmlFor="content">Inhalt</Label>
-                <Textarea name="content" defaultValue={editingNews.content} rows={6} required className="max-h-[300px] overflow-y-auto" />
+                <Textarea name="content" defaultValue={editingNews.content} rows={6} required className="max-h-[300px] overflow-y-auto resize-none" />
               </div>
               <div>
                 <Label htmlFor="link_url">Link (Optional)</Label>
