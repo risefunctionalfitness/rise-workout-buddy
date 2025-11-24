@@ -139,12 +139,12 @@ export const AdminRiskRadar = () => {
   return (
     <div className="space-y-8 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">📡 Admin Risk Radar</h1>
+        <h1 className="text-3xl font-bold">Admin Risk Radar</h1>
       </div>
 
       {/* ===== NEVER ACTIVE DASHBOARD ===== */}
       <Card className="p-6">
-        <h2 className="text-2xl font-semibold mb-6">🆕 Nie Aktiv (Noch nie gebucht/trainiert)</h2>
+        <h2 className="text-2xl font-semibold mb-6">Nie Aktiv (Noch nie gebucht/trainiert)</h2>
 
         {/* Category Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -267,7 +267,7 @@ export const AdminRiskRadar = () => {
 
         {/* Trend Chart */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">📈 30-Tage-Trend (Nie Aktiv)</h3>
+          <h3 className="text-lg font-semibold mb-4">30-Tage-Trend (Nie Aktiv)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={neverActiveSnapshots}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -286,7 +286,7 @@ export const AdminRiskRadar = () => {
         {/* 21+ Members List */}
         <div>
           <h3 className="text-lg font-semibold mb-4">
-            🎯 21+ Tage Nie Aktiv ({neverActive21Plus?.length || 0} Mitglieder)
+            21+ Tage Nie Aktiv ({neverActive21Plus?.length || 0} Mitglieder)
           </h3>
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {neverActive21Plus?.map((member) => (
@@ -316,7 +316,7 @@ export const AdminRiskRadar = () => {
 
       {/* ===== INACTIVE DASHBOARD ===== */}
       <Card className="p-6">
-        <h2 className="text-2xl font-semibold mb-6">🔄 Inaktiv (War mal aktiv, jetzt inaktiv)</h2>
+        <h2 className="text-2xl font-semibold mb-6">Inaktiv (War mal aktiv, jetzt inaktiv)</h2>
 
         {/* Category Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -439,7 +439,7 @@ export const AdminRiskRadar = () => {
 
         {/* Trend Chart */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">📈 30-Tage-Trend (Inaktiv)</h3>
+          <h3 className="text-lg font-semibold mb-4">30-Tage-Trend (Inaktiv)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={inactiveSnapshots}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -458,7 +458,7 @@ export const AdminRiskRadar = () => {
         {/* 21+ Members List */}
         <div>
           <h3 className="text-lg font-semibold mb-4">
-            🎯 21+ Tage Inaktiv ({inactive21Plus?.length || 0} Mitglieder)
+            21+ Tage Inaktiv ({inactive21Plus?.length || 0} Mitglieder)
           </h3>
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {inactive21Plus?.map((member) => (
