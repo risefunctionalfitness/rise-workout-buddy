@@ -337,6 +337,93 @@ export type Database = {
         }
         Relationships: []
       }
+      inactive_member_details: {
+        Row: {
+          category: string
+          created_at: string | null
+          days_since_last_activity: number
+          display_name: string | null
+          id: string
+          last_activity_date: string | null
+          membership_type: string | null
+          snapshot_date: string
+          total_bookings: number | null
+          total_training_sessions: number | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          days_since_last_activity: number
+          display_name?: string | null
+          id?: string
+          last_activity_date?: string | null
+          membership_type?: string | null
+          snapshot_date: string
+          total_bookings?: number | null
+          total_training_sessions?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          days_since_last_activity?: number
+          display_name?: string | null
+          id?: string
+          last_activity_date?: string | null
+          membership_type?: string | null
+          snapshot_date?: string
+          total_bookings?: number | null
+          total_training_sessions?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inactive_member_snapshots: {
+        Row: {
+          active_under_10_count: number
+          active_under_10_percentage: number | null
+          created_at: string | null
+          days_10_15_count: number
+          days_10_15_percentage: number | null
+          days_15_21_count: number
+          days_15_21_percentage: number | null
+          days_21_plus_count: number
+          days_21_plus_percentage: number | null
+          id: string
+          snapshot_date: string
+          total_previously_active: number
+        }
+        Insert: {
+          active_under_10_count?: number
+          active_under_10_percentage?: number | null
+          created_at?: string | null
+          days_10_15_count?: number
+          days_10_15_percentage?: number | null
+          days_15_21_count?: number
+          days_15_21_percentage?: number | null
+          days_21_plus_count?: number
+          days_21_plus_percentage?: number | null
+          id?: string
+          snapshot_date: string
+          total_previously_active?: number
+        }
+        Update: {
+          active_under_10_count?: number
+          active_under_10_percentage?: number | null
+          created_at?: string | null
+          days_10_15_count?: number
+          days_10_15_percentage?: number | null
+          days_15_21_count?: number
+          days_15_21_percentage?: number | null
+          days_21_plus_count?: number
+          days_21_plus_percentage?: number | null
+          id?: string
+          snapshot_date?: string
+          total_previously_active?: number
+        }
+        Relationships: []
+      }
       leaderboard_entries: {
         Row: {
           challenge_bonus_points: number
@@ -469,6 +556,87 @@ export type Database = {
           title?: string
           updated_at?: string
           year?: number
+        }
+        Relationships: []
+      }
+      never_active_member_details: {
+        Row: {
+          category: string
+          created_at: string | null
+          days_since_signup: number
+          display_name: string | null
+          id: string
+          membership_type: string | null
+          signup_date: string | null
+          snapshot_date: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          days_since_signup: number
+          display_name?: string | null
+          id?: string
+          membership_type?: string | null
+          signup_date?: string | null
+          snapshot_date: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          days_since_signup?: number
+          display_name?: string | null
+          id?: string
+          membership_type?: string | null
+          signup_date?: string | null
+          snapshot_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      never_active_snapshots: {
+        Row: {
+          created_at: string | null
+          days_0_7_count: number
+          days_0_7_percentage: number | null
+          days_15_21_count: number
+          days_15_21_percentage: number | null
+          days_21_plus_count: number
+          days_21_plus_percentage: number | null
+          days_8_14_count: number
+          days_8_14_percentage: number | null
+          id: string
+          snapshot_date: string
+          total_never_active: number
+        }
+        Insert: {
+          created_at?: string | null
+          days_0_7_count?: number
+          days_0_7_percentage?: number | null
+          days_15_21_count?: number
+          days_15_21_percentage?: number | null
+          days_21_plus_count?: number
+          days_21_plus_percentage?: number | null
+          days_8_14_count?: number
+          days_8_14_percentage?: number | null
+          id?: string
+          snapshot_date: string
+          total_never_active?: number
+        }
+        Update: {
+          created_at?: string | null
+          days_0_7_count?: number
+          days_0_7_percentage?: number | null
+          days_15_21_count?: number
+          days_15_21_percentage?: number | null
+          days_21_plus_count?: number
+          days_21_plus_percentage?: number | null
+          days_8_14_count?: number
+          days_8_14_percentage?: number | null
+          id?: string
+          snapshot_date?: string
+          total_never_active?: number
         }
         Relationships: []
       }
