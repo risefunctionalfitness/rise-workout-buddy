@@ -228,9 +228,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
               <div className="relative">
                 <Input
                   id="accessCode"
+                  name="access-code-numeric"
                   type={showAccessCode ? "text" : "password"}
                   inputMode="numeric"
                   pattern="[0-9]*"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
                   value={accessCode}
                   onChange={(e) => handleAccessCodeChange(e.target.value)}
                   placeholder="123456"
