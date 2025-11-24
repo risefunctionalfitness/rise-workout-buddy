@@ -106,134 +106,134 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
       {/* Navigation Overlay */}
       {dropdownOpen && (showAdminAccess && isAdmin) && (
         <div className="fixed inset-0 z-50 bg-background flex flex-col items-center p-8 overflow-y-auto">
-          <div className="grid grid-cols-3 gap-4 max-w-3xl w-full my-auto">
+          <div className="grid grid-cols-3 gap-6 max-w-3xl w-full my-auto justify-items-center">
             <div 
               onClick={() => {
                 onPageChange?.('home');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'home' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'home' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Home className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Home</span>
+              <Home className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Home</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('members');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'members' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'members' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Users className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Mitglieder</span>
+              <Users className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Mitglieder</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('courses');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'courses' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'courses' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Calendar className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Kurse</span>
+              <Calendar className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Kurse</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('templates');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'templates' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'templates' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Dumbbell className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Vorlagen</span>
+              <Dumbbell className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Vorlagen</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('news');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'news' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'news' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Newspaper className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">News</span>
+              <Newspaper className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">News</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('credits');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'credits' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'credits' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <CreditCard className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Credits</span>
+              <CreditCard className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Credits</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('workouts');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'workouts' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'workouts' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Dumbbell className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Workouts</span>
+              <Dumbbell className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Workouts</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('codes');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'codes' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'codes' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Users className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Codes</span>
+              <Users className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Codes</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('challenges');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'challenges' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'challenges' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Trophy className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Challenges</span>
+              <Trophy className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Challenges</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('leaderboard');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'leaderboard' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'leaderboard' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Trophy className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Leaderboard</span>
+              <Trophy className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Leaderboard</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('emails');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'emails' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'emails' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Mail className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Emails</span>
+              <Mail className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Emails</span>
             </div>
             <div 
               onClick={() => {
                 onPageChange?.('risk-radar');
                 setDropdownOpen(false);
               }}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg hover:bg-muted cursor-pointer transition-colors ${activePage === 'risk-radar' ? 'bg-primary/10 text-primary' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'risk-radar' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
-              <Radio className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">Risk Radar</span>
+              <Radio className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Risk Radar</span>
             </div>
             {onLogout && (
               <div 
                 onClick={handleLogout}
-                className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-destructive/10 cursor-pointer transition-colors"
+                className="w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-destructive/10 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-destructive/30 hover:shadow-lg"
               >
-                <LogOut className="h-8 w-8 text-destructive mb-2" />
-                <span className="text-sm font-medium text-destructive">Abmelden</span>
+                <LogOut className="h-10 w-10 text-destructive mb-3" />
+                <span className="text-sm font-semibold text-destructive">Abmelden</span>
               </div>
             )}
           </div>
