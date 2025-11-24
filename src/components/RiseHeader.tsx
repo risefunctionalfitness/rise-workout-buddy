@@ -71,7 +71,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
   }
 
   return (
-    <header className="flex justify-between items-center w-full p-6 border-b border-border">
+    <header className="relative z-50 flex justify-between items-center w-full p-6 border-b border-border">
       <div className="flex items-center gap-4">
         <Logo 
           className="h-12"
@@ -105,7 +105,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
       
       {/* Navigation Overlay */}
       {dropdownOpen && (showAdminAccess && isAdmin) && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col items-center p-8 overflow-y-auto">
+        <div className="fixed inset-x-0 top-[88px] bottom-0 z-40 bg-background/95 backdrop-blur-sm flex flex-col items-center p-8 overflow-y-auto">
           <div className="grid grid-cols-3 gap-6 max-w-3xl w-full my-auto justify-items-center">
             <div 
               onClick={() => {
@@ -239,7 +239,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
           </div>
           
           {/* Close button */}
-          <div className="absolute top-6 right-6">
+          <div className="absolute top-2 right-6">
             <Button
               variant="outline"
               size="icon"
