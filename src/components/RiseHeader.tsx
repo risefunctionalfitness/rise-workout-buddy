@@ -241,17 +241,6 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
               </div>
             )}
           </div>
-          
-          {/* Close button */}
-          <div className="absolute top-2 right-6">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setDropdownOpen(false)}
-            >
-              <span className="text-xl">×</span>
-            </Button>
-          </div>
         </div>
       )}
     </header>
