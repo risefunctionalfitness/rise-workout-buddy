@@ -96,9 +96,13 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => setDropdownOpen(true)}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
           >
-            <MoreVertical className="h-4 w-4" />
+            {dropdownOpen ? (
+              <span className="text-xl">×</span>
+            ) : (
+              <MoreVertical className="h-4 w-4" />
+            )}
           </Button>
         )}
       </div>
