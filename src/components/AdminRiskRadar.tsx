@@ -139,7 +139,10 @@ export const AdminRiskRadar = () => {
   return (
     <div className="space-y-8 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Admin Risk Radar</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Risk Radar</h1>
+          <p className="text-sm text-muted-foreground mt-1">Mitglieder-Aktivität und Engagement-Tracking</p>
+        </div>
       </div>
 
       {/* ===== NEVER ACTIVE DASHBOARD ===== */}
