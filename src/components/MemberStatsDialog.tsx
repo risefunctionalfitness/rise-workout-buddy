@@ -26,14 +26,12 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
   const { data: stats, isLoading } = useQuery({
     queryKey: ['member-stats', userId],
     queryFn: async () => {
-      console.log('Fetching stats for user:', userId);
-      
       // Fetch bookings
       const { data: bookings, error: bookingsError } = await supabase
         .from('course_registrations')
         .select(`
           id,
-          created_at,
+          registered_at,
           status,
           courses (
             course_date,
@@ -42,8 +40,6 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
           )
         `)
         .eq('user_id', userId);
-
-      console.log('Bookings query result:', { bookings, bookingsError });
       
       if (bookingsError) throw bookingsError;
 
@@ -52,8 +48,6 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
         .from('training_sessions')
         .select('id, status')
         .eq('user_id', userId);
-
-      console.log('Trainings query result:', { trainings, trainingsError });
       
       if (trainingsError) throw trainingsError;
 
@@ -85,7 +79,7 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
       const preferredHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
       const preferredTime = preferredHour ? `${preferredHour}:00` : 'N/A';
 
-      const result = {
+      return {
         total_bookings: bookings?.length || 0,
         total_trainings: trainings?.length || 0,
         bookings_by_day: bookingsByDay,
@@ -93,10 +87,6 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
         preferred_day: preferredDay,
         preferred_time: preferredTime
       } as MemberStats;
-      
-      console.log('Stats result:', result);
-      
-      return result;
     },
     enabled: isOpen
   });
