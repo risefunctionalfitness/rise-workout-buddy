@@ -1,10 +1,12 @@
 import { Card } from '@/components/ui/card';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ArrowUp, ArrowDown, Minus, Eye, Mail, FileEdit } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Eye, Mail, FileEdit, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface NeverActiveSnapshot {
   snapshot_date: string;
@@ -50,6 +52,9 @@ interface InactiveMember {
 }
 
 export const AdminRiskRadar = () => {
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Load last 30 snapshots for "Never Active"
   const { data: neverActiveSnapshots, isLoading: neverActiveLoading } = useQuery({
     queryKey: ['never-active-snapshots'],
@@ -127,6 +132,28 @@ export const AdminRiskRadar = () => {
     return <Minus className="h-4 w-4 text-muted-foreground" />;
   };
 
+  const handleRefreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      const { error } = await supabase.functions.invoke('calculate-risk-radar-snapshot');
+      
+      if (error) throw error;
+      
+      // Invalidate all queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['never-active-snapshots'] });
+      await queryClient.invalidateQueries({ queryKey: ['inactive-snapshots'] });
+      await queryClient.invalidateQueries({ queryKey: ['never-active-21-plus-details'] });
+      await queryClient.invalidateQueries({ queryKey: ['inactive-21-plus-details'] });
+      
+      toast.success('Daten wurden erfolgreich aktualisiert');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error('Fehler beim Aktualisieren der Daten');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   if (neverActiveLoading || inactiveLoading) {
     return (
       <div className="space-y-6">
@@ -143,6 +170,14 @@ export const AdminRiskRadar = () => {
           <h1 className="text-3xl font-bold">Risk Radar</h1>
           <p className="text-sm text-muted-foreground mt-1">Mitglieder-Aktivität und Engagement-Tracking</p>
         </div>
+        <Button 
+          onClick={handleRefreshData} 
+          disabled={isRefreshing}
+          className="gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Wird aktualisiert...' : 'Daten aktualisieren'}
+        </Button>
       </div>
 
       {/* ===== NEVER ACTIVE DASHBOARD ===== */}
