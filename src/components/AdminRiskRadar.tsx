@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { MemberStatsDialog } from './MemberStatsDialog';
 
 interface NeverActiveSnapshot {
   snapshot_date: string;
@@ -53,7 +55,9 @@ interface InactiveMember {
 
 export const AdminRiskRadar = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<{ userId: string; displayName: string } | null>(null);
 
   // Load last 30 snapshots for "Never Active"
   const { data: neverActiveSnapshots, isLoading: neverActiveLoading } = useQuery({
@@ -336,13 +340,31 @@ export const AdminRiskRadar = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name })}
+                    title="Statistiken anzeigen"
+                  >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => navigate(`/admin?tab=emails&userId=${member.user_id}`)}
+                    title="E-Mail senden"
+                  >
                     <Mail className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => navigate(`/admin?tab=members&editUserId=${member.user_id}`)}
+                    title="Profil bearbeiten"
+                  >
                     <FileEdit className="h-4 w-4" />
                   </Button>
                 </div>
@@ -509,13 +531,31 @@ export const AdminRiskRadar = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name })}
+                    title="Statistiken anzeigen"
+                  >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => navigate(`/admin?tab=emails&userId=${member.user_id}`)}
+                    title="E-Mail senden"
+                  >
                     <Mail className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => navigate(`/admin?tab=members&editUserId=${member.user_id}`)}
+                    title="Profil bearbeiten"
+                  >
                     <FileEdit className="h-4 w-4" />
                   </Button>
                 </div>
@@ -524,6 +564,16 @@ export const AdminRiskRadar = () => {
           </div>
         </div>
       </Card>
+
+      {/* Member Stats Dialog */}
+      {selectedMember && (
+        <MemberStatsDialog
+          userId={selectedMember.userId}
+          displayName={selectedMember.displayName}
+          isOpen={!!selectedMember}
+          onClose={() => setSelectedMember(null)}
+        />
+      )}
     </div>
   );
 };
