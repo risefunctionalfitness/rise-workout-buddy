@@ -8,6 +8,8 @@ const corsHeaders = {
 interface MemberActivity {
   user_id: string;
   display_name: string;
+  first_name: string | null;
+  last_name: string | null;
   membership_type: string;
   created_at: string;
   last_activity_date: string | null;
@@ -34,7 +36,7 @@ Deno.serve(async (req) => {
     // ===== 1. Load all members with activity data =====
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('user_id, display_name, membership_type, created_at')
+      .select('user_id, display_name, first_name, last_name, membership_type, created_at')
       .not('membership_type', 'in', '("Administrator","Admin")');
 
     if (profilesError) throw profilesError;
@@ -98,6 +100,8 @@ Deno.serve(async (req) => {
       memberActivities.push({
         user_id: profile.user_id,
         display_name: profile.display_name,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
         membership_type: profile.membership_type,
         created_at: profile.created_at,
         last_activity_date: lastActivityDate,
@@ -154,6 +158,8 @@ Deno.serve(async (req) => {
           ? '15-21'
           : '21+',
       display_name: m.display_name,
+      first_name: m.first_name,
+      last_name: m.last_name,
       membership_type: m.membership_type,
       signup_date: m.created_at.split('T')[0],
     }));
@@ -210,6 +216,8 @@ Deno.serve(async (req) => {
           ? '15-21'
           : '21+',
       display_name: m.display_name,
+      first_name: m.first_name,
+      last_name: m.last_name,
       membership_type: m.membership_type,
       last_activity_date: m.last_activity_date,
       total_bookings: m.total_bookings,

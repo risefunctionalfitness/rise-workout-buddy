@@ -373,8 +373,10 @@ export type Database = {
           created_at: string | null
           days_since_last_activity: number
           display_name: string | null
+          first_name: string | null
           id: string
           last_activity_date: string | null
+          last_name: string | null
           membership_type: string | null
           snapshot_date: string
           total_bookings: number | null
@@ -386,8 +388,10 @@ export type Database = {
           created_at?: string | null
           days_since_last_activity: number
           display_name?: string | null
+          first_name?: string | null
           id?: string
           last_activity_date?: string | null
+          last_name?: string | null
           membership_type?: string | null
           snapshot_date: string
           total_bookings?: number | null
@@ -399,8 +403,10 @@ export type Database = {
           created_at?: string | null
           days_since_last_activity?: number
           display_name?: string | null
+          first_name?: string | null
           id?: string
           last_activity_date?: string | null
+          last_name?: string | null
           membership_type?: string | null
           snapshot_date?: string
           total_bookings?: number | null
@@ -595,7 +601,9 @@ export type Database = {
           created_at: string | null
           days_since_signup: number
           display_name: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           membership_type: string | null
           signup_date: string | null
           snapshot_date: string
@@ -606,7 +614,9 @@ export type Database = {
           created_at?: string | null
           days_since_signup: number
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           membership_type?: string | null
           signup_date?: string | null
           snapshot_date: string
@@ -617,7 +627,9 @@ export type Database = {
           created_at?: string | null
           days_since_signup?: number
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           membership_type?: string | null
           signup_date?: string | null
           snapshot_date?: string
