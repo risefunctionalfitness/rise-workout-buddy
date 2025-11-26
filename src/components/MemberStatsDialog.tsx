@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Dumbbell, Users } from "lucide-react";
+import { Calendar, Dumbbell, Users, XCircle } from "lucide-react";
 
 interface MemberStatsDialogProps {
   userId: string;
@@ -23,9 +23,11 @@ interface MemberStats {
   total_trainings: number;
   cancellations: number;
   bookings_by_day: Record<string, number>;
+  trainings_by_day: Record<string, number>;
   bookings_by_trainer: Record<string, number>;
   preferred_day: string;
   preferred_time: string;
+  preferred_training_day: string;
 }
 
 export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, totalBookings, totalTrainings, cancellations, isOpen, onClose }: MemberStatsDialogProps) => {
@@ -63,7 +65,7 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
       // Fetch free training (Open Gym QR scans) only
       const { data: trainings, error: trainingsError } = await supabase
         .from('training_sessions')
-        .select('id, status')
+        .select('id, status, date')
         .eq('user_id', userId)
         .eq('workout_type', 'free_training');
       
@@ -72,6 +74,7 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
       // Process bookings by day of week
       const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
       const bookingsByDay: Record<string, number> = {};
+      const trainingsByDay: Record<string, number> = {};
       const bookingsByTrainer: Record<string, number> = {};
       const hourCounts: Record<number, number> = {};
 
@@ -92,26 +95,39 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
         }
       });
 
+      // Process trainings by day of week
+      trainings?.forEach((training: any) => {
+        if (training.date) {
+          const date = new Date(training.date);
+          const dayName = dayNames[date.getDay()];
+          trainingsByDay[dayName] = (trainingsByDay[dayName] || 0) + 1;
+        }
+      });
+
       // Find preferred day and time
       const preferredDay = Object.entries(bookingsByDay).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
       const preferredHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
       const preferredTime = preferredHour ? `${preferredHour}:00` : 'N/A';
+      const preferredTrainingDay = Object.entries(trainingsByDay).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
       return {
         total_bookings: bookings?.length || 0,
         total_trainings: trainings?.length || 0,
         cancellations: cancellationsCount || 0,
         bookings_by_day: bookingsByDay,
+        trainings_by_day: trainingsByDay,
         bookings_by_trainer: bookingsByTrainer,
         preferred_day: preferredDay,
-        preferred_time: preferredTime
+        preferred_time: preferredTime,
+        preferred_training_day: preferredTrainingDay
       } as MemberStats;
     },
     enabled: isOpen
   });
 
   const dayOrder = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-  const maxBookings = stats ? Math.max(...Object.values(stats.bookings_by_day)) : 1;
+  const maxBookings = stats ? Math.max(...Object.values(stats.bookings_by_day), 1) : 1;
+  const maxTrainings = stats ? Math.max(...Object.values(stats.trainings_by_day), 1) : 1;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -163,20 +179,25 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
 
               <Card>
                 <CardContent className="pt-6">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm text-muted-foreground">Stornierungen</p>
-                    <p className="text-2xl font-bold">{cancellations !== undefined ? cancellations : stats?.cancellations || 0}</p>
-                    {(() => {
-                      const totalBookingsValue = totalBookings !== undefined ? totalBookings : stats?.total_bookings || 0;
-                      const cancellationsValue = cancellations !== undefined ? cancellations : stats?.cancellations || 0;
-                      const total = totalBookingsValue + cancellationsValue;
-                      const rate = total > 0 ? (cancellationsValue / total * 100).toFixed(1) : '0';
-                      return (
-                        <p className="text-xs text-muted-foreground">
-                          {rate}% Stornierungsrate
-                        </p>
-                      );
-                    })()}
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-primary/10 p-3">
+                      <XCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Stornierungen</p>
+                      <p className="text-2xl font-bold">{cancellations !== undefined ? cancellations : stats?.cancellations || 0}</p>
+                      {(() => {
+                        const totalBookingsValue = totalBookings !== undefined ? totalBookings : stats?.total_bookings || 0;
+                        const cancellationsValue = cancellations !== undefined ? cancellations : stats?.cancellations || 0;
+                        const total = totalBookingsValue + cancellationsValue;
+                        const rate = total > 0 ? (cancellationsValue / total * 100).toFixed(1) : '0';
+                        return (
+                          <p className="text-xs text-muted-foreground">
+                            {rate}% Rate
+                          </p>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -188,17 +209,25 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
                 <h3 className="font-semibold mb-3">Präferenzen</h3>
                 <div className="flex gap-6">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Bevorzugter Tag</p>
+                    <p className="text-sm text-muted-foreground mb-1">Bevorzugter Kurstag</p>
                     <Badge variant="secondary" className="text-base">
                       {stats?.preferred_day}
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Bevorzugte Uhrzeit</p>
+                    <p className="text-sm text-muted-foreground mb-1">Bevorzugte Kurszeit</p>
                     <Badge variant="secondary" className="text-base">
                       {stats?.preferred_time}
                     </Badge>
                   </div>
+                  {stats && Object.keys(stats.trainings_by_day).length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Bevorzugter Open Gym Tag</p>
+                      <Badge variant="secondary" className="text-base">
+                        {stats.preferred_training_day}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -206,7 +235,7 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
             {/* Bookings by Day Chart */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-4">Buchungen pro Wochentag</h3>
+                <h3 className="font-semibold mb-4">Kursbuchungen pro Wochentag</h3>
                 <div className="space-y-3">
                   {dayOrder.map((day) => {
                     const count = stats?.bookings_by_day[day] || 0;
@@ -232,6 +261,38 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
                 </div>
               </CardContent>
             </Card>
+
+            {/* Trainings by Day Chart */}
+            {stats && Object.keys(stats.trainings_by_day).length > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4">Open Gym pro Wochentag</h3>
+                  <div className="space-y-3">
+                    {dayOrder.map((day) => {
+                      const count = stats.trainings_by_day[day] || 0;
+                      const width = maxTrainings > 0 ? (count / maxTrainings) * 100 : 0;
+                      return (
+                        <div key={day} className="flex items-center gap-3">
+                          <span className="text-sm font-medium w-8">{day}</span>
+                          <div className="flex-1 bg-muted rounded-full h-8 relative overflow-hidden">
+                            <div
+                              className="bg-primary h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                              style={{ width: `${width}%` }}
+                            >
+                              {count > 0 && (
+                                <span className="text-xs font-semibold text-primary-foreground">
+                                  {count}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Bookings by Trainer */}
             {stats && Object.keys(stats.bookings_by_trainer).length > 0 && (
