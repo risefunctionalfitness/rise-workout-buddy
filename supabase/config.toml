@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.send-news-email]
 verify_jwt = true
+
+[functions.calculate-risk-radar-snapshot]
+verify_jwt = false
