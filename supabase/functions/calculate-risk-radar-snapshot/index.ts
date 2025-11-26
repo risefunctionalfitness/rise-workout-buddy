@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
         days_8_14_percentage: totalNeverActive > 0 ? (neverActiveCounts.days_8_14 / totalNeverActive) * 100 : 0,
         days_15_21_percentage: totalNeverActive > 0 ? (neverActiveCounts.days_15_21 / totalNeverActive) * 100 : 0,
         days_21_plus_percentage: totalNeverActive > 0 ? (neverActiveCounts.days_21_plus / totalNeverActive) * 100 : 0,
-      });
+      }, { onConflict: 'snapshot_date' });
 
     if (neverActiveSnapshotError) throw neverActiveSnapshotError;
 
@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
     if (neverActiveDetails.length > 0) {
       const { error: neverActiveDetailsError } = await supabase
         .from('never_active_member_details')
-        .upsert(neverActiveDetails);
+        .upsert(neverActiveDetails, { onConflict: 'user_id,snapshot_date' });
 
       if (neverActiveDetailsError) throw neverActiveDetailsError;
     }
@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
         days_10_15_percentage: totalPreviouslyActive > 0 ? (inactiveCounts.days_10_15 / totalPreviouslyActive) * 100 : 0,
         days_15_21_percentage: totalPreviouslyActive > 0 ? (inactiveCounts.days_15_21 / totalPreviouslyActive) * 100 : 0,
         days_21_plus_percentage: totalPreviouslyActive > 0 ? (inactiveCounts.days_21_plus / totalPreviouslyActive) * 100 : 0,
-      });
+      }, { onConflict: 'snapshot_date' });
 
     if (inactiveSnapshotError) throw inactiveSnapshotError;
 
@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
     if (inactiveDetails.length > 0) {
       const { error: inactiveDetailsError } = await supabase
         .from('inactive_member_details')
-        .upsert(inactiveDetails);
+        .upsert(inactiveDetails, { onConflict: 'user_id,snapshot_date' });
 
       if (inactiveDetailsError) throw inactiveDetailsError;
     }
