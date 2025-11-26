@@ -266,15 +266,15 @@ export const AdminRiskRadar = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {/* 0-7 Days */}
           <Card 
-            className={`p-4 border-2 border-blue-200 bg-blue-50 dark:bg-blue-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedNeverActiveCategory === 'days_0_7' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-border bg-muted/30 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedNeverActiveCategory === 'days_0_7' ? 'ring-2 ring-primary border-primary' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_0_7' ? null : 'days_0_7'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">0-7 Tage</div>
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="text-3xl font-bold">
               {latestNeverActive?.days_0_7_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -287,7 +287,7 @@ export const AdminRiskRadar = () => {
                   previousNeverActive?.days_0_7_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestNeverActive?.days_0_7_count || 0,
                   previousNeverActive?.days_0_7_count || 0
@@ -302,15 +302,15 @@ export const AdminRiskRadar = () => {
 
           {/* 8-14 Days */}
           <Card 
-            className={`p-4 border-2 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedNeverActiveCategory === 'days_8_14' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-primary/30 bg-primary/5 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedNeverActiveCategory === 'days_8_14' ? 'ring-2 ring-primary border-primary' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_8_14' ? null : 'days_8_14'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">8-14 Tage</div>
-            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+            <div className="text-3xl font-bold text-primary/70">
               {latestNeverActive?.days_8_14_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -323,7 +323,7 @@ export const AdminRiskRadar = () => {
                   previousNeverActive?.days_8_14_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestNeverActive?.days_8_14_count || 0,
                   previousNeverActive?.days_8_14_count || 0
@@ -338,15 +338,15 @@ export const AdminRiskRadar = () => {
 
           {/* 15-21 Days */}
           <Card 
-            className={`p-4 border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedNeverActiveCategory === 'days_15_21' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-primary/50 bg-primary/10 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedNeverActiveCategory === 'days_15_21' ? 'ring-2 ring-primary border-primary' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_15_21' ? null : 'days_15_21'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">15-21 Tage</div>
-            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+            <div className="text-3xl font-bold text-primary/90">
               {latestNeverActive?.days_15_21_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -359,7 +359,7 @@ export const AdminRiskRadar = () => {
                   previousNeverActive?.days_15_21_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestNeverActive?.days_15_21_count || 0,
                   previousNeverActive?.days_15_21_count || 0
@@ -374,15 +374,15 @@ export const AdminRiskRadar = () => {
 
           {/* 21+ Days */}
           <Card 
-            className={`p-4 border-2 border-red-200 bg-red-50 dark:bg-red-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedNeverActiveCategory === 'days_21_plus' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-primary bg-primary/20 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedNeverActiveCategory === 'days_21_plus' ? 'ring-2 ring-primary shadow-lg' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_21_plus' ? null : 'days_21_plus'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">21+ Tage</div>
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+            <div className="text-3xl font-bold text-primary">
               {latestNeverActive?.days_21_plus_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -395,7 +395,7 @@ export const AdminRiskRadar = () => {
                   previousNeverActive?.days_21_plus_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestNeverActive?.days_21_plus_count || 0,
                   previousNeverActive?.days_21_plus_count || 0
@@ -414,15 +414,15 @@ export const AdminRiskRadar = () => {
           <h3 className="text-lg font-semibold mb-4">30-Tage-Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={neverActiveSnapshots}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="snapshot_date" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="snapshot_date" className="text-muted-foreground" />
+              <YAxis className="text-muted-foreground" />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="days_0_7_count" stroke="#3b82f6" name="0-7 Tage" />
-              <Line type="monotone" dataKey="days_8_14_count" stroke="#eab308" name="8-14 Tage" />
-              <Line type="monotone" dataKey="days_15_21_count" stroke="#f97316" name="15-21 Tage" />
-              <Line type="monotone" dataKey="days_21_plus_count" stroke="#ef4444" name="21+ Tage" />
+              <Line type="monotone" dataKey="days_0_7_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2} name="0-7 Tage" />
+              <Line type="monotone" dataKey="days_8_14_count" stroke="hsl(var(--primary) / 0.5)" strokeWidth={2} name="8-14 Tage" />
+              <Line type="monotone" dataKey="days_15_21_count" stroke="hsl(var(--primary) / 0.75)" strokeWidth={2} name="15-21 Tage" />
+              <Line type="monotone" dataKey="days_21_plus_count" stroke="hsl(var(--primary))" strokeWidth={3} name="21+ Tage" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -497,15 +497,15 @@ export const AdminRiskRadar = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {/* Active (<10 Days) */}
           <Card 
-            className={`p-4 border-2 border-green-200 bg-green-50 dark:bg-green-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedInactiveCategory === 'active_under_10' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-border bg-card cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedInactiveCategory === 'active_under_10' ? 'ring-2 ring-primary border-primary' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'active_under_10' ? null : 'active_under_10'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">Aktiv</div>
-            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+            <div className="text-3xl font-bold">
               {latestInactive?.active_under_10_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -518,7 +518,7 @@ export const AdminRiskRadar = () => {
                   previousInactive?.active_under_10_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestInactive?.active_under_10_count || 0,
                   previousInactive?.active_under_10_count || 0
@@ -533,15 +533,15 @@ export const AdminRiskRadar = () => {
 
           {/* 10-15 Days */}
           <Card 
-            className={`p-4 border-2 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedInactiveCategory === 'days_10_15' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-primary/30 bg-primary/5 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedInactiveCategory === 'days_10_15' ? 'ring-2 ring-primary border-primary' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'days_10_15' ? null : 'days_10_15'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">10-15 Tage</div>
-            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+            <div className="text-3xl font-bold text-primary/70">
               {latestInactive?.days_10_15_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -554,7 +554,7 @@ export const AdminRiskRadar = () => {
                   previousInactive?.days_10_15_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestInactive?.days_10_15_count || 0,
                   previousInactive?.days_10_15_count || 0
@@ -569,15 +569,15 @@ export const AdminRiskRadar = () => {
 
           {/* 15-21 Days */}
           <Card 
-            className={`p-4 border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedInactiveCategory === 'days_15_21' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-primary/50 bg-primary/10 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedInactiveCategory === 'days_15_21' ? 'ring-2 ring-primary border-primary' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'days_15_21' ? null : 'days_15_21'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">15-21 Tage</div>
-            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+            <div className="text-3xl font-bold text-primary/90">
               {latestInactive?.days_15_21_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -590,7 +590,7 @@ export const AdminRiskRadar = () => {
                   previousInactive?.days_15_21_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestInactive?.days_15_21_count || 0,
                   previousInactive?.days_15_21_count || 0
@@ -605,15 +605,15 @@ export const AdminRiskRadar = () => {
 
           {/* 21+ Days */}
           <Card 
-            className={`p-4 border-2 border-red-200 bg-red-50 dark:bg-red-950/20 cursor-pointer transition-all hover:scale-105 ${
-              selectedInactiveCategory === 'days_21_plus' ? 'ring-2 ring-primary' : ''
+            className={`p-4 border-2 border-primary bg-primary/20 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
+              selectedInactiveCategory === 'days_21_plus' ? 'ring-2 ring-primary shadow-lg' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'days_21_plus' ? null : 'days_21_plus'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">21+ Tage</div>
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+            <div className="text-3xl font-bold text-primary">
               {latestInactive?.days_21_plus_count || 0}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -626,7 +626,7 @@ export const AdminRiskRadar = () => {
                   previousInactive?.days_21_plus_count || 0
                 )
               )}
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 {calculateChange(
                   latestInactive?.days_21_plus_count || 0,
                   previousInactive?.days_21_plus_count || 0
@@ -645,15 +645,15 @@ export const AdminRiskRadar = () => {
           <h3 className="text-lg font-semibold mb-4">30-Tage-Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={inactiveSnapshots}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="snapshot_date" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="snapshot_date" className="text-muted-foreground" />
+              <YAxis className="text-muted-foreground" />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="active_under_10_count" stroke="#22c55e" name="Aktiv" />
-              <Line type="monotone" dataKey="days_10_15_count" stroke="#eab308" name="10-15 Tage" />
-              <Line type="monotone" dataKey="days_15_21_count" stroke="#f97316" name="15-21 Tage" />
-              <Line type="monotone" dataKey="days_21_plus_count" stroke="#ef4444" name="21+ Tage" />
+              <Line type="monotone" dataKey="active_under_10_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2} name="Aktiv" />
+              <Line type="monotone" dataKey="days_10_15_count" stroke="hsl(var(--primary) / 0.5)" strokeWidth={2} name="10-15 Tage" />
+              <Line type="monotone" dataKey="days_15_21_count" stroke="hsl(var(--primary) / 0.75)" strokeWidth={2} name="15-21 Tage" />
+              <Line type="monotone" dataKey="days_21_plus_count" stroke="hsl(var(--primary))" strokeWidth={3} name="21+ Tage" />
             </LineChart>
           </ResponsiveContainer>
         </div>
