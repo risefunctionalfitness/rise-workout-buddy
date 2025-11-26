@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +68,7 @@ export default function Admin() {
   const [totalMembers, setTotalMembers] = useState(0);
   const membersPerPage = 10;
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   
 
@@ -108,6 +109,15 @@ export default function Admin() {
       loadMembers();
     }
   }, [activePage, isAdmin, currentPage, searchTerm]);
+
+  // Read URL parameters and set active page
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && tab !== activePage) {
+      setActivePage(tab as typeof activePage);
+    }
+  }, [location.search]);
 
   const checkAdminRole = async (userId: string) => {
     try {
