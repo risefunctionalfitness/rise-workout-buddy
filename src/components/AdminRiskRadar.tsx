@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ArrowUp, ArrowDown, Minus, Eye, Mail, FileEdit, RefreshCw } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Eye, Mail, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
@@ -50,6 +50,8 @@ interface InactiveMember {
   membership_type: string;
   days_since_last_activity: number;
   last_activity_date: string;
+  total_bookings: number;
+  total_training_sessions: number;
   category: string;
 }
 
@@ -58,6 +60,9 @@ export const AdminRiskRadar = () => {
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{ userId: string; displayName: string } | null>(null);
+  const [emailQueue, setEmailQueue] = useState<Set<string>>(new Set());
+  const [selectedNeverActiveCategory, setSelectedNeverActiveCategory] = useState<string | null>(null);
+  const [selectedInactiveCategory, setSelectedInactiveCategory] = useState<string | null>(null);
 
   // Load last 30 snapshots for "Never Active"
   const { data: neverActiveSnapshots, isLoading: neverActiveLoading } = useQuery({
@@ -87,32 +92,30 @@ export const AdminRiskRadar = () => {
     },
   });
 
-  // Load "Never Active" 21+ member details
-  const { data: neverActive21Plus } = useQuery({
-    queryKey: ['never-active-21-plus-details'],
+  // Fetch all never active members for filtering
+  const { data: allNeverActiveMembers, isLoading: neverActiveMembersLoading } = useQuery({
+    queryKey: ['never-active-members-all'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('never_active_member_details')
         .select('*')
         .eq('snapshot_date', today)
-        .eq('category', '21+')
         .order('days_since_signup', { ascending: false });
       if (error) throw error;
       return data as NeverActiveMember[];
     },
   });
 
-  // Load "Inactive" 21+ member details
-  const { data: inactive21Plus } = useQuery({
-    queryKey: ['inactive-21-plus-details'],
+  // Fetch all inactive members for filtering
+  const { data: allInactiveMembers, isLoading: inactiveMembersLoading } = useQuery({
+    queryKey: ['inactive-members-all'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from('inactive_member_details')
         .select('*')
         .eq('snapshot_date', today)
-        .eq('category', '21+')
         .order('days_since_last_activity', { ascending: false });
       if (error) throw error;
       return data as InactiveMember[];
@@ -136,6 +139,34 @@ export const AdminRiskRadar = () => {
     return <Minus className="h-4 w-4 text-muted-foreground" />;
   };
 
+  const handleAddToEmailQueue = (userId: string, displayName: string) => {
+    if (emailQueue.has(userId)) {
+      toast.info(`${displayName} ist bereits in der E-Mail-Liste`);
+      return;
+    }
+    
+    setEmailQueue(prev => new Set(prev).add(userId));
+    toast.success(`${displayName} zur E-Mail-Liste hinzugefügt ✓`);
+  };
+
+  const handleRemoveFromQueue = (userId: string) => {
+    setEmailQueue(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(userId);
+      return newSet;
+    });
+  };
+
+  const handleClearQueue = () => {
+    setEmailQueue(new Set());
+    toast.info("E-Mail-Liste geleert");
+  };
+
+  const handleSendEmails = () => {
+    const userIds = Array.from(emailQueue).join(',');
+    navigate(`/admin?tab=emails&userIds=${userIds}`);
+  };
+
   const handleRefreshData = async () => {
     setIsRefreshing(true);
     try {
@@ -146,8 +177,8 @@ export const AdminRiskRadar = () => {
       // Invalidate all queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ['never-active-snapshots'] });
       await queryClient.invalidateQueries({ queryKey: ['inactive-snapshots'] });
-      await queryClient.invalidateQueries({ queryKey: ['never-active-21-plus-details'] });
-      await queryClient.invalidateQueries({ queryKey: ['inactive-21-plus-details'] });
+      await queryClient.invalidateQueries({ queryKey: ['never-active-members-all'] });
+      await queryClient.invalidateQueries({ queryKey: ['inactive-members-all'] });
       
       toast.success('Daten wurden erfolgreich aktualisiert');
     } catch (error) {
@@ -158,7 +189,37 @@ export const AdminRiskRadar = () => {
     }
   };
 
-  if (neverActiveLoading || inactiveLoading) {
+  // Filter members based on selected categories
+  const filteredNeverActiveMembers = allNeverActiveMembers?.filter(m => {
+    if (!selectedNeverActiveCategory) return false;
+    const categoryMap: Record<string, string> = {
+      'days_0_7': '0-7',
+      'days_8_14': '8-14',
+      'days_15_21': '15-21',
+      'days_21_plus': '21+'
+    };
+    return m.category === categoryMap[selectedNeverActiveCategory];
+  }) || [];
+
+  const filteredInactiveMembers = allInactiveMembers?.filter(m => {
+    if (!selectedInactiveCategory) return false;
+    const categoryMap: Record<string, string> = {
+      'active_under_10': 'Active (<10)',
+      'days_10_15': '10-15',
+      'days_15_21': '15-21',
+      'days_21_plus': '21+'
+    };
+    return m.category === categoryMap[selectedInactiveCategory];
+  }) || [];
+
+  // Get member names from queue
+  const queuedMemberNames = Array.from(emailQueue).map(userId => {
+    const neverActive = allNeverActiveMembers?.find(m => m.user_id === userId);
+    const inactive = allInactiveMembers?.find(m => m.user_id === userId);
+    return (neverActive?.display_name || inactive?.display_name || 'Unbekannt').split(' ')[0];
+  });
+
+  if (neverActiveLoading || inactiveLoading || neverActiveMembersLoading || inactiveMembersLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-[600px] w-full" />
@@ -188,10 +249,17 @@ export const AdminRiskRadar = () => {
       <Card className="p-6">
         <h2 className="text-2xl font-semibold mb-6">Nie Aktiv</h2>
 
-        {/* Category Cards */}
+        {/* Category Cards - Clickable */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {/* 0-7 Days */}
-          <Card className="p-4 border-2 border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+          <Card 
+            className={`p-4 border-2 border-blue-200 bg-blue-50 dark:bg-blue-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedNeverActiveCategory === 'days_0_7' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedNeverActiveCategory(
+              selectedNeverActiveCategory === 'days_0_7' ? null : 'days_0_7'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">0-7 Tage</div>
             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
               {latestNeverActive?.days_0_7_count || 0}
@@ -220,7 +288,14 @@ export const AdminRiskRadar = () => {
           </Card>
 
           {/* 8-14 Days */}
-          <Card className="p-4 border-2 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+          <Card 
+            className={`p-4 border-2 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedNeverActiveCategory === 'days_8_14' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedNeverActiveCategory(
+              selectedNeverActiveCategory === 'days_8_14' ? null : 'days_8_14'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">8-14 Tage</div>
             <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
               {latestNeverActive?.days_8_14_count || 0}
@@ -249,7 +324,14 @@ export const AdminRiskRadar = () => {
           </Card>
 
           {/* 15-21 Days */}
-          <Card className="p-4 border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+          <Card 
+            className={`p-4 border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedNeverActiveCategory === 'days_15_21' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedNeverActiveCategory(
+              selectedNeverActiveCategory === 'days_15_21' ? null : 'days_15_21'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">15-21 Tage</div>
             <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
               {latestNeverActive?.days_15_21_count || 0}
@@ -278,7 +360,14 @@ export const AdminRiskRadar = () => {
           </Card>
 
           {/* 21+ Days */}
-          <Card className="p-4 border-2 border-red-200 bg-red-50 dark:bg-red-950/20">
+          <Card 
+            className={`p-4 border-2 border-red-200 bg-red-50 dark:bg-red-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedNeverActiveCategory === 'days_21_plus' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedNeverActiveCategory(
+              selectedNeverActiveCategory === 'days_21_plus' ? null : 'days_21_plus'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">21+ Tage</div>
             <div className="text-3xl font-bold text-red-600 dark:text-red-400">
               {latestNeverActive?.days_21_plus_count || 0}
@@ -325,63 +414,71 @@ export const AdminRiskRadar = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 21+ Members List */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">
-            21+ Tage Nie Aktiv
-          </h3>
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {neverActive21Plus?.map((member) => (
-              <Card key={member.user_id} className="p-4 flex items-center justify-between">
-                <div>
-                  <div className="font-semibold">{member.display_name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {member.days_since_signup} Tage • {member.membership_type}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name })}
-                    title="Statistiken anzeigen"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => navigate(`/admin?tab=emails&userId=${member.user_id}`)}
-                    title="E-Mail senden"
-                  >
-                    <Mail className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => navigate(`/admin?tab=members&editUserId=${member.user_id}`)}
-                    title="Profil bearbeiten"
-                  >
-                    <FileEdit className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
+        {/* Member List - shown when category is selected */}
+        {selectedNeverActiveCategory && (
+          <div>
+            <h3 className="text-lg font-semibold mb-4">
+              Mitglieder: {
+                selectedNeverActiveCategory === 'days_0_7' ? '0-7 Tage' :
+                selectedNeverActiveCategory === 'days_8_14' ? '8-14 Tage' :
+                selectedNeverActiveCategory === 'days_15_21' ? '15-21 Tage' : '21+ Tage'
+              } Nie Aktiv
+            </h3>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {filteredNeverActiveMembers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Keine Mitglieder in dieser Kategorie</p>
+              ) : (
+                filteredNeverActiveMembers.map((member) => (
+                  <Card key={member.user_id} className="p-4 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">{member.display_name || 'Unbekannt'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {member.days_since_signup} Tage seit Anmeldung • {member.membership_type || 'N/A'}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name || 'Unbekannt' })}
+                        title="Statistiken anzeigen"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant={emailQueue.has(member.user_id) ? "default" : "ghost"}
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleAddToEmailQueue(member.user_id, member.display_name || 'Unbekannt')}
+                        title="Zur E-Mail-Liste hinzufügen"
+                      >
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </Card>
 
       {/* ===== INACTIVE DASHBOARD ===== */}
       <Card className="p-6">
         <h2 className="text-2xl font-semibold mb-6">Inaktiv</h2>
 
-        {/* Category Cards */}
+        {/* Category Cards - Clickable */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {/* Active (<10 Days) */}
-          <Card className="p-4 border-2 border-green-200 bg-green-50 dark:bg-green-950/20">
+          <Card 
+            className={`p-4 border-2 border-green-200 bg-green-50 dark:bg-green-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedInactiveCategory === 'active_under_10' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedInactiveCategory(
+              selectedInactiveCategory === 'active_under_10' ? null : 'active_under_10'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">Aktiv</div>
             <div className="text-3xl font-bold text-green-600 dark:text-green-400">
               {latestInactive?.active_under_10_count || 0}
@@ -410,7 +507,14 @@ export const AdminRiskRadar = () => {
           </Card>
 
           {/* 10-15 Days */}
-          <Card className="p-4 border-2 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+          <Card 
+            className={`p-4 border-2 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedInactiveCategory === 'days_10_15' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedInactiveCategory(
+              selectedInactiveCategory === 'days_10_15' ? null : 'days_10_15'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">10-15 Tage</div>
             <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
               {latestInactive?.days_10_15_count || 0}
@@ -439,7 +543,14 @@ export const AdminRiskRadar = () => {
           </Card>
 
           {/* 15-21 Days */}
-          <Card className="p-4 border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+          <Card 
+            className={`p-4 border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedInactiveCategory === 'days_15_21' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedInactiveCategory(
+              selectedInactiveCategory === 'days_15_21' ? null : 'days_15_21'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">15-21 Tage</div>
             <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
               {latestInactive?.days_15_21_count || 0}
@@ -468,7 +579,14 @@ export const AdminRiskRadar = () => {
           </Card>
 
           {/* 21+ Days */}
-          <Card className="p-4 border-2 border-red-200 bg-red-50 dark:bg-red-950/20">
+          <Card 
+            className={`p-4 border-2 border-red-200 bg-red-50 dark:bg-red-950/20 cursor-pointer transition-all hover:scale-105 ${
+              selectedInactiveCategory === 'days_21_plus' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedInactiveCategory(
+              selectedInactiveCategory === 'days_21_plus' ? null : 'days_21_plus'
+            )}
+          >
             <div className="text-sm text-muted-foreground mb-2">21+ Tage</div>
             <div className="text-3xl font-bold text-red-600 dark:text-red-400">
               {latestInactive?.days_21_plus_count || 0}
@@ -515,57 +633,92 @@ export const AdminRiskRadar = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 21+ Members List */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">
-            21+ Tage Inaktiv
-          </h3>
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {inactive21Plus?.map((member) => (
-              <Card key={member.user_id} className="p-4 flex items-center justify-between">
-                <div>
-                  <div className="font-semibold">{member.display_name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {member.days_since_last_activity} Tage • {member.membership_type} • Letzte
-                    Aktivität: {new Date(member.last_activity_date).toLocaleDateString('de-DE')}
+        {/* Member List - shown when category is selected */}
+        {selectedInactiveCategory && (
+          <div>
+            <h3 className="text-lg font-semibold mb-4">
+              Mitglieder: {
+                selectedInactiveCategory === 'active_under_10' ? 'Aktiv (<10 Tage)' :
+                selectedInactiveCategory === 'days_10_15' ? '10-15 Tage' :
+                selectedInactiveCategory === 'days_15_21' ? '15-21 Tage' : '21+ Tage'
+              } Inaktiv
+            </h3>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {filteredInactiveMembers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Keine Mitglieder in dieser Kategorie</p>
+              ) : (
+                filteredInactiveMembers.map((member) => (
+                  <Card key={member.user_id} className="p-4 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">{member.display_name || 'Unbekannt'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {member.days_since_last_activity} Tage seit letzter Aktivität • {member.membership_type || 'N/A'}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {member.total_bookings} Buchungen • {member.total_training_sessions} Trainings
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name || 'Unbekannt' })}
+                        title="Statistiken anzeigen"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant={emailQueue.has(member.user_id) ? "default" : "ghost"}
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleAddToEmailQueue(member.user_id, member.display_name || 'Unbekannt')}
+                        title="Zur E-Mail-Liste hinzufügen"
+                      >
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Email Queue Floating Button */}
+      {emailQueue.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <Card className="shadow-lg">
+            <div className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="font-semibold text-sm mb-1">E-Mail-Liste ({emailQueue.size})</div>
+                  <div className="text-xs text-muted-foreground max-w-xs truncate">
+                    {queuedMemberNames.join(', ')}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="ghost" 
+                  <Button
                     size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name })}
-                    title="Statistiken anzeigen"
+                    variant="ghost"
+                    onClick={handleClearQueue}
                   >
-                    <Eye className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
+                  <Button
                     size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => navigate(`/admin?tab=emails&userId=${member.user_id}`)}
-                    title="E-Mail senden"
+                    onClick={handleSendEmails}
                   >
-                    <Mail className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => navigate(`/admin?tab=members&editUserId=${member.user_id}`)}
-                    title="Profil bearbeiten"
-                  >
-                    <FileEdit className="h-4 w-4" />
+                    E-Mails senden →
                   </Button>
                 </div>
-              </Card>
-            ))}
-          </div>
+              </div>
+            </div>
+          </Card>
         </div>
-      </Card>
+      )}
 
-      {/* Member Stats Dialog */}
       {selectedMember && (
         <MemberStatsDialog
           userId={selectedMember.userId}
