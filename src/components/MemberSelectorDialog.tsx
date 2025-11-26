@@ -70,8 +70,7 @@ export const MemberSelectorDialog = ({
     
     const { data, error } = await supabase
       .from("profiles")
-      .select("user_id, nickname, display_name, avatar_url")
-      .eq("status", "active")
+      .select("user_id, nickname, display_name, avatar_url, membership_type")
       .order("nickname", { ascending: true });
 
     if (error) {
@@ -79,8 +78,11 @@ export const MemberSelectorDialog = ({
       return;
     }
 
-    // Filter out current user
-    const filteredMembers = data.filter(m => m.user_id !== currentUserId);
+    // Filter out current user and admins
+    const filteredMembers = data.filter(m => 
+      m.user_id !== currentUserId && 
+      !['Administrator', 'Admin'].includes(m.membership_type)
+    );
     setMembers(filteredMembers.map(m => ({ ...m, isFavorite: false })));
   };
 
