@@ -147,8 +147,8 @@ export const AdminRiskRadar = () => {
   };
 
   const renderChangeIndicator = (change: number) => {
-    if (change > 0) return <ArrowUp className="h-4 w-4 text-red-500" />;
-    if (change < 0) return <ArrowDown className="h-4 w-4 text-green-500" />;
+    if (change > 0) return <ArrowUp className="h-4 w-4 text-muted-foreground" />;
+    if (change < 0) return <ArrowDown className="h-4 w-4 text-muted-foreground" />;
     return <Minus className="h-4 w-4 text-muted-foreground" />;
   };
 
@@ -263,24 +263,24 @@ export const AdminRiskRadar = () => {
         <h2 className="text-2xl font-semibold mb-6">Nie Aktiv</h2>
 
         {/* Category Cards - Clickable */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8">
           {/* 0-7 Days */}
-          <Card 
-            className={`p-4 border-2 border-border bg-muted/30 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedNeverActiveCategory === 'days_0_7' ? 'ring-2 ring-primary border-primary' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedNeverActiveCategory === 'days_0_7' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_0_7' ? null : 'days_0_7'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">0-7 Tage</div>
-            <div className="text-3xl font-bold">
+            <div className="text-3xl font-bold text-foreground">
               {latestNeverActive?.days_0_7_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestNeverActive?.days_0_7_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestNeverActive?.days_0_7_count || 0,
@@ -291,32 +291,39 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestNeverActive?.days_0_7_count || 0,
                   previousNeverActive?.days_0_7_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestNeverActive?.days_0_7_count || 0,
-                  previousNeverActive?.days_0_7_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestNeverActive?.days_0_7_count || 0,
+                      previousNeverActive?.days_0_7_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestNeverActive?.days_0_7_count || 0,
+                      previousNeverActive?.days_0_7_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
 
           {/* 8-14 Days */}
-          <Card 
-            className={`p-4 border-2 border-primary/30 bg-primary/5 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedNeverActiveCategory === 'days_8_14' ? 'ring-2 ring-primary border-primary' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedNeverActiveCategory === 'days_8_14' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_8_14' ? null : 'days_8_14'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">8-14 Tage</div>
-            <div className="text-3xl font-bold text-primary/70">
+            <div className="text-3xl font-bold text-foreground">
               {latestNeverActive?.days_8_14_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestNeverActive?.days_8_14_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestNeverActive?.days_8_14_count || 0,
@@ -327,32 +334,39 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestNeverActive?.days_8_14_count || 0,
                   previousNeverActive?.days_8_14_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestNeverActive?.days_8_14_count || 0,
-                  previousNeverActive?.days_8_14_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestNeverActive?.days_8_14_count || 0,
+                      previousNeverActive?.days_8_14_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestNeverActive?.days_8_14_count || 0,
+                      previousNeverActive?.days_8_14_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
 
           {/* 15-21 Days */}
-          <Card 
-            className={`p-4 border-2 border-primary/50 bg-primary/10 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedNeverActiveCategory === 'days_15_21' ? 'ring-2 ring-primary border-primary' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedNeverActiveCategory === 'days_15_21' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_15_21' ? null : 'days_15_21'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">15-21 Tage</div>
-            <div className="text-3xl font-bold text-primary/90">
+            <div className="text-3xl font-bold text-foreground">
               {latestNeverActive?.days_15_21_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestNeverActive?.days_15_21_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestNeverActive?.days_15_21_count || 0,
@@ -363,32 +377,39 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestNeverActive?.days_15_21_count || 0,
                   previousNeverActive?.days_15_21_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestNeverActive?.days_15_21_count || 0,
-                  previousNeverActive?.days_15_21_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestNeverActive?.days_15_21_count || 0,
+                      previousNeverActive?.days_15_21_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestNeverActive?.days_15_21_count || 0,
+                      previousNeverActive?.days_15_21_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
 
           {/* 21+ Days */}
-          <Card 
-            className={`p-4 border-2 border-primary bg-primary/20 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedNeverActiveCategory === 'days_21_plus' ? 'ring-2 ring-primary shadow-lg' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedNeverActiveCategory === 'days_21_plus' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedNeverActiveCategory(
               selectedNeverActiveCategory === 'days_21_plus' ? null : 'days_21_plus'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">21+ Tage</div>
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-3xl font-bold text-foreground">
               {latestNeverActive?.days_21_plus_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestNeverActive?.days_21_plus_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestNeverActive?.days_21_plus_count || 0,
@@ -399,14 +420,21 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestNeverActive?.days_21_plus_count || 0,
                   previousNeverActive?.days_21_plus_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestNeverActive?.days_21_plus_count || 0,
-                  previousNeverActive?.days_21_plus_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestNeverActive?.days_21_plus_count || 0,
+                      previousNeverActive?.days_21_plus_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestNeverActive?.days_21_plus_count || 0,
+                      previousNeverActive?.days_21_plus_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
         </div>
 
         {/* Trend Chart */}
@@ -419,9 +447,9 @@ export const AdminRiskRadar = () => {
               <YAxis className="text-muted-foreground" />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="days_0_7_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2} name="0-7 Tage" />
-              <Line type="monotone" dataKey="days_8_14_count" stroke="hsl(var(--primary) / 0.5)" strokeWidth={2} name="8-14 Tage" />
-              <Line type="monotone" dataKey="days_15_21_count" stroke="hsl(var(--primary) / 0.75)" strokeWidth={2} name="15-21 Tage" />
+              <Line type="monotone" dataKey="days_0_7_count" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} name="0-7 Tage" />
+              <Line type="monotone" dataKey="days_8_14_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2} name="8-14 Tage" />
+              <Line type="monotone" dataKey="days_15_21_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2.5} name="15-21 Tage" />
               <Line type="monotone" dataKey="days_21_plus_count" stroke="hsl(var(--primary))" strokeWidth={3} name="21+ Tage" />
             </LineChart>
           </ResponsiveContainer>
@@ -494,24 +522,24 @@ export const AdminRiskRadar = () => {
         <h2 className="text-2xl font-semibold mb-6">Inaktiv</h2>
 
         {/* Category Cards - Clickable */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8">
           {/* Active (<10 Days) */}
-          <Card 
-            className={`p-4 border-2 border-border bg-card cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedInactiveCategory === 'active_under_10' ? 'ring-2 ring-primary border-primary' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedInactiveCategory === 'active_under_10' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'active_under_10' ? null : 'active_under_10'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">Aktiv</div>
-            <div className="text-3xl font-bold">
+            <div className="text-3xl font-bold text-foreground">
               {latestInactive?.active_under_10_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestInactive?.active_under_10_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestInactive?.active_under_10_count || 0,
@@ -522,32 +550,39 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestInactive?.active_under_10_count || 0,
                   previousInactive?.active_under_10_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestInactive?.active_under_10_count || 0,
-                  previousInactive?.active_under_10_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestInactive?.active_under_10_count || 0,
+                      previousInactive?.active_under_10_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestInactive?.active_under_10_count || 0,
+                      previousInactive?.active_under_10_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
 
           {/* 10-15 Days */}
-          <Card 
-            className={`p-4 border-2 border-primary/30 bg-primary/5 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedInactiveCategory === 'days_10_15' ? 'ring-2 ring-primary border-primary' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedInactiveCategory === 'days_10_15' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'days_10_15' ? null : 'days_10_15'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">10-15 Tage</div>
-            <div className="text-3xl font-bold text-primary/70">
+            <div className="text-3xl font-bold text-foreground">
               {latestInactive?.days_10_15_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestInactive?.days_10_15_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestInactive?.days_10_15_count || 0,
@@ -558,32 +593,39 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestInactive?.days_10_15_count || 0,
                   previousInactive?.days_10_15_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestInactive?.days_10_15_count || 0,
-                  previousInactive?.days_10_15_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestInactive?.days_10_15_count || 0,
+                      previousInactive?.days_10_15_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestInactive?.days_10_15_count || 0,
+                      previousInactive?.days_10_15_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
 
           {/* 15-21 Days */}
-          <Card 
-            className={`p-4 border-2 border-primary/50 bg-primary/10 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedInactiveCategory === 'days_15_21' ? 'ring-2 ring-primary border-primary' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedInactiveCategory === 'days_15_21' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'days_15_21' ? null : 'days_15_21'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">15-21 Tage</div>
-            <div className="text-3xl font-bold text-primary/90">
+            <div className="text-3xl font-bold text-foreground">
               {latestInactive?.days_15_21_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestInactive?.days_15_21_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestInactive?.days_15_21_count || 0,
@@ -594,32 +636,39 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestInactive?.days_15_21_count || 0,
                   previousInactive?.days_15_21_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestInactive?.days_15_21_count || 0,
-                  previousInactive?.days_15_21_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestInactive?.days_15_21_count || 0,
+                      previousInactive?.days_15_21_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestInactive?.days_15_21_count || 0,
+                      previousInactive?.days_15_21_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
 
           {/* 21+ Days */}
-          <Card 
-            className={`p-4 border-2 border-primary bg-primary/20 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${
-              selectedInactiveCategory === 'days_21_plus' ? 'ring-2 ring-primary shadow-lg' : ''
+          <button 
+            className={`bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 text-left transition-all hover:bg-gray-150 dark:hover:bg-gray-700 hover:scale-[1.02] ${
+              selectedInactiveCategory === 'days_21_plus' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => setSelectedInactiveCategory(
               selectedInactiveCategory === 'days_21_plus' ? null : 'days_21_plus'
             )}
           >
             <div className="text-sm text-muted-foreground mb-2">21+ Tage</div>
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-3xl font-bold text-foreground">
               {latestInactive?.days_21_plus_count || 0}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-2">
               {latestInactive?.days_21_plus_percentage?.toFixed(1) || 0}%
             </div>
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 pt-2 border-t border-border/50">
               {renderChangeIndicator(
                 calculateChange(
                   latestInactive?.days_21_plus_count || 0,
@@ -630,14 +679,21 @@ export const AdminRiskRadar = () => {
                 {calculateChange(
                   latestInactive?.days_21_plus_count || 0,
                   previousInactive?.days_21_plus_count || 0
-                ) > 0 && '+'}
-                {calculateChange(
-                  latestInactive?.days_21_plus_count || 0,
-                  previousInactive?.days_21_plus_count || 0
+                ) === 0 ? '0' : (
+                  <>
+                    {calculateChange(
+                      latestInactive?.days_21_plus_count || 0,
+                      previousInactive?.days_21_plus_count || 0
+                    ) > 0 && '+'}
+                    {calculateChange(
+                      latestInactive?.days_21_plus_count || 0,
+                      previousInactive?.days_21_plus_count || 0
+                    )}
+                  </>
                 )}
               </span>
             </div>
-          </Card>
+          </button>
         </div>
 
         {/* Trend Chart */}
@@ -650,9 +706,9 @@ export const AdminRiskRadar = () => {
               <YAxis className="text-muted-foreground" />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="active_under_10_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2} name="Aktiv" />
-              <Line type="monotone" dataKey="days_10_15_count" stroke="hsl(var(--primary) / 0.5)" strokeWidth={2} name="10-15 Tage" />
-              <Line type="monotone" dataKey="days_15_21_count" stroke="hsl(var(--primary) / 0.75)" strokeWidth={2} name="15-21 Tage" />
+              <Line type="monotone" dataKey="active_under_10_count" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} name="Aktiv" />
+              <Line type="monotone" dataKey="days_10_15_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2} name="10-15 Tage" />
+              <Line type="monotone" dataKey="days_15_21_count" stroke="hsl(var(--muted-foreground))" strokeWidth={2.5} name="15-21 Tage" />
               <Line type="monotone" dataKey="days_21_plus_count" stroke="hsl(var(--primary))" strokeWidth={3} name="21+ Tage" />
             </LineChart>
           </ResponsiveContainer>
