@@ -9,6 +9,10 @@ import { Calendar, Dumbbell, Users } from "lucide-react";
 interface MemberStatsDialogProps {
   userId: string;
   displayName: string;
+  firstName?: string;
+  lastName?: string;
+  totalBookings?: number;
+  totalTrainings?: number;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -22,7 +26,8 @@ interface MemberStats {
   preferred_time: string;
 }
 
-export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: MemberStatsDialogProps) => {
+export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, totalBookings, totalTrainings, isOpen, onClose }: MemberStatsDialogProps) => {
+  const fullName = firstName && lastName ? `${firstName} ${lastName}` : displayName;
   const { data: stats, isLoading } = useQuery({
     queryKey: ['member-stats', userId],
     queryFn: async () => {
@@ -100,7 +105,7 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Statistiken: {displayName}
+            Statistiken: {fullName}
           </DialogTitle>
         </DialogHeader>
 
@@ -122,7 +127,7 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Buchungen</p>
-                      <p className="text-2xl font-bold">{stats?.total_bookings || 0}</p>
+                      <p className="text-2xl font-bold">{totalBookings !== undefined ? totalBookings : stats?.total_bookings || 0}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -136,7 +141,7 @@ export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: Memb
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Trainings</p>
-                      <p className="text-2xl font-bold">{stats?.total_trainings || 0}</p>
+                      <p className="text-2xl font-bold">{totalTrainings !== undefined ? totalTrainings : stats?.total_trainings || 0}</p>
                     </div>
                   </div>
                 </CardContent>

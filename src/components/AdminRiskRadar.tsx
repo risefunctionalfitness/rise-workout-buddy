@@ -39,6 +39,8 @@ interface InactiveSnapshot {
 interface NeverActiveMember {
   user_id: string;
   display_name: string;
+  first_name: string | null;
+  last_name: string | null;
   membership_type: string;
   days_since_signup: number;
   category: string;
@@ -47,6 +49,8 @@ interface NeverActiveMember {
 interface InactiveMember {
   user_id: string;
   display_name: string;
+  first_name: string | null;
+  last_name: string | null;
   membership_type: string;
   days_since_last_activity: number;
   last_activity_date: string;
@@ -60,6 +64,15 @@ export const AdminRiskRadar = () => {
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{ userId: string; displayName: string } | null>(null);
+  const [selectedMemberDetails, setSelectedMemberDetails] = useState<{
+    userId: string;
+    displayName: string;
+    firstName?: string;
+    lastName?: string;
+    totalBookings?: number;
+    totalTrainings?: number;
+  } | null>(null);
+  const [showMemberStatsDialog, setShowMemberStatsDialog] = useState(false);
   const [emailQueue, setEmailQueue] = useState<Set<string>>(new Set());
   const [selectedNeverActiveCategory, setSelectedNeverActiveCategory] = useState<string | null>(null);
   const [selectedInactiveCategory, setSelectedInactiveCategory] = useState<string | null>(null);
@@ -431,7 +444,11 @@ export const AdminRiskRadar = () => {
                 filteredNeverActiveMembers.map((member) => (
                   <Card key={member.user_id} className="p-4 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold">{member.display_name || 'Unbekannt'}</div>
+                      <div className="font-semibold">
+                        {member.first_name && member.last_name 
+                          ? `${member.first_name} ${member.last_name}` 
+                          : member.display_name || 'Unbekannt'}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {member.days_since_signup} Tage seit Anmeldung • {member.membership_type || 'N/A'}
                       </div>
@@ -441,7 +458,15 @@ export const AdminRiskRadar = () => {
                         variant="ghost" 
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name || 'Unbekannt' })}
+                        onClick={() => {
+                          setSelectedMemberDetails({
+                            userId: member.user_id,
+                            displayName: member.display_name || 'Unbekannt',
+                            firstName: member.first_name || undefined,
+                            lastName: member.last_name || undefined
+                          });
+                          setShowMemberStatsDialog(true);
+                        }}
                         title="Statistiken anzeigen"
                       >
                         <Eye className="h-4 w-4" />
@@ -650,7 +675,11 @@ export const AdminRiskRadar = () => {
                 filteredInactiveMembers.map((member) => (
                   <Card key={member.user_id} className="p-4 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold">{member.display_name || 'Unbekannt'}</div>
+                      <div className="font-semibold">
+                        {member.first_name && member.last_name 
+                          ? `${member.first_name} ${member.last_name}` 
+                          : member.display_name || 'Unbekannt'}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {member.days_since_last_activity} Tage seit letzter Aktivität • {member.membership_type || 'N/A'}
                       </div>
@@ -663,7 +692,17 @@ export const AdminRiskRadar = () => {
                         variant="ghost" 
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => setSelectedMember({ userId: member.user_id, displayName: member.display_name || 'Unbekannt' })}
+                        onClick={() => {
+                          setSelectedMemberDetails({
+                            userId: member.user_id,
+                            displayName: member.display_name || 'Unbekannt',
+                            firstName: member.first_name || undefined,
+                            lastName: member.last_name || undefined,
+                            totalBookings: member.total_bookings,
+                            totalTrainings: member.total_training_sessions
+                          });
+                          setShowMemberStatsDialog(true);
+                        }}
                         title="Statistiken anzeigen"
                       >
                         <Eye className="h-4 w-4" />
@@ -719,12 +758,19 @@ export const AdminRiskRadar = () => {
         </div>
       )}
 
-      {selectedMember && (
+      {selectedMemberDetails && (
         <MemberStatsDialog
-          userId={selectedMember.userId}
-          displayName={selectedMember.displayName}
-          isOpen={!!selectedMember}
-          onClose={() => setSelectedMember(null)}
+          userId={selectedMemberDetails.userId}
+          displayName={selectedMemberDetails.displayName}
+          firstName={selectedMemberDetails.firstName}
+          lastName={selectedMemberDetails.lastName}
+          totalBookings={selectedMemberDetails.totalBookings}
+          totalTrainings={selectedMemberDetails.totalTrainings}
+          isOpen={showMemberStatsDialog}
+          onClose={() => {
+            setShowMemberStatsDialog(false);
+            setSelectedMemberDetails(null);
+          }}
         />
       )}
     </div>
