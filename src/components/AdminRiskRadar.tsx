@@ -192,46 +192,25 @@ export const AdminRiskRadar = () => {
   // Filter members based on selected categories
   const filteredNeverActiveMembers = allNeverActiveMembers?.filter(m => {
     if (!selectedNeverActiveCategory) return false;
-    // Map UI category keys to database category values
     const categoryMap: Record<string, string> = {
       'days_0_7': '0-7',
       'days_8_14': '8-14',
       'days_15_21': '15-21',
       'days_21_plus': '21+'
     };
-    console.log('Filtering never active:', { 
-      selectedCategory: selectedNeverActiveCategory, 
-      mappedCategory: categoryMap[selectedNeverActiveCategory],
-      memberCategory: m.category,
-      match: m.category === categoryMap[selectedNeverActiveCategory]
-    });
     return m.category === categoryMap[selectedNeverActiveCategory];
   }) || [];
 
   const filteredInactiveMembers = allInactiveMembers?.filter(m => {
     if (!selectedInactiveCategory) return false;
-    // Map UI category keys to database category values
     const categoryMap: Record<string, string> = {
-      'active_under_10': 'Active (<10)',
+      'active_under_10': 'active',
       'days_10_15': '10-15',
       'days_15_21': '15-21',
       'days_21_plus': '21+'
     };
-    console.log('Filtering inactive:', { 
-      selectedCategory: selectedInactiveCategory, 
-      mappedCategory: categoryMap[selectedInactiveCategory],
-      memberCategory: m.category,
-      match: m.category === categoryMap[selectedInactiveCategory]
-    });
     return m.category === categoryMap[selectedInactiveCategory];
   }) || [];
-
-  console.log('Filtered results:', {
-    neverActiveCount: filteredNeverActiveMembers.length,
-    inactiveCount: filteredInactiveMembers.length,
-    allNeverActiveCount: allNeverActiveMembers?.length,
-    allInactiveCount: allInactiveMembers?.length
-  });
 
   // Get member names from queue
   const queuedMemberNames = Array.from(emailQueue).map(userId => {
