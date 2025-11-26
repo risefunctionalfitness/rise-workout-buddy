@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Dumbbell, Users, XCircle } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 
 interface MemberStatsDialogProps {
   userId: string;
@@ -33,6 +33,7 @@ interface MemberStats {
 
 export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, totalBookings, totalTrainings, cancellations, isOpen, onClose }: MemberStatsDialogProps) => {
   const fullName = firstName && lastName ? `${firstName} ${lastName}` : displayName;
+  const [showOpenGym, setShowOpenGym] = useState(false);
   const { data: stats, isLoading } = useQuery({
     queryKey: ['member-stats', userId],
     queryFn: async () => {
@@ -233,75 +234,81 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
               </CardContent>
             </Card>
 
-            {/* Wochentags-Diagramme mit Toggle */}
+            {/* Wochentags-Diagramme mit Switch Toggle */}
             <Card>
               <CardContent className="pt-6">
-                <Tabs defaultValue="bookings" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="bookings" className="gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Kursbuchungen
-                    </TabsTrigger>
-                    <TabsTrigger value="trainings" className="gap-2">
-                      <Dumbbell className="h-4 w-4" />
-                      Open Gym
-                    </TabsTrigger>
-                  </TabsList>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="font-semibold">
+                      {showOpenGym ? 'Open Gym pro Wochentag' : 'Kursbuchungen pro Wochentag'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowOpenGym(!showOpenGym)}
+                    className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    style={{
+                      backgroundColor: showOpenGym ? 'hsl(var(--primary))' : 'hsl(var(--muted))'
+                    }}
+                  >
+                    <span
+                      className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                      style={{
+                        transform: showOpenGym ? 'translateX(1.5rem)' : 'translateX(0.25rem)'
+                      }}
+                    />
+                  </button>
+                </div>
 
-                  <TabsContent value="bookings" className="mt-0">
-                    <h3 className="font-semibold mb-4">Kursbuchungen pro Wochentag</h3>
-                    <div className="space-y-3">
-                      {dayOrder.map((day) => {
-                        const count = stats?.bookings_by_day[day] || 0;
-                        const width = maxBookings > 0 ? (count / maxBookings) * 100 : 0;
-                        return (
-                          <div key={day} className="flex items-center gap-3">
-                            <span className="text-sm font-medium w-8">{day}</span>
-                            <div className="flex-1 bg-muted rounded-full h-8 relative overflow-hidden">
-                              <div
-                                className="bg-primary h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
-                                style={{ width: `${width}%` }}
-                              >
-                                {count > 0 && (
-                                  <span className="text-xs font-semibold text-primary-foreground">
-                                    {count}
-                                  </span>
-                                )}
-                              </div>
+                {!showOpenGym ? (
+                  <div className="space-y-3">
+                    {dayOrder.map((day) => {
+                      const count = stats?.bookings_by_day[day] || 0;
+                      const width = maxBookings > 0 ? (count / maxBookings) * 100 : 0;
+                      return (
+                        <div key={day} className="flex items-center gap-3">
+                          <span className="text-sm font-medium w-8">{day}</span>
+                          <div className="flex-1 bg-muted rounded-full h-8 relative overflow-hidden">
+                            <div
+                              className="bg-primary h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                              style={{ width: `${width}%` }}
+                            >
+                              {count > 0 && (
+                                <span className="text-xs font-semibold text-primary-foreground">
+                                  {count}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="trainings" className="mt-0">
-                    <h3 className="font-semibold mb-4">Open Gym pro Wochentag</h3>
-                    <div className="space-y-3">
-                      {dayOrder.map((day) => {
-                        const count = stats?.trainings_by_day[day] || 0;
-                        const width = maxTrainings > 0 ? (count / maxTrainings) * 100 : 0;
-                        return (
-                          <div key={day} className="flex items-center gap-3">
-                            <span className="text-sm font-medium w-8">{day}</span>
-                            <div className="flex-1 bg-muted rounded-full h-8 relative overflow-hidden">
-                              <div
-                                className="bg-primary h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
-                                style={{ width: `${width}%` }}
-                              >
-                                {count > 0 && (
-                                  <span className="text-xs font-semibold text-primary-foreground">
-                                    {count}
-                                  </span>
-                                )}
-                              </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {dayOrder.map((day) => {
+                      const count = stats?.trainings_by_day[day] || 0;
+                      const width = maxTrainings > 0 ? (count / maxTrainings) * 100 : 0;
+                      return (
+                        <div key={day} className="flex items-center gap-3">
+                          <span className="text-sm font-medium w-8">{day}</span>
+                          <div className="flex-1 bg-muted rounded-full h-8 relative overflow-hidden">
+                            <div
+                              className="bg-primary h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                              style={{ width: `${width}%` }}
+                            >
+                              {count > 0 && (
+                                <span className="text-xs font-semibold text-primary-foreground">
+                                  {count}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
