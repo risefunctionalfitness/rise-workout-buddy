@@ -369,6 +369,7 @@ export type Database = {
       }
       inactive_member_details: {
         Row: {
+          cancellations: number | null
           category: string
           created_at: string | null
           days_since_last_activity: number
@@ -384,6 +385,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancellations?: number | null
           category: string
           created_at?: string | null
           days_since_last_activity: number
@@ -399,6 +401,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancellations?: number | null
           category?: string
           created_at?: string | null
           days_since_last_activity?: number

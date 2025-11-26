@@ -17,6 +17,7 @@ interface MemberActivity {
   days_since_last_activity: number | null;
   total_bookings: number;
   total_training_sessions: number;
+  cancellations: number;
 }
 
 Deno.serve(async (req) => {
@@ -86,16 +87,26 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Count bookings and training sessions
+      // Count registered bookings only
       const { count: bookingsCount } = await supabase
         .from('course_registrations')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.user_id);
+        .eq('user_id', profile.user_id)
+        .eq('status', 'registered');
 
+      // Count free training (Open Gym QR scans) only
       const { count: trainingsCount } = await supabase
         .from('training_sessions')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.user_id);
+        .eq('user_id', profile.user_id)
+        .eq('workout_type', 'free_training');
+
+      // Count cancellations
+      const { count: cancellationsCount } = await supabase
+        .from('course_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', profile.user_id)
+        .eq('status', 'cancelled');
 
       memberActivities.push({
         user_id: profile.user_id,
@@ -109,6 +120,7 @@ Deno.serve(async (req) => {
         days_since_last_activity: daysSinceLastActivity,
         total_bookings: bookingsCount || 0,
         total_training_sessions: trainingsCount || 0,
+        cancellations: cancellationsCount || 0,
       });
     }
 
@@ -222,6 +234,7 @@ Deno.serve(async (req) => {
       last_activity_date: m.last_activity_date,
       total_bookings: m.total_bookings,
       total_training_sessions: m.total_training_sessions,
+      cancellations: m.cancellations,
     }));
 
     if (inactiveDetails.length > 0) {
