@@ -72,10 +72,21 @@ export default function AdminEmailManager() {
     loadProfiles();
     loadTemplates();
     
-    // Check for URL parameters to pre-select member
+    // Check for userId or userIds parameter from Risk Radar navigation
     const params = new URLSearchParams(location.search);
     const userId = params.get('userId');
-    if (userId && profiles.length > 0) {
+    const userIds = params.get('userIds');
+    
+    if (userIds && profiles.length > 0) {
+      // Multiple users from email queue
+      const ids = userIds.split(',').filter(id => id.trim());
+      const members = profiles.filter(p => ids.includes(p.user_id || ''));
+      if (members.length > 0) {
+        setSelectedMembers(members);
+        setActiveTab('compose');
+      }
+    } else if (userId && profiles.length > 0) {
+      // Single user
       const member = profiles.find(p => p.user_id === userId);
       if (member) {
         setSelectedMembers([member]);
