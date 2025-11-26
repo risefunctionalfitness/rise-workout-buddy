@@ -56,6 +56,7 @@ interface InactiveMember {
   last_activity_date: string;
   total_bookings: number;
   total_training_sessions: number;
+  cancellations: number;
   category: string;
 }
 
@@ -71,6 +72,7 @@ export const AdminRiskRadar = () => {
     lastName?: string;
     totalBookings?: number;
     totalTrainings?: number;
+    cancellations?: number;
   } | null>(null);
   const [showMemberStatsDialog, setShowMemberStatsDialog] = useState(false);
   const [emailQueue, setEmailQueue] = useState<Set<string>>(new Set());
@@ -755,7 +757,8 @@ export const AdminRiskRadar = () => {
                             firstName: member.first_name || undefined,
                             lastName: member.last_name || undefined,
                             totalBookings: member.total_bookings,
-                            totalTrainings: member.total_training_sessions
+                            totalTrainings: member.total_training_sessions,
+                            cancellations: member.cancellations
                           });
                           setShowMemberStatsDialog(true);
                         }}
@@ -822,6 +825,7 @@ export const AdminRiskRadar = () => {
           lastName={selectedMemberDetails.lastName}
           totalBookings={selectedMemberDetails.totalBookings}
           totalTrainings={selectedMemberDetails.totalTrainings}
+          cancellations={selectedMemberDetails.cancellations}
           isOpen={showMemberStatsDialog}
           onClose={() => {
             setShowMemberStatsDialog(false);

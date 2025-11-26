@@ -13,6 +13,7 @@ interface MemberStatsDialogProps {
   lastName?: string;
   totalBookings?: number;
   totalTrainings?: number;
+  cancellations?: number;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,18 +21,19 @@ interface MemberStatsDialogProps {
 interface MemberStats {
   total_bookings: number;
   total_trainings: number;
+  cancellations: number;
   bookings_by_day: Record<string, number>;
   bookings_by_trainer: Record<string, number>;
   preferred_day: string;
   preferred_time: string;
 }
 
-export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, totalBookings, totalTrainings, isOpen, onClose }: MemberStatsDialogProps) => {
+export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, totalBookings, totalTrainings, cancellations, isOpen, onClose }: MemberStatsDialogProps) => {
   const fullName = firstName && lastName ? `${firstName} ${lastName}` : displayName;
   const { data: stats, isLoading } = useQuery({
     queryKey: ['member-stats', userId],
     queryFn: async () => {
-      // Fetch bookings
+      // Fetch registered bookings only
       const { data: bookings, error: bookingsError } = await supabase
         .from('course_registrations')
         .select(`
@@ -44,15 +46,26 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
             trainer
           )
         `)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('status', 'registered');
       
       if (bookingsError) throw bookingsError;
 
-      // Fetch training sessions
+      // Fetch cancellations
+      const { count: cancellationsCount, error: cancellationsError } = await supabase
+        .from('course_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'cancelled');
+      
+      if (cancellationsError) throw cancellationsError;
+
+      // Fetch free training (Open Gym QR scans) only
       const { data: trainings, error: trainingsError } = await supabase
         .from('training_sessions')
         .select('id, status')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('workout_type', 'free_training');
       
       if (trainingsError) throw trainingsError;
 
@@ -87,6 +100,7 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
       return {
         total_bookings: bookings?.length || 0,
         total_trainings: trainings?.length || 0,
+        cancellations: cancellationsCount || 0,
         bookings_by_day: bookingsByDay,
         bookings_by_trainer: bookingsByTrainer,
         preferred_day: preferredDay,
@@ -118,7 +132,7 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
         ) : (
           <div className="space-y-6">
             {/* Overview Cards */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
@@ -140,9 +154,29 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
                       <Dumbbell className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Trainings</p>
+                      <p className="text-sm text-muted-foreground">Open Gym</p>
                       <p className="text-2xl font-bold">{totalTrainings !== undefined ? totalTrainings : stats?.total_trainings || 0}</p>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm text-muted-foreground">Stornierungen</p>
+                    <p className="text-2xl font-bold">{cancellations !== undefined ? cancellations : stats?.cancellations || 0}</p>
+                    {(() => {
+                      const totalBookingsValue = totalBookings !== undefined ? totalBookings : stats?.total_bookings || 0;
+                      const cancellationsValue = cancellations !== undefined ? cancellations : stats?.cancellations || 0;
+                      const total = totalBookingsValue + cancellationsValue;
+                      const rate = total > 0 ? (cancellationsValue / total * 100).toFixed(1) : '0';
+                      return (
+                        <p className="text-xs text-muted-foreground">
+                          {rate}% Stornierungsrate
+                        </p>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
