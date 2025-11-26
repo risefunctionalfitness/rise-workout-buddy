@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { MemberStatsDialog } from './MemberStatsDialog';
+import { MembershipBadge } from './MembershipBadge';
 
 interface NeverActiveSnapshot {
   snapshot_date: string;
@@ -479,8 +480,10 @@ export const AdminRiskRadar = () => {
                           ? `${member.first_name} ${member.last_name}` 
                           : member.display_name || 'Unbekannt'}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {member.days_since_signup} Tage seit Anmeldung • {member.membership_type || 'N/A'}
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span>{member.days_since_signup} Tage seit Anmeldung</span>
+                        <span>•</span>
+                        <MembershipBadge type={member.membership_type as any} />
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -738,8 +741,10 @@ export const AdminRiskRadar = () => {
                           ? `${member.first_name} ${member.last_name}` 
                           : member.display_name || 'Unbekannt'}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {member.days_since_last_activity} Tage seit letzter Aktivität • {member.membership_type || 'N/A'}
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span>{member.days_since_last_activity} Tage seit letzter Aktivität</span>
+                        <span>•</span>
+                        <MembershipBadge type={member.membership_type as any} />
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         {member.total_bookings} Buchungen • {member.total_training_sessions} Trainings
