@@ -1,34 +1,25 @@
-import { useState, useEffect, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/integrations/supabase/client"
-import { Mail, Users, AlertTriangle, Loader2, Eye, Filter, ChevronDown, Search, Plus, X, Tag, FileText } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { MembershipBadge } from "@/components/MembershipBadge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+import { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Send, X, Eye, Search, Save, Trash2, Plus, Mail, Users, Tag, FileText, AlertTriangle, Loader2, Filter, ChevronDown } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { MembershipBadge } from './MembershipBadge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLocation } from 'react-router-dom';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { SaveTemplateDialog } from './SaveTemplateDialog';
 
 type StatusFilter = 'all' | 'active' | 'inactive'
 type MembershipType = 'Basic Member' | 'Premium Member' | '10er Karte' | 'Administrator' | 'Trainer' | 'Wellpass' | 'Open Gym'
@@ -46,8 +37,9 @@ interface Profile {
 }
 
 export default function AdminEmailManager() {
-  const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState<'recipients' | 'compose'>('recipients')
+  const location = useLocation();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'recipients' | 'compose'>('compose');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [membershipTypes, setMembershipTypes] = useState<MembershipType[]>([
     'Basic Member',
@@ -69,11 +61,28 @@ export default function AdminEmailManager() {
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
   const [previewMemberIndex, setPreviewMemberIndex] = useState(0)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  
+  // Template management
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
 
   // Load profiles
   useEffect(() => {
-    loadProfiles()
-  }, [])
+    loadProfiles();
+    loadTemplates();
+    
+    // Check for URL parameters to pre-select member
+    const params = new URLSearchParams(location.search);
+    const userId = params.get('userId');
+    if (userId && profiles.length > 0) {
+      const member = profiles.find(p => p.user_id === userId);
+      if (member) {
+        setSelectedMembers([member]);
+        setActiveTab('compose');
+      }
+    }
+  }, [location, profiles.length]);
 
   const loadProfiles = async () => {
     try {
@@ -93,6 +102,99 @@ export default function AdminEmailManager() {
       })
     } finally {
       setLoading(false)
+    }
+  };
+
+  const loadTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select('*')
+        .order('title');
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      toast({
+        title: "Fehler",
+        description: "Konnte Vorlagen nicht laden",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadTemplate = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setSubject(template.subject);
+      setBody(template.body);
+      toast({
+        title: "Vorlage geladen",
+        description: `Vorlage "${template.title}" wurde geladen`,
+      });
+    }
+  };
+
+  const saveAsTemplate = async (templateName: string) => {
+    if (!templateName.trim() || !subject.trim() || !body.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Bitte Titel, Betreff und Nachricht ausfüllen",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('email_templates')
+        .insert({
+          title: templateName,
+          subject,
+          body,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Erfolg",
+        description: "Vorlage gespeichert",
+      });
+      loadTemplates();
+    } catch (error) {
+      console.error('Error saving template:', error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Speichern der Vorlage",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteTemplate = async (templateId: string) => {
+    if (!confirm('Möchtest du diese Vorlage wirklich löschen?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('email_templates')
+        .delete()
+        .eq('id', templateId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Erfolg",
+        description: "Vorlage gelöscht",
+      });
+      loadTemplates();
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Löschen der Vorlage",
+        variant: "destructive"
+      });
     }
   }
 
@@ -539,6 +641,52 @@ export default function AdminEmailManager() {
                 </CardContent>
               </Card>
 
+              {/* Template Selection */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="template-select" className="text-base font-semibold">Vorlage wählen (optional)</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSaveTemplateOpen(true)}
+                      disabled={!subject.trim() || !body.trim()}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Als Vorlage speichern
+                    </Button>
+                  </div>
+                  <Select value={selectedTemplateId} onValueChange={(value) => {
+                    setSelectedTemplateId(value);
+                    loadTemplate(value);
+                  }}>
+                    <SelectTrigger id="template-select">
+                      <SelectValue placeholder="Vorlage auswählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{template.title}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTemplateId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => deleteTemplate(selectedTemplateId)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Vorlage löschen
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Subject */}
               <div className="space-y-2">
                 <Label htmlFor="email-subject" className="text-base font-semibold">Betreff</Label>
@@ -743,6 +891,13 @@ export default function AdminEmailManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Save Template Dialog */}
+      <SaveTemplateDialog
+        open={saveTemplateOpen}
+        onOpenChange={setSaveTemplateOpen}
+        onSave={saveAsTemplate}
+      />
     </div>
   )
 }

@@ -1,0 +1,221 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Dumbbell, Users } from "lucide-react";
+
+interface MemberStatsDialogProps {
+  userId: string;
+  displayName: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface MemberStats {
+  total_bookings: number;
+  total_trainings: number;
+  bookings_by_day: Record<string, number>;
+  bookings_by_trainer: Record<string, number>;
+  preferred_day: string;
+  preferred_time: string;
+}
+
+export const MemberStatsDialog = ({ userId, displayName, isOpen, onClose }: MemberStatsDialogProps) => {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['member-stats', userId],
+    queryFn: async () => {
+      // Fetch bookings
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('course_registrations')
+        .select(`
+          id,
+          created_at,
+          status,
+          courses (
+            course_date,
+            start_time,
+            trainer
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'registered');
+
+      if (bookingsError) throw bookingsError;
+
+      // Fetch training sessions
+      const { data: trainings, error: trainingsError } = await supabase
+        .from('training_sessions')
+        .select('id, status')
+        .eq('user_id', userId)
+        .eq('status', 'completed');
+
+      if (trainingsError) throw trainingsError;
+
+      // Process bookings by day of week
+      const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+      const bookingsByDay: Record<string, number> = {};
+      const bookingsByTrainer: Record<string, number> = {};
+      const hourCounts: Record<number, number> = {};
+
+      bookings?.forEach((booking: any) => {
+        if (booking.courses?.course_date) {
+          const date = new Date(booking.courses.course_date);
+          const dayName = dayNames[date.getDay()];
+          bookingsByDay[dayName] = (bookingsByDay[dayName] || 0) + 1;
+
+          if (booking.courses?.trainer) {
+            bookingsByTrainer[booking.courses.trainer] = (bookingsByTrainer[booking.courses.trainer] || 0) + 1;
+          }
+
+          if (booking.courses?.start_time) {
+            const hour = parseInt(booking.courses.start_time.split(':')[0]);
+            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+          }
+        }
+      });
+
+      // Find preferred day and time
+      const preferredDay = Object.entries(bookingsByDay).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+      const preferredHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+      const preferredTime = preferredHour ? `${preferredHour}:00` : 'N/A';
+
+      return {
+        total_bookings: bookings?.length || 0,
+        total_trainings: trainings?.length || 0,
+        bookings_by_day: bookingsByDay,
+        bookings_by_trainer: bookingsByTrainer,
+        preferred_day: preferredDay,
+        preferred_time: preferredTime
+      } as MemberStats;
+    },
+    enabled: isOpen
+  });
+
+  const dayOrder = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  const maxBookings = stats ? Math.max(...Object.values(stats.bookings_by_day)) : 1;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Statistiken: {displayName}
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Overview Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-primary/10 p-3">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Buchungen</p>
+                      <p className="text-2xl font-bold">{stats?.total_bookings || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-primary/10 p-3">
+                      <Dumbbell className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Trainings</p>
+                      <p className="text-2xl font-bold">{stats?.total_trainings || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Preferred Day and Time */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-3">Präferenzen</h3>
+                <div className="flex gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Bevorzugter Tag</p>
+                    <Badge variant="secondary" className="text-base">
+                      {stats?.preferred_day}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Bevorzugte Uhrzeit</p>
+                    <Badge variant="secondary" className="text-base">
+                      {stats?.preferred_time}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bookings by Day Chart */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-4">Buchungen pro Wochentag</h3>
+                <div className="space-y-3">
+                  {dayOrder.map((day) => {
+                    const count = stats?.bookings_by_day[day] || 0;
+                    const width = maxBookings > 0 ? (count / maxBookings) * 100 : 0;
+                    return (
+                      <div key={day} className="flex items-center gap-3">
+                        <span className="text-sm font-medium w-8">{day}</span>
+                        <div className="flex-1 bg-muted rounded-full h-8 relative overflow-hidden">
+                          <div
+                            className="bg-primary h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                            style={{ width: `${width}%` }}
+                          >
+                            {count > 0 && (
+                              <span className="text-xs font-semibold text-primary-foreground">
+                                {count}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bookings by Trainer */}
+            {stats && Object.keys(stats.bookings_by_trainer).length > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4">Buchungen pro Coach</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(stats.bookings_by_trainer)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([trainer, count]) => (
+                        <Badge key={trainer} variant="outline" className="px-3 py-1">
+                          {trainer}: <span className="font-bold ml-1">{count}</span>
+                        </Badge>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
