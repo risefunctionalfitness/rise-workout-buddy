@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Dumbbell, Users, XCircle } from "lucide-react";
+import { Calendar, Dumbbell, Users, XCircle, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { subMonths, startOfWeek, addWeeks, format, getISOWeek } from 'date-fns';
 
 interface MemberStatsDialogProps {
   userId: string;
@@ -19,6 +21,13 @@ interface MemberStatsDialogProps {
   onClose: () => void;
 }
 
+interface WeeklyActivity {
+  week: string;
+  weekStart: Date;
+  bookings: number;
+  trainings: number;
+}
+
 interface MemberStats {
   total_bookings: number;
   total_trainings: number;
@@ -29,6 +38,7 @@ interface MemberStats {
   preferred_day: string;
   preferred_time: string;
   preferred_training_day: string;
+  weekly_activity: WeeklyActivity[];
 }
 
 export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, totalBookings, totalTrainings, cancellations, isOpen, onClose }: MemberStatsDialogProps) => {
@@ -37,6 +47,8 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
   const { data: stats, isLoading } = useQuery({
     queryKey: ['member-stats', userId],
     queryFn: async () => {
+      const threeMonthsAgo = subMonths(new Date(), 3);
+      
       // Fetch registered bookings only
       const { data: bookings, error: bookingsError } = await supabase
         .from('course_registrations')
@@ -79,6 +91,10 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
       const trainingsByDay: Record<string, number> = {};
       const bookingsByTrainer: Record<string, number> = {};
       const hourCounts: Record<number, number> = {};
+      
+      // Weekly activity tracking
+      const bookingsByWeek: Record<string, number> = {};
+      const trainingsByWeek: Record<string, number> = {};
 
       bookings?.forEach((booking: any) => {
         if (booking.courses?.course_date) {
@@ -94,6 +110,12 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
             const hour = parseInt(booking.courses.start_time.split(':')[0]);
             hourCounts[hour] = (hourCounts[hour] || 0) + 1;
           }
+          
+          // Weekly tracking (last 3 months)
+          if (date >= threeMonthsAgo) {
+            const weekKey = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-ww');
+            bookingsByWeek[weekKey] = (bookingsByWeek[weekKey] || 0) + 1;
+          }
         }
       });
 
@@ -103,8 +125,33 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
           const date = new Date(training.date);
           const dayName = dayNames[date.getDay()];
           trainingsByDay[dayName] = (trainingsByDay[dayName] || 0) + 1;
+          
+          // Weekly tracking (last 3 months)
+          if (date >= threeMonthsAgo) {
+            const weekKey = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-ww');
+            trainingsByWeek[weekKey] = (trainingsByWeek[weekKey] || 0) + 1;
+          }
         }
       });
+
+      // Generate all weeks for the last 3 months (fill gaps with 0)
+      const weeklyActivity: WeeklyActivity[] = [];
+      let currentWeek = startOfWeek(threeMonthsAgo, { weekStartsOn: 1 });
+      const now = new Date();
+
+      while (currentWeek <= now) {
+        const weekKey = format(currentWeek, 'yyyy-ww');
+        const weekNumber = getISOWeek(currentWeek);
+        
+        weeklyActivity.push({
+          week: `KW ${weekNumber}`,
+          weekStart: new Date(currentWeek),
+          bookings: bookingsByWeek[weekKey] || 0,
+          trainings: trainingsByWeek[weekKey] || 0
+        });
+        
+        currentWeek = addWeeks(currentWeek, 1);
+      }
 
       // Find preferred day and time
       const preferredDay = Object.entries(bookingsByDay).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
@@ -121,7 +168,8 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
         bookings_by_trainer: bookingsByTrainer,
         preferred_day: preferredDay,
         preferred_time: preferredTime,
-        preferred_training_day: preferredTrainingDay
+        preferred_training_day: preferredTrainingDay,
+        weekly_activity: weeklyActivity
       } as MemberStats;
     },
     enabled: isOpen
@@ -145,6 +193,7 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
           <div className="space-y-4">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-64 w-full" />
             <Skeleton className="h-32 w-full" />
           </div>
         ) : (
@@ -204,6 +253,65 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
                 </CardContent>
               </Card>
             </div>
+
+            {/* Weekly Activity Line Chart */}
+            {stats && stats.weekly_activity.length > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="font-semibold">Aktivität der letzten 3 Monate</h3>
+                  </div>
+                  
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={stats.weekly_activity}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis 
+                          dataKey="week" 
+                          tick={{ fontSize: 11 }}
+                          interval="preserveStartEnd"
+                          className="text-muted-foreground"
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 12 }}
+                          allowDecimals={false}
+                          className="text-muted-foreground"
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            color: 'hsl(var(--foreground))'
+                          }}
+                          labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="bookings" 
+                          name="Kursbuchungen"
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="trainings" 
+                          name="Open Gym"
+                          stroke="hsl(var(--muted-foreground))" 
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(var(--muted-foreground))', strokeWidth: 2, r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Preferred Day and Time */}
             <Card>
