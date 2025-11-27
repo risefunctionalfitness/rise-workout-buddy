@@ -12,6 +12,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { User } from "@supabase/supabase-js";
 import { timezone } from "@/lib/timezone";
+import { cn } from "@/lib/utils";
 
 interface Invitation {
   id: string;
@@ -62,6 +63,16 @@ interface CourseInvitationsPanelProps {
   onNavigateToCourses?: () => void;
 }
 
+// Helper function to check if a course is in the past
+const isCourseInPast = (courseDate: string, endTime: string): boolean => {
+  const nowInBerlin = timezone.nowInBerlin();
+  const todayStr = format(nowInBerlin, 'yyyy-MM-dd');
+  const nowTime = format(nowInBerlin, 'HH:mm:ss');
+  
+  return courseDate < todayStr || 
+         (courseDate === todayStr && endTime <= nowTime);
+};
+
 export const CourseInvitationsPanel = ({
   open,
   onOpenChange,
@@ -90,11 +101,7 @@ export const CourseInvitationsPanel = ({
     console.log("User ID:", user.id)
 
     try {
-      // Get current time in Berlin timezone
-      const nowInBerlin = timezone.nowInBerlin()
-      const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
-      const nowTime = format(nowInBerlin, 'HH:mm:ss')
-
+      // Load all pending invitations (including past courses)
       const { data, error } = await supabase
         .from("course_invitations")
         .select(`
@@ -113,7 +120,6 @@ export const CourseInvitationsPanel = ({
         `)
         .eq("recipient_id", user.id)
         .eq("status", "pending")
-        .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
         .order("created_at", { ascending: false });
 
       console.log("Received invitations loaded:", data)
@@ -142,8 +148,23 @@ export const CourseInvitationsPanel = ({
         })
       );
 
-      console.log("Received invitations with profiles:", invitationsWithProfiles)
-      setReceivedInvitations(invitationsWithProfiles);
+      // Sort: future courses first (ascending), then past courses (descending)
+      const sortedInvitations = invitationsWithProfiles.sort((a, b) => {
+        const aIsPast = isCourseInPast(a.courses.course_date, a.courses.end_time);
+        const bIsPast = isCourseInPast(b.courses.course_date, b.courses.end_time);
+        
+        if (aIsPast !== bIsPast) {
+          return aIsPast ? 1 : -1; // Future courses first
+        }
+        
+        // Same category: sort by date
+        const dateA = new Date(a.courses.course_date).getTime();
+        const dateB = new Date(b.courses.course_date).getTime();
+        return aIsPast ? dateB - dateA : dateA - dateB; // Past: newest first, Future: earliest first
+      });
+
+      console.log("Received invitations with profiles:", sortedInvitations)
+      setReceivedInvitations(sortedInvitations);
     } catch (error) {
       console.error("Unexpected error loading received invitations:", error);
       toast.error("Fehler beim Laden der Einladungen");
@@ -158,11 +179,7 @@ export const CourseInvitationsPanel = ({
     console.log("User ID:", user.id)
 
     try {
-      // Get current time in Berlin timezone
-      const nowInBerlin = timezone.nowInBerlin()
-      const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
-      const nowTime = format(nowInBerlin, 'HH:mm:ss')
-
+      // Load all sent invitations (including past courses)
       const { data, error } = await supabase
         .from("course_invitations")
         .select(`
@@ -181,7 +198,6 @@ export const CourseInvitationsPanel = ({
           )
         `)
         .eq("sender_id", user.id)
-        .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
         .order("created_at", { ascending: false });
 
       console.log("Sent invitations loaded:", data)
@@ -210,8 +226,23 @@ export const CourseInvitationsPanel = ({
         })
       );
 
-      console.log("Sent invitations with profiles:", invitationsWithProfiles)
-      setSentInvitations(invitationsWithProfiles);
+      // Sort: future courses first (ascending), then past courses (descending)
+      const sortedInvitations = invitationsWithProfiles.sort((a, b) => {
+        const aIsPast = isCourseInPast(a.courses.course_date, a.courses.end_time);
+        const bIsPast = isCourseInPast(b.courses.course_date, b.courses.end_time);
+        
+        if (aIsPast !== bIsPast) {
+          return aIsPast ? 1 : -1; // Future courses first
+        }
+        
+        // Same category: sort by date
+        const dateA = new Date(a.courses.course_date).getTime();
+        const dateB = new Date(b.courses.course_date).getTime();
+        return aIsPast ? dateB - dateA : dateA - dateB; // Past: newest first, Future: earliest first
+      });
+
+      console.log("Sent invitations with profiles:", sortedInvitations)
+      setSentInvitations(sortedInvitations);
     } catch (error) {
       console.error("Unexpected error loading sent invitations:", error);
       toast.error("Fehler beim Laden der gesendeten Einladungen");
@@ -306,7 +337,12 @@ export const CourseInvitationsPanel = ({
     onAcceptInvitation(courseId, courseDate);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, isExpired?: boolean) => {
+    // Show "Abgelaufen" badge for pending invitations with past courses
+    if (isExpired && status === "pending") {
+      return <Badge variant="secondary" className="bg-gray-500 text-white">Abgelaufen</Badge>;
+    }
+    
     switch (status) {
       case "pending":
         return <Badge variant="secondary" className="bg-yellow-500 text-white">Ausstehend</Badge>;
@@ -327,9 +363,10 @@ export const CourseInvitationsPanel = ({
     
     const courseDate = parseISO(invitation.courses.course_date);
     const formattedDate = format(courseDate, "EEEE, dd.MM.yyyy", { locale: de });
+    const isPast = isCourseInPast(invitation.courses.course_date, invitation.courses.end_time);
 
     return (
-      <Card key={invitation.id} className="p-4 border-none">
+      <Card key={invitation.id} className={cn("p-4 border-none", isPast && "opacity-60")}>
         <div className="space-y-4">
           {/* Sender Info */}
           <div className="flex items-center gap-3">
@@ -365,30 +402,36 @@ export const CourseInvitationsPanel = ({
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAccept(invitation);
-              }}
-              className="flex-1 bg-green-600 hover:bg-green-700"
-            >
-              <Check className="h-4 w-4 mr-2" />
-              Annehmen
-            </Button>
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDecline(invitation.id);
-              }}
-              variant="outline"
-              className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Ablehnen
-            </Button>
-          </div>
+          {/* Action Buttons or Expired Badge */}
+          {!isPast ? (
+            <div className="flex gap-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAccept(invitation);
+                }}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Annehmen
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDecline(invitation.id);
+                }}
+                variant="outline"
+                className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Ablehnen
+              </Button>
+            </div>
+          ) : (
+            <div className="flex justify-end">
+              {getStatusBadge(invitation.status, true)}
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -402,9 +445,10 @@ export const CourseInvitationsPanel = ({
     
     const courseDate = parseISO(invitation.courses.course_date);
     const formattedDate = format(courseDate, "EEEE, dd.MM.yyyy", { locale: de });
+    const isPast = isCourseInPast(invitation.courses.course_date, invitation.courses.end_time);
 
     return (
-      <Card key={invitation.id} className="p-4 border-none">
+      <Card key={invitation.id} className={cn("p-4 border-none", isPast && "opacity-60")}>
         <div className="space-y-4">
           {/* Recipient Info with Status */}
           <div className="flex items-center justify-between">
@@ -418,7 +462,7 @@ export const CourseInvitationsPanel = ({
                 <p className="font-medium">{recipientName}</p>
               </div>
             </div>
-            {getStatusBadge(invitation.status)}
+            {getStatusBadge(invitation.status, isPast)}
           </div>
 
           {/* Course Info - Clickable */}
@@ -469,6 +513,18 @@ export const CourseInvitationsPanel = ({
       onNavigateToCourses();
     }
   };
+
+  // Calculate active and expired counts for received invitations
+  const activeReceivedCount = receivedInvitations.filter(
+    inv => !isCourseInPast(inv.courses.course_date, inv.courses.end_time)
+  ).length;
+  const expiredReceivedCount = receivedInvitations.length - activeReceivedCount;
+
+  // Calculate active and expired counts for sent invitations
+  const activeSentCount = sentInvitations.filter(
+    inv => !isCourseInPast(inv.courses.course_date, inv.courses.end_time)
+  ).length;
+  const expiredSentCount = sentInvitations.length - activeSentCount;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -529,7 +585,11 @@ export const CourseInvitationsPanel = ({
               ) : (
                 <>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {receivedInvitations.length} ausstehende Einladung{receivedInvitations.length !== 1 ? 'en' : ''}
+                    {activeReceivedCount > 0 
+                      ? `${activeReceivedCount} ausstehende Einladung${activeReceivedCount !== 1 ? 'en' : ''}`
+                      : 'Keine aktiven Einladungen'
+                    }
+                    {expiredReceivedCount > 0 && ` (${expiredReceivedCount} abgelaufen)`}
                   </p>
                   <ScrollArea className="flex-1 -mx-6 px-6">
                     <div className="space-y-4">
@@ -567,7 +627,11 @@ export const CourseInvitationsPanel = ({
               ) : (
                 <>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {sentInvitations.length} gesendete Einladung{sentInvitations.length !== 1 ? 'en' : ''}
+                    {activeSentCount > 0 
+                      ? `${activeSentCount} gesendete Einladung${activeSentCount !== 1 ? 'en' : ''}`
+                      : 'Keine aktiven Einladungen'
+                    }
+                    {expiredSentCount > 0 && ` (${expiredSentCount} abgelaufen)`}
                   </p>
                   <ScrollArea className="flex-1 -mx-6 px-6">
                     <div className="space-y-4">
