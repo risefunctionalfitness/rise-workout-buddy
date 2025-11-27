@@ -254,65 +254,6 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
               </Card>
             </div>
 
-            {/* Weekly Activity Line Chart */}
-            {stats && stats.weekly_activity.length > 0 && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="font-semibold">Aktivität der letzten 3 Monate</h3>
-                  </div>
-                  
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={stats.weekly_activity}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis 
-                          dataKey="week" 
-                          tick={{ fontSize: 11 }}
-                          interval="preserveStartEnd"
-                          className="text-muted-foreground"
-                        />
-                        <YAxis 
-                          tick={{ fontSize: 12 }}
-                          allowDecimals={false}
-                          className="text-muted-foreground"
-                        />
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                            color: 'hsl(var(--foreground))'
-                          }}
-                          labelStyle={{ color: 'hsl(var(--foreground))' }}
-                        />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="bookings" 
-                          name="Kursbuchungen"
-                          stroke="hsl(var(--primary))" 
-                          strokeWidth={2}
-                          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 3 }}
-                          activeDot={{ r: 5 }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="trainings" 
-                          name="Open Gym"
-                          stroke="hsl(var(--muted-foreground))" 
-                          strokeWidth={2}
-                          dot={{ fill: 'hsl(var(--muted-foreground))', strokeWidth: 2, r: 3 }}
-                          activeDot={{ r: 5 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Preferred Day and Time */}
             <Card>
               <CardContent className="pt-6">
@@ -419,6 +360,65 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
                 )}
               </CardContent>
             </Card>
+
+            {/* Weekly Activity Line Chart */}
+            {stats && stats.weekly_activity.length > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="font-semibold">Aktivität der letzten 3 Monate</h3>
+                  </div>
+                  
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={stats.weekly_activity}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis 
+                          dataKey="week" 
+                          tick={{ fontSize: 11 }}
+                          interval="preserveStartEnd"
+                          className="text-muted-foreground"
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 12 }}
+                          allowDecimals={false}
+                          className="text-muted-foreground"
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            color: 'hsl(var(--foreground))'
+                          }}
+                          labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="bookings" 
+                          name="Kursbuchungen"
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="trainings" 
+                          name="Open Gym"
+                          stroke="hsl(var(--muted-foreground))" 
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(var(--muted-foreground))', strokeWidth: 2, r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Bookings by Trainer */}
             {stats && Object.keys(stats.bookings_by_trainer).length > 0 && (
