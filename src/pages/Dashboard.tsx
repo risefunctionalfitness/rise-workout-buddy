@@ -43,7 +43,7 @@ import { useNewsNotification } from "@/hooks/useNewsNotification"
 
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { timezone } from "@/lib/timezone"
-import { format } from "date-fns"
+import { format, startOfMonth, addMonths } from "date-fns"
 
 type DashboardTabType = 'home' | 'wod' | 'courses' | 'leaderboard' | 'news'
 
@@ -376,13 +376,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     }
 
     try {
+      // Calculate date range using date-fns for correct month boundaries
+      const firstDayOfMonth = startOfMonth(new Date(currentYear, currentMonth))
+      const firstDayOfNextMonth = startOfMonth(addMonths(firstDayOfMonth, 1))
+      const firstDayStr = format(firstDayOfMonth, 'yyyy-MM-dd')
+      const nextMonthStr = format(firstDayOfNextMonth, 'yyyy-MM-dd')
+
       // Load existing training sessions
       const { data: sessions, error } = await supabase
         .from('training_sessions')
         .select('id, date, workout_type, status')
         .eq('user_id', user.id)
-        .gte('date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
-        .lt('date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
+        .gte('date', firstDayStr)
+        .lt('date', nextMonthStr)
 
       if (error) {
         console.error('Error loading training sessions:', error)
@@ -399,8 +405,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         `)
         .eq('user_id', user.id)
         .eq('status', 'registered')
-        .gte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
-        .lt('courses.course_date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
+        .gte('courses.course_date', firstDayStr)
+        .lt('courses.course_date', nextMonthStr)
 
       if (regError) {
         console.error('Error loading course registrations:', regError)
