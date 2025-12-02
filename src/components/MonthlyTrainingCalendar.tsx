@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
 import { DayCourseDialog } from "./DayCourseDialog"
+import { startOfMonth, addMonths, format } from "date-fns"
 
 
 interface MonthlyTrainingCalendarProps {
@@ -33,8 +34,10 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
   const loadTrainingDays = async () => {
     try {
       const currentDate = new Date()
-      const currentYear = currentDate.getFullYear()
-      const currentMonth = currentDate.getMonth()
+      const firstDayOfMonth = startOfMonth(currentDate)
+      const firstDayOfNextMonth = startOfMonth(addMonths(currentDate, 1))
+      const firstDayStr = format(firstDayOfMonth, 'yyyy-MM-dd')
+      const nextMonthStr = format(firstDayOfNextMonth, 'yyyy-MM-dd')
       
       // Load training sessions
       const { data: sessions, error } = await supabase
@@ -42,8 +45,8 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
         .select('date')
         .eq('user_id', user.id)
         .eq('status', 'completed')
-        .gte('date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
-        .lt('date', `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`)
+        .gte('date', firstDayStr)
+        .lt('date', nextMonthStr)
 
       if (error) {
         console.error('Error loading training days:', error)
@@ -65,8 +68,8 @@ export const MonthlyTrainingCalendar = ({ user, userRole }: MonthlyTrainingCalen
         `)
         .eq('user_id', user.id)
         .eq('status', 'registered')
-        .gte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
-        .lte('courses.course_date', `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-31`)
+        .gte('courses.course_date', firstDayStr)
+        .lt('courses.course_date', nextMonthStr)
 
       const regDays = new Set<number>()
       if (!regError && registrations) {
