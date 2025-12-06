@@ -525,7 +525,6 @@ export const CourseTemplateManager = () => {
                     <Input
                       type="number"
                       min="30"
-                      max="120"
                       value={templateForm.duration_minutes}
                       onChange={(e) => setTemplateForm(prev => ({ ...prev, duration_minutes: e.target.value === '' ? 0 : parseInt(e.target.value, 10) }))}
                       required
@@ -851,7 +850,7 @@ export const CourseTemplateManager = () => {
               </div>
               <div>
                 <Label htmlFor="duration_minutes">Dauer (Minuten)</Label>
-                <Input name="duration_minutes" type="number" min="30" max="120" defaultValue={editingCourse.duration_minutes} required />
+                <Input name="duration_minutes" type="number" min="30" defaultValue={editingCourse.duration_minutes} required />
               </div>
               <Button type="submit" className="w-full">
                 Kurs aktualisieren
