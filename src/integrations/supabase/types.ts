@@ -547,6 +547,98 @@ export type Database = {
         }
         Relationships: []
       }
+      merch_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          price_per_item: number
+          product_type: string
+          quantity: number
+          size: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          price_per_item: number
+          product_type: string
+          quantity?: number
+          size: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          price_per_item?: number
+          product_type?: string
+          quantity?: number
+          size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merch_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "merch_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merch_orders: {
+        Row: {
+          created_at: string
+          id: string
+          is_paid: boolean
+          notes: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      merch_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_ordering_open: boolean
+          order_deadline: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_ordering_open?: boolean
+          order_deadline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_ordering_open?: boolean
+          order_deadline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       monthly_challenges: {
         Row: {
           bonus_points: number
