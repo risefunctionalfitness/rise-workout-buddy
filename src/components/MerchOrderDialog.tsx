@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, ShoppingCart, Info } from "lucide-react";
+import { Plus, Trash2, ShoppingCart, Info, ZoomIn, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import merchImage from "@/assets/rise-merch.jpg";
@@ -49,6 +49,7 @@ export const MerchOrderDialog = ({
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [imageZoomOpen, setImageZoomOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -177,7 +178,6 @@ export const MerchOrderDialog = ({
       const totalAmount = calculateTotal();
 
       if (existingOrderId) {
-        // Update existing order
         await supabase
           .from("merch_order_items")
           .delete()
@@ -207,7 +207,6 @@ export const MerchOrderDialog = ({
           description: "Deine Bestellung wurde erfolgreich aktualisiert.",
         });
       } else {
-        // Create new order
         const { data: newOrder, error: orderError } = await supabase
           .from("merch_orders")
           .insert({
@@ -293,37 +292,45 @@ export const MerchOrderDialog = ({
     items: OrderItem[],
     setItems: React.Dispatch<React.SetStateAction<OrderItem[]>>
   ) => (
-    <div key={item.id} className="flex items-center gap-2">
-      <Select
-        value={item.size}
-        onValueChange={(value) => updateItem(items, setItems, item.id, "size", value)}
-      >
-        <SelectTrigger className="w-24">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {sizes.map((size) => (
-            <SelectItem key={size} value={size}>
-              {size}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Input
-        type="number"
-        min={1}
-        max={10}
-        value={item.quantity}
-        onChange={(e) =>
-          updateItem(items, setItems, item.id, "quantity", parseInt(e.target.value) || 1)
-        }
-        className="w-16 text-center"
-      />
+    <div key={item.id} className="flex items-center gap-2 bg-muted/30 rounded-lg p-3">
+      <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1">
+          <span className="text-xs text-muted-foreground block mb-1">Größe</span>
+          <Select
+            value={item.size}
+            onValueChange={(value) => updateItem(items, setItems, item.id, "size", value)}
+          >
+            <SelectTrigger className="h-10 bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sizes.map((size) => (
+                <SelectItem key={size} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-20">
+          <span className="text-xs text-muted-foreground block mb-1">Anzahl</span>
+          <Input
+            type="number"
+            min={1}
+            max={10}
+            value={item.quantity}
+            onChange={(e) =>
+              updateItem(items, setItems, item.id, "quantity", parseInt(e.target.value) || 1)
+            }
+            className="h-10 text-center bg-background"
+          />
+        </div>
+      </div>
       <Button
         variant="ghost"
         size="icon"
         onClick={() => removeItem(items, setItems, item.id)}
-        className="text-destructive hover:text-destructive"
+        className="text-destructive hover:text-destructive hover:bg-destructive/10 mt-5"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -331,128 +338,183 @@ export const MerchOrderDialog = ({
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl">T-Shirt Bestellung</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">T-Shirt Bestellung</DialogTitle>
+          </DialogHeader>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Product Image */}
-            <div className="rounded-xl overflow-hidden border border-border">
-              <img
-                src={merchImage}
-                alt="RISE Merch"
-                className="w-full h-auto object-cover"
-              />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-
-            {/* Info Box */}
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-              <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-muted-foreground">
-                Im Gym liegen Test-Shirts zum Anprobieren für die Größe.
-              </p>
-            </div>
-
-            {/* T-Shirt Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold">T-Shirt</h3>
-                  <p className="text-sm text-muted-foreground">{TSHIRT_PRICE} €</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={addTshirtItem}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Hinzufügen
-                </Button>
-              </div>
-              <div className="space-y-2 pl-2">
-                {tshirtItems.map((item) =>
-                  renderItemRow(item, TSHIRT_SIZES, tshirtItems, setTshirtItems)
-                )}
-              </div>
-            </div>
-
-            {/* Longsleeve Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold">Longsleeve</h3>
-                  <p className="text-sm text-muted-foreground">{LONGSLEEVE_PRICE} €</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={addLongsleeveItem}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Hinzufügen
-                </Button>
-              </div>
-              <div className="space-y-2 pl-2">
-                {longsleeveItems.map((item) =>
-                  renderItemRow(item, LONGSLEEVE_SIZES, longsleeveItems, setLongsleeveItems)
-                )}
-              </div>
-            </div>
-
-            {/* Cart Summary */}
-            {hasItems && (
-              <div className="border-t border-border pt-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <ShoppingCart className="h-4 w-4" />
-                  Warenkorb
-                </div>
-                <div className="space-y-1 text-sm">
-                  {tshirtItems.map((item) => (
-                    <div key={item.id} className="flex justify-between text-muted-foreground">
-                      <span>T-Shirt {item.size} x{item.quantity}</span>
-                      <span>{item.quantity * TSHIRT_PRICE} €</span>
-                    </div>
-                  ))}
-                  {longsleeveItems.map((item) => (
-                    <div key={item.id} className="flex justify-between text-muted-foreground">
-                      <span>Longsleeve {item.size} x{item.quantity}</span>
-                      <span>{item.quantity * LONGSLEEVE_PRICE} €</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
-                  <span>Gesamt</span>
-                  <span className="text-primary">{calculateTotal()} €</span>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-2">
-              <Button
-                onClick={handleSubmit}
-                disabled={!hasItems || submitting}
-                className="w-full"
+          ) : (
+            <div className="space-y-6">
+              {/* Product Image with Zoom */}
+              <div 
+                className="relative rounded-xl overflow-hidden border-2 border-muted cursor-pointer group"
+                onClick={() => setImageZoomOpen(true)}
               >
-                {submitting
-                  ? "Wird gespeichert..."
-                  : existingOrderId
-                  ? "Bestellung aktualisieren"
-                  : "Bestellung abschicken"}
-              </Button>
-              {existingOrderId && (
-                <Button
-                  variant="outline"
-                  onClick={handleDeleteOrder}
-                  disabled={submitting}
-                  className="w-full text-destructive hover:text-destructive"
-                >
-                  Bestellung löschen
-                </Button>
+                <img
+                  src={merchImage}
+                  alt="RISE Merch"
+                  className="w-full h-auto object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                    <ZoomIn className="h-4 w-4" />
+                    <span className="text-sm font-medium">Vergrößern</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Box */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-foreground">
+                  Im Gym liegen Test-Shirts zum Anprobieren für die Größe.
+                </p>
+              </div>
+
+              {/* T-Shirt Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
+                  <div>
+                    <h3 className="font-bold text-lg">T-Shirt</h3>
+                    <p className="text-primary font-semibold">{TSHIRT_PRICE} €</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={addTshirtItem}
+                    className="h-10 w-10 rounded-full border-2 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </div>
+                {tshirtItems.length > 0 && (
+                  <div className="space-y-2 pl-2">
+                    {tshirtItems.map((item) =>
+                      renderItemRow(item, TSHIRT_SIZES, tshirtItems, setTshirtItems)
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Longsleeve Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
+                  <div>
+                    <h3 className="font-bold text-lg">Longsleeve</h3>
+                    <p className="text-primary font-semibold">{LONGSLEEVE_PRICE} €</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={addLongsleeveItem}
+                    className="h-10 w-10 rounded-full border-2 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </div>
+                {longsleeveItems.length > 0 && (
+                  <div className="space-y-2 pl-2">
+                    {longsleeveItems.map((item) =>
+                      renderItemRow(item, LONGSLEEVE_SIZES, longsleeveItems, setLongsleeveItems)
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Cart Summary */}
+              {hasItems && (
+                <div className="border-t-2 border-muted pt-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                    Warenkorb
+                  </div>
+                  <div className="space-y-1 text-sm bg-muted/30 rounded-lg p-3">
+                    {tshirtItems.map((item) => (
+                      <div key={item.id} className="flex justify-between">
+                        <span>T-Shirt {item.size} × {item.quantity}</span>
+                        <span className="font-medium">{item.quantity * TSHIRT_PRICE} €</span>
+                      </div>
+                    ))}
+                    {longsleeveItems.map((item) => (
+                      <div key={item.id} className="flex justify-between">
+                        <span>Longsleeve {item.size} × {item.quantity}</span>
+                        <span className="font-medium">{item.quantity * LONGSLEEVE_PRICE} €</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between font-bold text-xl pt-2">
+                    <span>Gesamt</span>
+                    <span className="text-primary">{calculateTotal()} €</span>
+                  </div>
+                </div>
               )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 pt-2">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!hasItems || submitting}
+                  className="w-full h-14 text-lg"
+                >
+                  {submitting
+                    ? "Wird gespeichert..."
+                    : existingOrderId
+                    ? "Bestellung aktualisieren"
+                    : "Bestellung abschicken"}
+                </Button>
+                {existingOrderId && (
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteOrder}
+                    disabled={submitting}
+                    className="w-full h-12 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
+                  >
+                    Bestellung löschen
+                  </Button>
+                )}
+              </div>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Zoom Dialog */}
+      <Dialog open={imageZoomOpen} onOpenChange={setImageZoomOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black/95">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setImageZoomOpen(false)}
+            className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <div className="w-full h-full overflow-auto flex items-center justify-center p-4">
+            <img
+              src={merchImage}
+              alt="RISE Merch - Vergrößert"
+              className="max-w-none w-auto h-auto object-contain cursor-zoom-in"
+              style={{ maxHeight: '90vh', maxWidth: '90vw' }}
+              onClick={(e) => {
+                const img = e.currentTarget;
+                if (img.style.transform === 'scale(2)') {
+                  img.style.transform = 'scale(1)';
+                  img.style.cursor = 'zoom-in';
+                } else {
+                  img.style.transform = 'scale(2)';
+                  img.style.cursor = 'zoom-out';
+                }
+              }}
+            />
           </div>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
