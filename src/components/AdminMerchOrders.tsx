@@ -13,7 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Settings, Download, Package, Euro, Calendar, Save } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Settings, Download, Package, Euro, Calendar, Save, Search, ChevronDown, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -61,6 +66,8 @@ export const AdminMerchOrders = () => {
   const [savingSettings, setSavingSettings] = useState(false);
   const [deadlineInput, setDeadlineInput] = useState("");
   const [isOrderingOpen, setIsOrderingOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [paidOrdersOpen, setPaidOrdersOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -70,7 +77,6 @@ export const AdminMerchOrders = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load settings
       const { data: settingsData, error: settingsError } = await supabase
         .from("merch_settings")
         .select("*")
@@ -89,7 +95,6 @@ export const AdminMerchOrders = () => {
         setIsOrderingOpen(settingsData.is_ordering_open);
       }
 
-      // Load orders with profiles
       const { data: ordersData, error: ordersError } = await supabase
         .from("merch_orders")
         .select(`
@@ -103,7 +108,6 @@ export const AdminMerchOrders = () => {
 
       if (ordersError) throw ordersError;
 
-      // Load items and profiles separately
       const ordersWithDetails: OrderWithItems[] = [];
 
       for (const order of ordersData || []) {
@@ -127,7 +131,6 @@ export const AdminMerchOrders = () => {
 
       setOrders(ordersWithDetails);
 
-      // Calculate aggregated data
       const aggregatedMap = new Map<string, AggregatedItem>();
       
       for (const order of ordersWithDetails) {
@@ -146,7 +149,6 @@ export const AdminMerchOrders = () => {
         }
       }
 
-      // Sort: T-shirts first (XS-3XL), then longsleeves (XS-XXL)
       const sortedAggregated = Array.from(aggregatedMap.values()).sort((a, b) => {
         if (a.product_type !== b.product_type) {
           return a.product_type === "tshirt" ? -1 : 1;
@@ -240,10 +242,7 @@ export const AdminMerchOrders = () => {
     const rows: string[][] = [];
 
     for (const order of orders) {
-      const name =
-        order.profile?.display_name ||
-        `${order.profile?.first_name || ""} ${order.profile?.last_name || ""}`.trim() ||
-        "Unbekannt";
+      const name = getDisplayName(order);
       const email = order.profile?.email || "";
       const orderDate = format(new Date(order.created_at), "dd.MM.yyyy HH:mm", {
         locale: de,
@@ -292,14 +291,53 @@ export const AdminMerchOrders = () => {
     return items
       .map(
         (item) =>
-          `${item.product_type === "tshirt" ? "T-Shirt" : "Longsleeve"} ${item.size} x${item.quantity}`
+          `${item.product_type === "tshirt" ? "T-Shirt" : "Longsleeve"} ${item.size} ×${item.quantity}`
       )
       .join(", ");
   };
 
+  const filteredUnpaidOrders = orders.filter((order) => {
+    if (order.is_paid) return false;
+    if (!searchQuery) return true;
+    const name = getDisplayName(order).toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
+  });
+
+  const filteredPaidOrders = orders.filter((order) => {
+    if (!order.is_paid) return false;
+    if (!searchQuery) return true;
+    const name = getDisplayName(order).toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
+  });
+
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total_amount), 0);
   const totalItems = aggregated.reduce((sum, item) => sum + item.count, 0);
   const paidOrders = orders.filter((o) => o.is_paid).length;
+
+  const renderOrderRow = (order: OrderWithItems) => (
+    <TableRow key={order.id}>
+      <TableCell className="font-medium">
+        {getDisplayName(order)}
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {format(new Date(order.created_at), "dd.MM.yyyy", {
+          locale: de,
+        })}
+      </TableCell>
+      <TableCell className="text-sm max-w-[200px]">
+        {formatItems(order.items)}
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        {order.total_amount} €
+      </TableCell>
+      <TableCell className="text-center">
+        <Checkbox
+          checked={order.is_paid}
+          onCheckedChange={() => togglePaid(order.id, order.is_paid)}
+        />
+      </TableCell>
+    </TableRow>
+  );
 
   if (loading) {
     return (
@@ -417,23 +455,36 @@ export const AdminMerchOrders = () => {
         </CardContent>
       </Card>
 
-      {/* Individual Orders */}
+      {/* Individual Orders - Unpaid */}
       <Card>
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Euro className="h-5 w-5" />
-              Einzelbestellungen
+              Offene Bestellungen ({filteredUnpaidOrders.length})
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={exportCSV}>
-              <Download className="h-4 w-4 mr-2" />
-              CSV Export
-            </Button>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Nach Namen suchen..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={exportCSV}>
+                <Download className="h-4 w-4 mr-2" />
+                CSV
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          {orders.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Keine Bestellungen vorhanden.</p>
+          {filteredUnpaidOrders.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {searchQuery ? "Keine Ergebnisse gefunden." : "Keine offenen Bestellungen vorhanden."}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -447,36 +498,52 @@ export const AdminMerchOrders = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        {getDisplayName(order)}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(order.created_at), "dd.MM.yyyy", {
-                          locale: de,
-                        })}
-                      </TableCell>
-                      <TableCell className="text-sm max-w-[200px] truncate">
-                        {formatItems(order.items)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {order.total_amount} €
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={order.is_paid}
-                          onCheckedChange={() => togglePaid(order.id, order.is_paid)}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredUnpaidOrders.map(renderOrderRow)}
                 </TableBody>
               </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Paid Orders - Collapsible */}
+      {filteredPaidOrders.length > 0 && (
+        <Collapsible open={paidOrdersOpen} onOpenChange={setPaidOrdersOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-4 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    Bezahlte Bestellungen ({filteredPaidOrders.length})
+                  </div>
+                  <ChevronDown className={`h-5 w-5 transition-transform ${paidOrdersOpen ? 'rotate-180' : ''}`} />
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Datum</TableHead>
+                        <TableHead>Artikel</TableHead>
+                        <TableHead className="text-right">Betrag</TableHead>
+                        <TableHead className="text-center">Bezahlt</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPaidOrders.map(renderOrderRow)}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      )}
     </div>
   );
 };
