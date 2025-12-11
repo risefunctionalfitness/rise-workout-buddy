@@ -63,13 +63,11 @@ export const DashboardShopCard = ({ userId }: DashboardShopCardProps) => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-24 hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] w-full"
+        className="relative bg-gradient-to-br from-primary/15 to-primary/5 rounded-2xl p-4 h-24 hover:from-primary/20 hover:to-primary/10 transition-all hover:scale-[1.02] w-full border border-primary/10"
       >
         {/* Icon top right */}
         <div className="absolute top-3 right-3">
-          <div className="p-1.5 bg-primary/10 rounded-full">
-            <ShoppingBag className="h-5 w-5 text-primary" />
-          </div>
+          <ShoppingBag className="h-5 w-5 text-primary" />
         </div>
 
         {/* Center Content */}
