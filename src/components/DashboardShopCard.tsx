@@ -63,12 +63,21 @@ export const DashboardShopCard = ({ userId }: DashboardShopCardProps) => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 border border-primary/20 hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+        className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-24 hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] w-full"
       >
-        <div className="p-3 bg-primary/10 rounded-full">
-          <ShoppingBag className="h-8 w-8 text-primary" />
+        {/* Icon top right */}
+        <div className="absolute top-3 right-3">
+          <div className="p-1.5 bg-primary/10 rounded-full">
+            <ShoppingBag className="h-5 w-5 text-primary" />
+          </div>
         </div>
-        <span className="text-sm font-semibold text-foreground">T-Shirt Bestellung</span>
+
+        {/* Center Content */}
+        <div className="flex items-center justify-center h-full">
+          <span className="text-lg font-semibold text-foreground">
+            T-Shirt Bestellung
+          </span>
+        </div>
       </button>
 
       <MerchOrderDialog
