@@ -200,6 +200,7 @@ export type Database = {
       courses: {
         Row: {
           cancellation_deadline_minutes: number
+          cancelled_due_to_low_attendance: boolean | null
           color: string | null
           course_date: string
           created_at: string
@@ -218,6 +219,7 @@ export type Database = {
         }
         Insert: {
           cancellation_deadline_minutes?: number
+          cancelled_due_to_low_attendance?: boolean | null
           color?: string | null
           course_date: string
           created_at?: string
@@ -236,6 +238,7 @@ export type Database = {
         }
         Update: {
           cancellation_deadline_minutes?: number
+          cancelled_due_to_low_attendance?: boolean | null
           color?: string | null
           course_date?: string
           created_at?: string

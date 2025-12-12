@@ -1,4 +1,4 @@
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Calendar, Clock, MapPin, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
@@ -290,6 +290,14 @@ export const UpcomingClassReservation = ({
                 </div>
               )}
             </div>
+
+            {/* Minimum participants warning */}
+            {registeredCount < 3 && (
+              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <span>Ein Kurs mit weniger als 3 Teilnehmern findet nicht statt.</span>
+              </div>
+            )}
 
             {/* Participants */}
             <div className="space-y-3">
