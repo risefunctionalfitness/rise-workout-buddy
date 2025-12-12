@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { ProfileImageViewer } from "./ProfileImageViewer";
 import { MembershipBadge } from "./MembershipBadge";
 import { CourseInvitationButton } from "./CourseInvitationButton";
-import { Separator } from "@/components/ui/separator";
 
 interface UpcomingClassReservationProps {
   user: any;
@@ -294,9 +293,17 @@ export const UpcomingClassReservation = ({
 
             {/* Participants */}
             <div className="space-y-3">
-              <h4 className="font-medium text-sm text-muted-foreground">
-                Teilnehmer ({registeredCount}/{upcomingCourse.max_participants})
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-sm text-muted-foreground">
+                  Teilnehmer ({registeredCount}/{upcomingCourse.max_participants})
+                </h4>
+                <CourseInvitationButton
+                  courseId={upcomingCourse.id}
+                  courseName={upcomingCourse.title}
+                  courseDate={upcomingCourse.course_date}
+                  courseTime={upcomingCourse.start_time.slice(0, 5)}
+                />
+              </div>
               <div className="max-h-64 overflow-y-auto">
                 {participants.filter(p => p.status === 'registered').length === 0 ? (
                   <Card>
@@ -365,19 +372,6 @@ export const UpcomingClassReservation = ({
               )}
             </div>
 
-            {/* Invite Friends Section */}
-            <div className="space-y-3">
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Freunde einladen</span>
-                <CourseInvitationButton
-                  courseId={upcomingCourse.id}
-                  courseName={upcomingCourse.title}
-                  courseDate={upcomingCourse.course_date}
-                  courseTime={upcomingCourse.start_time.slice(0, 5)}
-                />
-              </div>
-            </div>
 
             {/* Action Button */}
             <Button 
