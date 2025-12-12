@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, MapPin, Calendar, X, Dumbbell } from "lucide-react"
+import { Clock, MapPin, Calendar, X, Dumbbell, AlertTriangle } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { User } from "@supabase/supabase-js"
@@ -31,6 +31,7 @@ interface Course {
   is_registered: boolean
   is_waitlisted: boolean
   color?: string
+  cancelled_due_to_low_attendance?: boolean
 }
 
 interface DayCourseDialogProps {
@@ -108,9 +109,11 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         .select(`
           *,
           color,
+          cancelled_due_to_low_attendance,
           course_registrations(status)
         `)
         .eq('is_cancelled', false)
+        .eq('cancelled_due_to_low_attendance', false)
         .eq('course_date', date)
 
       // If today, only show courses that haven't ended
@@ -517,6 +520,14 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Minimum participants warning */}
+              {selectedCourse.registered_count < 3 && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <span>Ein Kurs mit weniger als 3 Teilnehmern findet nicht statt.</span>
+                </div>
+              )}
 
               {/* Participants */}
               <div className="space-y-3">

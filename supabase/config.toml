@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.sync-course-trainings]
 verify_jwt = false
+
+[functions.check-course-attendance]
+verify_jwt = false

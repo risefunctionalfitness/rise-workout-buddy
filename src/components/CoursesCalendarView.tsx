@@ -27,6 +27,7 @@ interface Course {
   is_registered: boolean
   is_waitlisted: boolean
   color?: string
+  cancelled_due_to_low_attendance?: boolean
 }
 
 interface CoursesCalendarViewProps {
@@ -63,9 +64,11 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
           .select(`
             *,
             color,
+            cancelled_due_to_low_attendance,
             course_registrations(status)
           `)
           .eq('is_cancelled', false)
+          .eq('cancelled_due_to_low_attendance', false)
           .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .lte('course_date', endDate)
           .order('course_date', { ascending: true })

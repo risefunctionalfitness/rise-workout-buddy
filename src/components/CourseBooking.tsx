@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { User } from "@supabase/supabase-js"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, AlertTriangle } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
@@ -33,6 +33,7 @@ interface Course {
   is_registered: boolean
   is_waitlisted: boolean
   color?: string
+  cancelled_due_to_low_attendance?: boolean
 }
 
 interface CourseBookingProps {
@@ -51,6 +52,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [userMembershipType, setUserMembershipType] = useState<string>('')
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const [activeTab, setActiveTab] = useState<string>("liste")
+  const scrollPositionRef = useRef<number>(0)
 
   useEffect(() => {
     let mounted = true
@@ -120,9 +122,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           .select(`
             *,
             color,
+            cancelled_due_to_low_attendance,
             course_registrations(status)
           `)
           .eq('is_cancelled', false)
+          .eq('cancelled_due_to_low_attendance', false)
           // Only future courses by date and time
           .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .order('course_date', { ascending: true })
@@ -219,10 +223,21 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   }
 
   const handleCourseClick = async (course: Course) => {
+    // Save scroll position before opening dialog
+    scrollPositionRef.current = window.scrollY
     setSelectedCourse(course)
     await loadParticipants(course.id)
     setDialogOpen(true)
   }
+
+  // Restore scroll position after dialog closes
+  useEffect(() => {
+    if (!dialogOpen && scrollPositionRef.current > 0) {
+      setTimeout(() => {
+        window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' })
+      }, 50)
+    }
+  }, [dialogOpen])
 
   const handleRegistration = async (courseId: string) => {
     try {
@@ -605,6 +620,14 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   </div>
                 )}
               </div>
+
+              {/* Minimum participants warning */}
+              {selectedCourse.registered_count < 3 && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <span>Ein Kurs mit weniger als 3 Teilnehmern findet nicht statt.</span>
+                </div>
+              )}
 
               {/* Participants */}
               <div className="space-y-3">
