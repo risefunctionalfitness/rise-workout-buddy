@@ -418,13 +418,13 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                 return (
                   <Card 
                     key={course.id} 
-                    className={`cursor-pointer hover:shadow-md transition-all duration-200 shadow-md rounded-lg p-4 bg-card border-l-8 ${
+                    className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
                       course.is_registered 
-                        ? 'ring-2 ring-green-500' 
+                        ? 'border-green-500 border-2' 
                         : ''
                     }`}
                     style={{
-                      borderLeftColor: course.color || '#f3f4f6'
+                      borderLeft: `8px solid ${course.color || '#f3f4f6'}`
                     }}
                     onClick={() => handleCourseClick(course)}
                   >
