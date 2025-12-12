@@ -318,10 +318,16 @@ export const MerchOrderDialog = ({
             type="number"
             min={1}
             max={10}
-            value={item.quantity}
-            onChange={(e) =>
-              updateItem(items, setItems, item.id, "quantity", parseInt(e.target.value) || 1)
-            }
+            value={item.quantity === 0 ? "" : item.quantity}
+            onChange={(e) => {
+              const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+              updateItem(items, setItems, item.id, "quantity", val);
+            }}
+            onBlur={(e) => {
+              if (e.target.value === "" || parseInt(e.target.value) < 1) {
+                updateItem(items, setItems, item.id, "quantity", 1);
+              }
+            }}
             className="h-10 text-center bg-background"
           />
         </div>
