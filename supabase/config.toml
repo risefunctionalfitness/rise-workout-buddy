@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.check-course-attendance]
 verify_jwt = false
+
+[functions.send-test-cancellation-webhook]
+verify_jwt = false
