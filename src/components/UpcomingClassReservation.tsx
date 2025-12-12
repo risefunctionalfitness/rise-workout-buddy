@@ -16,6 +16,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ProfileImageViewer } from "./ProfileImageViewer";
 import { MembershipBadge } from "./MembershipBadge";
+import { CourseInvitationButton } from "./CourseInvitationButton";
+import { Separator } from "@/components/ui/separator";
 
 interface UpcomingClassReservationProps {
   user: any;
@@ -361,6 +363,20 @@ export const UpcomingClassReservation = ({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Invite Friends Section */}
+            <div className="space-y-3">
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Freunde einladen</span>
+                <CourseInvitationButton
+                  courseId={upcomingCourse.id}
+                  courseName={upcomingCourse.title}
+                  courseDate={upcomingCourse.course_date}
+                  courseTime={upcomingCourse.start_time.slice(0, 5)}
+                />
+              </div>
             </div>
 
             {/* Action Button */}

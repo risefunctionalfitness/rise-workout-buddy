@@ -101,7 +101,7 @@ export const CourseInvitationsPanel = ({
     console.log("User ID:", user.id)
 
     try {
-      // Load all pending invitations (including past courses)
+      // Load all invitations (pending, accepted, declined)
       const { data, error } = await supabase
         .from("course_invitations")
         .select(`
@@ -119,7 +119,7 @@ export const CourseInvitationsPanel = ({
           )
         `)
         .eq("recipient_id", user.id)
-        .eq("status", "pending")
+        .in("status", ["pending", "accepted", "declined"])
         .order("created_at", { ascending: false });
 
       console.log("Received invitations loaded:", data)
@@ -148,19 +148,25 @@ export const CourseInvitationsPanel = ({
         })
       );
 
-      // Sort: future courses first (ascending), then past courses (descending)
+      // Sort: pending first, then by date (future first, then past)
       const sortedInvitations = invitationsWithProfiles.sort((a, b) => {
         const aIsPast = isCourseInPast(a.courses.course_date, a.courses.end_time);
         const bIsPast = isCourseInPast(b.courses.course_date, b.courses.end_time);
+        const aIsPending = a.status === 'pending';
+        const bIsPending = b.status === 'pending';
         
-        if (aIsPast !== bIsPast) {
-          return aIsPast ? 1 : -1; // Future courses first
-        }
+        // Pending future invitations come first
+        if (aIsPending && !aIsPast && (!bIsPending || bIsPast)) return -1;
+        if (bIsPending && !bIsPast && (!aIsPending || aIsPast)) return 1;
+        
+        // Then non-pending future invitations
+        if (!aIsPast && bIsPast) return -1;
+        if (bIsPast && !aIsPast) return 1;
         
         // Same category: sort by date
         const dateA = new Date(a.courses.course_date).getTime();
         const dateB = new Date(b.courses.course_date).getTime();
-        return aIsPast ? dateB - dateA : dateA - dateB; // Past: newest first, Future: earliest first
+        return aIsPast ? dateB - dateA : dateA - dateB;
       });
 
       console.log("Received invitations with profiles:", sortedInvitations)
@@ -364,20 +370,31 @@ export const CourseInvitationsPanel = ({
     const courseDate = parseISO(invitation.courses.course_date);
     const formattedDate = format(courseDate, "EEEE, dd.MM.yyyy", { locale: de });
     const isPast = isCourseInPast(invitation.courses.course_date, invitation.courses.end_time);
+    const isAccepted = invitation.status === 'accepted';
+    const isDeclined = invitation.status === 'declined';
+    const isPending = invitation.status === 'pending';
 
     return (
-      <Card key={invitation.id} className={cn("p-4 border-none", isPast && "opacity-60")}>
+      <Card key={invitation.id} className={cn("p-4 border-none", (isPast || isAccepted || isDeclined) && "opacity-60")}>
         <div className="space-y-4">
           {/* Sender Info */}
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={invitation.sender_profile.avatar_url || undefined} />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm text-muted-foreground">Einladung von</p>
-              <p className="font-medium">{senderName}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={invitation.sender_profile.avatar_url || undefined} />
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm text-muted-foreground">Einladung von</p>
+                <p className="font-medium">{senderName}</p>
+              </div>
             </div>
+            {/* Status badge for non-pending invitations */}
+            {(isAccepted || isDeclined || (isPending && isPast)) && (
+              <div>
+                {getStatusBadge(invitation.status, isPending && isPast)}
+              </div>
+            )}
           </div>
 
           {/* Course Info - Clickable */}
@@ -402,8 +419,8 @@ export const CourseInvitationsPanel = ({
             </p>
           </div>
 
-          {/* Action Buttons or Expired Badge */}
-          {!isPast ? (
+          {/* Action Buttons only for pending future invitations */}
+          {isPending && !isPast && (
             <div className="flex gap-2">
               <Button
                 onClick={(e) => {
@@ -426,10 +443,6 @@ export const CourseInvitationsPanel = ({
                 <X className="h-4 w-4 mr-2" />
                 Ablehnen
               </Button>
-            </div>
-          ) : (
-            <div className="flex justify-end">
-              {getStatusBadge(invitation.status, true)}
             </div>
           )}
         </div>
@@ -514,11 +527,15 @@ export const CourseInvitationsPanel = ({
     }
   };
 
-  // Calculate active and expired counts for received invitations
-  const activeReceivedCount = receivedInvitations.filter(
-    inv => !isCourseInPast(inv.courses.course_date, inv.courses.end_time)
+  // Calculate counts for received invitations
+  const pendingFutureReceivedCount = receivedInvitations.filter(
+    inv => inv.status === 'pending' && !isCourseInPast(inv.courses.course_date, inv.courses.end_time)
   ).length;
-  const expiredReceivedCount = receivedInvitations.length - activeReceivedCount;
+  const acceptedReceivedCount = receivedInvitations.filter(inv => inv.status === 'accepted').length;
+  const declinedReceivedCount = receivedInvitations.filter(inv => inv.status === 'declined').length;
+  const expiredReceivedCount = receivedInvitations.filter(
+    inv => inv.status === 'pending' && isCourseInPast(inv.courses.course_date, inv.courses.end_time)
+  ).length;
 
   // Calculate active and expired counts for sent invitations
   const activeSentCount = sentInvitations.filter(
@@ -585,11 +602,13 @@ export const CourseInvitationsPanel = ({
               ) : (
                 <>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {activeReceivedCount > 0 
-                      ? `${activeReceivedCount} ausstehende Einladung${activeReceivedCount !== 1 ? 'en' : ''}`
-                      : 'Keine aktiven Einladungen'
+                    {pendingFutureReceivedCount > 0 
+                      ? `${pendingFutureReceivedCount} ausstehende Einladung${pendingFutureReceivedCount !== 1 ? 'en' : ''}`
+                      : 'Keine ausstehenden Einladungen'
                     }
-                    {expiredReceivedCount > 0 && ` (${expiredReceivedCount} abgelaufen)`}
+                    {acceptedReceivedCount > 0 && ` · ${acceptedReceivedCount} angenommen`}
+                    {declinedReceivedCount > 0 && ` · ${declinedReceivedCount} abgelehnt`}
+                    {expiredReceivedCount > 0 && ` · ${expiredReceivedCount} abgelaufen`}
                   </p>
                   <ScrollArea className="flex-1 -mx-6 px-6">
                     <div className="space-y-4">

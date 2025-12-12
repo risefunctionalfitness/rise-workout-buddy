@@ -9,6 +9,7 @@ import { Star, StarOff, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ProfileImageViewer } from "./ProfileImageViewer";
 
 interface Member {
   user_id: string;
@@ -41,6 +42,7 @@ export const MemberSelectorDialog = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null);
 
   useEffect(() => {
     const initDialog = async () => {
@@ -314,7 +316,13 @@ export const MemberSelectorDialog = ({
           checked={isSelected}
           onCheckedChange={() => toggleMember(member.user_id)}
         />
-        <Avatar className="h-10 w-10">
+        <Avatar 
+          className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => member.avatar_url && setSelectedProfile({
+            imageUrl: member.avatar_url,
+            displayName: displayName
+          })}
+        >
           <AvatarImage src={member.avatar_url || undefined} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
@@ -417,6 +425,13 @@ export const MemberSelectorDialog = ({
           </div>
         </div>
       </DialogContent>
+
+      <ProfileImageViewer
+        isOpen={!!selectedProfile}
+        onClose={() => setSelectedProfile(null)}
+        imageUrl={selectedProfile?.imageUrl || null}
+        displayName={selectedProfile?.displayName || ''}
+      />
     </Dialog>
   );
 };
