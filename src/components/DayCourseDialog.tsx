@@ -522,11 +522,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
               </div>
 
               {/* Minimum participants warning */}
-              {selectedCourse.registered_count < 3 && (
-                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
-                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                  <span>Ein Kurs mit weniger als 3 Teilnehmern findet nicht statt.</span>
-                </div>
+              {selectedCourse.registered_count < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
+                <p className="text-xs text-muted-foreground">
+                  Min. 3 Teilnehmer erforderlich
+                </p>
               )}
 
               {/* Participants */}

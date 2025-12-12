@@ -107,6 +107,21 @@ serve(async (req) => {
           continue
         }
 
+        console.log(`Marked course ${course.id} as cancelled due to low attendance`)
+
+        // Cancel all registrations for this course (so no credits are deducted and no leaderboard points given)
+        const { error: cancelRegError } = await supabase
+          .from('course_registrations')
+          .update({ status: 'cancelled' })
+          .eq('course_id', course.id)
+          .in('status', ['registered', 'waitlist'])
+
+        if (cancelRegError) {
+          console.error(`Error cancelling registrations for course ${course.id}:`, cancelRegError)
+        } else {
+          console.log(`Cancelled all registrations for course ${course.id}`)
+        }
+
         // Get participant details for notification
         const { data: registrations, error: regError } = await supabase
           .from('course_registrations')
