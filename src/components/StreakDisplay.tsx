@@ -53,16 +53,11 @@ export const StreakDisplay: React.FC<StreakDisplayProps> = ({ user }) => {
     return "text-red-500";
   };
 
-  const getStreakAnimation = (streak: number) => {
-    if (streak >= 8) return "animate-pulse";
-    return "";
-  };
-
   if (loading) {
     return (
       <div className="flex items-center gap-1 px-2 py-1">
-        <Flame className="h-5 w-5 text-muted-foreground" />
-        <span className="text-sm font-medium text-muted-foreground">-</span>
+        <span className="text-lg font-bold text-muted-foreground">-</span>
+        <Flame className="h-6 w-6 text-muted-foreground" />
       </div>
     );
   }
@@ -74,14 +69,14 @@ export const StreakDisplay: React.FC<StreakDisplayProps> = ({ user }) => {
       <button
         onClick={() => setDialogOpen(true)}
         className={cn(
-          "flex items-center gap-1 px-2 py-1 rounded-lg transition-all hover:bg-accent",
-          getStreakAnimation(currentStreak)
+          "flex items-center gap-1 px-3 py-2 rounded-xl transition-all hover:bg-accent",
+          currentStreak >= 8 && "animate-pulse"
         )}
       >
-        <Flame className={cn("h-5 w-5", getStreakColor(currentStreak))} />
-        <span className={cn("text-sm font-bold", getStreakColor(currentStreak))}>
+        <span className={cn("text-2xl font-black", getStreakColor(currentStreak))}>
           {currentStreak}
         </span>
+        <Flame className={cn("h-7 w-7", getStreakColor(currentStreak))} />
       </button>
 
       <StreakDialog
