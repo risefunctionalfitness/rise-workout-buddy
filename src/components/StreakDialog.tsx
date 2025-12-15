@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Flame, Snowflake, Check, Info, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Flame, Snowflake, Check, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Tooltip } from "recharts";
 import { format, startOfWeek, subWeeks, endOfWeek, getWeek } from "date-fns";
-import { de } from "date-fns/locale";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,9 +42,9 @@ interface WeeklyStats {
 }
 
 const goalOptions = [
-  { value: 1, icon: "🌱", title: "Konstant dabei", description: "Bleib am Ball - auch kleine Schritte zählen" },
-  { value: 2, icon: "💪", title: "Auf Kurs", description: "Der perfekte Rhythmus für stetige Fortschritte" },
-  { value: 3, icon: "🔥", title: "Vollgas", description: "Maximiere dein Potenzial mit regelmäßigem Training" },
+  { value: 1, icon: "🌱" },
+  { value: 2, icon: "💪" },
+  { value: 3, icon: "🔥" },
 ];
 
 export const StreakDialog: React.FC<StreakDialogProps> = ({
@@ -133,7 +130,6 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
 
     const currentGoal = streakData?.weekly_goal ?? 2;
 
-    // If increasing goal, show confirmation dialog
     if (newGoal > currentGoal && streakData?.current_streak && streakData.current_streak > 0) {
       setConfirmDialog({ open: true, newGoal });
       return;
@@ -157,7 +153,6 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
       }
 
       if (streakData) {
-        // Update existing
         const { error } = await supabase
           .from("weekly_streaks")
           .update(updateData)
@@ -165,7 +160,6 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
 
         if (error) throw error;
       } else {
-        // Create new
         const { error } = await supabase
           .from("weekly_streaks")
           .insert({
@@ -178,9 +172,7 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
 
       toast({
         title: resetStreak ? "Ziel geändert" : "Ziel gespeichert",
-        description: resetStreak 
-          ? "Deine Streak beginnt jetzt von vorne." 
-          : `Trainiere ${newGoal}x pro Woche für deine Streak.`,
+        description: `Trainiere ${newGoal}x pro Woche`,
       });
 
       onStreakUpdate();
@@ -207,39 +199,33 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-center">Deine Trainingsstreak</DialogTitle>
-          </DialogHeader>
-
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto p-6">
           <div className="space-y-6">
-            {/* Streak Status */}
-            <div className="text-center py-4">
-              <div className={cn("flex items-center justify-center gap-2 mb-2", getStreakColor(currentStreak))}>
-                <Flame className={cn("h-12 w-12", currentStreak >= 8 && "animate-pulse")} />
-                <span className="text-5xl font-bold">{currentStreak}</span>
+            {/* Streak Status - Hero Section */}
+            <div className="text-center pt-2">
+              <div className={cn("flex items-center justify-center gap-2", getStreakColor(currentStreak))}>
+                <span className="text-7xl font-black">{currentStreak}</span>
+                <Flame className={cn("h-14 w-14", currentStreak >= 8 && "animate-pulse")} />
               </div>
-              <p className="text-lg font-medium">
+              <p className="text-lg font-semibold mt-2">
                 {currentStreak === 0 
                   ? "Starte deine Streak!" 
                   : currentStreak === 1 
-                    ? "1 Woche am Stück!" 
-                    : `${currentStreak} Wochen am Stück!`}
+                    ? "Woche" 
+                    : "Wochen"}
               </p>
               {longestStreak > 0 && longestStreak > currentStreak && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Längste Streak: {longestStreak} Wochen
+                <p className="text-xs text-muted-foreground mt-1">
+                  Rekord: {longestStreak}
                 </p>
               )}
             </div>
 
-            {/* Weekly Progress */}
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">Diese Woche</span>
-                <span className="text-sm text-muted-foreground">
-                  {currentWeekTrainings}/{currentGoal} Trainings
-                </span>
+            {/* Weekly Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Diese Woche</span>
+                <span className="font-medium">{currentWeekTrainings}/{currentGoal}</span>
               </div>
               <div className="flex gap-2">
                 {Array.from({ length: currentGoal }, (_, i) => (
@@ -253,123 +239,94 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
                 ))}
               </div>
               {currentWeekTrainings >= currentGoal && (
-                <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-                  <Check className="h-4 w-4" />
-                  Wochenziel erreicht!
+                <p className="text-sm text-green-600 flex items-center justify-center gap-1">
+                  <Check className="h-4 w-4" /> Geschafft!
                 </p>
               )}
-            </Card>
+            </div>
 
-            {/* Goal Selection */}
-            <div>
-              <p className="text-sm text-muted-foreground mb-3 flex items-center gap-1">
-                <Info className="h-4 w-4" />
-                Baue dir eine Streak auf, indem du jede Woche dein Ziel erreichst!
-              </p>
-              <div className="grid gap-2">
+            {/* Goal Selection - Compact Tiles */}
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground text-center">Ziel pro Woche</p>
+              <div className="grid grid-cols-3 gap-3">
                 {goalOptions.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => handleGoalChange(option.value)}
                     disabled={loading}
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
+                      "flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all",
                       currentGoal === option.value
-                        ? "border-primary bg-primary/5 ring-2 ring-primary"
-                        : "border-border hover:border-primary/50"
+                        ? "border-primary bg-primary/10 scale-105"
+                        : "border-border hover:border-primary/50 hover:bg-accent"
                     )}
                   >
-                    <span className="text-2xl">{option.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{option.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {option.value}x/Woche
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{option.description}</p>
-                    </div>
-                    {currentGoal === option.value && (
-                      <Check className="h-5 w-5 text-primary" />
-                    )}
+                    <span className="text-2xl mb-1">{option.icon}</span>
+                    <span className="text-2xl font-bold">{option.value}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Streak Freezes */}
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">Streak auf Eis</span>
-                <span className="text-sm text-muted-foreground">{freezes}/2</span>
-              </div>
-              <div className="flex gap-2 mb-3">
+            {/* Streak Freezes - Prominent, no container */}
+            <div className="flex items-center justify-center gap-4 py-2">
+              <div className="flex gap-2">
                 {[0, 1].map((i) => (
                   <Snowflake
                     key={i}
                     className={cn(
-                      "h-6 w-6 transition-colors",
-                      i < freezes ? "text-blue-500" : "text-muted-foreground/30"
+                      "h-8 w-8 transition-colors",
+                      i < freezes ? "text-blue-500" : "text-muted-foreground/20"
                     )}
                   />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Freezes werden automatisch genutzt, wenn du eine Woche verpasst.
-              </p>
-              <div className="mt-3 text-xs text-muted-foreground space-y-1">
-                <p>So verdienst du Freezes:</p>
-                <p className="flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" /> 4 Wochen Streak = +1 Freeze
-                </p>
-                <p className="flex items-center gap-1">
-                  ⭐ Monats-Challenge abschließen = +1 Freeze
-                </p>
-              </div>
-            </Card>
+              <span className="text-sm text-muted-foreground">Streak auf Eis</span>
+            </div>
 
             {/* Activity Chart */}
             {weeklyStats.length > 0 && (
               <div>
-                <h4 className="font-medium mb-3 flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
                   <TrendingUp className="h-4 w-4" />
-                  Letzte 13 Wochen
-                </h4>
-                <div className="h-40">
+                  <span>Letzte 13 Wochen</span>
+                </div>
+                <div className="h-32">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={weeklyStats}>
                       <XAxis 
                         dataKey="week" 
-                        tick={{ fontSize: 10 }} 
-                        interval={2}
+                        tick={{ fontSize: 9 }} 
+                        interval={3}
                         stroke="hsl(var(--muted-foreground))"
                       />
                       <YAxis 
-                        tick={{ fontSize: 10 }}
+                        tick={{ fontSize: 9 }}
                         stroke="hsl(var(--muted-foreground))"
                         allowDecimals={false}
+                        width={20}
                       />
                       <Tooltip 
                         contentStyle={{ 
                           background: 'hsl(var(--background))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          fontSize: '12px'
                         }}
-                        formatter={(value: number) => [`${value} Trainings`, '']}
+                        formatter={(value: number) => [`${value}`, '']}
                       />
                       <ReferenceLine 
                         y={currentGoal} 
                         stroke="hsl(var(--primary))" 
                         strokeDasharray="5 5"
-                        label={{ value: `Ziel: ${currentGoal}`, fontSize: 10, fill: 'hsl(var(--primary))' }}
                       />
                       <Line
                         type="monotone"
                         dataKey="trainings"
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
-                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 3 }}
-                        activeDot={{ r: 5 }}
+                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 2 }}
+                        activeDot={{ r: 4 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -386,8 +343,7 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Ziel erhöhen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Wenn du dein Wochenziel erhöhst, beginnt deine Streak von vorne. 
-              Deine aktuelle Streak von {currentStreak} Wochen geht verloren.
+              Deine Streak von {currentStreak} Wochen wird zurückgesetzt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -398,7 +354,7 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
                 setConfirmDialog({ open: false, newGoal: 0 });
               }}
             >
-              Ziel erhöhen
+              Erhöhen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
