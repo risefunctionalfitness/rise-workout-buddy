@@ -41,11 +41,7 @@ interface WeeklyStats {
   weekNumber: number;
 }
 
-const goalOptions = [
-  { value: 1, icon: "🌱" },
-  { value: 2, icon: "💪" },
-  { value: 3, icon: "🔥" },
-];
+const goalOptions = [1, 2, 3];
 
 export const StreakDialog: React.FC<StreakDialogProps> = ({
   open,
@@ -249,39 +245,40 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground text-center">Ziel pro Woche</p>
               <div className="grid grid-cols-3 gap-3">
-                {goalOptions.map((option) => (
+                {goalOptions.map((goal) => (
                   <button
-                    key={option.value}
-                    onClick={() => handleGoalChange(option.value)}
+                    key={goal}
+                    onClick={() => handleGoalChange(goal)}
                     disabled={loading}
                     className={cn(
-                      "flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all",
-                      currentGoal === option.value
+                      "flex items-center justify-center py-4 rounded-xl border-2 transition-all",
+                      currentGoal === goal
                         ? "border-primary bg-primary/10 scale-105"
                         : "border-border hover:border-primary/50 hover:bg-accent"
                     )}
                   >
-                    <span className="text-2xl mb-1">{option.icon}</span>
-                    <span className="text-2xl font-bold">{option.value}</span>
+                    <span className="text-3xl font-bold">{goal}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Streak Freezes - Prominent, no container */}
-            <div className="flex items-center justify-center gap-4 py-2">
-              <div className="flex gap-2">
+            {/* Streak Freezes - Centered with text above */}
+            <div className="flex flex-col items-center py-4">
+              <span className="text-sm font-medium mb-3">Streak auf Eis</span>
+              <div className="flex gap-3 mb-2">
                 {[0, 1].map((i) => (
                   <Snowflake
                     key={i}
                     className={cn(
-                      "h-8 w-8 transition-colors",
+                      "h-10 w-10 transition-colors",
                       i < freezes ? "text-blue-500" : "text-muted-foreground/20"
                     )}
                   />
                 ))}
               </div>
-              <span className="text-sm text-muted-foreground">Streak auf Eis</span>
+              <p className="text-xs text-muted-foreground text-center">
+              </p>
             </div>
 
             {/* Activity Chart */}

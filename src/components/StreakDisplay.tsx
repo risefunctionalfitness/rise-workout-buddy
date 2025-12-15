@@ -73,7 +73,7 @@ export const StreakDisplay: React.FC<StreakDisplayProps> = ({ user }) => {
           currentStreak >= 8 && "animate-pulse"
         )}
       >
-        <span className={cn("text-2xl font-black", getStreakColor(currentStreak))}>
+        <span className="text-2xl text-foreground">
           {currentStreak}
         </span>
         <Flame className={cn("h-7 w-7", getStreakColor(currentStreak))} />
