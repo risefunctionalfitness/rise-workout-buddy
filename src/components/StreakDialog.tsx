@@ -278,6 +278,7 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
                 ))}
               </div>
               <p className="text-xs text-muted-foreground text-center">
+                4 Wochen Streak oder Monatschallenge = +1
               </p>
             </div>
 
