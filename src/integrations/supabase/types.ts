@@ -1360,6 +1360,7 @@ export type Database = {
           workout_type: string
         }[]
       }
+      run_weekly_streaks_now: { Args: never; Returns: undefined }
       update_leaderboard_entry: {
         Args: { session_date: string; user_id_param: string }
         Returns: undefined
