@@ -199,7 +199,7 @@ export const StreakDialog: React.FC<StreakDialogProps> = ({
           <div className="space-y-6">
             {/* Streak Status - Hero Section */}
             <div className="text-center pt-2">
-              <div className={cn("flex items-center justify-center gap-2", getStreakColor(currentStreak))}>
+              <div className="flex items-center justify-center gap-2 text-primary">
                 <span className="text-7xl font-black">{currentStreak}</span>
                 <Flame className={cn("h-14 w-14", currentStreak >= 8 && "animate-pulse")} />
               </div>
