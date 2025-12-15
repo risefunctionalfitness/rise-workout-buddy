@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Target, Check, Star } from "lucide-react";
+import { Target, Check, Star, Snowflake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BadgeImage } from "@/components/BadgeIconMapper";
@@ -234,6 +234,10 @@ export default function ChallengeDetail({
                 💪 {challenge.bonus_points} Bonus Punkte für das Leaderboard
               </p>
             )}
+            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+              <Snowflake className="h-4 w-4 text-blue-400" />
+              1 Bonus Freeze
+            </p>
           </div>
           
           <div>
