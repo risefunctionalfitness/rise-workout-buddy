@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LeaderboardPosition } from "@/components/LeaderboardPosition";
+import { StreakDisplay } from "@/components/StreakDisplay";
 
 interface TrainingPathHeaderProps {
   user: any;
@@ -20,8 +20,6 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
   onAdminClick,
 }) => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(true); // Default true for now
-
   useEffect(() => {
     const checkRole = async () => {
       if (!user?.id) return;
@@ -66,10 +64,9 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
         />
       </div>
 
-      {/* Rechts: Leaderboard Position + Admin Grid */}
+      {/* Rechts: Streak Display + Admin Grid */}
       <div className="flex items-center gap-3 flex-1 justify-end">
-        {showLeaderboard && user && <LeaderboardPosition user={user} />}
-
+        {user && <StreakDisplay user={user} />}
         {/* Admin-Zugang Button */}
         {isAdmin && (
           <Button

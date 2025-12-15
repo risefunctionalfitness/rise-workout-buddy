@@ -152,10 +152,34 @@ export default function ChallengeDetail({
           throw badgeError;
         }
 
+        // Award streak freeze if user has streak entry and < 2 freezes
+        const { data: streakData } = await supabase
+          .from("weekly_streaks")
+          .select("streak_freezes")
+          .eq("user_id", userData.user.id)
+          .maybeSingle();
+
+        let freezeAwarded = false;
+        if (streakData && streakData.streak_freezes < 2) {
+          const { error: freezeError } = await supabase
+            .from("weekly_streaks")
+            .update({ 
+              streak_freezes: streakData.streak_freezes + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq("user_id", userData.user.id);
+
+          if (!freezeError) {
+            freezeAwarded = true;
+          }
+        }
+
         setShowConfetti(true);
         toast({ 
           title: "Challenge abgeschlossen! 🎉", 
-          description: "Du hast ein neues Abzeichen erhalten!" 
+          description: freezeAwarded 
+            ? "Du hast ein Abzeichen + 1 Streak Freeze erhalten!" 
+            : "Du hast ein neues Abzeichen erhalten!" 
         });
         
         setTimeout(() => setShowConfetti(false), 3000);
