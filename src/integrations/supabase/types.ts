@@ -1208,6 +1208,48 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          freezes_used_total: number
+          id: string
+          last_week_completed: string | null
+          longest_streak: number
+          streak_freezes: number
+          streak_started_at: string | null
+          updated_at: string
+          user_id: string
+          weekly_goal: number
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          freezes_used_total?: number
+          id?: string
+          last_week_completed?: string | null
+          longest_streak?: number
+          streak_freezes?: number
+          streak_started_at?: string | null
+          updated_at?: string
+          user_id: string
+          weekly_goal?: number
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          freezes_used_total?: number
+          id?: string
+          last_week_completed?: string | null
+          longest_streak?: number
+          streak_freezes?: number
+          streak_started_at?: string | null
+          updated_at?: string
+          user_id?: string
+          weekly_goal?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

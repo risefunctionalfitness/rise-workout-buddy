@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.send-test-cancellation-webhook]
 verify_jwt = false
+
+[functions.calculate-weekly-streaks]
+verify_jwt = false
