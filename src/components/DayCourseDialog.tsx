@@ -113,7 +113,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           course_registrations(status)
         `)
         .eq('is_cancelled', false)
-        .eq('cancelled_due_to_low_attendance', false)
+        // Show cancelled_due_to_low_attendance courses too (with badge)
         .eq('course_date', date)
 
       // If today, only show courses that haven't ended
@@ -425,7 +425,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                       course.is_registered 
                         ? 'border-green-500 border-2' 
                         : ''
-                    }`}
+                    } ${course.cancelled_due_to_low_attendance ? 'opacity-60' : ''}`}
                     style={{
                       borderLeft: `8px solid ${course.color || '#f3f4f6'}`
                     }}
@@ -436,6 +436,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-medium truncate">{course.title}</h4>
+                            {course.cancelled_due_to_low_attendance && (
+                              <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Abgesagt
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
@@ -454,10 +460,16 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Badge className={`text-white ${badgeColor}`}>
-                            {course.registered_count}/{course.max_participants}
-                          </Badge>
-                          {course.waitlist_count > 0 && (
+                          {course.cancelled_due_to_low_attendance ? (
+                            <Badge className="text-white bg-muted-foreground">
+                              {course.registered_count}/{course.max_participants}
+                            </Badge>
+                          ) : (
+                            <Badge className={`text-white ${badgeColor}`}>
+                              {course.registered_count}/{course.max_participants}
+                            </Badge>
+                          )}
+                          {course.waitlist_count > 0 && !course.cancelled_due_to_low_attendance && (
                             <Badge style={{ backgroundColor: '#ff914d' }} className="text-white">
                               WL {course.waitlist_count}
                             </Badge>
@@ -652,7 +664,15 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
               {/* Action Buttons */}
               <div className="flex gap-2">
-                {selectedCourse.is_registered ? (
+                {selectedCourse.cancelled_due_to_low_attendance ? (
+                  <Button 
+                    disabled
+                    variant="secondary"
+                    className="flex-1"
+                  >
+                    Kurs wurde abgesagt
+                  </Button>
+                ) : selectedCourse.is_registered ? (
                   <Button 
                     variant="destructive" 
                     onClick={() => handleCancellation(selectedCourse.id)}

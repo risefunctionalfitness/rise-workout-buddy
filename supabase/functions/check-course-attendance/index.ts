@@ -96,7 +96,42 @@ serve(async (req) => {
       if (registeredCount < MINIMUM_PARTICIPANTS) {
         console.log(`Course ${course.title} has less than ${MINIMUM_PARTICIPANTS} participants - cancelling...`)
 
-        // Mark course as cancelled due to low attendance
+        // IMPORTANT: Get participant details BEFORE cancelling registrations
+        const { data: registrations, error: regError } = await supabase
+          .from('course_registrations')
+          .select('user_id')
+          .eq('course_id', course.id)
+          .in('status', ['registered', 'waitlist'])
+
+        if (regError) {
+          console.error(`Error fetching registrations for course ${course.id}:`, regError)
+        }
+
+        const userIds = registrations?.map(r => r.user_id) || []
+        
+        // Get user profiles with emails BEFORE cancelling
+        let participants: Array<{email: string | null, first_name: string, display_name: string | null}> = []
+        
+        if (userIds.length > 0) {
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, first_name, email')
+            .in('user_id', userIds)
+
+          if (profileError) {
+            console.error(`Error fetching profiles:`, profileError)
+          } else {
+            participants = profiles?.map(p => ({
+              email: p.email,
+              first_name: p.first_name || p.display_name || 'Mitglied',
+              display_name: p.display_name
+            })).filter(p => p.email) || []
+          }
+        }
+
+        console.log(`Found ${participants.length} participants with emails to notify`)
+
+        // NOW mark course as cancelled due to low attendance
         const { error: updateError } = await supabase
           .from('courses')
           .update({ cancelled_due_to_low_attendance: true })
@@ -109,7 +144,7 @@ serve(async (req) => {
 
         console.log(`Marked course ${course.id} as cancelled due to low attendance`)
 
-        // Cancel all registrations for this course (so no credits are deducted and no leaderboard points given)
+        // NOW cancel all registrations for this course
         const { error: cancelRegError } = await supabase
           .from('course_registrations')
           .update({ status: 'cancelled' })
@@ -121,37 +156,6 @@ serve(async (req) => {
         } else {
           console.log(`Cancelled all registrations for course ${course.id}`)
         }
-
-        // Get participant details for notification
-        const { data: registrations, error: regError } = await supabase
-          .from('course_registrations')
-          .select('user_id')
-          .eq('course_id', course.id)
-          .in('status', ['registered', 'waitlist'])
-
-        if (regError) {
-          console.error(`Error fetching registrations for course ${course.id}:`, regError)
-          continue
-        }
-
-        const userIds = registrations?.map(r => r.user_id) || []
-        
-        // Get user profiles with emails
-        const { data: profiles, error: profileError } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, first_name, email')
-          .in('user_id', userIds)
-
-        if (profileError) {
-          console.error(`Error fetching profiles:`, profileError)
-          continue
-        }
-
-        const participants = profiles?.map(p => ({
-          email: p.email,
-          first_name: p.first_name || p.display_name || 'Mitglied',
-          display_name: p.display_name
-        })).filter(p => p.email) || []
 
         // Send webhook to Make.com if configured
         if (webhookUrl && participants.length > 0) {
