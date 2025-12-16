@@ -126,8 +126,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
             course_registrations(status)
           `)
           .eq('is_cancelled', false)
-          .eq('cancelled_due_to_low_attendance', false)
-          // Only future courses by date and time
+          // Show cancelled_due_to_low_attendance courses too (with badge)
           .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .order('course_date', { ascending: true })
           .order('start_time', { ascending: true }),
@@ -521,7 +520,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                         course.is_registered 
                           ? 'border-green-500 border-2' 
                           : ''
-                      }`}
+                      } ${course.cancelled_due_to_low_attendance ? 'opacity-60' : ''}`}
                       style={{
                         borderLeft: `8px solid ${course.color || '#f3f4f6'}`
                       }}
@@ -532,6 +531,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
                               <h4 className="font-medium truncate">{course.title}</h4>
+                              {course.cancelled_due_to_low_attendance && (
+                                <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Abgesagt
+                                </Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
@@ -553,7 +558,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                             {(() => {
                               const percentage = (course.registered_count / course.max_participants) * 100;
                               let badgeColor = "bg-green-500";
-                              if (percentage >= 100) badgeColor = "bg-red-500";
+                              if (course.cancelled_due_to_low_attendance) badgeColor = "bg-muted-foreground";
+                              else if (percentage >= 100) badgeColor = "bg-red-500";
                               else if (percentage >= 75) badgeColor = "bg-[#edb408]";
                               
                               return (
@@ -562,7 +568,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                 </Badge>
                               );
                             })()}
-                            {course.waitlist_count > 0 && (
+                            {course.waitlist_count > 0 && !course.cancelled_due_to_low_attendance && (
                               <Badge style={{ backgroundColor: '#ff914d' }} className="text-white">
                                 WL {course.waitlist_count}
                               </Badge>
@@ -755,7 +761,15 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
               {/* Action Buttons */}
               <div className="flex gap-2">
-                {selectedCourse.is_registered ? (
+                {selectedCourse.cancelled_due_to_low_attendance ? (
+                  <Button 
+                    disabled
+                    variant="secondary"
+                    className="flex-1"
+                  >
+                    Kurs wurde abgesagt
+                  </Button>
+                ) : selectedCourse.is_registered ? (
                   <Button 
                     variant="destructive" 
                     onClick={() => handleCancellation(selectedCourse.id)}

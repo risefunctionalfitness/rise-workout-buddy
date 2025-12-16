@@ -3,7 +3,7 @@ import { User } from "@supabase/supabase-js"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, MapPin } from "lucide-react"
+import { Clock, MapPin, AlertTriangle } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { format, parseISO, isSameDay } from "date-fns"
 import { de } from "date-fns/locale"
@@ -68,7 +68,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
             course_registrations(status)
           `)
           .eq('is_cancelled', false)
-          .eq('cancelled_due_to_low_attendance', false)
+          // Show cancelled_due_to_low_attendance courses too (with badge)
           .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
           .lte('course_date', endDate)
           .order('course_date', { ascending: true })
@@ -194,7 +194,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                     course.is_registered 
                       ? 'ring-2 ring-green-500' 
                       : ''
-                  }`}
+                  } ${course.cancelled_due_to_low_attendance ? 'opacity-60' : ''}`}
                   style={{
                     borderLeftColor: course.color || '#f3f4f6'
                   }}
@@ -205,6 +205,12 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
                           <h4 className="font-medium truncate">{course.title}</h4>
+                          {course.cancelled_due_to_low_attendance && (
+                            <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Abgesagt
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
@@ -226,7 +232,8 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                         {(() => {
                           const percentage = (course.registered_count / course.max_participants) * 100;
                           let badgeColor = "bg-green-500";
-                          if (percentage >= 100) badgeColor = "bg-red-500";
+                          if (course.cancelled_due_to_low_attendance) badgeColor = "bg-muted-foreground";
+                          else if (percentage >= 100) badgeColor = "bg-red-500";
                           else if (percentage >= 75) badgeColor = "bg-[#edb408]";
                           
                           return (
@@ -235,7 +242,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                             </Badge>
                           );
                         })()}
-                         {course.waitlist_count > 0 && (
+                         {course.waitlist_count > 0 && !course.cancelled_due_to_low_attendance && (
                            <span className="text-xs" style={{ color: '#ff914d' }}>
                              {course.waitlist_count} Warteliste
                            </span>

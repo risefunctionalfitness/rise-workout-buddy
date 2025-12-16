@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.calculate-weekly-streaks]
 verify_jwt = false
+
+[functions.backfill-weekly-streaks]
+verify_jwt = false

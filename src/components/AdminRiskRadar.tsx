@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ArrowUp, ArrowDown, Minus, Eye, Mail, RefreshCw, X } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus, Eye, Mail, RefreshCw, X, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
@@ -65,6 +65,7 @@ export const AdminRiskRadar = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isBackfillingStreaks, setIsBackfillingStreaks] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{ userId: string; displayName: string } | null>(null);
   const [selectedMemberDetails, setSelectedMemberDetails] = useState<{
     userId: string;
@@ -205,6 +206,29 @@ export const AdminRiskRadar = () => {
     }
   };
 
+  const handleBackfillStreaks = async () => {
+    setIsBackfillingStreaks(true);
+    try {
+      toast.info('Streaks werden neu berechnet...');
+      
+      const { data, error } = await supabase.functions.invoke('backfill-weekly-streaks');
+      
+      if (error) {
+        console.error('Error backfilling streaks:', error);
+        toast.error('Fehler beim Berechnen der Streaks');
+        return;
+      }
+      
+      console.log('Backfill result:', data);
+      toast.success(`Streaks erfolgreich berechnet: ${data?.results?.filter((r: any) => r.success).length || 0} Mitglieder aktualisiert`);
+    } catch (error) {
+      console.error('Error backfilling streaks:', error);
+      toast.error('Fehler beim Berechnen der Streaks');
+    } finally {
+      setIsBackfillingStreaks(false);
+    }
+  };
+
   // Filter members based on selected categories
   const filteredNeverActiveMembers = allNeverActiveMembers?.filter(m => {
     if (!selectedNeverActiveCategory) return false;
@@ -251,14 +275,25 @@ export const AdminRiskRadar = () => {
           <h1 className="text-3xl font-bold">Risk Radar</h1>
           <p className="text-sm text-muted-foreground mt-1">Mitglieder-Aktivität und Engagement-Tracking</p>
         </div>
-        <Button 
-          onClick={handleRefreshData} 
-          disabled={isRefreshing}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Wird aktualisiert...' : 'Daten aktualisieren'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleBackfillStreaks} 
+            disabled={isBackfillingStreaks}
+            variant="outline"
+            className="gap-2"
+          >
+            <Flame className={`h-4 w-4 ${isBackfillingStreaks ? 'animate-pulse' : ''}`} />
+            {isBackfillingStreaks ? 'Berechne Streaks...' : 'Streaks neu berechnen'}
+          </Button>
+          <Button 
+            onClick={handleRefreshData} 
+            disabled={isRefreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Wird aktualisiert...' : 'Daten aktualisieren'}
+          </Button>
+        </div>
       </div>
 
       {/* ===== NEVER ACTIVE DASHBOARD ===== */}
