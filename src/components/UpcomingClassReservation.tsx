@@ -252,62 +252,58 @@ export const UpcomingClassReservation = ({
 
   return (
     <>
-      <div className="space-y-2">
-        <Carousel setApi={setCarouselApi} className="w-full">
-          <CarouselContent>
-            {upcomingCourses.map((course) => {
-              const courseDateTime = new Date(
-                `${course.course_date}T${course.start_time}`
-              );
-              
-              return (
-                <CarouselItem key={course.id}>
-                  <button
-                    onClick={() => handleCardClick(course)}
-                    className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-auto hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer w-full border-l-8"
-                    style={{
-                      borderLeftColor: course.color || '#f3f4f6'
-                    }}
-                  >
-                    <Calendar className="absolute top-3 right-3 h-4 w-4 text-gray-600 dark:text-gray-400" />
-                    
-                    <div className="flex flex-col items-center justify-center space-y-2 text-center">
-                      <span className="text-sm text-muted-foreground">
-                        {upcomingCourses.indexOf(course) === 0 ? 'Nächste Reservierung' : 'Reservierung'}
+      <Carousel setApi={setCarouselApi} className="w-full">
+        <CarouselContent>
+          {upcomingCourses.map((course, index) => {
+            const courseDateTime = new Date(
+              `${course.course_date}T${course.start_time}`
+            );
+            
+            return (
+              <CarouselItem key={course.id}>
+                <button
+                  onClick={() => handleCardClick(course)}
+                  className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 pb-6 h-auto hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer w-full border-l-8"
+                  style={{
+                    borderLeftColor: course.color || '#f3f4f6'
+                  }}
+                >
+                  <Calendar className="absolute top-3 right-3 h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  
+                  <div className="flex flex-col items-center justify-center space-y-2 text-center">
+                    <span className="text-sm text-muted-foreground">
+                      {index === 0 ? 'Nächste Reservierung' : 'Reservierung'}
+                    </span>
+                    <span className="text-base font-semibold">{course.title}</span>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        {format(courseDateTime, "EEEE HH:mm", { locale: de })} -{" "}
+                        {course.end_time?.slice(0, 5)}
                       </span>
-                      <span className="text-base font-semibold">{course.title}</span>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>
-                          {format(courseDateTime, "EEEE HH:mm", { locale: de })} -{" "}
-                          {course.end_time?.slice(0, 5)}
-                        </span>
-                      </div>
                     </div>
-                  </button>
-                </CarouselItem>
-              );
-            })}
-          </CarouselContent>
-        </Carousel>
+                  </div>
 
-        {/* Dot Navigation */}
-        {upcomingCourses.length > 1 && (
-          <div className="flex justify-center gap-1.5 pt-1">
-            {upcomingCourses.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => carouselApi?.scrollTo(index)}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-colors",
-                  index === currentSlide ? "bg-gray-600" : "bg-gray-300"
-                )}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+                  {/* Dots inside card */}
+                  {upcomingCourses.length > 1 && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                      {upcomingCourses.map((_, dotIndex) => (
+                        <span
+                          key={dotIndex}
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full transition-colors",
+                            dotIndex === currentSlide ? "bg-gray-600" : "bg-gray-300"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </button>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+      </Carousel>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-md">
