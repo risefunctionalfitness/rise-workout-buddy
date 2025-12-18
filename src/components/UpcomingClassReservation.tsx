@@ -1,4 +1,4 @@
-import { Calendar, Clock, MapPin, AlertTriangle } from "lucide-react";
+import { Calendar, Clock, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
@@ -17,6 +17,13 @@ import { toast } from "sonner";
 import { ProfileImageViewer } from "./ProfileImageViewer";
 import { MembershipBadge } from "./MembershipBadge";
 import { CourseInvitationButton } from "./CourseInvitationButton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 
 interface UpcomingClassReservationProps {
   user: any;
@@ -25,30 +32,46 @@ interface UpcomingClassReservationProps {
 export const UpcomingClassReservation = ({
   user,
 }: UpcomingClassReservationProps) => {
-  const [upcomingCourse, setUpcomingCourse] = useState<any>(null);
+  const [upcomingCourses, setUpcomingCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
   const [isTrainer, setIsTrainer] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    
+    const onSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+    
+    carouselApi.on("select", onSelect);
+    onSelect(); // Set initial state
+    
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi]);
 
   useEffect(() => {
     if (user?.id) {
-      loadUpcomingReservation();
+      loadUpcomingReservations();
       loadUserInfo();
       
-      // Handle custom event from course booking/cancellation
       const handleCourseChange = () => {
-        loadUpcomingReservation();
-        if (showDialog && upcomingCourse) {
-          loadParticipants();
+        loadUpcomingReservations();
+        if (showDialog && selectedCourse) {
+          loadParticipants(selectedCourse.id);
         }
       };
       
       window.addEventListener('courseRegistrationChanged', handleCourseChange);
       
-      // Setup realtime updates and store cleanup function
       const cleanup = setupRealtimeUpdates();
       
       return () => {
@@ -56,7 +79,7 @@ export const UpcomingClassReservation = ({
         cleanup();
       };
     }
-  }, [user?.id, showDialog, upcomingCourse]);
+  }, [user?.id, showDialog, selectedCourse]);
 
   const loadUserInfo = async () => {
     try {
@@ -75,7 +98,7 @@ export const UpcomingClassReservation = ({
     }
   };
 
-  const loadUpcomingReservation = async () => {
+  const loadUpcomingReservations = async () => {
     if (!user?.id) return;
 
     try {
@@ -95,35 +118,33 @@ export const UpcomingClassReservation = ({
       if (error) throw error;
 
       // Filter out courses that have already started today
-      const upcomingCourses = data?.filter(course => {
+      const filteredCourses = data?.filter(course => {
         if (course.course_date > today) return true;
         if (course.course_date === today && course.start_time > currentTime) return true;
         return false;
-      });
+      }) || [];
 
-      setUpcomingCourse(upcomingCourses?.[0] || null);
+      setUpcomingCourses(filteredCourses);
     } catch (error) {
-      console.error("Error loading upcoming reservation:", error);
+      console.error("Error loading upcoming reservations:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadParticipants = async () => {
-    if (!upcomingCourse?.id) return;
+  const loadParticipants = async (courseId: string) => {
+    if (!courseId) return;
 
     try {
-      // First load registrations
       const { data: registrations, error: regError } = await supabase
         .from("course_registrations")
         .select("status, user_id, registered_at")
-        .eq("course_id", upcomingCourse.id)
+        .eq("course_id", courseId)
         .in("status", ["registered", "waitlist"])
         .order("registered_at", { ascending: true });
 
       if (regError) throw regError;
 
-      // Then load profiles separately
       const userIds = registrations?.map(r => r.user_id) || [];
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
@@ -132,7 +153,6 @@ export const UpcomingClassReservation = ({
 
       if (profileError) throw profileError;
 
-      // Merge registrations with profiles
       const participantsWithProfiles = registrations?.map(reg => ({
         ...reg,
         profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: "Unbekannt" }
@@ -155,7 +175,7 @@ export const UpcomingClassReservation = ({
           table: "course_registrations",
           filter: `user_id=eq.${user.id}`,
         },
-        () => loadUpcomingReservation()
+        () => loadUpcomingReservations()
       )
       .subscribe();
 
@@ -164,27 +184,27 @@ export const UpcomingClassReservation = ({
     };
   };
 
-  const canCancelCourse = () => {
-    if (!upcomingCourse) return false;
+  const canCancelCourse = (course: any) => {
+    if (!course) return false;
     
     const courseDateTime = new Date(
-      `${upcomingCourse.course_date}T${upcomingCourse.start_time}`
+      `${course.course_date}T${course.start_time}`
     );
     const cancellationDeadline = new Date(
       courseDateTime.getTime() -
-        upcomingCourse.cancellation_deadline_minutes * 60000
+        course.cancellation_deadline_minutes * 60000
     );
     return new Date() < cancellationDeadline;
   };
 
   const handleCancel = async () => {
-    if (!upcomingCourse || !canCancelCourse()) return;
+    if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
 
     try {
       const { error } = await supabase
         .from("course_registrations")
         .update({ status: "cancelled" })
-        .eq("course_id", upcomingCourse.id)
+        .eq("course_id", selectedCourse.id)
         .eq("user_id", user.id);
 
       if (error) throw error;
@@ -193,18 +213,17 @@ export const UpcomingClassReservation = ({
 
       window.dispatchEvent(new CustomEvent("courseRegistrationChanged"));
       setShowDialog(false);
-      loadUpcomingReservation();
+      loadUpcomingReservations();
     } catch (error) {
       console.error("Error cancelling registration:", error);
       toast.error("Fehler bei der Stornierung");
     }
   };
 
-  const handleCardClick = () => {
-    if (upcomingCourse) {
-      loadParticipants();
-      setShowDialog(true);
-    }
+  const handleCardClick = (course: any) => {
+    setSelectedCourse(course);
+    loadParticipants(course.id);
+    setShowDialog(true);
   };
 
   if (isLoading) {
@@ -217,7 +236,7 @@ export const UpcomingClassReservation = ({
     );
   }
 
-  if (!upcomingCourse) {
+  if (upcomingCourses.length === 0) {
     return (
       <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-auto">
         <div className="flex items-center gap-2 justify-center text-muted-foreground">
@@ -228,168 +247,198 @@ export const UpcomingClassReservation = ({
     );
   }
 
-  const courseDateTime = new Date(
-    `${upcomingCourse.course_date}T${upcomingCourse.start_time}`
-  );
-
   const registeredCount = participants.filter(p => p.status === 'registered').length;
   const waitlistCount = participants.filter(p => p.status === 'waitlist').length;
 
   return (
     <>
-      <button
-        onClick={handleCardClick}
-        className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-auto hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer w-full border-l-8"
-        style={{
-          borderLeftColor: upcomingCourse.color || '#f3f4f6'
-        }}
-      >
-        <Calendar className="absolute top-3 right-3 h-4 w-4 text-gray-600 dark:text-gray-400" />
-        
-        <div className="flex flex-col items-center justify-center space-y-2 text-center">
-          <span className="text-sm text-muted-foreground">
-            Nächste Reservierung
-          </span>
-          <span className="text-base font-semibold">{upcomingCourse.title}</span>
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>
-              {format(courseDateTime, "EEEE HH:mm", { locale: de })} -{" "}
-              {upcomingCourse.end_time?.slice(0, 5)}
-            </span>
+      <div className="space-y-2">
+        <Carousel setApi={setCarouselApi} className="w-full">
+          <CarouselContent>
+            {upcomingCourses.map((course) => {
+              const courseDateTime = new Date(
+                `${course.course_date}T${course.start_time}`
+              );
+              
+              return (
+                <CarouselItem key={course.id}>
+                  <button
+                    onClick={() => handleCardClick(course)}
+                    className="relative bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 h-auto hover:bg-gray-150 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] cursor-pointer w-full border-l-8"
+                    style={{
+                      borderLeftColor: course.color || '#f3f4f6'
+                    }}
+                  >
+                    <Calendar className="absolute top-3 right-3 h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    
+                    <div className="flex flex-col items-center justify-center space-y-2 text-center">
+                      <span className="text-sm text-muted-foreground">
+                        {upcomingCourses.indexOf(course) === 0 ? 'Nächste Reservierung' : 'Reservierung'}
+                      </span>
+                      <span className="text-base font-semibold">{course.title}</span>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {format(courseDateTime, "EEEE HH:mm", { locale: de })} -{" "}
+                          {course.end_time?.slice(0, 5)}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+        </Carousel>
+
+        {/* Dot Navigation */}
+        {upcomingCourses.length > 1 && (
+          <div className="flex justify-center gap-1.5 pt-1">
+            {upcomingCourses.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => carouselApi?.scrollTo(index)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-colors",
+                  index === currentSlide ? "bg-gray-600" : "bg-gray-300"
+                )}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
-        </div>
-      </button>
+        )}
+      </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{upcomingCourse.title}</DialogTitle>
+            <DialogTitle>{selectedCourse?.title}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Course Details */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4" />
-                {format(parseISO(upcomingCourse.course_date), 'EEEE, dd.MM.yyyy', { locale: de })}
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4" />
-                {upcomingCourse.start_time.slice(0, 5)} - {upcomingCourse.end_time.slice(0, 5)}
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="h-4 w-4" />
-                Trainer: {upcomingCourse.trainer}
-              </div>
-              {upcomingCourse.strength_exercise && (
+          {selectedCourse && (
+            <div className="space-y-4">
+              {/* Course Details */}
+              <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
-                  <Badge variant="outline">
-                    Kraftteil: {upcomingCourse.strength_exercise}
-                  </Badge>
+                  <Calendar className="h-4 w-4" />
+                  {format(parseISO(selectedCourse.course_date), 'EEEE, dd.MM.yyyy', { locale: de })}
                 </div>
-              )}
-            </div>
-
-            {/* Minimum participants warning */}
-            {registeredCount < 3 && (
-              <p className="text-xs text-muted-foreground">
-                Min. 3 Teilnehmer erforderlich
-              </p>
-            )}
-
-            {/* Participants */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm text-muted-foreground">
-                  Teilnehmer ({registeredCount}/{upcomingCourse.max_participants})
-                </h4>
-                <CourseInvitationButton
-                  courseId={upcomingCourse.id}
-                  courseName={upcomingCourse.title}
-                  courseDate={upcomingCourse.course_date}
-                  courseTime={upcomingCourse.start_time.slice(0, 5)}
-                />
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {participants.filter(p => p.status === 'registered').length === 0 ? (
-                  <Card>
-                    <CardContent className="p-6 text-center">
-                      <p className="text-muted-foreground">Keine Anmeldungen</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-3">
-                    {participants
-                      .filter(p => p.status === 'registered')
-                      .map((participant, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
-                                imageUrl: participant.profiles.avatar_url, 
-                                displayName: participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt' 
-                              })}
-                            >
-                              {participant.profiles?.avatar_url ? (
-                                <img 
-                                  src={participant.profiles.avatar_url} 
-                                  alt="Avatar" 
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <span className="text-xs font-medium">
-                                  {participant.profiles?.display_name?.charAt(0) || '?'}
-                                </span>
-                              )}
-                            </div>
-                            <span className="font-medium">
-                              {(isTrainer || isAdmin) 
-                                ? participant.profiles?.display_name || 'Unbekannt'
-                                : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
-                              }
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              Angemeldet
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {(isTrainer || isAdmin) && (
-                              <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4" />
+                  {selectedCourse.start_time.slice(0, 5)} - {selectedCourse.end_time.slice(0, 5)}
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4" />
+                  Trainer: {selectedCourse.trainer}
+                </div>
+                {selectedCourse.strength_exercise && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Badge variant="outline">
+                      Kraftteil: {selectedCourse.strength_exercise}
+                    </Badge>
                   </div>
                 )}
               </div>
-              
-              {waitlistCount > 0 && (
-                <div className="space-y-3">
-                  <h5 className="font-medium text-sm text-muted-foreground">
-                    Warteliste ({waitlistCount})
-                  </h5>
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      {waitlistCount} Person(en) auf der Warteliste
-                    </p>
-                  </div>
-                </div>
+
+              {/* Minimum participants warning */}
+              {registeredCount < 3 && (
+                <p className="text-xs text-muted-foreground">
+                  Min. 3 Teilnehmer erforderlich
+                </p>
               )}
+
+              {/* Participants */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm text-muted-foreground">
+                    Teilnehmer ({registeredCount}/{selectedCourse.max_participants})
+                  </h4>
+                  <CourseInvitationButton
+                    courseId={selectedCourse.id}
+                    courseName={selectedCourse.title}
+                    courseDate={selectedCourse.course_date}
+                    courseTime={selectedCourse.start_time.slice(0, 5)}
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {participants.filter(p => p.status === 'registered').length === 0 ? (
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <p className="text-muted-foreground">Keine Anmeldungen</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-3">
+                      {participants
+                        .filter(p => p.status === 'registered')
+                        .map((participant, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
+                                  imageUrl: participant.profiles.avatar_url, 
+                                  displayName: participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt' 
+                                })}
+                              >
+                                {participant.profiles?.avatar_url ? (
+                                  <img 
+                                    src={participant.profiles.avatar_url} 
+                                    alt="Avatar" 
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-xs font-medium">
+                                    {participant.profiles?.display_name?.charAt(0) || '?'}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="font-medium">
+                                {(isTrainer || isAdmin) 
+                                  ? participant.profiles?.display_name || 'Unbekannt'
+                                  : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
+                                }
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Angemeldet
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {(isTrainer || isAdmin) && (
+                                <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+                
+                {waitlistCount > 0 && (
+                  <div className="space-y-3">
+                    <h5 className="font-medium text-sm text-muted-foreground">
+                      Warteliste ({waitlistCount})
+                    </h5>
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        {waitlistCount} Person(en) auf der Warteliste
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Button */}
+              <Button 
+                variant="destructive" 
+                onClick={handleCancel}
+                disabled={!canCancelCourse(selectedCourse)}
+                className="w-full"
+              >
+                {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
+              </Button>
             </div>
-
-
-            {/* Action Button */}
-            <Button 
-              variant="destructive" 
-              onClick={handleCancel}
-              disabled={!canCancelCourse()}
-              className="w-full"
-            >
-              {canCancelCourse() ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
-            </Button>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 
