@@ -25,6 +25,8 @@ import { AuthKeeper } from "@/components/AuthKeeper";
 import RepsCounter from "./pages/RepsCounter";
 import SimpleRepsCounter from "./pages/SimpleRepsCounter";
 import ProRepsCounter from "./pages/ProRepsCounter";
+import EmbedKursplan from "./pages/EmbedKursplan";
+import EmbedWellpass from "./pages/EmbedWellpass";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,8 @@ const App = () => (
               <Route path="/rep-counter/pro" element={<ProRepsCounter />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/workouts" element={<WorkoutManagement />} />
+              <Route path="/embed/kursplan" element={<EmbedKursplan />} />
+              <Route path="/embed/wellpass" element={<EmbedWellpass />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

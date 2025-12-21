@@ -340,6 +340,50 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_registrations: {
+        Row: {
+          booking_type: string
+          course_id: string
+          created_at: string
+          guest_email: string
+          guest_name: string
+          id: string
+          payment_status: string
+          status: string
+          ticket_id: string
+        }
+        Insert: {
+          booking_type: string
+          course_id: string
+          created_at?: string
+          guest_email: string
+          guest_name: string
+          id?: string
+          payment_status?: string
+          status?: string
+          ticket_id: string
+        }
+        Update: {
+          booking_type?: string
+          course_id?: string
+          created_at?: string
+          guest_email?: string
+          guest_name?: string
+          id?: string
+          payment_status?: string
+          status?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_registrations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_access_codes: {
         Row: {
           code: string
@@ -1247,6 +1291,45 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weekly_goal?: number
+        }
+        Relationships: []
+      }
+      wellpass_registrations: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string | null
+          wellpass_member_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string | null
+          wellpass_member_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string | null
+          wellpass_member_id?: string | null
         }
         Relationships: []
       }

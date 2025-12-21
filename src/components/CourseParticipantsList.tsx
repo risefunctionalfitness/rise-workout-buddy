@@ -30,6 +30,8 @@ interface Participant {
   membership_type: string
   avatar_url?: string
   nickname?: string
+  isGuest?: boolean
+  bookingType?: 'drop_in' | 'probetraining'
 }
 
 interface CourseParticipantsListProps {
@@ -67,13 +69,17 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
 
       if (regError) throw regError
 
-      if (!registrations || registrations.length === 0) {
-        setParticipants([])
-        return
-      }
+      // Get guest registrations
+      const { data: guestRegistrations, error: guestError } = await supabase
+        .from('guest_registrations')
+        .select('id, guest_name, guest_email, booking_type, status, created_at')
+        .eq('course_id', course.id)
+        .eq('status', 'registered')
 
-      // Get profiles for these users
-      const userIds = registrations.map(r => r.user_id)
+      if (guestError) console.error('Error loading guest registrations:', guestError)
+
+      // Get profiles for regular users
+      const userIds = registrations?.map(r => r.user_id) || []
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('user_id, display_name, nickname, membership_type, avatar_url')
@@ -81,8 +87,8 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
 
       if (profileError) throw profileError
 
-      // Combine data
-      const participantsData = registrations.map(reg => {
+      // Combine regular participants
+      const regularParticipants = registrations?.map(reg => {
         const profile = profiles?.find(p => p.user_id === reg.user_id)
         return {
           id: reg.id,
@@ -92,11 +98,24 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           display_name: profile?.nickname || profile?.display_name || 'Unbekannt',
           membership_type: profile?.membership_type || 'Member',
           avatar_url: profile?.avatar_url,
-          nickname: profile?.nickname
+          nickname: profile?.nickname,
+          isGuest: false
         }
-      })
+      }) || []
 
-      setParticipants(participantsData)
+      // Add guest participants
+      const guestParticipants = guestRegistrations?.map(guest => ({
+        id: guest.id,
+        user_id: guest.id,
+        status: 'registered',
+        registered_at: guest.created_at,
+        display_name: guest.guest_name,
+        membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+        isGuest: true,
+        bookingType: guest.booking_type as 'drop_in' | 'probetraining'
+      })) || []
+
+      setParticipants([...regularParticipants, ...guestParticipants])
     } catch (error) {
       console.error('Error loading participants:', error)
       toast.error('Fehler beim Laden der Teilnehmer')
