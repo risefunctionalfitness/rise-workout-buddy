@@ -95,3 +95,9 @@ verify_jwt = false
 
 [functions.backfill-weekly-streaks]
 verify_jwt = false
+
+[functions.book-guest-training]
+verify_jwt = false
+
+[functions.register-wellpass]
+verify_jwt = false
