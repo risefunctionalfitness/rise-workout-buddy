@@ -11,7 +11,6 @@ interface WellpassRequest {
   lastName: string;
   email: string;
   accessCode: string;
-  wellpassMemberId?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,9 +31,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    const { firstName, lastName, email, accessCode, wellpassMemberId }: WellpassRequest = await req.json();
+    const { firstName, lastName, email, accessCode }: WellpassRequest = await req.json();
 
-    console.log('Processing Wellpass registration:', { firstName, lastName, email, wellpassMemberId });
+    console.log('Processing Wellpass registration:', { firstName, lastName, email });
 
     // Validate inputs
     if (!firstName || !lastName || !email || !accessCode) {
@@ -123,7 +122,6 @@ const handler = async (req: Request): Promise<Response> => {
         first_name: firstName,
         last_name: lastName,
         email: email,
-        wellpass_member_id: wellpassMemberId || null,
         user_id: newUser.user!.id,
         status: 'pending' // For admin notification badge
       });
@@ -135,8 +133,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Wellpass registration created successfully');
 
-    // Send welcome email via Make.com webhook (optional)
-    const webhookUrl = Deno.env.get('MAKE_GUEST_TICKET_WEBHOOK_URL');
+    // Send welcome email via Make.com webhook
+    const webhookUrl = Deno.env.get('MAKE_WELLPASS_WELCOME_WEBHOOK_URL');
     
     if (webhookUrl) {
       try {
@@ -146,21 +144,25 @@ const handler = async (req: Request): Promise<Response> => {
             firstName,
             lastName,
             email,
-            accessCode
+            accessCode,
+            displayName: firstName
           },
+          membership_type: 'Wellpass',
           timestamp: new Date().toISOString()
         };
 
-        await fetch(webhookUrl, {
+        const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(webhookPayload)
         });
 
-        console.log('Welcome email webhook sent');
+        console.log('Welcome email webhook sent, status:', webhookResponse.status);
       } catch (webhookError) {
         console.error('Error sending welcome webhook:', webhookError);
       }
+    } else {
+      console.log('No MAKE_WELLPASS_WELCOME_WEBHOOK_URL configured, skipping welcome email');
     }
 
     return new Response(

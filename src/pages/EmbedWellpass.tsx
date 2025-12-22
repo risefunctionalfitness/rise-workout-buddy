@@ -13,7 +13,6 @@ export default function EmbedWellpass() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
-  const [wellpassMemberId, setWellpassMemberId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +28,7 @@ export default function EmbedWellpass() {
           firstName,
           lastName,
           email,
-          accessCode,
-          wellpassMemberId: wellpassMemberId || undefined
+          accessCode
         }
       });
 
@@ -58,7 +56,7 @@ export default function EmbedWellpass() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="h-8 w-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Willkommen bei Rise!</h2>
+            <h2 className="text-xl font-bold mb-2">Willkommen im Rise!</h2>
             <p className="text-muted-foreground mb-4">
               Dein Account wurde erfolgreich erstellt.
             </p>
@@ -67,8 +65,22 @@ export default function EmbedWellpass() {
               <p className="text-sm"><strong>Zugangscode:</strong> {accessCode}</p>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              Du kannst dich jetzt in der Rise-App anmelden und Kurse buchen.
+              Du kannst dich jetzt in der Rise-App anmelden und Kurse buchen. Deine Zugangsdaten wurden dir auch per E-Mail zugesendet.
             </p>
+            <Button 
+              onClick={() => {
+                setIsSuccess(false);
+                setFirstName("");
+                setLastName("");
+                setEmail("");
+                setAccessCode("");
+                setError(null);
+              }} 
+              variant="outline" 
+              className="mt-4"
+            >
+              Zurück zur Registrierung
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -141,15 +153,6 @@ export default function EmbedWellpass() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="wellpassId">Wellpass-Mitgliedsnummer (optional)</Label>
-              <Input
-                id="wellpassId"
-                value={wellpassMemberId}
-                onChange={(e) => setWellpassMemberId(e.target.value)}
-                placeholder="Deine Wellpass-Nummer"
-              />
-            </div>
 
             {error && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-2">

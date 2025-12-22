@@ -108,8 +108,25 @@ export default function Admin() {
   useEffect(() => {
     if (activePage === 'members' && isAdmin) {
       loadMembers();
+      // Mark pending Wellpass registrations as approved when viewing members
+      markWellpassRegistrationsAsApproved();
     }
   }, [activePage, isAdmin, currentPage, searchTerm]);
+
+  const markWellpassRegistrationsAsApproved = async () => {
+    try {
+      const { error } = await supabase
+        .from('wellpass_registrations')
+        .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+        .eq('status', 'pending');
+
+      if (error) {
+        console.error('Error marking wellpass registrations as approved:', error);
+      }
+    } catch (error) {
+      console.error('Error in markWellpassRegistrationsAsApproved:', error);
+    }
+  };
 
   // Read URL parameters and set active page
   useEffect(() => {
