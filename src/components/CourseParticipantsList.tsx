@@ -103,8 +103,8 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         }
       }) || []
 
-      // Add guest participants
-      const guestParticipants = guestRegistrations?.map(guest => ({
+      // Add guest participants only for admin view
+      const guestParticipants = isAdmin ? (guestRegistrations?.map(guest => ({
         id: guest.id,
         user_id: guest.id,
         status: 'registered',
@@ -113,7 +113,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
         isGuest: true,
         bookingType: guest.booking_type as 'drop_in' | 'probetraining'
-      })) || []
+      })) || []) : []
 
       setParticipants([...regularParticipants, ...guestParticipants])
     } catch (error) {
@@ -124,16 +124,27 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     }
   }
 
-  const removeParticipant = async (registrationId: string) => {
+  const removeParticipant = async (registrationId: string, isGuest: boolean = false) => {
     try {
-      const { error } = await supabase
-        .from('course_registrations')
-        .update({ status: 'cancelled' })
-        .eq('id', registrationId)
+      if (isGuest) {
+        // Delete guest registration directly
+        const { error } = await supabase
+          .from('guest_registrations')
+          .delete()
+          .eq('id', registrationId)
 
-      if (error) throw error
+        if (error) throw error
+      } else {
+        // Update status for regular registrations
+        const { error } = await supabase
+          .from('course_registrations')
+          .update({ status: 'cancelled' })
+          .eq('id', registrationId)
+
+        if (error) throw error
+      }
+      
       toast.success('Teilnehmer entfernt')
-
       await loadParticipants()
     } catch (error) {
       console.error('Error removing participant:', error)
@@ -259,7 +270,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => removeParticipant(participant.id)}
+                          onClick={() => removeParticipant(participant.id, participant.isGuest)}
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-5 w-5" />
