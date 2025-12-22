@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import riseLogo from "@/assets/rise-logo-dark.png";
 
 export default function EmbedWellpass() {
   const [firstName, setFirstName] = useState("");
@@ -91,7 +90,6 @@ export default function EmbedWellpass() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src={riseLogo} alt="Rise Fitness" className="h-12 mx-auto mb-2" />
           <CardTitle>Wellpass Registrierung</CardTitle>
           <CardDescription>
             Registriere dich als Wellpass-Mitglied und erhalte Zugang zur Rise-App

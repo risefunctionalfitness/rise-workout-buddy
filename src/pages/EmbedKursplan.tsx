@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Clock, Users, User, Check, Download } from "lucide-react";
-import { format, startOfWeek, addDays } from "date-fns";
+import { Clock, Users, User, Check, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, addDays, startOfDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { toast } from "sonner";
-import riseLogo from "@/assets/rise-logo-dark.png";
+import jsPDF from 'jspdf';
 
 interface Course {
   id: string;
@@ -20,6 +20,7 @@ interface Course {
   start_time: string;
   end_time: string;
   max_participants: number;
+  duration_minutes: number;
   color?: string;
   registered_count: number;
   guest_count: number;
@@ -51,30 +52,33 @@ export default function EmbedKursplan() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [weekStart, setWeekStart] = useState<Date>(startOfDay(new Date()));
 
   useEffect(() => {
     loadCourses();
-  }, []);
+  }, [weekStart]);
 
   const loadCourses = async () => {
     try {
       setLoading(true);
       const now = new Date();
       const nowDate = now.toISOString().split('T')[0];
-      const nowTime = now.toTimeString().slice(0, 8);
+      const nowTime = now.toTimeString().slice(0, 5);
 
-      // Get courses for next 7 days
-      const endDate = addDays(now, 7).toISOString().split('T')[0];
+      // Get courses for current week view (7 days from weekStart)
+      const startDate = format(weekStart, 'yyyy-MM-dd');
+      const endDate = format(addDays(weekStart, 6), 'yyyy-MM-dd');
 
       const { data: coursesData, error } = await supabase
         .from('courses')
         .select(`
           id, title, trainer, course_date, start_time, end_time, 
-          max_participants, color,
+          max_participants, duration_minutes, color,
           course_registrations(status)
         `)
         .eq('is_cancelled', false)
-        .gte('course_date', nowDate)
+        .gte('course_date', startDate)
         .lte('course_date', endDate)
         .order('course_date', { ascending: true })
         .order('start_time', { ascending: true });
@@ -94,17 +98,27 @@ export default function EmbedKursplan() {
         guestCounts[g.course_id] = (guestCounts[g.course_id] || 0) + 1;
       });
 
-      const processedCourses = (coursesData || []).map(course => {
-        const registrations = course.course_registrations || [];
-        const registered_count = registrations.filter(r => r.status === 'registered').length;
-        const guest_count = guestCounts[course.id] || 0;
+      // Filter out past courses for today
+      const processedCourses = (coursesData || [])
+        .filter(course => {
+          // If course is today, only show if start_time is in the future
+          if (course.course_date === nowDate) {
+            return course.start_time.substring(0, 5) >= nowTime;
+          }
+          // For future dates, show all
+          return course.course_date > nowDate;
+        })
+        .map(course => {
+          const registrations = course.course_registrations || [];
+          const registered_count = registrations.filter(r => r.status === 'registered').length;
+          const guest_count = guestCounts[course.id] || 0;
 
-        return {
-          ...course,
-          registered_count,
-          guest_count
-        };
-      });
+          return {
+            ...course,
+            registered_count,
+            guest_count
+          };
+        });
 
       setCourses(processedCourses);
     } catch (error) {
@@ -164,52 +178,97 @@ export default function EmbedKursplan() {
   const generateTicketPDF = () => {
     if (!ticketData) return;
 
-    // Create a simple printable ticket
-    const ticketContent = `
-RISE FITNESS - ${ticketData.bookingType === 'drop_in' ? 'DROP-IN' : 'PROBETRAINING'} TICKET
-
-Ticket-ID: ${ticketData.ticketId}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-KURS: ${ticketData.courseTitle}
-DATUM: ${ticketData.courseDate}
-UHRZEIT: ${ticketData.courseTime}
-TRAINER: ${ticketData.trainer}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-NAME: ${ticketData.guestName}
-E-MAIL: ${ticketData.guestEmail}
-
-${ticketData.paymentNote ? `\n💰 ${ticketData.paymentNote}\n` : ''}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📱 ${ticketData.whatsappMessage}
-WhatsApp: ${ticketData.whatsappNumber}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-www.rise-gym.de
-    `;
-
-    const blob = new Blob([ticketContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ticket-${ticketData.ticketId}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Header
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RISE FITNESS', pageWidth / 2, 30, { align: 'center' });
+    
+    doc.setFontSize(16);
+    doc.text(ticketData.bookingType === 'drop_in' ? 'DROP-IN TICKET' : 'PROBETRAINING TICKET', pageWidth / 2, 42, { align: 'center' });
+    
+    // Ticket ID
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Ticket-ID: ${ticketData.ticketId}`, pageWidth / 2, 52, { align: 'center' });
+    
+    // Separator line
+    doc.setLineWidth(0.5);
+    doc.line(20, 60, pageWidth - 20, 60);
+    
+    // Course info
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Kursdetails', 20, 75);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Kurs: ${ticketData.courseTitle}`, 20, 88);
+    doc.text(`Datum: ${ticketData.courseDate}`, 20, 98);
+    doc.text(`Uhrzeit: ${ticketData.courseTime}`, 20, 108);
+    doc.text(`Trainer: ${ticketData.trainer}`, 20, 118);
+    
+    // Separator line
+    doc.line(20, 128, pageWidth - 20, 128);
+    
+    // Guest info
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Teilnehmer', 20, 143);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Name: ${ticketData.guestName}`, 20, 156);
+    doc.text(`E-Mail: ${ticketData.guestEmail}`, 20, 166);
+    
+    // Payment note
+    if (ticketData.paymentNote) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(200, 100, 0);
+      doc.text(ticketData.paymentNote, 20, 183);
+      doc.setTextColor(0, 0, 0);
+    }
+    
+    // Footer
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('www.rise-gym.de', pageWidth / 2, 280, { align: 'center' });
+    
+    doc.save(`ticket-${ticketData.ticketId}.pdf`);
   };
 
-  // Group courses by date
-  const groupedCourses = courses.reduce((acc, course) => {
-    const date = course.course_date;
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(course);
-    return acc;
-  }, {} as Record<string, Course[]>);
+  // Get the 7 days for the week selector
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  // Filter courses for selected date
+  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+  const coursesForSelectedDate = courses.filter(c => c.course_date === selectedDateStr);
+
+  const prevWeek = () => {
+    const today = startOfDay(new Date());
+    const newStart = addDays(weekStart, -7);
+    // Don't go before today
+    if (newStart >= today) {
+      setWeekStart(newStart);
+      setSelectedDate(newStart);
+    } else {
+      setWeekStart(today);
+      setSelectedDate(today);
+    }
+  };
+
+  const nextWeek = () => {
+    const newStart = addDays(weekStart, 7);
+    setWeekStart(newStart);
+    setSelectedDate(newStart);
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+  };
 
   if (loading) {
     return (
@@ -223,72 +282,98 @@ www.rise-gym.de
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <img src={riseLogo} alt="Rise Fitness" className="h-12 mx-auto mb-2" />
-        <h1 className="text-2xl font-bold">Kursplan</h1>
-        <p className="text-muted-foreground">Buche dein Probetraining oder Drop-In</p>
+    <div className="min-h-screen bg-background p-4 max-w-2xl mx-auto">
+      {/* Week Day Selector */}
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="ghost" size="icon" onClick={prevWeek} disabled={weekStart <= startOfDay(new Date())}>
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        
+        <div className="flex gap-1 flex-1 justify-center">
+          {weekDays.map((day) => {
+            const isSelected = format(day, 'yyyy-MM-dd') === selectedDateStr;
+            const isTodayDate = isToday(day);
+            
+            return (
+              <button
+                key={day.toISOString()}
+                onClick={() => setSelectedDate(day)}
+                className={`flex flex-col items-center p-2 rounded-lg min-w-[44px] transition-all ${
+                  isSelected 
+                    ? 'bg-primary text-primary-foreground' 
+                    : isTodayDate 
+                      ? 'bg-primary/20 hover:bg-primary/30' 
+                      : 'hover:bg-muted'
+                }`}
+              >
+                <span className="text-xs font-medium">
+                  {format(day, 'EEEEEE', { locale: de })}
+                </span>
+                <span className={`text-lg font-bold ${isSelected && isTodayDate ? 'bg-primary-foreground text-primary rounded-full w-8 h-8 flex items-center justify-center' : ''}`}>
+                  {format(day, 'd')}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        
+        <Button variant="ghost" size="icon" onClick={nextWeek}>
+          <ChevronRight className="h-5 w-5" />
+        </Button>
       </div>
 
-      {/* Course List by Day */}
-      <div className="space-y-6 max-w-2xl mx-auto">
-        {Object.entries(groupedCourses).map(([date, dayCourses]) => (
-          <div key={date}>
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              {format(new Date(date), 'EEEE, dd.MM.yyyy', { locale: de })}
-            </h2>
-            <div className="space-y-2">
-              {dayCourses.map((course) => {
-                const totalRegistered = course.registered_count + course.guest_count;
-                const isFull = totalRegistered >= course.max_participants;
-                const spotsLeft = course.max_participants - totalRegistered;
+      {/* Selected Date Header */}
+      <h2 className="text-xl font-semibold mb-4">
+        {format(selectedDate, 'EEEE d MMMM yyyy', { locale: de })}
+      </h2>
 
-                return (
-                  <Card
-                    key={course.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${isFull ? 'opacity-60' : ''}`}
-                    style={{ borderLeftColor: course.color || '#e11d48', borderLeftWidth: 4 }}
-                    onClick={() => !isFull && handleCourseClick(course)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold">{course.title}</h3>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              {course.start_time.substring(0, 5)} - {course.end_time.substring(0, 5)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <User className="h-4 w-4" />
-                              {course.trainer}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          {isFull ? (
-                            <Badge variant="destructive">Ausgebucht</Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-green-100 text-green-800">
-                              <Users className="h-3 w-3 mr-1" />
-                              {spotsLeft} {spotsLeft === 1 ? 'Platz' : 'Plätze'}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      {/* Course List for Selected Day */}
+      <div className="space-y-2">
+        {coursesForSelectedDate.map((course) => {
+          const totalRegistered = course.registered_count + course.guest_count;
+          const isFull = totalRegistered >= course.max_participants;
 
-        {Object.keys(groupedCourses).length === 0 && (
+          return (
+            <Card
+              key={course.id}
+              className={`cursor-pointer transition-all hover:shadow-md ${isFull ? 'opacity-60' : ''}`}
+              style={{ borderBottomColor: course.color || '#22c55e', borderBottomWidth: 3 }}
+              onClick={() => !isFull && handleCourseClick(course)}
+            >
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center justify-center border rounded-lg p-2 min-w-[60px]" style={{ borderColor: course.color || '#3b82f6' }}>
+                      <span className="text-sm font-bold" style={{ color: course.color || '#3b82f6' }}>
+                        {course.start_time.substring(0, 5)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {course.duration_minutes || 60}m
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{course.title}</h3>
+                      <p className="text-sm text-muted-foreground">{course.trainer}</p>
+                    </div>
+                  </div>
+                  <div className="text-right text-sm">
+                    {isFull ? (
+                      <Badge variant="destructive">Voll</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {totalRegistered}/{course.max_participants}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        {coursesForSelectedDate.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            Keine Kurse in den nächsten 7 Tagen verfügbar
+            Keine Kurse an diesem Tag verfügbar
           </div>
         )}
       </div>
