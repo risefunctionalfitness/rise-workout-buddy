@@ -5,6 +5,7 @@ import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, Credi
 import { useTheme } from "next-themes"
 import { supabase } from "@/integrations/supabase/client"
 import { Logo } from "@/components/Logo"
+import { Badge } from "@/components/ui/badge"
 
 interface RiseHeaderProps {
   showNavigation?: boolean
@@ -24,6 +25,7 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [pendingWellpassCount, setPendingWellpassCount] = useState(0)
   const { theme, setTheme } = useTheme()
 
   // Check admin role
@@ -62,6 +64,30 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
       checkAdminRole()
     }
   }, [showAdminAccess])
+
+  // Load pending Wellpass registrations count
+  useEffect(() => {
+    const loadPendingWellpassCount = async () => {
+      if (!isAdmin) return
+
+      try {
+        const { count, error } = await supabase
+          .from('wellpass_registrations')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending')
+
+        if (error) {
+          console.error('Error loading pending wellpass count:', error)
+        } else {
+          setPendingWellpassCount(count || 0)
+        }
+      } catch (error) {
+        console.error('Error loading pending wellpass count:', error)
+      }
+    }
+
+    loadPendingWellpassCount()
+  }, [isAdmin])
 
   const handleLogout = async () => {
     if (onLogout) {
@@ -126,8 +152,13 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
                 onPageChange?.('members');
                 setDropdownOpen(false);
               }}
-              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'members' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg relative ${activePage === 'members' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
             >
+              {pendingWellpassCount > 0 && (
+                <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                  {pendingWellpassCount}
+                </span>
+              )}
               <Users className="h-10 w-10 mb-3" />
               <span className="text-sm font-semibold">Mitglieder</span>
             </div>
