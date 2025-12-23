@@ -34,21 +34,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
   useEffect(() => {
     loadProfile()
-    checkDailyRefresh()
   }, [])
-
-  const checkDailyRefresh = () => {
-    const lastRefresh = localStorage.getItem('lastAppRefresh')
-    const now = new Date()
-    const today = now.toDateString()
-    
-    if (!lastRefresh || lastRefresh !== today) {
-      localStorage.setItem('lastAppRefresh', today)
-      if (lastRefresh) {
-        setTimeout(() => window.location.reload(), 2000)
-      }
-    }
-  }
 
   const loadProfile = async () => {
     try {
