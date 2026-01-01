@@ -292,7 +292,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       const currentMonth = currentDate.getMonth() + 1
       const currentYear = currentDate.getFullYear()
 
-      const { data: challenge, error } = await supabase
+      // First try to find a challenge for the current year
+      let { data: challenge, error } = await supabase
         .from("monthly_challenges")
         .select("*")
         .eq("month", currentMonth)
@@ -300,10 +301,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         .eq("is_archived", false)
         .single()
 
-      if (error && error.code !== 'PGRST116') throw error
+      // If no challenge found for current year, look for recurring challenge from previous years
+      if (!challenge && (!error || error.code === 'PGRST116')) {
+        const { data: recurringChallenge, error: recurringError } = await supabase
+          .from("monthly_challenges")
+          .select("*")
+          .eq("month", currentMonth)
+          .eq("is_recurring", true)
+          .eq("is_archived", false)
+          .order("year", { ascending: false })
+          .limit(1)
+          .single()
+
+        if (recurringError && recurringError.code !== 'PGRST116') throw recurringError
+        challenge = recurringChallenge
+      } else if (error && error.code !== 'PGRST116') {
+        throw error
+      }
+
       setCurrentChallenge(challenge)
-      
-      // Challenge is loaded and ready
     } catch (error) {
       console.error("Error loading current challenge:", error)
     }
