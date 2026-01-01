@@ -54,8 +54,8 @@ export default function ChallengeCard({ onOpenChallenge }: ChallengeCardProps) {
       const currentMonth = currentDate.getMonth() + 1;
       const currentYear = currentDate.getFullYear();
 
-      // Get current month's challenge
-      const { data: challengeData, error: challengeError } = await supabase
+      // First try to find a challenge for the current year
+      let { data: challengeData, error: challengeError } = await supabase
         .from("monthly_challenges")
         .select("*")
         .eq("month", currentMonth)
@@ -63,7 +63,23 @@ export default function ChallengeCard({ onOpenChallenge }: ChallengeCardProps) {
         .eq("is_archived", false)
         .single();
 
-      if (challengeError && challengeError.code !== 'PGRST116') {
+      // If no challenge found for current year, look for recurring challenge from previous years
+      if (!challengeData && (!challengeError || challengeError.code === 'PGRST116')) {
+        const { data: recurringChallenge, error: recurringError } = await supabase
+          .from("monthly_challenges")
+          .select("*")
+          .eq("month", currentMonth)
+          .eq("is_recurring", true)
+          .eq("is_archived", false)
+          .order("year", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (recurringError && recurringError.code !== 'PGRST116') {
+          throw recurringError;
+        }
+        challengeData = recurringChallenge;
+      } else if (challengeError && challengeError.code !== 'PGRST116') {
         throw challengeError;
       }
 
