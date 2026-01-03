@@ -664,12 +664,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 {selectedCourse.cancelled_due_to_low_attendance ? (
                   <Button 
                     disabled
                     variant="secondary"
-                    className="flex-1"
+                    className="w-full"
                   >
                     Kurs wurde abgesagt
                   </Button>
@@ -679,7 +679,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                       variant="destructive" 
                       onClick={() => handleCancellation(selectedCourse.id)}
                       disabled={!canCancelCourse(selectedCourse)}
-                      className="flex-1"
+                      className="w-full"
                     >
                       {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
                     </Button>
@@ -690,7 +690,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                       endTime={selectedCourse.end_time}
                       trainer={selectedCourse.trainer}
                       variant="outline"
-                      size="icon"
+                      size="default"
+                      className="w-full"
                     />
                   </>
                 ) : selectedCourse.is_waitlisted ? (
@@ -698,14 +699,14 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     variant="destructive" 
                     onClick={() => handleCancellation(selectedCourse.id)}
                     disabled={!canCancelCourse(selectedCourse)}
-                    className="flex-1"
+                    className="w-full"
                   >
                     {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
                 ) : (
                   <Button 
                     onClick={() => handleRegistration(selectedCourse.id)}
-                    className="flex-1"
+                    className="w-full"
                   >
                     {selectedCourse.registered_count >= selectedCourse.max_participants 
                       ? 'Auf Warteliste' 

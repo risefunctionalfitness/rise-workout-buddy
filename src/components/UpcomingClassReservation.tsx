@@ -426,12 +426,12 @@ export const UpcomingClassReservation = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 <Button 
                   variant="destructive" 
                   onClick={handleCancel}
                   disabled={!canCancelCourse(selectedCourse)}
-                  className="flex-1"
+                  className="w-full"
                 >
                   {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
                 </Button>
@@ -442,7 +442,8 @@ export const UpcomingClassReservation = ({
                   endTime={selectedCourse.end_time}
                   trainer={selectedCourse.trainer}
                   variant="outline"
-                  size="icon"
+                  size="default"
+                  className="w-full"
                 />
               </div>
             </div>

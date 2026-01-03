@@ -12,6 +12,7 @@ import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
 import { ProfileImageViewer } from "@/components/ProfileImageViewer"
 import { CoursesCalendarView } from "@/components/CoursesCalendarView"
 import { CourseInvitationButton } from "@/components/CourseInvitationButton"
+import { AddToCalendarButton } from "@/components/AddToCalendarButton"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -760,37 +761,49 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 {selectedCourse.cancelled_due_to_low_attendance ? (
                   <Button 
                     disabled
                     variant="secondary"
-                    className="flex-1"
+                    className="w-full"
                   >
                     Kurs wurde abgesagt
                   </Button>
                 ) : selectedCourse.is_registered ? (
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => handleCancellation(selectedCourse.id)}
-                    disabled={!canCancelCourse(selectedCourse)}
-                    className="flex-1"
-                  >
-                    {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
-                  </Button>
+                  <>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => handleCancellation(selectedCourse.id)}
+                      disabled={!canCancelCourse(selectedCourse)}
+                      className="w-full"
+                    >
+                      {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
+                    </Button>
+                    <AddToCalendarButton
+                      title={selectedCourse.title}
+                      startDate={selectedCourse.course_date}
+                      startTime={selectedCourse.start_time}
+                      endTime={selectedCourse.end_time}
+                      trainer={selectedCourse.trainer}
+                      variant="outline"
+                      size="default"
+                      className="w-full"
+                    />
+                  </>
                 ) : selectedCourse.is_waitlisted ? (
                   <Button 
                     variant="destructive" 
                     onClick={() => handleCancellation(selectedCourse.id)}
                     disabled={!canCancelCourse(selectedCourse)}
-                    className="flex-1"
+                    className="w-full"
                   >
                     {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
                 ) : (
                   <Button 
                     onClick={() => handleRegistration(selectedCourse.id)}
-                    className="flex-1"
+                    className="w-full"
                   >
                     {selectedCourse.registered_count >= selectedCourse.max_participants 
                       ? 'Auf Warteliste' 
