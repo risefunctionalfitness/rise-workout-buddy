@@ -13,6 +13,7 @@ import { ProfileImageViewer } from "./ProfileImageViewer"
 import { MembershipBadge } from "./MembershipBadge"
 import { OpenGymCheckin } from "./OpenGymCheckin"
 import { CourseInvitationButton } from "./CourseInvitationButton"
+import { AddToCalendarButton } from "./AddToCalendarButton"
 
 interface Course {
   id: string
@@ -673,14 +674,25 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     Kurs wurde abgesagt
                   </Button>
                 ) : selectedCourse.is_registered ? (
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => handleCancellation(selectedCourse.id)}
-                    disabled={!canCancelCourse(selectedCourse)}
-                    className="flex-1"
-                  >
-                    {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
-                  </Button>
+                  <>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => handleCancellation(selectedCourse.id)}
+                      disabled={!canCancelCourse(selectedCourse)}
+                      className="flex-1"
+                    >
+                      {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
+                    </Button>
+                    <AddToCalendarButton
+                      title={selectedCourse.title}
+                      startDate={selectedCourse.course_date}
+                      startTime={selectedCourse.start_time}
+                      endTime={selectedCourse.end_time}
+                      trainer={selectedCourse.trainer}
+                      variant="outline"
+                      size="icon"
+                    />
+                  </>
                 ) : selectedCourse.is_waitlisted ? (
                   <Button 
                     variant="destructive" 
