@@ -110,8 +110,8 @@ serve(async (req) => {
     // Format course time
     const courseTime = `${course.start_time.slice(0, 5)} - ${course.end_time.slice(0, 5)}`;
 
-    // Get the app URL
-    const appUrl = 'https://rise-ff.lovable.app?invitations=open';
+    // Get the app URL - redirect to /pro with invitations panel open
+    const appUrl = 'https://rise-ff.lovable.app/pro?invitations=open';
 
     // Construct webhook payload
     const webhookData = {
