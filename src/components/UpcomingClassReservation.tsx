@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { ProfileImageViewer } from "./ProfileImageViewer";
 import { MembershipBadge } from "./MembershipBadge";
 import { CourseInvitationButton } from "./CourseInvitationButton";
+import { AddToCalendarButton } from "./AddToCalendarButton";
 import {
   Carousel,
   CarouselContent,
@@ -424,15 +425,26 @@ export const UpcomingClassReservation = ({
                 )}
               </div>
 
-              {/* Action Button */}
-              <Button 
-                variant="destructive" 
-                onClick={handleCancel}
-                disabled={!canCancelCourse(selectedCourse)}
-                className="w-full"
-              >
-                {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="destructive" 
+                  onClick={handleCancel}
+                  disabled={!canCancelCourse(selectedCourse)}
+                  className="flex-1"
+                >
+                  {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
+                </Button>
+                <AddToCalendarButton
+                  title={selectedCourse.title}
+                  startDate={selectedCourse.course_date}
+                  startTime={selectedCourse.start_time}
+                  endTime={selectedCourse.end_time}
+                  trainer={selectedCourse.trainer}
+                  variant="outline"
+                  size="icon"
+                />
+              </div>
             </div>
           )}
         </DialogContent>
