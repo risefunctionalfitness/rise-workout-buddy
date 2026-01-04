@@ -421,10 +421,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     }
   }
 
-  // Check if attendance can be marked (course is today or in the future)
+  // Check if attendance can be marked (only for courses today)
   const canMarkAttendance = (courseDate: string) => {
     const today = new Date().toISOString().split('T')[0]
-    return courseDate >= today
+    return courseDate === today
   }
 
   const markNoShow = async (participant: any) => {

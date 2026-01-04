@@ -266,10 +266,10 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     }
   }
 
-  // Check if attendance can be marked (course is today or in the future)
+  // Check if attendance can be marked (only for courses today)
   const canMarkAttendance = () => {
     const today = new Date().toISOString().split('T')[0]
-    return course.course_date >= today
+    return course.course_date === today
   }
 
   const registeredParticipants = participants.filter(p => p.status === 'registered')
