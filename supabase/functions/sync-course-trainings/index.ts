@@ -58,10 +58,10 @@ serve(async (req) => {
         continue
       }
 
-      // Get all registered participants for this course
+      // Get all registered participants for this course (exclude no-shows)
       const { data: registrations, error: regError } = await supabase
         .from('course_registrations')
-        .select('user_id')
+        .select('user_id, attendance_status')
         .eq('course_id', course.id)
         .eq('status', 'registered')
 
@@ -70,7 +70,12 @@ serve(async (req) => {
         continue
       }
 
-      for (const reg of registrations || []) {
+      // Filter out no-shows - they don't get points
+      const eligibleRegistrations = (registrations || []).filter(
+        reg => reg.attendance_status !== 'no_show'
+      )
+
+      for (const reg of eligibleRegistrations) {
         // Check if training session already exists for this user on this date
         const { data: existingSession, error: checkError } = await supabase
           .from('training_sessions')
