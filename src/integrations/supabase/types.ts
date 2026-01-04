@@ -122,6 +122,9 @@ export type Database = {
       }
       course_registrations: {
         Row: {
+          attendance_marked_at: string | null
+          attendance_marked_by: string | null
+          attendance_status: string | null
           course_id: string
           id: string
           registered_at: string
@@ -130,6 +133,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attendance_marked_at?: string | null
+          attendance_marked_by?: string | null
+          attendance_status?: string | null
           course_id: string
           id?: string
           registered_at?: string
@@ -138,6 +144,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attendance_marked_at?: string | null
+          attendance_marked_by?: string | null
+          attendance_status?: string | null
           course_id?: string
           id?: string
           registered_at?: string
