@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, MapPin, Calendar, X, Dumbbell, AlertTriangle } from "lucide-react"
+import { Clock, User as UserIcon, Calendar, X, Dumbbell, AlertTriangle } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { User } from "@supabase/supabase-js"
@@ -450,7 +450,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                               {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
                             </div>
                             <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
+                              <UserIcon className="h-3 w-3" />
                               {course.trainer}
                             </div>
                           </div>
@@ -522,7 +522,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                   {selectedCourse.start_time.slice(0, 5)} - {selectedCourse.end_time.slice(0, 5)}
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4" />
+                  <UserIcon className="h-4 w-4" />
                   Trainer: {selectedCourse.trainer}
                 </div>
                 {selectedCourse.strength_exercise && (
@@ -598,7 +598,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              {(isTrainer || isAdmin) && (
+                              {isAdmin && (
                                 <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                               )}
                             </div>
@@ -651,7 +651,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
-                                {(isTrainer || isAdmin) && (
+                                {isAdmin && (
                                   <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                                 )}
                               </div>

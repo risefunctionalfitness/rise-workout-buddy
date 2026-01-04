@@ -1,4 +1,4 @@
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Calendar, Clock, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
@@ -325,7 +325,7 @@ export const UpcomingClassReservation = ({
                   {selectedCourse.start_time.slice(0, 5)} - {selectedCourse.end_time.slice(0, 5)}
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4" />
+                  <User className="h-4 w-4" />
                   Trainer: {selectedCourse.trainer}
                 </div>
                 {selectedCourse.strength_exercise && (
@@ -401,7 +401,7 @@ export const UpcomingClassReservation = ({
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              {(isTrainer || isAdmin) && (
+                              {isAdmin && (
                                 <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                               )}
                             </div>

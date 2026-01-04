@@ -363,7 +363,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                     </div>
                     <div className="flex items-center gap-2">
                       {/* Attendance buttons - for admins and trainers, for today and future courses */}
-                      {(isAdmin || isTrainer) && canMarkAttendance() && !participant.isGuest && (
+                      {isAdmin && canMarkAttendance() && !participant.isGuest && (
                         participant.attendance_status === 'no_show' ? (
                           <Button
                             variant="outline"
