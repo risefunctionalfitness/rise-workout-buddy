@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, AlertTriangle, UserX } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, User as UserIcon, AlertTriangle, UserX } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
@@ -623,7 +623,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                 {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
                               </div>
                               <div className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
+                                <UserIcon className="h-3 w-3" />
                                 {course.trainer}
                               </div>
                             </div>
@@ -694,7 +694,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   {selectedCourse.start_time.slice(0, 5)} - {selectedCourse.end_time.slice(0, 5)}
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4" />
+                  <UserIcon className="h-4 w-4" />
                   Trainer: {selectedCourse.trainer}
                 </div>
                 {selectedCourse.strength_exercise && (
@@ -808,7 +808,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                      </Button>
                                    )
                                  )}
-                                 {(isTrainer || isAdmin) && (
+                                 {isAdmin && (
                                    <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                                  )}
                                </div>
@@ -862,7 +862,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
-                                {(isTrainer || isAdmin) && (
+                                {isAdmin && (
                                   <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                                 )}
                               </div>
