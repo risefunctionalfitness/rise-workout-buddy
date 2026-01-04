@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MembershipBadge } from "@/components/MembershipBadge"
-import { Trash2, Plus, ArrowUp, X } from "lucide-react"
+import { Trash2, Plus, ArrowUp, X, UserX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { AdminParticipantManager } from "@/components/AdminParticipantManager"
@@ -32,6 +32,7 @@ interface Participant {
   nickname?: string
   isGuest?: boolean
   bookingType?: 'drop_in' | 'probetraining'
+  attendance_status?: string | null
 }
 
 interface CourseParticipantsListProps {
@@ -60,12 +61,12 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     try {
       setLoading(true)
       
-      // Get registrations
+      // Get registrations (attendance_status may not be in types yet)
       const { data: registrations, error: regError } = await supabase
         .from('course_registrations')
         .select('id, user_id, status, registered_at')
         .eq('course_id', course.id)
-        .order('registered_at', { ascending: true })
+        .order('registered_at', { ascending: true }) as { data: Array<{ id: string; user_id: string; status: string; registered_at: string; attendance_status?: string | null }> | null; error: any }
 
       if (regError) throw regError
 
@@ -99,7 +100,8 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
           membership_type: profile?.membership_type || 'Member',
           avatar_url: profile?.avatar_url,
           nickname: profile?.nickname,
-          isGuest: false
+          isGuest: false,
+          attendance_status: reg.attendance_status
         }
       }) || []
 
@@ -187,6 +189,87 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     }
   }
 
+  const markNoShow = async (participant: Participant) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Nicht eingeloggt')
+        return
+      }
+
+      // Update attendance status in database
+      const { error: updateError } = await supabase
+        .from('course_registrations')
+        .update({ 
+          attendance_status: 'no_show',
+          attendance_marked_at: new Date().toISOString(),
+          attendance_marked_by: user.id
+        } as any)
+        .eq('id', participant.id)
+
+      if (updateError) {
+        console.error('Error updating attendance:', updateError)
+        throw updateError
+      }
+
+      // Trigger no-show notification via Edge Function
+      try {
+        const { error: notifyError } = await supabase.functions.invoke('notify-no-show', {
+          body: { 
+            registration_id: participant.id,
+            course_id: course.id,
+            user_id: participant.user_id
+          }
+        })
+        if (notifyError) {
+          console.error('Notify no-show error:', notifyError)
+          toast.warning('Anwesenheit gespeichert, aber Email konnte nicht gesendet werden')
+        } else {
+          console.log('No-show notification sent')
+        }
+      } catch (notifyErr) {
+        console.error('Notify no-show exception:', notifyErr)
+        toast.warning('Anwesenheit gespeichert, aber Email konnte nicht gesendet werden')
+      }
+
+      toast.success(`${participant.display_name} als nicht erschienen markiert`)
+      await loadParticipants()
+    } catch (error) {
+      console.error('Error marking no-show:', error)
+      toast.error('Fehler beim Speichern der Anwesenheit')
+    }
+  }
+
+  const undoNoShow = async (participant: Participant) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('course_registrations')
+        .update({ 
+          attendance_status: null,
+          attendance_marked_at: null,
+          attendance_marked_by: null
+        } as any)
+        .eq('id', participant.id)
+
+      if (updateError) {
+        console.error('Error undoing no-show:', updateError)
+        throw updateError
+      }
+
+      toast.success(`${participant.display_name} wieder als anwesend markiert`)
+      await loadParticipants()
+    } catch (error) {
+      console.error('Error undoing no-show:', error)
+      toast.error('Fehler beim Zurücksetzen der Anwesenheit')
+    }
+  }
+
+  // Check if attendance can be marked (course is today and hasn't ended yet in terms of day)
+  const canMarkAttendance = () => {
+    const today = new Date().toISOString().split('T')[0]
+    return course.course_date === today
+  }
+
   const registeredParticipants = participants.filter(p => p.status === 'registered')
   const waitlistedParticipants = participants.filter(p => p.status === 'waitlisted' || p.status === 'waitlist')
 
@@ -248,8 +331,15 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
             ) : (
               <div className="space-y-3">
                 {registeredParticipants.map((participant) => (
-                  <div key={participant.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg min-h-[60px]">
-                    <div className="flex items-center gap-3">
+                  <div 
+                    key={participant.id} 
+                    className={`flex items-center justify-between p-3 rounded-lg min-h-[60px] ${
+                      participant.attendance_status === 'no_show' 
+                        ? 'bg-destructive/10 border border-destructive/30' 
+                        : 'bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 flex-wrap">
                       <img
                         src={participant.avatar_url || '/placeholder.svg'}
                         alt={participant.display_name}
@@ -259,13 +349,40 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                           displayName: participant.nickname || participant.display_name 
                         })}
                       />
-                      <span className="font-medium">{participant.display_name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(participant.registered_at).toLocaleDateString('de-DE')}
+                      <span className={`font-medium ${participant.attendance_status === 'no_show' ? 'line-through text-muted-foreground' : ''}`}>
+                        {participant.display_name}
                       </span>
                       <MembershipBadge type={participant.membership_type as any} />
+                      {participant.attendance_status === 'no_show' && (
+                        <Badge variant="destructive" className="text-xs">
+                          Nicht erschienen
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Attendance buttons - only for admins and only for today's courses */}
+                      {isAdmin && canMarkAttendance() && !participant.isGuest && (
+                        participant.attendance_status === 'no_show' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => undoNoShow(participant)}
+                            className="text-xs"
+                          >
+                            Zurücksetzen
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => markNoShow(participant)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Als nicht erschienen markieren"
+                          >
+                            <UserX className="h-5 w-5" />
+                          </Button>
+                        )
+                      )}
                       {isAdmin && (
                         <Button
                           variant="ghost"

@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.register-wellpass]
 verify_jwt = false
+
+[functions.notify-no-show]
+verify_jwt = false
