@@ -117,9 +117,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         body: { newAccessCode: accessCode }
       })
 
+      // Check for edge function error or error in response body
       if (accessCodeError) {
         console.error('Access code update error:', accessCodeError)
         throw new Error(accessCodeError.message || 'Fehler beim Aktualisieren des Zugangscodes')
+      }
+      
+      // Edge functions return errors in the data body when status is 400
+      if (data?.error) {
+        console.error('Access code update error from response:', data.error)
+        throw new Error(data.error)
       }
 
       toast({
