@@ -39,12 +39,14 @@ interface CourseParticipantsListProps {
   course: Course
   onClose: () => void
   isAdmin?: boolean
+  isTrainer?: boolean
 }
 
 export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
   course,
   onClose,
-  isAdmin = false
+  isAdmin = false,
+  isTrainer = false
 }) => {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [loading, setLoading] = useState(true)
@@ -264,10 +266,10 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
     }
   }
 
-  // Check if attendance can be marked (course is today and hasn't ended yet in terms of day)
+  // Check if attendance can be marked (course is today or in the future)
   const canMarkAttendance = () => {
     const today = new Date().toISOString().split('T')[0]
-    return course.course_date === today
+    return course.course_date >= today
   }
 
   const registeredParticipants = participants.filter(p => p.status === 'registered')
@@ -360,8 +362,8 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* Attendance buttons - only for admins and only for today's courses */}
-                      {isAdmin && canMarkAttendance() && !participant.isGuest && (
+                      {/* Attendance buttons - for admins and trainers, for today and future courses */}
+                      {(isAdmin || isTrainer) && canMarkAttendance() && !participant.isGuest && (
                         participant.attendance_status === 'no_show' ? (
                           <Button
                             variant="outline"

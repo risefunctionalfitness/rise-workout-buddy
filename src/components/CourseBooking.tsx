@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, AlertTriangle } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, AlertTriangle, UserX } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
@@ -183,12 +183,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     try {
       console.log('Loading participants for course:', courseId)
       
-      // First get the registrations
+      // First get the registrations (cast to include attendance_status)
       const { data: registrations, error: regError } = await supabase
         .from('course_registrations')
-        .select('status, user_id, registered_at')
+        .select('id, status, user_id, registered_at')
         .eq('course_id', courseId)
-        .order('registered_at', { ascending: true })
+        .order('registered_at', { ascending: true }) as { data: Array<{ id: string; status: string; user_id: string; registered_at: string; attendance_status?: string | null }> | null; error: any }
 
       if (regError) {
         console.error('Error loading registrations:', regError)
@@ -417,6 +417,83 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     } catch (error) {
       console.error('Error cancelling registration:', error)
       toast.error('Fehler bei der Stornierung')
+    }
+  }
+
+  // Check if attendance can be marked (course is today or in the future)
+  const canMarkAttendance = (courseDate: string) => {
+    const today = new Date().toISOString().split('T')[0]
+    return courseDate >= today
+  }
+
+  const markNoShow = async (participant: any) => {
+    try {
+      // Update attendance status in database
+      const { error: updateError } = await supabase
+        .from('course_registrations')
+        .update({ 
+          attendance_status: 'no_show',
+          attendance_marked_at: new Date().toISOString(),
+          attendance_marked_by: user.id
+        } as any)
+        .eq('id', participant.id)
+
+      if (updateError) {
+        console.error('Error updating attendance:', updateError)
+        throw updateError
+      }
+
+      // Trigger no-show notification via Edge Function
+      try {
+        const { error: notifyError } = await supabase.functions.invoke('notify-no-show', {
+          body: { 
+            registration_id: participant.id,
+            course_id: selectedCourse?.id,
+            user_id: participant.user_id
+          }
+        })
+        if (notifyError) {
+          console.error('Notify no-show error:', notifyError)
+          toast.warning('Anwesenheit gespeichert, aber Email konnte nicht gesendet werden')
+        }
+      } catch (notifyErr) {
+        console.error('Notify no-show exception:', notifyErr)
+        toast.warning('Anwesenheit gespeichert, aber Email konnte nicht gesendet werden')
+      }
+
+      toast.success(`${participant.profiles?.display_name || 'Teilnehmer'} als nicht erschienen markiert`)
+      if (selectedCourse) {
+        await loadParticipants(selectedCourse.id)
+      }
+    } catch (error) {
+      console.error('Error marking no-show:', error)
+      toast.error('Fehler beim Speichern der Anwesenheit')
+    }
+  }
+
+  const undoNoShow = async (participant: any) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('course_registrations')
+        .update({ 
+          attendance_status: null,
+          attendance_marked_at: null,
+          attendance_marked_by: null
+        } as any)
+        .eq('id', participant.id)
+
+      if (updateError) {
+        console.error('Error undoing no-show:', updateError)
+        throw updateError
+      }
+
+      toast.success(`${participant.profiles?.display_name || 'Teilnehmer'} wieder als anwesend markiert`)
+      if (selectedCourse) {
+        await loadParticipants(selectedCourse.id)
+      }
+    } catch (error) {
+      console.error('Error undoing no-show:', error)
+      toast.error('Fehler beim Zurücksetzen der Anwesenheit')
     }
   }
 
@@ -662,8 +739,15 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                         .map((participant, index) => {
                           const position = index + 1
                            return (
-                             <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                               <div className="flex items-center gap-3">
+                             <div 
+                               key={participant.id || index} 
+                               className={`flex items-center justify-between p-3 rounded-lg ${
+                                 participant.attendance_status === 'no_show' 
+                                   ? 'bg-destructive/10 border border-destructive/30' 
+                                   : 'bg-muted/30'
+                               }`}
+                             >
+                               <div className="flex items-center gap-3 flex-wrap">
                                   <div 
                                     className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                                     onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
@@ -683,17 +767,46 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                       </span>
                                     )}
                                   </div>
-                                  <span className="font-medium">
+                                  <span className={`font-medium ${participant.attendance_status === 'no_show' ? 'line-through text-muted-foreground' : ''}`}>
                                     {(isTrainer || isAdmin) 
                                       ? participant.profiles?.display_name || 'Unbekannt'
                                       : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
                                     }
                                   </span>
-                                 <span className="text-xs text-muted-foreground">
-                                   Angemeldet
-                                 </span>
+                                  {participant.attendance_status === 'no_show' ? (
+                                    <Badge variant="destructive" className="text-xs">
+                                      Nicht erschienen
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">
+                                      Angemeldet
+                                    </span>
+                                  )}
                                </div>
                                <div className="flex items-center gap-2">
+                                 {/* Attendance buttons - for admins and trainers, for today and future courses */}
+                                 {(isTrainer || isAdmin) && canMarkAttendance(selectedCourse.course_date) && (
+                                   participant.attendance_status === 'no_show' ? (
+                                     <Button
+                                       variant="outline"
+                                       size="sm"
+                                       onClick={() => undoNoShow(participant)}
+                                       className="text-xs"
+                                     >
+                                       Zurücksetzen
+                                     </Button>
+                                   ) : (
+                                     <Button
+                                       variant="ghost"
+                                       size="icon"
+                                       onClick={() => markNoShow(participant)}
+                                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                       title="Als nicht erschienen markieren"
+                                     >
+                                       <UserX className="h-5 w-5" />
+                                     </Button>
+                                   )
+                                 )}
                                  {(isTrainer || isAdmin) && (
                                    <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                                  )}
