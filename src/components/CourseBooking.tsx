@@ -21,6 +21,7 @@ interface Course {
   id: string
   title: string
   trainer: string
+  trainer_user_id?: string | null
   strength_exercise?: string
   max_participants: number
   course_date: string
@@ -784,8 +785,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                   )}
                                </div>
                                <div className="flex items-center gap-2">
-                                 {/* Attendance buttons - for admins and trainers, for today and future courses */}
-                                 {(isTrainer || isAdmin) && canMarkAttendance(selectedCourse.course_date) && (
+                                 {/* Attendance buttons - for admins or trainers assigned to this course, for today and future courses */}
+                                 {(isAdmin || (isTrainer && selectedCourse.trainer_user_id === user.id)) && canMarkAttendance(selectedCourse.course_date) && (
                                    participant.attendance_status === 'no_show' ? (
                                      <Button
                                        variant="outline"

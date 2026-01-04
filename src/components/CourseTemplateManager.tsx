@@ -21,6 +21,7 @@ interface CourseTemplate {
   id: string
   title: string
   trainer: string
+  trainer_user_id?: string | null
   strength_exercise?: string
   max_participants: number
   registration_deadline_minutes: number
@@ -30,10 +31,17 @@ interface CourseTemplate {
   color?: string
 }
 
+interface Trainer {
+  user_id: string
+  display_name: string
+  first_name?: string
+}
+
 interface Course {
   id: string
   title: string
   trainer: string
+  trainer_user_id?: string | null
   strength_exercise?: string
   max_participants: number
   course_date: string
@@ -55,13 +63,16 @@ interface ScheduleEntry {
 export const CourseTemplateManager = () => {
   const [templates, setTemplates] = useState<CourseTemplate[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('templates')
+  const [useCustomTrainer, setUseCustomTrainer] = useState(false)
 
   // Template form state
   const [templateForm, setTemplateForm] = useState({
     title: '',
     trainer: '',
+    trainer_user_id: null as string | null,
     strength_exercise: '',
     max_participants: 16,
     registration_deadline_minutes: 30,
@@ -85,6 +96,9 @@ export const CourseTemplateManager = () => {
   const [endDate, setEndDate] = useState<Date>()
 
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+  const [editingCourseTrainerId, setEditingCourseTrainerId] = useState<string | null>(null)
+  const [editingCourseTrainerName, setEditingCourseTrainerName] = useState<string>('')
+  const [editingCourseUseCustom, setEditingCourseUseCustom] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<CourseTemplate | null>(null)
 
   useEffect(() => {
@@ -92,8 +106,33 @@ export const CourseTemplateManager = () => {
   }, [])
 
   const loadData = async () => {
-    await Promise.all([loadTemplates(), loadCourses()])
+    await Promise.all([loadTemplates(), loadCourses(), loadTrainers()])
     setLoading(false)
+  }
+
+  const loadTrainers = async () => {
+    try {
+      // Get all users with trainer role
+      const { data: trainerRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'trainer')
+
+      if (rolesError) throw rolesError
+
+      if (trainerRoles && trainerRoles.length > 0) {
+        const trainerIds = trainerRoles.map(r => r.user_id)
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name')
+          .in('user_id', trainerIds)
+
+        if (profilesError) throw profilesError
+        setTrainers(profiles || [])
+      }
+    } catch (error) {
+      console.error('Error loading trainers:', error)
+    }
   }
 
   const loadTemplates = async () => {
@@ -151,6 +190,7 @@ export const CourseTemplateManager = () => {
       setTemplateForm({
         title: '',
         trainer: '',
+        trainer_user_id: null,
         strength_exercise: '',
         max_participants: 16,
         registration_deadline_minutes: 30,
@@ -158,6 +198,7 @@ export const CourseTemplateManager = () => {
         duration_minutes: 60,
         color: '#f3f4f6'
       })
+      setUseCustomTrainer(false)
       await loadTemplates()
     } catch (error) {
       console.error('Error creating template:', error)
@@ -231,6 +272,7 @@ export const CourseTemplateManager = () => {
               template_id: template.id,
               title: template.title,
               trainer: template.trainer,
+              trainer_user_id: template.trainer_user_id || null,
               strength_exercise: template.strength_exercise,
               max_participants: template.max_participants,
               color: template.color || '#f3f4f6',
@@ -272,6 +314,9 @@ export const CourseTemplateManager = () => {
 
   const handleEditCourse = async (course: Course) => {
     setEditingCourse(course)
+    setEditingCourseTrainerId(course.trainer_user_id || null)
+    setEditingCourseTrainerName(course.trainer)
+    setEditingCourseUseCustom(!course.trainer_user_id && !!course.trainer)
   }
 
   const handleUpdateCourse = async (e: React.FormEvent) => {
@@ -289,7 +334,8 @@ export const CourseTemplateManager = () => {
 
       const updates = {
         title: formData.get('title') as string,
-        trainer: formData.get('trainer') as string,
+        trainer: editingCourseTrainerName,
+        trainer_user_id: editingCourseTrainerId,
         strength_exercise: formData.get('strength_exercise') as string || null,
         max_participants: parseInt(formData.get('max_participants') as string),
         
@@ -309,6 +355,9 @@ export const CourseTemplateManager = () => {
 
       toast.success('Kurs erfolgreich aktualisiert')
       setEditingCourse(null)
+      setEditingCourseTrainerId(null)
+      setEditingCourseTrainerName('')
+      setEditingCourseUseCustom(false)
       await loadCourses()
     } catch (error) {
       console.error('Error updating course:', error)
@@ -321,6 +370,7 @@ export const CourseTemplateManager = () => {
     setTemplateForm({
       title: template.title,
       trainer: template.trainer,
+      trainer_user_id: template.trainer_user_id || null,
       strength_exercise: template.strength_exercise || '',
       max_participants: template.max_participants,
       registration_deadline_minutes: template.registration_deadline_minutes,
@@ -328,6 +378,8 @@ export const CourseTemplateManager = () => {
       duration_minutes: template.duration_minutes,
       color: template.color || '#f3f4f6'
     })
+    // If trainer_user_id is null but trainer is set, it's a custom trainer
+    setUseCustomTrainer(!template.trainer_user_id && !!template.trainer)
   }
 
   const handleUpdateTemplate = async (e: React.FormEvent) => {
@@ -347,6 +399,7 @@ export const CourseTemplateManager = () => {
       setTemplateForm({
         title: '',
         trainer: '',
+        trainer_user_id: null,
         strength_exercise: '',
         max_participants: 16,
         registration_deadline_minutes: 30,
@@ -354,6 +407,7 @@ export const CourseTemplateManager = () => {
         duration_minutes: 60,
         color: '#f3f4f6'
       })
+      setUseCustomTrainer(false)
       await loadTemplates()
     } catch (error) {
       console.error('Error updating template:', error)
@@ -473,12 +527,47 @@ export const CourseTemplateManager = () => {
                   </div>
                   <div>
                     <Label htmlFor="trainer">Trainer</Label>
-                    <Input
-                      value={templateForm.trainer}
-                      onChange={(e) => setTemplateForm(prev => ({ ...prev, trainer: e.target.value }))}
-                      placeholder="Trainer Name"
-                      required
-                    />
+                    <Select 
+                      value={useCustomTrainer ? '__custom__' : (templateForm.trainer_user_id || '')}
+                      onValueChange={(value) => {
+                        if (value === '__custom__') {
+                          setUseCustomTrainer(true)
+                          setTemplateForm(prev => ({ ...prev, trainer: '', trainer_user_id: null }))
+                        } else {
+                          setUseCustomTrainer(false)
+                          const selectedTrainer = trainers.find(t => t.user_id === value)
+                          if (selectedTrainer) {
+                            const firstName = selectedTrainer.first_name || selectedTrainer.display_name?.split(' ')[0] || selectedTrainer.display_name || ''
+                            setTemplateForm(prev => ({ 
+                              ...prev, 
+                              trainer: firstName,
+                              trainer_user_id: value 
+                            }))
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Trainer wählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {trainers.map((trainer) => (
+                          <SelectItem key={trainer.user_id} value={trainer.user_id}>
+                            {trainer.first_name || trainer.display_name?.split(' ')[0] || trainer.display_name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="__custom__">--- Freier Eintrag ---</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {useCustomTrainer && (
+                      <Input
+                        className="mt-2"
+                        value={templateForm.trainer}
+                        onChange={(e) => setTemplateForm(prev => ({ ...prev, trainer: e.target.value, trainer_user_id: null }))}
+                        placeholder="Trainer Name eingeben"
+                        required
+                      />
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="strength_exercise">Kraftübung (optional)</Label>
@@ -559,6 +648,7 @@ export const CourseTemplateManager = () => {
                         setTemplateForm({
                           title: '',
                           trainer: '',
+                          trainer_user_id: null,
                           strength_exercise: '',
                           max_participants: 16,
                           registration_deadline_minutes: 30,
@@ -566,6 +656,7 @@ export const CourseTemplateManager = () => {
                           duration_minutes: 60,
                           color: '#f3f4f6'
                         })
+                        setUseCustomTrainer(false)
                       }}
                     >
                       Abbrechen
@@ -826,7 +917,45 @@ export const CourseTemplateManager = () => {
               </div>
               <div>
                 <Label htmlFor="trainer">Trainer</Label>
-                <Input name="trainer" defaultValue={editingCourse.trainer} required />
+                <Select 
+                  value={editingCourseUseCustom ? '__custom__' : (editingCourseTrainerId || '')}
+                  onValueChange={(value) => {
+                    if (value === '__custom__') {
+                      setEditingCourseUseCustom(true)
+                      setEditingCourseTrainerId(null)
+                      setEditingCourseTrainerName('')
+                    } else {
+                      setEditingCourseUseCustom(false)
+                      const selectedTrainer = trainers.find(t => t.user_id === value)
+                      if (selectedTrainer) {
+                        const firstName = selectedTrainer.first_name || selectedTrainer.display_name?.split(' ')[0] || selectedTrainer.display_name || ''
+                        setEditingCourseTrainerId(value)
+                        setEditingCourseTrainerName(firstName)
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Trainer wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {trainers.map((trainer) => (
+                      <SelectItem key={trainer.user_id} value={trainer.user_id}>
+                        {trainer.first_name || trainer.display_name?.split(' ')[0] || trainer.display_name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="__custom__">--- Freier Eintrag ---</SelectItem>
+                  </SelectContent>
+                </Select>
+                {editingCourseUseCustom && (
+                  <Input
+                    className="mt-2"
+                    value={editingCourseTrainerName}
+                    onChange={(e) => setEditingCourseTrainerName(e.target.value)}
+                    placeholder="Trainer Name eingeben"
+                    required
+                  />
+                )}
               </div>
               <div>
                 <Label htmlFor="strength_exercise">Kraftübung</Label>
