@@ -176,6 +176,7 @@ export type Database = {
           strength_exercise: string | null
           title: string
           trainer: string
+          trainer_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -189,6 +190,7 @@ export type Database = {
           strength_exercise?: string | null
           title: string
           trainer: string
+          trainer_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -202,9 +204,18 @@ export type Database = {
           strength_exercise?: string | null
           title?: string
           trainer?: string
+          trainer_user_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "course_templates_trainer_user_id_fkey"
+            columns: ["trainer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       courses: {
         Row: {
@@ -224,6 +235,7 @@ export type Database = {
           template_id: string
           title: string
           trainer: string
+          trainer_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -243,6 +255,7 @@ export type Database = {
           template_id: string
           title: string
           trainer: string
+          trainer_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -262,6 +275,7 @@ export type Database = {
           template_id?: string
           title?: string
           trainer?: string
+          trainer_user_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -271,6 +285,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "course_templates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courses_trainer_user_id_fkey"
+            columns: ["trainer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
