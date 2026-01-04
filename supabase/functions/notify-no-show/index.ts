@@ -49,7 +49,7 @@ serve(async (req) => {
     // Get user profile with email
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('display_name, nickname, email, user_id')
+      .select('display_name, nickname, email, user_id, first_name')
       .eq('user_id', user_id)
       .single()
 
@@ -80,7 +80,7 @@ serve(async (req) => {
       event_type: 'no_show',
       user_id: user_id,
       email: userEmail,
-      name: profile.nickname || profile.display_name || 'Mitglied',
+      name: profile.first_name || profile.nickname || profile.display_name || 'Mitglied',
       course_id: course.id,
       course_title: course.title,
       course_date: course.course_date,
