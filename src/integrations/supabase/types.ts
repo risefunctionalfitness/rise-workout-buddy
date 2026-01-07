@@ -923,6 +923,7 @@ export type Database = {
           show_in_leaderboard: boolean
           snatch_1rm: number | null
           status: string | null
+          terms_accepted_at: string | null
           updated_at: string
           user_id: string | null
           welcome_dialog_shown: boolean
@@ -953,6 +954,7 @@ export type Database = {
           show_in_leaderboard?: boolean
           snatch_1rm?: number | null
           status?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string | null
           welcome_dialog_shown?: boolean
@@ -983,6 +985,7 @@ export type Database = {
           show_in_leaderboard?: boolean
           snatch_1rm?: number | null
           status?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string | null
           welcome_dialog_shown?: boolean

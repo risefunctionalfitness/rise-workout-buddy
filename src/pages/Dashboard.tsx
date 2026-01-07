@@ -8,6 +8,7 @@ import { CourseBooking } from "@/components/CourseBooking"
 import { NewsSection } from "@/components/NewsSection"
 import ChallengeDetail from "@/components/ChallengeDetail"
 import { FirstLoginDialog } from "@/components/FirstLoginDialog"
+import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog"
 import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 import { MonthlyProgressCircle } from "@/components/MonthlyProgressCircle"
 import { WeekPreview } from "@/components/WeekPreview"
@@ -77,6 +78,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [currentChallenge, setCurrentChallenge] = useState<any>(null)
   const [wodStep, setWodStep] = useState(1)
   const [showFirstLoginDialog, setShowFirstLoginDialog] = useState(false)
+  const [showTermsDialog, setShowTermsDialog] = useState(false)
   const [showAdminNav, setShowAdminNav] = useState(false)
   const [showInvitations, setShowInvitations] = useState(false)
   const [invitationCount, setInvitationCount] = useState(0)
@@ -268,18 +270,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('welcome_dialog_shown')
+        .select('welcome_dialog_shown, terms_accepted_at')
         .eq('user_id', user.id)
         .maybeSingle()
       
       console.log('Welcome dialog check:', profile)
       
-      // Show dialog if welcome dialog hasn't been shown yet
+      // Step 1: Check if terms have been accepted
+      if (!profile?.terms_accepted_at) {
+        setTimeout(() => {
+          setShowTermsDialog(true)
+        }, 2000)
+        return
+      }
+      
+      // Step 2: Show welcome dialog if terms accepted but video not shown
       if (!profile?.welcome_dialog_shown) {
-        // Wait 2 seconds before showing the dialog
         setTimeout(() => {
           setShowFirstLoginDialog(true)
-        }, 2000)
+        }, 500)
       }
     } catch (error) {
       console.error('Error checking welcome dialog status:', error)
@@ -856,6 +865,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           }}
         />
       )}
+
+      <TermsAcceptanceDialog
+        open={showTermsDialog}
+        onAccept={async () => {
+          await supabase
+            .from('profiles')
+            .update({ terms_accepted_at: new Date().toISOString() })
+            .eq('user_id', user.id)
+          
+          setShowTermsDialog(false)
+          // Show welcome video dialog after terms acceptance
+          setTimeout(() => setShowFirstLoginDialog(true), 500)
+        }}
+      />
 
       <FirstLoginDialog 
         open={showFirstLoginDialog} 
