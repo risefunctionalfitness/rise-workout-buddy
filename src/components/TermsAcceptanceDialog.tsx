@@ -47,7 +47,7 @@ export const TermsAcceptanceDialog = ({ open, onAccept }: TermsAcceptanceDialogP
           <div className="relative">
             <div 
               ref={scrollRef}
-              className="h-[45vh] overflow-y-auto border rounded-lg p-3 text-xs text-muted-foreground space-y-4"
+              className="h-[35vh] overflow-y-auto border rounded-lg p-3 text-xs text-muted-foreground space-y-4"
             >
               {/* AGB */}
               <div>
