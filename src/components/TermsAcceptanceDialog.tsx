@@ -1,14 +1,9 @@
 import { useState, useRef } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface TermsAcceptanceDialogProps {
   open: boolean
@@ -29,19 +24,31 @@ export const TermsAcceptanceDialog = ({ open, onAccept }: TermsAcceptanceDialogP
   }
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>Nutzungsbedingungen akzeptieren</DialogTitle>
-        </DialogHeader>
+    <DialogPrimitive.Root open={open}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          className={cn(
+            "fixed left-[50%] top-[50%] z-50 grid w-full max-w-sm translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg"
+          )}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+            <DialogPrimitive.Title className="text-lg font-semibold leading-none tracking-tight">
+              Nutzungsbedingungen akzeptieren
+            </DialogPrimitive.Title>
+          </div>
 
-        <p className="text-sm text-muted-foreground">
-          Bitte lies und akzeptiere die AGB und Datenschutzerklärung um fortzufahren.
-        </p>
+          <p className="text-sm text-muted-foreground">
+            Bitte lies und akzeptiere die AGB und Datenschutzerklärung um fortzufahren.
+          </p>
 
-        <div className="relative flex-1 min-h-0">
-          <ScrollArea className="h-[50vh] border rounded-lg" ref={scrollRef}>
-            <div className="p-4 text-xs text-muted-foreground space-y-4">
+          <div className="relative">
+            <div 
+              ref={scrollRef}
+              className="h-[45vh] overflow-y-auto border rounded-lg p-3 text-xs text-muted-foreground space-y-4"
+            >
               {/* AGB */}
               <div>
                 <h2 className="text-sm font-bold text-foreground mb-2">Allgemeine Geschäftsbedingungen (AGB)</h2>
@@ -250,39 +257,39 @@ export const TermsAcceptanceDialog = ({ open, onAccept }: TermsAcceptanceDialogP
                 <p>Wir behalten uns vor, diese Datenschutzerklärung bei rechtlichen oder organisatorischen Änderungen anzupassen. Die aktuelle Version stellen wir im Studio und online zur Verfügung.</p>
               </div>
             </div>
-          </ScrollArea>
 
-          <button
-            onClick={scrollToEnd}
-            className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs text-primary hover:text-primary/80 bg-background/90 px-3 py-1 rounded-full border shadow-sm"
+            <button
+              onClick={scrollToEnd}
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs text-primary hover:text-primary/80 bg-background/90 px-3 py-1 rounded-full border shadow-sm"
+            >
+              <ChevronDown className="h-3 w-3" />
+              Zum Ende springen
+            </button>
+          </div>
+
+          <div className="flex items-start gap-3 pt-2">
+            <Checkbox 
+              id="accept-terms" 
+              checked={accepted} 
+              onCheckedChange={(checked) => setAccepted(checked === true)}
+            />
+            <label 
+              htmlFor="accept-terms" 
+              className="text-sm cursor-pointer leading-tight"
+            >
+              Ich akzeptiere die <span className="font-medium">AGB</span> und die <span className="font-medium">Datenschutzerklärung</span>
+            </label>
+          </div>
+
+          <Button 
+            onClick={onAccept} 
+            disabled={!accepted}
+            className="w-full"
           >
-            <ChevronDown className="h-3 w-3" />
-            Zum Ende springen
-          </button>
-        </div>
-
-        <div className="flex items-start gap-3 pt-2">
-          <Checkbox 
-            id="accept-terms" 
-            checked={accepted} 
-            onCheckedChange={(checked) => setAccepted(checked === true)}
-          />
-          <label 
-            htmlFor="accept-terms" 
-            className="text-sm cursor-pointer leading-tight"
-          >
-            Ich akzeptiere die <span className="font-medium">AGB</span> und die <span className="font-medium">Datenschutzerklärung</span>
-          </label>
-        </div>
-
-        <Button 
-          onClick={onAccept} 
-          disabled={!accepted}
-          className="w-full"
-        >
-          Weiter
-        </Button>
-      </DialogContent>
-    </Dialog>
+            Weiter
+          </Button>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }
