@@ -409,7 +409,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         </Card>
 
         {/* Abmelde Button - am Ende der Seite */}
-        <div className="mt-8 mb-8">
+        <div className="mt-8 mb-4">
           <Button 
             onClick={handleLogout} 
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all hover:scale-[1.02]"
@@ -418,6 +418,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             <LogOut className="mr-2 h-4 w-4" />
             Abmelden
           </Button>
+        </div>
+
+        {/* Rechtliche Links */}
+        <div className="flex justify-center gap-4 mb-8 text-xs text-muted-foreground">
+          <span 
+            className="cursor-pointer hover:underline" 
+            onClick={() => navigate('/terms')}
+          >
+            AGB
+          </span>
+          <span>|</span>
+          <span 
+            className="cursor-pointer hover:underline" 
+            onClick={() => navigate('/privacy')}
+          >
+            Datenschutz
+          </span>
         </div>
       </div>
     </div>

@@ -27,6 +27,8 @@ import SimpleRepsCounter from "./pages/SimpleRepsCounter";
 import ProRepsCounter from "./pages/ProRepsCounter";
 import EmbedKursplan from "./pages/EmbedKursplan";
 import EmbedWellpass from "./pages/EmbedWellpass";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,8 @@ const App = () => (
               <Route path="/admin/workouts" element={<WorkoutManagement />} />
               <Route path="/embed/kursplan" element={<EmbedKursplan />} />
               <Route path="/embed/wellpass" element={<EmbedWellpass />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
