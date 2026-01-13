@@ -259,7 +259,7 @@ export const CourseInvitationsPanel = ({
 
   const handleAccept = async (invitation: Invitation) => {
     try {
-      // Check if user can register for this course
+      // Check if user can register for this course (credits/limits)
       const { data: canRegister, error: checkError } = await supabase
         .rpc('can_user_register_for_course', {
           user_id_param: user.id,
@@ -276,13 +276,27 @@ export const CourseInvitationsPanel = ({
         return;
       }
 
-      // Try to register for the course
+      // Check if course is full - get current participant count and max
+      const { data: courseStats, error: statsError } = await supabase
+        .rpc('get_course_stats', { course_id_param: invitation.course_id });
+
+      if (statsError) {
+        console.error("Error getting course stats:", statsError);
+        toast.error("Fehler beim Prüfen der Kursverfügbarkeit");
+        return;
+      }
+
+      const stats = courseStats?.[0];
+      const isFull = stats && stats.registered_count >= stats.max_participants;
+      const registrationStatus = isFull ? "waitlist" : "registered";
+
+      // Try to register for the course with appropriate status
       const { error: registrationError } = await supabase
         .from("course_registrations")
         .insert({
           user_id: user.id,
           course_id: invitation.course_id,
-          status: "registered"
+          status: registrationStatus
         });
 
       if (registrationError) {
@@ -309,7 +323,11 @@ export const CourseInvitationsPanel = ({
         console.error("Error updating invitation:", invitationError);
       }
 
-      toast.success("Du bist jetzt für den Kurs angemeldet!");
+      if (isFull) {
+        toast.success("Du wurdest auf die Warteliste gesetzt, da der Kurs voll ist");
+      } else {
+        toast.success("Du bist jetzt für den Kurs angemeldet!");
+      }
       
       // Reload invitations
       loadReceivedInvitations();
