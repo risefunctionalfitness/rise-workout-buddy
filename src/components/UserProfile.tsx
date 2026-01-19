@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { LogOut, Dumbbell, Target, Moon, Sun, RotateCcw, Eye, EyeOff } from "lucide-react"
+import { LogOut, Dumbbell, Target, Moon, Sun, RotateCcw, Eye, EyeOff, Mail, MessageSquare, AlertTriangle } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
@@ -12,10 +12,29 @@ import { AvatarUpload } from "@/components/AvatarUpload"
 import { useTheme } from "next-themes"
 import UserBadges from "@/components/UserBadges"
 import { YearlyTrainingHeatmap } from "@/components/YearlyTrainingHeatmap"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface UserProfileProps {
   onClose: () => void
 }
+
+const countryCodes = [
+  { code: "+49", country: "DE", flag: "🇩🇪" },
+  { code: "+43", country: "AT", flag: "🇦🇹" },
+  { code: "+41", country: "CH", flag: "🇨🇭" },
+  { code: "+31", country: "NL", flag: "🇳🇱" },
+  { code: "+32", country: "BE", flag: "🇧🇪" },
+  { code: "+33", country: "FR", flag: "🇫🇷" },
+  { code: "+39", country: "IT", flag: "🇮🇹" },
+  { code: "+44", country: "UK", flag: "🇬🇧" },
+  { code: "+1", country: "US", flag: "🇺🇸" },
+]
 
 export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const navigate = useNavigate()
@@ -31,6 +50,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const [membershipType, setMembershipType] = useState<string | null>(null)
   const [accessCodeError, setAccessCodeError] = useState("")
   const [showAccessCode, setShowAccessCode] = useState(false)
+  const [userEmail, setUserEmail] = useState<string>("")
+  
+  // Notification settings
+  const [notifyEmailEnabled, setNotifyEmailEnabled] = useState(true)
+  const [notifyWhatsappEnabled, setNotifyWhatsappEnabled] = useState(false)
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+49")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [showPhoneInput, setShowPhoneInput] = useState(false)
+  const [savingNotifications, setSavingNotifications] = useState(false)
 
   useEffect(() => {
     loadProfile()
@@ -42,6 +70,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       if (!user) return
 
       setUserId(user.id)
+      setUserEmail(user.email || "")
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -55,6 +84,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         setAccessCode(profile.access_code || "")
         setAvatarUrl(profile.avatar_url)
         setMembershipType(profile.membership_type || null)
+        setNotifyEmailEnabled(profile.notify_email_enabled ?? true)
+        setNotifyWhatsappEnabled(profile.notify_whatsapp_enabled ?? false)
+        setPhoneCountryCode(profile.phone_country_code || "+49")
+        setPhoneNumber(profile.phone_number || "")
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -79,7 +112,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   }
 
   const handleAccessCodeChange = (value: string) => {
-    // Only allow numbers
     const numericValue = value.replace(/\D/g, '')
     setAccessCode(numericValue)
     if (numericValue) {
@@ -94,7 +126,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      // Validate access code before saving
       if (!validateAccessCode(accessCode)) {
         toast({
           title: "Fehler",
@@ -104,7 +135,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         return
       }
 
-      // Update nickname directly in profiles table
       const { error: nicknameError } = await supabase
         .from('profiles')
         .update({ nickname })
@@ -112,18 +142,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
       if (nicknameError) throw nicknameError
 
-      // Update access code using edge function (updates both profile and auth password)
       const { data, error: accessCodeError } = await supabase.functions.invoke('update-access-code', {
         body: { newAccessCode: accessCode }
       })
 
-      // Check for edge function error or error in response body
       if (accessCodeError) {
         console.error('Access code update error:', accessCodeError)
         throw new Error(accessCodeError.message || 'Fehler beim Aktualisieren des Zugangscodes')
       }
       
-      // Edge functions return errors in the data body when status is 400
       if (data?.error) {
         console.error('Access code update error from response:', data.error)
         throw new Error(data.error)
@@ -131,7 +158,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
       toast({
         title: "Profil gespeichert",
-        description: data?.message || "Zugangscode erfolgreich geändert. Verwenden Sie den neuen Code für die nächste Anmeldung.",
+        description: data?.message || "Zugangscode erfolgreich geändert.",
       })
     } catch (error) {
       console.error('Error saving profile:', error)
@@ -140,6 +167,107 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         description: (error as any)?.message ?? "Profil konnte nicht gespeichert werden.",
         variant: "destructive"
       })
+    }
+  }
+
+  const handleWhatsappToggle = async (enabled: boolean) => {
+    if (enabled && !phoneNumber) {
+      // Show phone input when trying to enable without a phone number
+      setShowPhoneInput(true)
+      return
+    }
+    
+    setNotifyWhatsappEnabled(enabled)
+    await saveNotificationSettings(notifyEmailEnabled, enabled)
+  }
+
+  const handleEmailToggle = async (enabled: boolean) => {
+    setNotifyEmailEnabled(enabled)
+    await saveNotificationSettings(enabled, notifyWhatsappEnabled)
+  }
+
+  const handlePhoneNumberChange = (value: string) => {
+    const cleaned = value.replace(/[^\d]/g, '')
+    setPhoneNumber(cleaned)
+  }
+
+  const savePhoneAndEnableWhatsapp = async () => {
+    if (!phoneNumber || phoneNumber.length < 6) {
+      toast({
+        title: "Fehler",
+        description: "Bitte gib eine gültige Telefonnummer ein",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setSavingNotifications(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          phone_country_code: phoneCountryCode,
+          phone_number: phoneNumber,
+          notify_whatsapp_enabled: true
+        })
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      setNotifyWhatsappEnabled(true)
+      setShowPhoneInput(false)
+      toast({
+        title: "Gespeichert",
+        description: "WhatsApp-Benachrichtigungen aktiviert"
+      })
+    } catch (error) {
+      console.error('Error saving phone:', error)
+      toast({
+        title: "Fehler",
+        description: "Konnte Telefonnummer nicht speichern",
+        variant: "destructive"
+      })
+    } finally {
+      setSavingNotifications(false)
+    }
+  }
+
+  const cancelPhoneInput = () => {
+    setShowPhoneInput(false)
+    // Reset to original value if canceling
+    loadProfile()
+  }
+
+  const saveNotificationSettings = async (emailEnabled: boolean, whatsappEnabled: boolean) => {
+    setSavingNotifications(true)
+    try {
+      const updateData: any = {
+        notify_email_enabled: emailEnabled,
+        notify_whatsapp_enabled: whatsappEnabled
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      toast({
+        title: "Gespeichert",
+        description: "Benachrichtigungseinstellungen aktualisiert"
+      })
+    } catch (error) {
+      console.error('Error saving notification settings:', error)
+      toast({
+        title: "Fehler",
+        description: "Einstellungen konnten nicht gespeichert werden",
+        variant: "destructive"
+      })
+      // Revert on error
+      loadProfile()
+    } finally {
+      setSavingNotifications(false)
     }
   }
 
@@ -164,6 +292,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const handleRefresh = () => {
     window.location.reload()
   }
+
+  const openWhatsAppAdmin = () => {
+    window.open('https://wa.me/4915730440756?text=Hallo%2C%20ich%20m%C3%B6chte%20meine%20E-Mail-Adresse%20%C3%A4ndern.', '_blank')
+  }
+
+  const bothNotificationsDisabled = !notifyEmailEnabled && !notifyWhatsappEnabled
 
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
@@ -197,7 +331,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                 currentAvatarUrl={avatarUrl}
                 onAvatarUpdate={(newAvatarUrl) => {
                   setAvatarUrl(newAvatarUrl)
-                  loadProfile() // Reload profile to sync data
+                  loadProfile()
                 }}
               />
               <div className="text-center">
@@ -288,7 +422,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         {/* Navigation zu Kraftwerten und Übungen */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div 
-            className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all hover:scale-[1.02]" 
+            className="bg-muted/50 rounded-2xl p-6 cursor-pointer hover:bg-muted transition-all hover:scale-[1.02]" 
             onClick={navigateToStrengthValues}
           >
             <div className="flex flex-col items-center justify-center">
@@ -299,7 +433,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
           </div>
           
           <div 
-            className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all hover:scale-[1.02]" 
+            className="bg-muted/50 rounded-2xl p-6 cursor-pointer hover:bg-muted transition-all hover:scale-[1.02]" 
             onClick={navigateToExercises}
           >
             <div className="flex flex-col items-center justify-center">
@@ -384,10 +518,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
           </CardContent>
         </Card>
 
-        {/* Einstellungen */}
+        {/* Anzeige Einstellungen */}
         <Card className="border-primary/20 mb-4">
           <CardHeader>
-            <CardTitle>Einstellungen</CardTitle>
+            <CardTitle>Anzeige</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -404,6 +538,132 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                 checked={theme === 'dark'}
                 onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Benachrichtigungen Einstellungen */}
+        <Card className="border-primary/20 mb-4">
+          <CardHeader>
+            <CardTitle>Benachrichtigungen</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Für Warteliste, Einladungen und Kurs-Erinnerungen
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Warning if both disabled */}
+            {bothNotificationsDisabled && (
+              <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <p className="text-sm text-destructive">
+                  Du erhältst keine Benachrichtigungen zu Warteliste, Einladungen und Kursen.
+                </p>
+              </div>
+            )}
+
+            {/* Email Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Mail className="h-4 w-4" />
+                  <Label>Email</Label>
+                </div>
+                <Switch
+                  checked={notifyEmailEnabled}
+                  onCheckedChange={handleEmailToggle}
+                  disabled={savingNotifications}
+                />
+              </div>
+              <div className="ml-6 space-y-2">
+                <p className="text-sm text-muted-foreground">{userEmail}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={openWhatsAppAdmin}
+                  className="text-xs"
+                >
+                  Zum Ändern Admin kontaktieren
+                </Button>
+              </div>
+            </div>
+
+            {/* WhatsApp Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <Label>WhatsApp</Label>
+                </div>
+                <Switch
+                  checked={notifyWhatsappEnabled}
+                  onCheckedChange={handleWhatsappToggle}
+                  disabled={savingNotifications}
+                />
+              </div>
+              
+              {/* Show phone number if WhatsApp enabled and number exists */}
+              {notifyWhatsappEnabled && phoneNumber && !showPhoneInput && (
+                <div className="ml-6 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {phoneCountryCode} {phoneNumber}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowPhoneInput(true)}
+                    className="text-xs"
+                  >
+                    Bearbeiten
+                  </Button>
+                </div>
+              )}
+
+              {/* Phone input when enabling without number or editing */}
+              {showPhoneInput && (
+                <div className="ml-6 space-y-3">
+                  <div className="flex gap-2">
+                    <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countryCodes.map((cc) => (
+                          <SelectItem key={cc.code} value={cc.code}>
+                            <span className="flex items-center gap-1">
+                              <span>{cc.flag}</span>
+                              <span>{cc.code}</span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="15730440756"
+                      value={phoneNumber}
+                      onChange={(e) => handlePhoneNumberChange(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      onClick={savePhoneAndEnableWhatsapp}
+                      disabled={savingNotifications || !phoneNumber}
+                    >
+                      Speichern
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={cancelPhoneInput}
+                    >
+                      Abbrechen
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

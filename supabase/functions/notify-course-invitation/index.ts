@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Format phone number: remove + and spaces
+const formatPhoneNumber = (countryCode: string, number: string): string => {
+  const cleanCountryCode = countryCode.replace(/^\+/, '').replace(/\s/g, '');
+  const cleanNumber = number.replace(/\s/g, '');
+  return `${cleanCountryCode}${cleanNumber}`;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -34,7 +41,7 @@ serve(async (req) => {
 
     console.log(`Processing invitation notification for invitation_id: ${invitation_id}`);
 
-    // Fetch invitation details with course, sender, and recipient information
+    // Fetch invitation details
     const { data: invitation, error: invitationError } = await supabase
       .from('course_invitations')
       .select(`
@@ -75,10 +82,10 @@ serve(async (req) => {
       console.warn(`Failed to fetch sender profile: ${senderError.message}`);
     }
 
-    // Fetch recipient profile
+    // Fetch recipient profile with notification preferences
     const { data: recipientProfile, error: recipientError } = await supabase
       .from('profiles')
-      .select('user_id, display_name, first_name, last_name, nickname')
+      .select('user_id, display_name, first_name, last_name, nickname, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled')
       .eq('user_id', invitation.recipient_id)
       .single();
 
@@ -94,6 +101,35 @@ serve(async (req) => {
     if (recipientUserError) {
       console.warn(`Failed to fetch recipient email: ${recipientUserError.message}`);
     }
+
+    // Determine notification method
+    const wantsEmail = recipientProfile?.notify_email_enabled !== false; // Default true
+    const wantsWhatsApp = recipientProfile?.notify_whatsapp_enabled && recipientProfile?.phone_number;
+
+    let notification_method: string;
+    if (wantsEmail && wantsWhatsApp) {
+      notification_method = 'both';
+    } else if (wantsEmail) {
+      notification_method = 'email';
+    } else if (wantsWhatsApp) {
+      notification_method = 'whatsapp';
+    } else {
+      notification_method = 'none';
+    }
+
+    // Skip if no notifications wanted
+    if (notification_method === 'none') {
+      console.log('User has disabled all notifications for this event');
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: 'User has disabled all notifications' }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Format phone number if available
+    const formattedPhone = (recipientProfile?.phone_number && recipientProfile?.notify_whatsapp_enabled)
+      ? formatPhoneNumber(recipientProfile.phone_country_code || '+49', recipientProfile.phone_number)
+      : null;
 
     // Format sender name - prioritize nickname
     const senderName = senderProfile?.nickname ||
@@ -116,6 +152,7 @@ serve(async (req) => {
     // Construct webhook payload
     const webhookData = {
       event_type: 'course_invitation',
+      notification_method,
       invitation_id: invitation.id,
       sender: {
         user_id: invitation.sender_id,
@@ -127,6 +164,7 @@ serve(async (req) => {
         name: recipientName,
         email: recipientUser?.user?.email || null,
       },
+      phone: formattedPhone,
       course: {
         id: course.id,
         title: course.title,

@@ -9,6 +9,7 @@ import { NewsSection } from "@/components/NewsSection"
 import ChallengeDetail from "@/components/ChallengeDetail"
 import { FirstLoginDialog } from "@/components/FirstLoginDialog"
 import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog"
+import { PhoneNumberDialog } from "@/components/PhoneNumberDialog"
 import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 import { MonthlyProgressCircle } from "@/components/MonthlyProgressCircle"
 import { WeekPreview } from "@/components/WeekPreview"
@@ -79,6 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [wodStep, setWodStep] = useState(1)
   const [showFirstLoginDialog, setShowFirstLoginDialog] = useState(false)
   const [showTermsDialog, setShowTermsDialog] = useState(false)
+  const [showPhoneDialog, setShowPhoneDialog] = useState(false)
   const [showAdminNav, setShowAdminNav] = useState(false)
   const [showInvitations, setShowInvitations] = useState(false)
   const [invitationCount, setInvitationCount] = useState(0)
@@ -270,7 +272,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('welcome_dialog_shown, terms_accepted_at')
+        .select('welcome_dialog_shown, terms_accepted_at, phone_prompt_shown')
         .eq('user_id', user.id)
         .maybeSingle()
       
@@ -284,7 +286,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         return
       }
       
-      // Step 2: Show welcome dialog if terms accepted but video not shown
+      // Step 2: Check if phone prompt has been shown
+      if (!profile?.phone_prompt_shown) {
+        setTimeout(() => {
+          setShowPhoneDialog(true)
+        }, 500)
+        return
+      }
+      
+      // Step 3: Show welcome dialog if terms accepted but video not shown
       if (!profile?.welcome_dialog_shown) {
         setTimeout(() => {
           setShowFirstLoginDialog(true)
