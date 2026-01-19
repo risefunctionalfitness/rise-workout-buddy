@@ -131,10 +131,15 @@ export const PhoneNumberDialog: React.FC<PhoneNumberDialogProps> = ({
           {/* Phone Input */}
           <div className="w-full flex gap-2">
             <Select value={countryCode} onValueChange={setCountryCode}>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
+              <SelectTrigger className="w-[110px]">
+                <SelectValue>
+                  <span className="flex items-center gap-1">
+                    <span>{countryCodes.find(cc => cc.code === countryCode)?.flag}</span>
+                    <span>{countryCode}</span>
+                  </span>
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background">
                 {countryCodes.map((cc) => (
                   <SelectItem key={cc.code} value={cc.code}>
                     <span className="flex items-center gap-1">
@@ -158,7 +163,7 @@ export const PhoneNumberDialog: React.FC<PhoneNumberDialogProps> = ({
           {/* Save Button */}
           <Button 
             onClick={handleSave} 
-            className="w-full bg-green-500 hover:bg-green-600 text-white"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={saving || !phoneNumber}
           >
             {saving ? "Speichern..." : "Nummer hinterlegen"}
