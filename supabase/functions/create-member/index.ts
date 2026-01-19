@@ -112,6 +112,24 @@ serve(async (req) => {
         console.log('Successfully added role:', role)
       }
       
+      // Update profile with phone data if provided
+      if (user_metadata?.phone_number) {
+        const { error: phoneError } = await supabase
+          .from('profiles')
+          .update({
+            phone_country_code: user_metadata.phone_country_code || '+49',
+            phone_number: user_metadata.phone_number,
+            notify_whatsapp_enabled: true
+          })
+          .eq('user_id', data.user.id)
+        
+        if (phoneError) {
+          console.error('Error updating phone data:', phoneError)
+        } else {
+          console.log('Successfully updated phone data')
+        }
+      }
+      
       // Initialize credits for 10er Karte members with 0 credits (admin must recharge)
       if (membershipType === '10er Karte') {
         const { error: creditsError } = await supabase
