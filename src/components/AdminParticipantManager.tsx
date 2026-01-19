@@ -4,17 +4,27 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, X, Edit } from "lucide-react"
+import { Search, Plus, Edit, Mail, MessageSquare } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { MembershipBadge } from "@/components/MembershipBadge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface Member {
   user_id: string
   display_name: string
   membership_type: string
   email?: string
+  phone_country_code?: string
+  phone_number?: string
+  notify_email_enabled?: boolean
+  notify_whatsapp_enabled?: boolean
 }
 
 interface AdminParticipantManagerProps {
@@ -23,6 +33,18 @@ interface AdminParticipantManagerProps {
   onOpenChange: (open: boolean) => void
   onParticipantAdded: () => void
 }
+
+const countryCodes = [
+  { code: "+49", country: "DE", flag: "🇩🇪" },
+  { code: "+43", country: "AT", flag: "🇦🇹" },
+  { code: "+41", country: "CH", flag: "🇨🇭" },
+  { code: "+31", country: "NL", flag: "🇳🇱" },
+  { code: "+32", country: "BE", flag: "🇧🇪" },
+  { code: "+33", country: "FR", flag: "🇫🇷" },
+  { code: "+39", country: "IT", flag: "🇮🇹" },
+  { code: "+44", country: "UK", flag: "🇬🇧" },
+  { code: "+1", country: "US", flag: "🇺🇸" },
+]
 
 export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = ({
   courseId,
@@ -36,8 +58,9 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
   const [loading, setLoading] = useState(false)
   const [registeredUserIds, setRegisteredUserIds] = useState<string[]>([])
   const [editingMember, setEditingMember] = useState<Member | null>(null)
-  const [editedEmail, setEditedEmail] = useState("")
   const [editedDisplayName, setEditedDisplayName] = useState("")
+  const [editedPhoneCountryCode, setEditedPhoneCountryCode] = useState("+49")
+  const [editedPhoneNumber, setEditedPhoneNumber] = useState("")
 
   useEffect(() => {
     if (open) {
@@ -59,28 +82,13 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
       setLoading(true)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, membership_type')
+        .select('user_id, display_name, membership_type, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled, email')
         .not('display_name', 'is', null)
         .order('display_name')
 
       if (profilesError) throw profilesError
 
-      // Get user emails from auth.users
-      const userIds = profilesData.map(p => p.user_id)
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, membership_type')
-        .in('user_id', userIds)
-
-      if (usersError) throw usersError
-
-      // For now, use placeholder emails since we can't access auth.users directly
-      const membersWithEmail = (profilesData || []).map(profile => ({
-        ...profile,
-        email: `${profile.display_name?.toLowerCase().replace(/\s+/g, '.')}@gym.com` || 'user@gym.com'
-      }))
-
-      setMembers(membersWithEmail)
+      setMembers(profilesData || [])
 
     } catch (error) {
       console.error('Error loading members:', error)
@@ -128,34 +136,30 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
 
   const startEditingMember = (member: Member) => {
     setEditingMember(member)
-    setEditedEmail(member.email || '')
     setEditedDisplayName(member.display_name)
+    setEditedPhoneCountryCode(member.phone_country_code || "+49")
+    setEditedPhoneNumber(member.phone_number || "")
+  }
+
+  const handlePhoneNumberChange = (value: string) => {
+    const cleaned = value.replace(/[^\d]/g, '')
+    setEditedPhoneNumber(cleaned)
   }
 
   const saveChanges = async () => {
     if (!editingMember) return
 
     try {
-      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ display_name: editedDisplayName })
+        .update({ 
+          display_name: editedDisplayName,
+          phone_country_code: editedPhoneCountryCode,
+          phone_number: editedPhoneNumber || null
+        })
         .eq('user_id', editingMember.user_id)
 
       if (profileError) throw profileError
-
-      // Update member's email in our local state and show success
-      if (editedEmail !== editingMember.email && editedEmail.includes('@')) {
-        // Update the member in our local state
-        setMembers(prevMembers => 
-          prevMembers.map(member => 
-            member.user_id === editingMember.user_id 
-              ? { ...member, email: editedEmail }
-              : member
-          )
-        )
-        console.log('Email updated locally for user:', editingMember.user_id, 'to:', editedEmail)
-      }
 
       toast.success('Mitglied erfolgreich aktualisiert')
       setEditingMember(null)
@@ -164,6 +168,14 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
       console.error('Error updating member:', error)
       toast.error('Fehler beim Aktualisieren des Mitglieds')
     }
+  }
+
+  const hasWhatsApp = (member: Member) => {
+    return member.notify_whatsapp_enabled && member.phone_number
+  }
+
+  const hasEmail = (member: Member) => {
+    return member.notify_email_enabled !== false // Default true if undefined
   }
 
   return (
@@ -203,9 +215,19 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
                            <span className="font-medium">{member.display_name}</span>
                            <MembershipBadge type={member.membership_type as any} />
                          </div>
-                         {member.email && (
-                           <span className="text-sm text-muted-foreground">{member.email}</span>
-                         )}
+                         <div className="flex items-center gap-2">
+                           {member.email && (
+                             <span className="text-sm text-muted-foreground">{member.email}</span>
+                           )}
+                           <div className="flex items-center gap-1">
+                             {hasEmail(member) && (
+                               <Mail className="h-3.5 w-3.5 text-blue-500" />
+                             )}
+                             {hasWhatsApp(member) && (
+                               <MessageSquare className="h-3.5 w-3.5 text-green-500" />
+                             )}
+                           </div>
+                         </div>
                        </div>
                        <div className="flex gap-2">
                          <Button
@@ -257,17 +279,35 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
                 />
               </div>
               <div>
-                <Label htmlFor="editEmail">E-Mail</Label>
-                <Input
-                  id="editEmail"
-                  type="email"
-                  value={editedEmail}
-                  onChange={(e) => setEditedEmail(e.target.value)}
-                  placeholder="E-Mail Adresse"
-                />
+                <Label>Telefon</Label>
+                <div className="flex gap-2">
+                  <Select value={editedPhoneCountryCode} onValueChange={setEditedPhoneCountryCode}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countryCodes.map((cc) => (
+                        <SelectItem key={cc.code} value={cc.code}>
+                          <span className="flex items-center gap-1">
+                            <span>{cc.flag}</span>
+                            <span>{cc.code}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="15730440756"
+                    value={editedPhoneNumber}
+                    onChange={(e) => handlePhoneNumberChange(e.target.value)}
+                    className="flex-1"
+                  />
+                </div>
               </div>
               <div className="flex gap-2 pt-4">
-                <Button onClick={saveChanges} disabled={!editedDisplayName || !editedEmail}>
+                <Button onClick={saveChanges} disabled={!editedDisplayName}>
                   Speichern
                 </Button>
                 <Button variant="outline" onClick={() => setEditingMember(null)}>

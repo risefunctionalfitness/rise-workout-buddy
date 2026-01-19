@@ -919,6 +919,11 @@ export type Database = {
           last_name: string | null
           membership_type: string | null
           nickname: string | null
+          notify_email_enabled: boolean | null
+          notify_whatsapp_enabled: boolean | null
+          phone_country_code: string | null
+          phone_number: string | null
+          phone_prompt_shown: boolean | null
           preferred_exercises: Json | null
           show_in_leaderboard: boolean
           snatch_1rm: number | null
@@ -950,6 +955,11 @@ export type Database = {
           last_name?: string | null
           membership_type?: string | null
           nickname?: string | null
+          notify_email_enabled?: boolean | null
+          notify_whatsapp_enabled?: boolean | null
+          phone_country_code?: string | null
+          phone_number?: string | null
+          phone_prompt_shown?: boolean | null
           preferred_exercises?: Json | null
           show_in_leaderboard?: boolean
           snatch_1rm?: number | null
@@ -981,6 +991,11 @@ export type Database = {
           last_name?: string | null
           membership_type?: string | null
           nickname?: string | null
+          notify_email_enabled?: boolean | null
+          notify_whatsapp_enabled?: boolean | null
+          phone_country_code?: string | null
+          phone_number?: string | null
+          phone_prompt_shown?: boolean | null
           preferred_exercises?: Json | null
           show_in_leaderboard?: boolean
           snatch_1rm?: number | null

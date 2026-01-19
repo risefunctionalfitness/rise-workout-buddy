@@ -5,6 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Format phone number: remove + and spaces
+const formatPhoneNumber = (countryCode: string, number: string): string => {
+  const cleanCountryCode = countryCode.replace(/^\+/, '').replace(/\s/g, '')
+  const cleanNumber = number.replace(/\s/g, '')
+  return `${cleanCountryCode}${cleanNumber}`
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -60,10 +67,10 @@ Deno.serve(async (req) => {
       console.error('Course not found:', courseError)
     }
 
-    // Get profile details
+    // Get profile details including notification preferences
     const { data: profile } = await supabase
       .from('profiles')
-      .select('display_name, access_code, membership_type')
+      .select('display_name, access_code, membership_type, first_name, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled')
       .eq('user_id', registration.user_id)
       .single()
 
@@ -71,11 +78,45 @@ Deno.serve(async (req) => {
     const { data: userData } = await supabase.auth.admin.getUserById(registration.user_id)
     const email = userData?.user?.email || null
 
+    // Determine notification method
+    const wantsEmail = profile?.notify_email_enabled !== false // Default true
+    const wantsWhatsApp = profile?.notify_whatsapp_enabled && profile?.phone_number
+
+    let notification_method: string
+    if (wantsEmail && wantsWhatsApp) {
+      notification_method = 'both'
+    } else if (wantsEmail) {
+      notification_method = 'email'
+    } else if (wantsWhatsApp) {
+      notification_method = 'whatsapp'
+    } else {
+      notification_method = 'none'
+    }
+
+    // Skip if no notifications wanted
+    if (notification_method === 'none') {
+      console.log('User has disabled all notifications for this event')
+      return new Response(JSON.stringify({ 
+        skipped: true, 
+        reason: 'User has disabled all notifications' 
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Format phone number if available
+    const formattedPhone = (profile?.phone_number && profile?.notify_whatsapp_enabled)
+      ? formatPhoneNumber(profile.phone_country_code || '+49', profile.phone_number)
+      : null
+
     const webhookData = {
       event_type: 'waitlist_promoted',
+      notification_method,
       user_id: registration.user_id,
-      name: profile?.display_name || 'Unbekannt',
+      name: profile?.first_name || profile?.display_name || 'Unbekannt',
       email,
+      phone: formattedPhone,
       access_code: profile?.access_code || '',
       membership_type: profile?.membership_type || 'Member',
       course_id: course?.id,

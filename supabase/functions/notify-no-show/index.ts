@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Format phone number: remove + and spaces
+const formatPhoneNumber = (countryCode: string, number: string): string => {
+  const cleanCountryCode = countryCode.replace(/^\+/, '').replace(/\s/g, '')
+  const cleanNumber = number.replace(/\s/g, '')
+  return `${cleanCountryCode}${cleanNumber}`
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -46,10 +53,10 @@ serve(async (req) => {
       throw courseError
     }
 
-    // Get user profile with email
+    // Get user profile with notification preferences
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('display_name, nickname, email, user_id, first_name')
+      .select('display_name, nickname, email, user_id, first_name, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled')
       .eq('user_id', user_id)
       .single()
 
@@ -67,19 +74,46 @@ serve(async (req) => {
       }
     }
 
-    if (!userEmail) {
-      console.error('No email found for user:', user_id)
-      return new Response(JSON.stringify({ error: 'No email found for user' }), {
+    // Determine notification method
+    const wantsEmail = profile?.notify_email_enabled !== false // Default true
+    const wantsWhatsApp = profile?.notify_whatsapp_enabled && profile?.phone_number
+
+    let notification_method: string
+    if (wantsEmail && wantsWhatsApp) {
+      notification_method = 'both'
+    } else if (wantsEmail) {
+      notification_method = 'email'
+    } else if (wantsWhatsApp) {
+      notification_method = 'whatsapp'
+    } else {
+      notification_method = 'none'
+    }
+
+    // Skip if no notifications wanted
+    if (notification_method === 'none') {
+      console.log('User has disabled all notifications for this event')
+      return new Response(JSON.stringify({ 
+        success: true, 
+        skipped: true, 
+        reason: 'User has disabled all notifications' 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
+        status: 200
       })
     }
+
+    // Format phone number if available
+    const formattedPhone = (profile?.phone_number && profile?.notify_whatsapp_enabled)
+      ? formatPhoneNumber(profile.phone_country_code || '+49', profile.phone_number)
+      : null
 
     // Prepare webhook payload
     const webhookPayload = {
       event_type: 'no_show',
+      notification_method,
       user_id: user_id,
       email: userEmail,
+      phone: formattedPhone,
       name: profile.first_name || profile.nickname || profile.display_name || 'Mitglied',
       course_id: course.id,
       course_title: course.title,
