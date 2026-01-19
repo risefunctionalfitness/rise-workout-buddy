@@ -19,22 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { countryCodes, countryCodeFlags } from "@/components/CountryFlags"
 
 interface UserProfileProps {
   onClose: () => void
 }
-
-const countryCodes = [
-  { code: "+49", country: "DE", flag: "🇩🇪" },
-  { code: "+43", country: "AT", flag: "🇦🇹" },
-  { code: "+41", country: "CH", flag: "🇨🇭" },
-  { code: "+31", country: "NL", flag: "🇳🇱" },
-  { code: "+32", country: "BE", flag: "🇧🇪" },
-  { code: "+33", country: "FR", flag: "🇫🇷" },
-  { code: "+39", country: "IT", flag: "🇮🇹" },
-  { code: "+44", country: "UK", flag: "🇬🇧" },
-  { code: "+1", country: "US", flag: "🇺🇸" },
-]
 
 export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const navigate = useNavigate()
@@ -623,18 +612,29 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                 <div className="ml-6 space-y-3">
                   <div className="flex gap-2">
                     <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue />
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue>
+                          <span className="flex items-center gap-2">
+                            {(() => {
+                              const FlagComponent = countryCodeFlags[phoneCountryCode]
+                              return FlagComponent ? <FlagComponent /> : null
+                            })()}
+                            <span>{phoneCountryCode}</span>
+                          </span>
+                        </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
-                        {countryCodes.map((cc) => (
-                          <SelectItem key={cc.code} value={cc.code}>
-                            <span className="flex items-center gap-1">
-                              <span>{cc.flag}</span>
-                              <span>{cc.code}</span>
-                            </span>
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="bg-background">
+                        {countryCodes.map((cc) => {
+                          const FlagComponent = countryCodeFlags[cc.code]
+                          return (
+                            <SelectItem key={cc.code} value={cc.code}>
+                              <span className="flex items-center gap-2">
+                                {FlagComponent ? <FlagComponent /> : null}
+                                <span>{cc.code}</span>
+                              </span>
+                            </SelectItem>
+                          )
+                        })}
                       </SelectContent>
                     </Select>
                     <Input
