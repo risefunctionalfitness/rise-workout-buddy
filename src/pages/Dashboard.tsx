@@ -876,7 +876,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
         />
       )}
 
-      <TermsAcceptanceDialog
+      <TermsAcceptanceDialog 
         open={showTermsDialog}
         onAccept={async () => {
           await supabase
@@ -885,7 +885,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
             .eq('user_id', user.id)
           
           setShowTermsDialog(false)
-          // Show welcome video dialog after terms acceptance
+          // Show phone dialog after terms acceptance
+          setTimeout(() => setShowPhoneDialog(true), 500)
+        }}
+      />
+
+      <PhoneNumberDialog
+        open={showPhoneDialog}
+        onOpenChange={setShowPhoneDialog}
+        userId={user.id}
+        onComplete={() => {
+          // Show welcome video dialog after phone prompt
           setTimeout(() => setShowFirstLoginDialog(true), 500)
         }}
       />
