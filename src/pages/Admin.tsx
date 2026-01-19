@@ -62,6 +62,8 @@ export default function Admin() {
   const [newMembershipType, setNewMembershipType] = useState("Premium Member");
   const [newMemberIsAuthor, setNewMemberIsAuthor] = useState(false);
   const [newMemberShowInLeaderboard, setNewMemberShowInLeaderboard] = useState(true);
+  const [newMemberPhoneCountryCode, setNewMemberPhoneCountryCode] = useState('+49');
+  const [newMemberPhoneNumber, setNewMemberPhoneNumber] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
@@ -299,7 +301,9 @@ export default function Admin() {
             access_code: newMemberCode,
             membership_type: newMembershipType,
             authors: newMemberIsAuthor,
-            show_in_leaderboard: newMemberShowInLeaderboard
+            show_in_leaderboard: newMemberShowInLeaderboard,
+            phone_country_code: newMemberPhoneNumber ? newMemberPhoneCountryCode : null,
+            phone_number: newMemberPhoneNumber || null
           }
         }
       });
@@ -323,6 +327,8 @@ export default function Admin() {
         setNewMembershipType("Premium Member");
         setNewMemberIsAuthor(false);
         setNewMemberShowInLeaderboard(true);
+        setNewMemberPhoneCountryCode('+49');
+        setNewMemberPhoneNumber('');
         setDialogOpen(false);
         setCurrentPage(1);
         loadMembers();
@@ -689,6 +695,45 @@ export default function Admin() {
                         Im Leaderboard anzeigen
                       </label>
                     </div>
+                    <div className="space-y-2">
+                      <Label>Telefon (optional)</Label>
+                      <div className="flex gap-2">
+                        <Select value={newMemberPhoneCountryCode} onValueChange={setNewMemberPhoneCountryCode}>
+                          <SelectTrigger className="w-[110px]">
+                            <SelectValue>
+                              <span className="flex items-center gap-2">
+                                {(() => {
+                                  const FlagComponent = countryCodeFlags[newMemberPhoneCountryCode]
+                                  return FlagComponent ? <FlagComponent /> : null
+                                })()}
+                                <span>{newMemberPhoneCountryCode}</span>
+                              </span>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            {countryCodes.map((cc) => {
+                              const FlagComponent = countryCodeFlags[cc.code]
+                              return (
+                                <SelectItem key={cc.code} value={cc.code}>
+                                  <span className="flex items-center gap-2">
+                                    {FlagComponent ? <FlagComponent /> : null}
+                                    <span>{cc.code}</span>
+                                  </span>
+                                </SelectItem>
+                              )
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder="15730440756"
+                          value={newMemberPhoneNumber}
+                          onChange={(e) => setNewMemberPhoneNumber(e.target.value.replace(/[^\d]/g, ''))}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <Button type="submit" className="flex-1">
                         Mitglied erstellen
@@ -955,10 +1000,10 @@ export default function Admin() {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           {member.notify_email_enabled !== false && (
-                            <Mail className="h-4 w-4 text-blue-500" />
+                            <Mail className="h-4 w-4 text-foreground" />
                           )}
                           {member.notify_whatsapp_enabled && member.phone_number && (
-                            <MessageSquare className="h-4 w-4 text-green-500" />
+                            <MessageSquare className="h-4 w-4 text-foreground" />
                           )}
                           {member.notify_email_enabled === false && !(member.notify_whatsapp_enabled && member.phone_number) && (
                             <span className="text-xs text-muted-foreground">-</span>
