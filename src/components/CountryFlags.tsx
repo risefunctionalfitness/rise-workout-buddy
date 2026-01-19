@@ -75,6 +75,13 @@ export const FlagUS = () => (
   </svg>
 )
 
+export const FlagES = () => (
+  <svg className="w-5 h-4 rounded-sm flex-shrink-0" viewBox="0 0 640 480">
+    <path fill="#AA151B" d="M0 0h640v480H0z"/>
+    <path fill="#F1BF00" d="M0 120h640v240H0z"/>
+  </svg>
+)
+
 export const countryCodeFlags: Record<string, React.FC> = {
   "+49": FlagDE,
   "+43": FlagAT,
@@ -82,6 +89,7 @@ export const countryCodeFlags: Record<string, React.FC> = {
   "+31": FlagNL,
   "+32": FlagBE,
   "+33": FlagFR,
+  "+34": FlagES,
   "+39": FlagIT,
   "+44": FlagGB,
   "+1": FlagUS,
@@ -91,6 +99,7 @@ export const countryCodes = [
   { code: "+49", country: "DE" },
   { code: "+43", country: "AT" },
   { code: "+41", country: "CH" },
+  { code: "+34", country: "ES" },
   { code: "+31", country: "NL" },
   { code: "+32", country: "BE" },
   { code: "+33", country: "FR" },

@@ -563,17 +563,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                   disabled={savingNotifications}
                 />
               </div>
-              <div className="ml-6 space-y-2">
-                <p className="text-sm text-muted-foreground">{userEmail}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={openWhatsAppAdmin}
-                  className="text-xs"
-                >
-                  Zum Ändern Admin kontaktieren
-                </Button>
-              </div>
             </div>
 
             {/* WhatsApp Section */}
