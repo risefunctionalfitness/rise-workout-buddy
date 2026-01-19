@@ -8,8 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, Edit, Trash2, Search } from "lucide-react";
+import { UserPlus, Edit, Trash2, Search, Mail, MessageSquare } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { countryCodes, countryCodeFlags } from "@/components/CountryFlags";
+import { Label } from "@/components/ui/label";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
 import { AdminCreditRecharge } from "@/components/AdminCreditRecharge";
@@ -41,6 +43,10 @@ interface Member {
   last_login_at: string | null;
   authors?: boolean;
   show_in_leaderboard?: boolean;
+  notify_email_enabled?: boolean;
+  notify_whatsapp_enabled?: boolean;
+  phone_country_code?: string;
+  phone_number?: string;
 }
 
 export default function Admin() {
@@ -63,6 +69,8 @@ export default function Admin() {
   const [editedDisplayName, setEditedDisplayName] = useState('')
   const [editedFirstName, setEditedFirstName] = useState('')
   const [editedLastName, setEditedLastName] = useState('')
+  const [editedPhoneCountryCode, setEditedPhoneCountryCode] = useState('+49')
+  const [editedPhoneNumber, setEditedPhoneNumber] = useState('')
   const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'risk-radar' | 'orders'>('home');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -192,7 +200,7 @@ export default function Admin() {
       // Build query with search filter - removed email from profiles query
       let query = supabase
         .from('profiles')
-        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors, show_in_leaderboard', { count: 'exact' });
+        .select('id, display_name, first_name, last_name, access_code, created_at, user_id, membership_type, status, last_login_at, authors, show_in_leaderboard, notify_email_enabled, notify_whatsapp_enabled, phone_country_code, phone_number', { count: 'exact' });
       
       if (searchTerm) {
         query = query.or(`display_name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
@@ -228,6 +236,8 @@ export default function Admin() {
     setEditedDisplayName(member.display_name || '');
     setEditedFirstName(member.first_name || '');
     setEditedLastName(member.last_name || '');
+    setEditedPhoneCountryCode(member.phone_country_code || '+49');
+    setEditedPhoneNumber(member.phone_number || '');
     
     if (!member.user_id) {
       setEditedEmail('');
@@ -357,7 +367,7 @@ export default function Admin() {
         }
       }
 
-      // Update profile data (display_name, first_name, last_name, membership_type, authors, etc.)
+      // Update profile data (display_name, first_name, last_name, membership_type, authors, phone, etc.)
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
@@ -368,7 +378,10 @@ export default function Admin() {
           access_code: editingMember.access_code,
           membership_type: editingMember.membership_type,
           authors: editingMember.authors,
-          show_in_leaderboard: editingMember.show_in_leaderboard ?? true
+          show_in_leaderboard: editingMember.show_in_leaderboard ?? true,
+          phone_country_code: editedPhoneNumber ? editedPhoneCountryCode : null,
+          phone_number: editedPhoneNumber || null,
+          notify_whatsapp_enabled: editedPhoneNumber ? true : false
         })
         .eq('user_id', editingMember.user_id);
 
@@ -786,6 +799,45 @@ export default function Admin() {
                            Im Leaderboard anzeigen
                          </label>
                        </div>
+                       <div className="space-y-2">
+                         <Label>Telefon (optional)</Label>
+                         <div className="flex gap-2">
+                           <Select value={editedPhoneCountryCode} onValueChange={setEditedPhoneCountryCode}>
+                             <SelectTrigger className="w-[110px]">
+                               <SelectValue>
+                                 <span className="flex items-center gap-2">
+                                   {(() => {
+                                     const FlagComponent = countryCodeFlags[editedPhoneCountryCode]
+                                     return FlagComponent ? <FlagComponent /> : null
+                                   })()}
+                                   <span>{editedPhoneCountryCode}</span>
+                                 </span>
+                               </SelectValue>
+                             </SelectTrigger>
+                             <SelectContent className="bg-background">
+                               {countryCodes.map((cc) => {
+                                 const FlagComponent = countryCodeFlags[cc.code]
+                                 return (
+                                   <SelectItem key={cc.code} value={cc.code}>
+                                     <span className="flex items-center gap-2">
+                                       {FlagComponent ? <FlagComponent /> : null}
+                                       <span>{cc.code}</span>
+                                     </span>
+                                   </SelectItem>
+                                 )
+                               })}
+                             </SelectContent>
+                           </Select>
+                           <Input
+                             type="tel"
+                             inputMode="numeric"
+                             placeholder="15730440756"
+                             value={editedPhoneNumber}
+                             onChange={(e) => setEditedPhoneNumber(e.target.value.replace(/[^\d]/g, ''))}
+                             className="flex-1"
+                           />
+                         </div>
+                       </div>
                       <div className="flex gap-2">
                         <Button type="submit" className="flex-1">
                           Änderungen speichern
@@ -874,6 +926,7 @@ export default function Admin() {
                       <TableHead>Name</TableHead>
                       <TableHead>Zugangscode</TableHead>
                       <TableHead>Mitgliedschaft</TableHead>
+                      <TableHead>Benachrichtigung</TableHead>
                       <TableHead>Erstellt am</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Letzter Login</TableHead>
@@ -896,6 +949,19 @@ export default function Admin() {
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
                               Autor
                             </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {member.notify_email_enabled !== false && (
+                            <Mail className="h-4 w-4 text-blue-500" />
+                          )}
+                          {member.notify_whatsapp_enabled && member.phone_number && (
+                            <MessageSquare className="h-4 w-4 text-green-500" />
+                          )}
+                          {member.notify_email_enabled === false && !(member.notify_whatsapp_enabled && member.phone_number) && (
+                            <span className="text-xs text-muted-foreground">-</span>
                           )}
                         </div>
                       </TableCell>
