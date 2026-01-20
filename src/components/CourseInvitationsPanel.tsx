@@ -272,7 +272,29 @@ export const CourseInvitationsPanel = ({
       }
 
       if (canRegister === false) {
-        toast.error("Du kannst dich nicht für diesen Kurs anmelden (Credits/Limit erreicht)");
+        // Check if already registered for same course title on same day
+        const courseTitle = invitation.courses?.title || '';
+        const courseDate = invitation.courses?.course_date || '';
+        
+        // Query to check if user has another registration for same title on same day
+        const { data: existingReg } = await supabase
+          .from('course_registrations')
+          .select('course_id, courses!inner(title, course_date, start_time)')
+          .eq('user_id', user.id)
+          .in('status', ['registered', 'waitlist'])
+          .neq('course_id', invitation.course_id);
+        
+        const duplicateReg = existingReg?.find((r: any) => 
+          r.courses?.title === courseTitle && 
+          r.courses?.course_date === courseDate
+        );
+        
+        if (duplicateReg) {
+          const existingTime = (duplicateReg as any).courses?.start_time?.slice(0, 5);
+          toast.error(`Du bist bereits für "${courseTitle}" um ${existingTime} Uhr angemeldet`);
+        } else {
+          toast.error("Du kannst dich nicht für diesen Kurs anmelden (Credits/Limit erreicht)");
+        }
         return;
       }
 

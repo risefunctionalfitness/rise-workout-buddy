@@ -226,7 +226,17 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         })
 
       if (checkError || !canRegister) {
-        if (userMembershipType === 'Basic Member') {
+        // Check if user is already registered for same course title on same day
+        const existingRegistration = courses.find(c => 
+          c.title === course.title && 
+          c.course_date === course.course_date && 
+          c.id !== courseId && 
+          (c.is_registered || c.is_waitlisted)
+        )
+        
+        if (existingRegistration) {
+          toast.error(`Du bist bereits für "${course.title}" um ${existingRegistration.start_time.slice(0, 5)} Uhr angemeldet`)
+        } else if (userMembershipType === 'Basic Member') {
           toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
         } else if (userMembershipType === '10er Karte') {
           toast.error("Du hast keine Credits mehr. Bitte lade deine 10er Karte am Empfang auf")
