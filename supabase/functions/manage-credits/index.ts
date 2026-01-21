@@ -9,6 +9,7 @@ const corsHeaders = {
 interface ManageCreditsRequest {
   user_id: string;
   credits_to_add: number;
+  description?: string;
 }
 
 serve(async (req) => {
@@ -57,7 +58,7 @@ serve(async (req) => {
       });
     }
 
-    const { user_id, credits_to_add }: ManageCreditsRequest = await req.json();
+    const { user_id, credits_to_add, description }: ManageCreditsRequest = await req.json();
 
     if (!user_id || typeof credits_to_add !== 'number' || credits_to_add === 0) {
       return new Response(JSON.stringify({ error: 'Invalid parameters' }), {
@@ -69,7 +70,7 @@ serve(async (req) => {
     // Check if user has 10er Karte membership
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('membership_type')
+      .select('membership_type, display_name')
       .eq('user_id', user_id)
       .single();
 
@@ -87,6 +88,9 @@ serve(async (req) => {
       .eq('user_id', user_id)
       .single();
 
+    let newCreditsRemaining: number;
+    let newCreditsTotal: number;
+
     if (existingCredits) {
       // Check if deducting credits would result in negative balance
       if (credits_to_add < 0 && existingCredits.credits_remaining + credits_to_add < 0) {
@@ -99,34 +103,20 @@ serve(async (req) => {
       }
 
       // Calculate new credits
-      const newCreditsRemaining = existingCredits.credits_remaining + credits_to_add;
-      const newCreditsTotal = credits_to_add > 0 ? existingCredits.credits_total + credits_to_add : existingCredits.credits_total;
+      newCreditsRemaining = existingCredits.credits_remaining + credits_to_add;
+      newCreditsTotal = credits_to_add > 0 ? existingCredits.credits_total + credits_to_add : existingCredits.credits_total;
 
       // Update existing credits
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('membership_credits')
         .update({
           credits_remaining: newCreditsRemaining,
           credits_total: newCreditsTotal,
           last_recharged_at: new Date().toISOString(),
         })
-        .eq('user_id', user_id)
-        .select()
-        .single();
+        .eq('user_id', user_id);
 
       if (error) throw error;
-
-      const action = credits_to_add > 0 ? 'hinzugefügt' : 'abgezogen';
-      const amount = Math.abs(credits_to_add);
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        credits: data,
-        message: `${amount} Credits erfolgreich ${action}`
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
     } else {
       // Can't deduct from non-existing credits
       if (credits_to_add < 0) {
@@ -138,29 +128,59 @@ serve(async (req) => {
         });
       }
 
+      newCreditsRemaining = credits_to_add;
+      newCreditsTotal = credits_to_add;
+
       // Create new credits record (only for positive values)
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('membership_credits')
         .insert({
           user_id,
           credits_remaining: credits_to_add,
           credits_total: credits_to_add,
           last_recharged_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+        });
 
       if (error) throw error;
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        credits: data,
-        message: `${credits_to_add} Credits erfolgreich hinzugefügt`
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
     }
+
+    // Log the transaction
+    const transactionType = credits_to_add > 0 ? 'admin_recharge' : 'admin_deduction';
+    const transactionDescription = description || 
+      (credits_to_add > 0 
+        ? `Admin-Aufladung: ${credits_to_add} Credits` 
+        : `Admin-Abzug: ${Math.abs(credits_to_add)} Credits`);
+
+    const { error: transactionError } = await supabase
+      .from('credit_transactions')
+      .insert({
+        user_id,
+        amount: credits_to_add,
+        transaction_type: transactionType,
+        description: transactionDescription,
+        balance_after: newCreditsRemaining,
+        created_by: user.id,
+      });
+
+    if (transactionError) {
+      console.error('Error logging transaction:', transactionError);
+      // Don't fail the request, just log the error
+    }
+
+    const action = credits_to_add > 0 ? 'hinzugefügt' : 'abgezogen';
+    const amount = Math.abs(credits_to_add);
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      credits: {
+        credits_remaining: newCreditsRemaining,
+        credits_total: newCreditsTotal,
+      },
+      message: `${amount} Credits erfolgreich ${action}`
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
 
   } catch (error: any) {
     console.error('Error in manage-credits function:', error);
