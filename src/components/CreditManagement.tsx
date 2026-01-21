@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { CreditCard, Plus, RefreshCw, User } from "lucide-react"
+import { CreditCard, Plus, RefreshCw, User, ChevronRight } from "lucide-react"
+import { CreditTransactionHistory } from "./CreditTransactionHistory"
 
 interface UserCredit {
   user_id: string
@@ -22,6 +23,7 @@ export const CreditManagement = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [creditsToAdd, setCreditsToAdd] = useState<number>(10)
   const [loading, setLoading] = useState(false)
+  const [viewingUser, setViewingUser] = useState<UserCredit | null>(null)
 
   useEffect(() => {
     loadUsers()
@@ -93,6 +95,26 @@ export const CreditManagement = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleUserClick = (user: UserCredit) => {
+    setViewingUser(user)
+  }
+
+  const handleBackFromHistory = () => {
+    setViewingUser(null)
+    loadUsers() // Refresh data when coming back
+  }
+
+  // Show transaction history when a user is selected
+  if (viewingUser) {
+    return (
+      <CreditTransactionHistory
+        userId={viewingUser.user_id}
+        userName={viewingUser.display_name}
+        onBack={handleBackFromHistory}
+      />
+    )
   }
 
   return (
@@ -173,7 +195,11 @@ export const CreditManagement = () => {
               </p>
             ) : (
               users.map(user => (
-                <div key={user.user_id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div 
+                  key={user.user_id} 
+                  className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => handleUserClick(user)}
+                >
                   <div>
                     <p className="font-medium">{user.display_name}</p>
                     {user.last_recharged_at && (
@@ -182,10 +208,11 @@ export const CreditManagement = () => {
                       </p>
                     )}
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center gap-3">
                     <Badge variant={user.credits_remaining > 0 ? "default" : "destructive"}>
                       {user.credits_remaining} / {user.credits_total} Credits
                     </Badge>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
               ))
