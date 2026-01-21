@@ -69,14 +69,14 @@ export const StreakDisplay: React.FC<StreakDisplayProps> = ({ user }) => {
       <button
         onClick={() => setDialogOpen(true)}
         className={cn(
-          "flex items-center gap-1 px-3 py-2 rounded-xl transition-all hover:bg-accent",
+          "flex items-center gap-1 px-3 py-2 rounded-xl transition-all hover:bg-accent group",
           currentStreak >= 8 && "animate-pulse"
         )}
       >
-        <span className="text-xl font-bold text-primary">
+        <span className="text-xl font-bold text-primary group-hover:text-accent-foreground transition-colors">
           {currentStreak}
         </span>
-        <Flame className="h-6 w-6 text-primary" />
+        <Flame className="h-6 w-6 text-primary group-hover:text-accent-foreground transition-colors" />
       </button>
 
       <StreakDialog
