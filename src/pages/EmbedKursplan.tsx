@@ -79,8 +79,7 @@ export default function EmbedKursplan() {
         .from('courses')
         .select(`
           id, title, trainer, course_date, start_time, end_time, 
-          max_participants, duration_minutes, color,
-          course_registrations(status)
+          max_participants, duration_minutes, color
         `)
         .eq('is_cancelled', false)
         .gte('course_date', startDate)
@@ -90,8 +89,28 @@ export default function EmbedKursplan() {
 
       if (error) throw error;
 
-      // Get guest registration counts
+      // Get registration counts using the RPC function (works without auth)
       const courseIds = coursesData?.map(c => c.id) || [];
+      
+      // Fetch stats for each course using the existing RPC function
+      const statsPromises = courseIds.map(id => 
+        supabase.rpc('get_course_stats', { course_id_param: id })
+      );
+      const statsResults = await Promise.all(statsPromises);
+      
+      const courseCounts: Record<string, { registered: number; guests: number }> = {};
+      statsResults.forEach((result, index) => {
+        if (result.data && result.data[0]) {
+          const courseId = courseIds[index];
+          // get_course_stats returns registered_count which includes members
+          courseCounts[courseId] = {
+            registered: result.data[0].registered_count || 0,
+            guests: 0 // guests are tracked separately
+          };
+        }
+      });
+
+      // Get guest registration counts separately
       const { data: guestData } = await supabase
         .from('guest_registrations')
         .select('course_id')
@@ -114,13 +133,12 @@ export default function EmbedKursplan() {
           return course.course_date > nowDate;
         })
         .map(course => {
-          const registrations = course.course_registrations || [];
-          const registered_count = registrations.filter(r => r.status === 'registered').length;
+          const counts = courseCounts[course.id] || { registered: 0, guests: 0 };
           const guest_count = guestCounts[course.id] || 0;
 
           return {
             ...course,
-            registered_count,
+            registered_count: counts.registered,
             guest_count
           };
         });
