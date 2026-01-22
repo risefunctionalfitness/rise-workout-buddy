@@ -156,20 +156,20 @@ export const GymCodeDisplay = () => {
     <div className="relative">
       {/* Ausfahrendes Textfeld - nach links */}
       <div 
-        className={`absolute top-0 right-14 bg-white border-2 border-[#B81243] rounded-l-lg shadow-lg h-14 flex items-center justify-center transition-all duration-500 overflow-hidden ${
+        className={`absolute top-0 right-14 bg-white border-2 border-[#d6242b] rounded-l-lg shadow-lg h-14 flex items-center justify-center transition-all duration-500 overflow-hidden ${
           isVisible ? 'w-80 opacity-100' : 'w-0 opacity-0'
         }`}
       >
         <div className="px-4 text-center flex items-center gap-3 justify-center w-full">
-          <LockOpen className="h-6 w-6 text-[#B81243] flex-shrink-0" />
+          <LockOpen className="h-6 w-6 text-[#d6242b] flex-shrink-0" />
           <div className="flex-shrink-0">
-            <p className="text-xs text-[#B81243] font-medium">Tür-Code</p>
+            <p className="text-xs text-[#d6242b] font-medium">Tür-Code</p>
             <p className="text-lg font-mono font-bold text-black">{getDisplayText()}</p>
             {hasError && gymCode && (
               <p className="text-xs text-orange-600">Cache</p>
             )}
           </div>
-          <LockOpen className="h-6 w-6 text-[#B81243] flex-shrink-0" />
+          <LockOpen className="h-6 w-6 text-[#d6242b] flex-shrink-0" />
         </div>
       </div>
 
@@ -192,7 +192,7 @@ export const GymCodeDisplay = () => {
         variant="outline"
         size="icon"
         onClick={handleShowCode}
-        className="rounded-full w-14 h-14 border-2 border-[#B81243] bg-[#B81243] hover:bg-[#901a36] text-white shadow-lg relative z-10"
+        className="rounded-full w-14 h-14 border-2 border-[#d6242b] bg-[#d6242b] hover:bg-[#a81d22] text-white shadow-lg relative z-10"
         aria-label="Zugangscode anzeigen"
         disabled={isLoading}
       >

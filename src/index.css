@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 340 85% 40%;
+    --primary: 358 71% 49%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 96%;
@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 340 85% 40%;
+    --accent: 358 71% 49%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -34,11 +34,11 @@ All colors MUST be HSL.
 
     --border: 0 0% 90%;
     --input: 0 0% 95%;
-    --ring: 340 85% 40%;
+    --ring: 358 71% 49%;
 
-    --rise-accent: 340 85% 40%;
-    --rise-accent-light: 340 85% 50%;
-    --rise-accent-dark: 340 85% 30%;
+    --rise-accent: 358 71% 49%;
+    --rise-accent-light: 358 71% 59%;
+    --rise-accent-dark: 358 71% 39%;
     
     --challenge-button: 173 27% 47%;
 
@@ -63,7 +63,7 @@ All colors MUST be HSL.
 
   .dark {
     /* Custom dark mode timer input border */
-    --timer-input-border: 340 85% 40%;
+    --timer-input-border: 358 71% 49%;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -73,7 +73,7 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 340 85% 40%;
+    --primary: 358 71% 49%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -82,7 +82,7 @@ All colors MUST be HSL.
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 340 85% 40%;
+    --accent: 358 71% 49%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
@@ -90,11 +90,11 @@ All colors MUST be HSL.
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 340 85% 40%;
+    --ring: 358 71% 49%;
     
-    --rise-accent: 340 85% 40%;
-    --rise-accent-light: 340 85% 50%;
-    --rise-accent-dark: 340 85% 30%;
+    --rise-accent: 358 71% 49%;
+    --rise-accent-light: 358 71% 59%;
+    --rise-accent-dark: 358 71% 39%;
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
