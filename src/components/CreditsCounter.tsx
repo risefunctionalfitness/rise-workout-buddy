@@ -48,14 +48,14 @@ export const CreditsCounter = ({ user }: CreditsCounterProps) => {
 
   if (loading) {
     return (
-      <div className="w-14 h-14 rounded-full bg-[#B81243] shadow-lg flex items-center justify-center animate-pulse">
+      <div className="w-14 h-14 rounded-full bg-[#d6242b] shadow-lg flex items-center justify-center animate-pulse">
         <div className="w-6 h-6 bg-white/20 rounded"></div>
       </div>
     )
   }
 
   return (
-    <div className="w-14 h-14 rounded-full bg-[#B81243] shadow-lg flex items-center justify-center">
+    <div className="w-14 h-14 rounded-full bg-[#d6242b] shadow-lg flex items-center justify-center">
       <span className="text-white text-lg font-bold">{credits}</span>
     </div>
   )
