@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,11 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Users, User, Check, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addDays, startOfDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
+import EmbedWeekTableView from "@/components/EmbedWeekTableView";
 
 interface Course {
   id: string;
@@ -41,6 +43,9 @@ interface TicketData {
 }
 
 export default function EmbedKursplan() {
+  const [searchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') === 'week' ? 'week' : 'list';
+  
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -281,6 +286,175 @@ export default function EmbedKursplan() {
     );
   }
 
+  // Render week table view
+  if (viewMode === 'week') {
+    return (
+      <>
+        <EmbedWeekTableView
+          courses={courses}
+          weekStart={weekStart}
+          onPrevWeek={prevWeek}
+          onNextWeek={nextWeek}
+          onCourseClick={handleCourseClick}
+          canGoPrev={weekStart > startOfDay(new Date())}
+        />
+        
+        {/* Dialogs - shared with list view */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedCourse?.title}</DialogTitle>
+              <DialogDescription>
+                {selectedCourse && format(new Date(selectedCourse.course_date), 'EEEE, dd.MM.yyyy', { locale: de })}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedCourse && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Uhrzeit:</span>
+                    <p className="font-medium">{selectedCourse.start_time.substring(0, 5)} - {selectedCourse.end_time.substring(0, 5)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Trainer:</span>
+                    <p className="font-medium">{selectedCourse.trainer}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Teilnehmer:</span>
+                    <p className="font-medium">
+                      {selectedCourse.registered_count + selectedCourse.guest_count} / {selectedCourse.max_participants}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    className="h-auto py-4 flex flex-col"
+                    onClick={() => handleBookingTypeSelect('probetraining')}
+                  >
+                    <span className="font-semibold">Probetraining</span>
+                    <span className="text-xs text-muted-foreground">Kostenlos</span>
+                  </Button>
+                  <Button
+                    className="h-auto py-4 flex flex-col bg-primary"
+                    onClick={() => handleBookingTypeSelect('drop_in')}
+                  >
+                    <span className="font-semibold">Drop-In</span>
+                    <span className="text-xs">22€ vor Ort</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {bookingType === 'drop_in' ? 'Drop-In buchen' : 'Probetraining buchen'}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedCourse?.title} am {selectedCourse && format(new Date(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleBooking} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name-week">Name *</Label>
+                <Input
+                  id="name-week"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="Vor- und Nachname"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email-week">E-Mail *</Label>
+                <Input
+                  id="email-week"
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  placeholder="deine@email.de"
+                  required
+                />
+              </div>
+
+              {bookingType === 'drop_in' && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                  <p className="font-medium text-yellow-800">💰 Zahlung vor Ort: 22€</p>
+                  <p className="text-yellow-700 mt-1">Die Zahlung erfolgt direkt im Gym.</p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setBookingDialogOpen(false)}
+                >
+                  Abbrechen
+                </Button>
+                <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                  {isSubmitting ? 'Wird gebucht...' : 'Jetzt buchen'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-green-600">
+                <Check className="h-6 w-6" />
+                Buchung erfolgreich!
+              </DialogTitle>
+            </DialogHeader>
+            {ticketData && (
+              <div className="space-y-4">
+                <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
+                  <p><strong>Kurs:</strong> {ticketData.courseTitle}</p>
+                  <p><strong>Datum:</strong> {ticketData.courseDate}</p>
+                  <p><strong>Uhrzeit:</strong> {ticketData.courseTime}</p>
+                  <p><strong>Trainer:</strong> {ticketData.trainer}</p>
+                  {ticketData.paymentNote && (
+                    <p className="text-yellow-700 font-medium">{ticketData.paymentNote}</p>
+                  )}
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  Du erhältst eine Bestätigung per E-Mail an {ticketData.guestEmail}
+                </p>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={generateTicketPDF}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Ticket herunterladen
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={() => setSuccessDialogOpen(false)}
+                  >
+                    Fertig
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // List view (default)
   return (
     <div className="min-h-screen bg-background p-4 max-w-2xl mx-auto">
       {/* Week Day Selector */}
