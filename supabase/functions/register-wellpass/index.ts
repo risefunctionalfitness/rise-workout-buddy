@@ -133,36 +133,39 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Wellpass registration created successfully');
 
-    // Send welcome email via Make.com webhook
-    const webhookUrl = Deno.env.get('MAKE_WELLPASS_WELCOME_WEBHOOK_URL');
-    
-    if (webhookUrl) {
+    // Send registration webhook to Make.com (same as create-member)
+    const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL');
+
+    if (mainWebhookUrl) {
       try {
-        const webhookPayload = {
-          event_type: 'wellpass_welcome',
-          user: {
-            firstName,
-            lastName,
-            email,
-            accessCode,
-            displayName: firstName
-          },
+        const webhookData = {
+          event_type: 'registration',
+          name: firstName,
+          email: email,
+          access_code: accessCode,
           membership_type: 'Wellpass',
-          timestamp: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          user_id: newUser.user!.id
         };
 
-        const webhookResponse = await fetch(webhookUrl, {
+        console.log('Sending registration webhook to Make.com:', webhookData);
+
+        const webhookResponse = await fetch(mainWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload)
+          body: JSON.stringify(webhookData)
         });
 
-        console.log('Welcome email webhook sent, status:', webhookResponse.status);
+        if (webhookResponse.ok) {
+          console.log('Registration webhook sent successfully');
+        } else {
+          console.error('Webhook failed:', await webhookResponse.text());
+        }
       } catch (webhookError) {
-        console.error('Error sending welcome webhook:', webhookError);
+        console.error('Error sending registration webhook:', webhookError);
       }
     } else {
-      console.log('No MAKE_WELLPASS_WELCOME_WEBHOOK_URL configured, skipping welcome email');
+      console.log('No MAKE_MAIN_WEBHOOK_URL configured, skipping registration email');
     }
 
     return new Response(
