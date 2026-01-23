@@ -67,6 +67,12 @@ export default function EmbedWellpass() {
               Du kannst dich jetzt in der Rise-App anmelden und Kurse buchen. Deine Zugangsdaten wurden dir auch per E-Mail zugesendet.
             </p>
             <Button 
+              onClick={() => window.open('https://rise-ff.lovable.app', '_blank')}
+              className="mt-4 w-full bg-[#12a6b0] hover:bg-[#0e8a93] text-white"
+            >
+              Zur Rise App
+            </Button>
+            <Button 
               onClick={() => {
                 setIsSuccess(false);
                 setFirstName("");
@@ -76,9 +82,9 @@ export default function EmbedWellpass() {
                 setError(null);
               }} 
               variant="outline" 
-              className="mt-4 border-[#444] text-white hover:bg-[#333]"
+              className="mt-2 w-full border-[#444] text-white hover:bg-[#333]"
             >
-              Zurück zur Registrierung
+              Weitere Registrierung
             </Button>
           </CardContent>
         </Card>
