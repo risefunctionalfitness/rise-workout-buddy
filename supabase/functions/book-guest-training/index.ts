@@ -154,6 +154,9 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const webhookPayload = {
           event_type: 'guest_ticket',
+          booking_type: bookingType,
+          is_drop_in: bookingType === 'drop_in',
+          is_probetraining: bookingType === 'probetraining',
           ticket: ticketData,
           timestamp: new Date().toISOString()
         };

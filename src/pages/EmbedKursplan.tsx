@@ -203,61 +203,156 @@ export default function EmbedKursplan() {
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const isDropIn = ticketData.bookingType === 'drop_in';
     
-    // Header
-    doc.setFontSize(24);
+    // Colors
+    const riseRed = { r: 214, g: 36, b: 43 }; // #d6242b
+    const probeGreen = { r: 34, g: 197, b: 94 }; // #22c55e
+    const accentColor = isDropIn ? riseRed : probeGreen;
+    const darkGray = { r: 26, g: 26, b: 26 }; // #1a1a1a
+    const mediumGray = { r: 100, g: 100, b: 100 };
+    
+    // Header background
+    doc.setFillColor(accentColor.r, accentColor.g, accentColor.b);
+    doc.rect(0, 0, pageWidth, 55, 'F');
+    
+    // Header text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
     doc.setFont('helvetica', 'bold');
-    doc.text('RISE FITNESS', pageWidth / 2, 30, { align: 'center' });
+    doc.text('RISE FITNESS', pageWidth / 2, 25, { align: 'center' });
     
-    doc.setFontSize(16);
-    doc.text(ticketData.bookingType === 'drop_in' ? 'DROP-IN TICKET' : 'PROBETRAINING TICKET', pageWidth / 2, 42, { align: 'center' });
+    doc.setFontSize(18);
+    doc.text(isDropIn ? 'DROP-IN TICKET' : 'PROBETRAINING TICKET', pageWidth / 2, 42, { align: 'center' });
     
-    // Ticket ID
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Ticket-ID: ${ticketData.ticketId}`, pageWidth / 2, 52, { align: 'center' });
+    // Ticket ID Box
+    doc.setFillColor(240, 240, 240);
+    doc.setDrawColor(accentColor.r, accentColor.g, accentColor.b);
+    doc.setLineWidth(1.5);
+    doc.roundedRect(20, 65, pageWidth - 40, 20, 3, 3, 'FD');
     
-    // Separator line
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TICKET-ID: ${ticketData.ticketId}`, pageWidth / 2, 77, { align: 'center' });
+    
+    // Course Details Section
+    let yPos = 100;
+    
+    doc.setFillColor(accentColor.r, accentColor.g, accentColor.b);
+    doc.rect(20, yPos, 4, 18, 'F');
+    
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('KURSDETAILS', 30, yPos + 7);
+    
+    doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.5);
-    doc.line(20, 60, pageWidth - 20, 60);
+    doc.line(30, yPos + 12, pageWidth - 20, yPos + 12);
     
-    // Course info
+    yPos += 25;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
+    
+    const labelX = 30;
+    const valueX = 70;
+    
+    doc.text('Kurs:', labelX, yPos);
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.setFont('helvetica', 'bold');
+    doc.text(ticketData.courseTitle, valueX, yPos);
+    
+    yPos += 12;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
+    doc.text('Datum:', labelX, yPos);
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.text(ticketData.courseDate, valueX, yPos);
+    
+    yPos += 12;
+    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
+    doc.text('Uhrzeit:', labelX, yPos);
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.text(ticketData.courseTime, valueX, yPos);
+    
+    yPos += 12;
+    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
+    doc.text('Trainer:', labelX, yPos);
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.text(ticketData.trainer, valueX, yPos);
+    
+    // Guest Details Section
+    yPos += 25;
+    
+    doc.setFillColor(accentColor.r, accentColor.g, accentColor.b);
+    doc.rect(20, yPos, 4, 18, 'F');
+    
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Kursdetails', 20, 75);
+    doc.text('TEILNEHMER', 30, yPos + 7);
     
-    doc.setFontSize(12);
+    doc.setDrawColor(220, 220, 220);
+    doc.line(30, yPos + 12, pageWidth - 20, yPos + 12);
+    
+    yPos += 25;
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Kurs: ${ticketData.courseTitle}`, 20, 88);
-    doc.text(`Datum: ${ticketData.courseDate}`, 20, 98);
-    doc.text(`Uhrzeit: ${ticketData.courseTime}`, 20, 108);
-    doc.text(`Trainer: ${ticketData.trainer}`, 20, 118);
+    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
     
-    // Separator line
-    doc.line(20, 128, pageWidth - 20, 128);
-    
-    // Guest info
-    doc.setFontSize(14);
+    doc.text('Name:', labelX, yPos);
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
     doc.setFont('helvetica', 'bold');
-    doc.text('Teilnehmer', 20, 143);
+    doc.text(ticketData.guestName, valueX, yPos);
     
-    doc.setFontSize(12);
+    yPos += 12;
     doc.setFont('helvetica', 'normal');
-    doc.text(`Name: ${ticketData.guestName}`, 20, 156);
-    doc.text(`E-Mail: ${ticketData.guestEmail}`, 20, 166);
+    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
+    doc.text('E-Mail:', labelX, yPos);
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.text(ticketData.guestEmail, valueX, yPos);
     
-    // Payment note
-    if (ticketData.paymentNote) {
+    // Payment Box (only for Drop-In)
+    if (isDropIn && ticketData.paymentNote) {
+      yPos += 25;
+      doc.setFillColor(255, 243, 224);
+      doc.setDrawColor(riseRed.r, riseRed.g, riseRed.b);
+      doc.setLineWidth(1.5);
+      doc.roundedRect(20, yPos, pageWidth - 40, 25, 3, 3, 'FD');
+      
+      doc.setTextColor(riseRed.r, riseRed.g, riseRed.b);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(200, 100, 0);
-      doc.text(ticketData.paymentNote, 20, 183);
-      doc.setTextColor(0, 0, 0);
+      doc.text('ZAHLUNG VOR ORT: 22 EUR', pageWidth / 2, yPos + 16, { align: 'center' });
     }
     
-    // Footer
+    // WhatsApp Contact Box
+    yPos = isDropIn ? yPos + 40 : yPos + 25;
+    doc.setFillColor(240, 240, 240);
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(20, yPos, pageWidth - 40, 30, 3, 3, 'FD');
+    
+    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('www.rise-gym.de', pageWidth / 2, 280, { align: 'center' });
+    doc.text('Bei Absage bitte per WhatsApp melden:', pageWidth / 2, yPos + 12, { align: 'center' });
+    
+    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('+49 157 30440756', pageWidth / 2, yPos + 24, { align: 'center' });
+    
+    // Footer
+    doc.setFillColor(darkGray.r, darkGray.g, darkGray.b);
+    doc.rect(0, 275, pageWidth, 22, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('www.rise-gym.de', pageWidth / 2, 288, { align: 'center' });
     
     doc.save(`ticket-${ticketData.ticketId}.pdf`);
   };
