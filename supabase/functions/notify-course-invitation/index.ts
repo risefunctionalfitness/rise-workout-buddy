@@ -163,8 +163,8 @@ serve(async (req) => {
         user_id: invitation.recipient_id,
         name: recipientName,
         email: recipientUser?.user?.email || null,
+        phone: formattedPhone,
       },
-      phone: formattedPhone,
       course: {
         id: course.id,
         title: course.title,
