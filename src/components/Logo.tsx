@@ -13,10 +13,10 @@ export const Logo: React.FC<LogoProps> = ({
 }) => {
   const { theme } = useTheme()
   
-  // Dark mode: Symbol only, Light mode: Full logo with text
+  // Dark mode: White text logo, Light mode: Dark text logo
   const logoSrc = theme === "dark" 
-    ? "/lovable-uploads/7baa88b3-5814-40a7-b522-33813a2ec885.png" // RISE Symbol
-    : "/lovable-uploads/c2f4fb4b-2b2b-4d58-85e9-6c31b062eda8.png" // RISE Full Logo
+    ? "/logos/rise_dark.png"   // White text for dark backgrounds
+    : "/logos/rise_white.png"  // Dark text for light backgrounds
   
   return (
     <img 
