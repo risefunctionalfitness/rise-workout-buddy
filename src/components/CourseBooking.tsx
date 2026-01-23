@@ -141,11 +141,25 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       if (coursesResult.error) throw coursesResult.error
       if (userRegistrationsResult.error) throw userRegistrationsResult.error
 
-      // Process courses data
+      // Get course IDs to fetch guest registrations
+      const courseIds = (coursesResult.data || []).map(c => c.id)
+      
+      // Fetch guest registrations for all courses
+      const { data: guestRegistrations } = await supabase
+        .from('guest_registrations')
+        .select('course_id, status')
+        .in('course_id', courseIds)
+        .eq('status', 'registered')
+
+      // Process courses data including guest counts
       const processedCourses = (coursesResult.data || []).map(course => {
         const registrations = course.course_registrations || []
-        const registered_count = registrations.filter(r => r.status === 'registered').length
+        const regularRegisteredCount = registrations.filter(r => r.status === 'registered').length
         const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
+        
+        // Add guest count to registered count
+        const guestCount = guestRegistrations?.filter(g => g.course_id === course.id).length || 0
+        const registered_count = regularRegisteredCount + guestCount
         
         const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
         const is_registered = userReg?.status === 'registered'
@@ -211,11 +225,41 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       // Combine the data
       const participantsWithNames = registrations?.map(reg => ({
         ...reg,
-        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: 'Unbekannt' }
+        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: 'Unbekannt' },
+        isGuest: false
       })) || []
 
-      console.log('Loaded participants:', participantsWithNames)
-      setParticipants(participantsWithNames)
+      // Load guest registrations (Drop-Ins and Probetrainings)
+      const { data: guestRegistrations, error: guestError } = await supabase
+        .from('guest_registrations')
+        .select('id, guest_name, booking_type, created_at')
+        .eq('course_id', courseId)
+        .eq('status', 'registered')
+        .order('created_at', { ascending: true })
+
+      if (guestError) {
+        console.error('Error loading guest registrations:', guestError)
+      }
+
+      // Convert guest registrations to participant format
+      const guestParticipants = (guestRegistrations || []).map(guest => ({
+        id: guest.id,
+        user_id: guest.id,
+        status: 'registered',
+        registered_at: guest.created_at,
+        profiles: {
+          display_name: guest.guest_name,
+          nickname: null,
+          membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+          avatar_url: null
+        },
+        isGuest: true
+      }))
+
+      // Combine regular participants and guests
+      const allParticipants = [...participantsWithNames, ...guestParticipants]
+      console.log('Loaded participants including guests:', allParticipants)
+      setParticipants(allParticipants)
     } catch (error) {
       console.error('Error loading participants:', error)
       toast.error('Fehler beim Laden der Teilnehmer')
@@ -784,7 +828,14 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                       : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
                                     }
                                   </span>
-                                  {participant.attendance_status === 'no_show' ? (
+                                  {participant.isGuest ? (
+                                    <Badge 
+                                      variant={participant.profiles?.membership_type === 'Drop-In' ? 'destructive' : 'default'}
+                                      className={participant.profiles?.membership_type === 'Probetraining' ? 'bg-green-500 text-white' : ''}
+                                    >
+                                      {participant.profiles?.membership_type}
+                                    </Badge>
+                                  ) : participant.attendance_status === 'no_show' ? (
                                     <Badge variant="destructive" className="text-xs">
                                       Nicht erschienen
                                     </Badge>
@@ -795,8 +846,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                   )}
                                </div>
                                <div className="flex items-center gap-2">
-                                 {/* Attendance buttons - for admins or trainers assigned to this course, for today and future courses */}
-                                 {(isAdmin || (isTrainer && selectedCourse.trainer_user_id === user.id)) && canMarkAttendance(selectedCourse.course_date) && (
+                                 {/* Attendance buttons - for admins or trainers assigned to this course, for today and future courses - not for guests */}
+                                 {!participant.isGuest && (isAdmin || (isTrainer && selectedCourse.trainer_user_id === user.id)) && canMarkAttendance(selectedCourse.course_date) && (
                                    participant.attendance_status === 'no_show' ? (
                                      <Button
                                        variant="outline"
@@ -818,7 +869,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                      </Button>
                                    )
                                  )}
-                                 {isAdmin && (
+                                 {isAdmin && !participant.isGuest && (
                                    <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                                  )}
                                </div>

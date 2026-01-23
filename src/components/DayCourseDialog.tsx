@@ -133,11 +133,25 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (coursesResult.error) throw coursesResult.error
       if (userRegistrationsResult.error) throw userRegistrationsResult.error
 
-      // Process courses
+      // Get course IDs to fetch guest registrations
+      const courseIds = (coursesResult.data || []).map(c => c.id)
+      
+      // Fetch guest registrations for all courses
+      const { data: guestRegistrations } = await supabase
+        .from('guest_registrations')
+        .select('course_id, status')
+        .in('course_id', courseIds)
+        .eq('status', 'registered')
+
+      // Process courses including guest counts
       const processedCourses = (coursesResult.data || []).map(course => {
         const registrations = course.course_registrations || []
-        const registered_count = registrations.filter(r => r.status === 'registered').length
+        const regularRegisteredCount = registrations.filter(r => r.status === 'registered').length
         const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
+        
+        // Add guest count to registered count
+        const guestCount = guestRegistrations?.filter(g => g.course_id === course.id).length || 0
+        const registered_count = regularRegisteredCount + guestCount
         
         const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
         const is_registered = userReg?.status === 'registered'
@@ -171,6 +185,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
   const loadParticipants = async (courseId: string) => {
     try {
+      // Load regular registrations
       const { data: registrations, error: regError } = await supabase
         .from('course_registrations')
         .select('status, user_id, registered_at')
@@ -189,10 +204,38 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
       const participantsWithNames = registrations?.map(reg => ({
         ...reg,
-        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: 'Unbekannt' }
+        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: 'Unbekannt' },
+        isGuest: false
       })) || []
 
-      setParticipants(participantsWithNames)
+      // Load guest registrations (Drop-Ins and Probetrainings)
+      const { data: guestRegistrations, error: guestError } = await supabase
+        .from('guest_registrations')
+        .select('id, guest_name, booking_type, created_at')
+        .eq('course_id', courseId)
+        .eq('status', 'registered')
+        .order('created_at', { ascending: true })
+
+      if (guestError) {
+        console.error('Error loading guest registrations:', guestError)
+      }
+
+      // Convert guest registrations to participant format
+      const guestParticipants = (guestRegistrations || []).map(guest => ({
+        user_id: guest.id,
+        status: 'registered',
+        registered_at: guest.created_at,
+        profiles: {
+          display_name: guest.guest_name,
+          nickname: null,
+          membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+          avatar_url: null
+        },
+        isGuest: true
+      }))
+
+      // Combine regular participants and guests
+      setParticipants([...participantsWithNames, ...guestParticipants])
     } catch (error) {
       console.error('Error loading participants:', error)
       toast.error('Fehler beim Laden der Teilnehmer')
@@ -603,12 +646,21 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                                   : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
                                 }
                               </span>
-                              <span className="text-xs text-muted-foreground">
-                                Angemeldet
-                              </span>
+                              {participant.isGuest ? (
+                                <Badge 
+                                  variant={participant.profiles?.membership_type === 'Drop-In' ? 'destructive' : 'default'}
+                                  className={participant.profiles?.membership_type === 'Probetraining' ? 'bg-green-500 text-white' : ''}
+                                >
+                                  {participant.profiles?.membership_type}
+                                </Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">
+                                  Angemeldet
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
-                              {isAdmin && (
+                              {isAdmin && !participant.isGuest && (
                                 <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
                               )}
                             </div>
