@@ -163,7 +163,7 @@ export default function EmbedWellpass() {
               </div>
             )}
 
-            <Button type="submit" className="w-full bg-[#d6242b] hover:bg-[#b81f25] text-white" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-[#12a6b0] hover:bg-[#0e8a93] text-white" disabled={isSubmitting}>
               {isSubmitting ? 'Wird registriert...' : 'Jetzt registrieren'}
             </Button>
 
