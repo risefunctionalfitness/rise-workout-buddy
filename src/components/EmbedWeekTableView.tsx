@@ -56,7 +56,7 @@ export default function EmbedWeekTableView({
   };
 
   return (
-    <div className="min-h-screen bg-background p-2 sm:p-4">
+    <div className="min-h-screen bg-[#1a1a1a] p-2 sm:p-4 text-white">
       {/* Week Navigation */}
       <div className="flex items-center justify-between mb-4">
         <Button
@@ -64,16 +64,17 @@ export default function EmbedWeekTableView({
           size="icon"
           onClick={onPrevWeek}
           disabled={!canGoPrev}
+          className="text-white hover:bg-[#333]"
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
 
-        <h2 className="text-lg font-semibold text-center">
+        <h2 className="text-lg font-semibold text-center text-white">
           {format(weekStart, "d. MMM", { locale: de })} -{" "}
           {format(addDays(weekStart, 6), "d. MMM yyyy", { locale: de })}
         </h2>
 
-        <Button variant="ghost" size="icon" onClick={onNextWeek}>
+        <Button variant="ghost" size="icon" onClick={onNextWeek} className="text-white hover:bg-[#333]">
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
@@ -83,7 +84,7 @@ export default function EmbedWeekTableView({
         <table className="w-full border-collapse min-w-[700px]">
           <thead>
             <tr>
-              <th className="p-2 text-left text-sm font-medium text-muted-foreground w-16">
+              <th className="p-2 text-left text-sm font-medium text-gray-400 w-16">
                 Zeit
               </th>
               {weekDays.map((day) => (
@@ -91,8 +92,8 @@ export default function EmbedWeekTableView({
                   key={day.toISOString()}
                   className={`p-2 text-center text-sm font-medium min-w-[100px] ${
                     isToday(day)
-                      ? "bg-primary/10 text-primary rounded-t-lg"
-                      : "text-muted-foreground"
+                      ? "bg-[#d6242b]/20 text-[#d6242b] rounded-t-lg"
+                      : "text-gray-400"
                   }`}
                 >
                   <div className="font-semibold">
@@ -110,15 +111,15 @@ export default function EmbedWeekTableView({
               <tr>
                 <td
                   colSpan={8}
-                  className="p-8 text-center text-muted-foreground"
+                  className="p-8 text-center text-gray-400"
                 >
                   Keine Kurse in dieser Woche verfügbar
                 </td>
               </tr>
             ) : (
               timeSlots.map((time) => (
-                <tr key={time} className="border-t border-border/50">
-                  <td className="p-2 text-sm font-medium text-muted-foreground align-top">
+                <tr key={time} className="border-t border-[#333]">
+                  <td className="p-2 text-sm font-medium text-gray-400 align-top">
                     {time}
                   </td>
                   {weekDays.map((day) => {
@@ -127,7 +128,7 @@ export default function EmbedWeekTableView({
                       <td
                         key={`${day.toISOString()}-${time}`}
                         className={`p-1 align-top ${
-                          isToday(day) ? "bg-primary/5" : ""
+                          isToday(day) ? "bg-[#d6242b]/5" : ""
                         }`}
                       >
                         {slotCourses.map((course) => {
@@ -139,11 +140,11 @@ export default function EmbedWeekTableView({
                           return (
                             <Card
                               key={course.id}
-                              className={`p-2 mb-1 cursor-pointer transition-all hover:shadow-md text-xs ${
+                              className={`p-2 mb-1 cursor-pointer transition-all hover:shadow-md text-xs bg-[#242424] border-[#333] text-white ${
                                 isFull ? "opacity-60" : ""
                               }`}
                               style={{
-                                borderLeftColor: course.color || "#22c55e",
+                                borderLeftColor: course.color || "#d6242b",
                                 borderLeftWidth: 3,
                               }}
                               onClick={() => !isFull && onCourseClick(course)}
@@ -151,23 +152,22 @@ export default function EmbedWeekTableView({
                               <div className="font-semibold truncate">
                                 {course.title}
                               </div>
-                              <div className="text-muted-foreground">
+                              <div className="text-gray-400">
                                 {course.start_time.slice(0, 5)}-
                                 {course.end_time.slice(0, 5)}
                               </div>
                               <div className="flex items-center justify-between mt-1">
-                                <span className="text-muted-foreground">
+                                <span className="text-gray-400">
                                   {course.trainer.split(" ")[0]}
                                 </span>
                                 {isFull ? (
                                   <Badge
-                                    variant="destructive"
-                                    className="text-[10px] px-1 py-0"
+                                    className="text-[10px] px-1 py-0 bg-[#d6242b] text-white"
                                   >
                                     Voll
                                   </Badge>
                                 ) : (
-                                  <span className="text-muted-foreground">
+                                  <span className="text-gray-400">
                                     {totalRegistered}/{course.max_participants}
                                   </span>
                                 )}
@@ -186,13 +186,13 @@ export default function EmbedWeekTableView({
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground justify-center">
+      <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-400 justify-center">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 border-l-2 border-green-500 bg-card rounded"></div>
+          <div className="w-3 h-3 border-l-2 border-[#d6242b] bg-[#242424] rounded"></div>
           <span>Plätze frei</span>
         </div>
         <div className="flex items-center gap-1">
-          <Badge variant="destructive" className="text-[10px] px-1 py-0">
+          <Badge className="text-[10px] px-1 py-0 bg-[#d6242b] text-white">
             Voll
           </Badge>
           <span>Ausgebucht</span>

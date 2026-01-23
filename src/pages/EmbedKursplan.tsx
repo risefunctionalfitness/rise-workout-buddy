@@ -295,10 +295,10 @@ export default function EmbedKursplan() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-muted-foreground">Lade Kursplan...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d6242b] mx-auto mb-2"></div>
+          <p className="text-gray-400">Lade Kursplan...</p>
         </div>
       </div>
     );
@@ -474,10 +474,10 @@ export default function EmbedKursplan() {
 
   // List view (default)
   return (
-    <div className="min-h-screen bg-background p-4 max-w-2xl mx-auto">
+    <div className="min-h-screen bg-[#1a1a1a] p-4 max-w-2xl mx-auto text-white">
       {/* Week Day Selector */}
       <div className="flex items-center justify-between mb-4">
-        <Button variant="ghost" size="icon" onClick={prevWeek} disabled={weekStart <= startOfDay(new Date())}>
+        <Button variant="ghost" size="icon" onClick={prevWeek} disabled={weekStart <= startOfDay(new Date())} className="text-white hover:bg-[#333]">
           <ChevronLeft className="h-5 w-5" />
         </Button>
         
@@ -492,16 +492,16 @@ export default function EmbedKursplan() {
                 onClick={() => setSelectedDate(day)}
                 className={`flex flex-col items-center p-2 rounded-lg min-w-[44px] transition-all ${
                   isSelected 
-                    ? 'bg-primary text-primary-foreground' 
+                    ? 'bg-[#d6242b] text-white' 
                     : isTodayDate 
-                      ? 'bg-primary/20 hover:bg-primary/30' 
-                      : 'hover:bg-muted'
+                      ? 'bg-[#d6242b]/20 hover:bg-[#d6242b]/30 text-white' 
+                      : 'hover:bg-[#333] text-gray-300'
                 }`}
               >
                 <span className="text-xs font-medium">
                   {format(day, 'EEEEEE', { locale: de })}
                 </span>
-                <span className={`text-lg font-bold ${isSelected && isTodayDate ? 'bg-primary-foreground text-primary rounded-full w-8 h-8 flex items-center justify-center' : ''}`}>
+                <span className={`text-lg font-bold ${isSelected && isTodayDate ? 'bg-white text-[#d6242b] rounded-full w-8 h-8 flex items-center justify-center' : ''}`}>
                   {format(day, 'd')}
                 </span>
               </button>
@@ -509,13 +509,13 @@ export default function EmbedKursplan() {
           })}
         </div>
         
-        <Button variant="ghost" size="icon" onClick={nextWeek}>
+        <Button variant="ghost" size="icon" onClick={nextWeek} className="text-white hover:bg-[#333]">
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Selected Date Header */}
-      <h2 className="text-xl font-semibold mb-4">
+      <h2 className="text-xl font-semibold mb-4 text-white">
         {format(selectedDate, 'EEEE d MMMM yyyy', { locale: de })}
       </h2>
 
@@ -528,31 +528,31 @@ export default function EmbedKursplan() {
           return (
             <Card
               key={course.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${isFull ? 'opacity-60' : ''}`}
-              style={{ borderBottomColor: course.color || '#22c55e', borderBottomWidth: 3 }}
+              className={`cursor-pointer transition-all hover:shadow-md bg-[#242424] border-[#333] text-white ${isFull ? 'opacity-60' : ''}`}
+              style={{ borderBottomColor: course.color || '#d6242b', borderBottomWidth: 3 }}
               onClick={() => !isFull && handleCourseClick(course)}
             >
               <CardContent className="p-4">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-center justify-center border rounded-lg p-2 min-w-[60px]" style={{ borderColor: course.color || '#3b82f6' }}>
-                      <span className="text-sm font-bold" style={{ color: course.color || '#3b82f6' }}>
+                    <div className="flex flex-col items-center justify-center border rounded-lg p-2 min-w-[60px] border-[#444]" style={{ borderColor: course.color || '#d6242b' }}>
+                      <span className="text-sm font-bold" style={{ color: course.color || '#d6242b' }}>
                         {course.start_time.substring(0, 5)}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-400">
                         {course.duration_minutes || 60}m
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold">{course.title}</h3>
-                      <p className="text-sm text-muted-foreground">{course.trainer}</p>
+                      <h3 className="font-semibold text-white">{course.title}</h3>
+                      <p className="text-sm text-gray-400">{course.trainer}</p>
                     </div>
                   </div>
                   <div className="text-right text-sm">
                     {isFull ? (
-                      <Badge variant="destructive">Voll</Badge>
+                      <Badge className="bg-[#d6242b] text-white">Voll</Badge>
                     ) : (
-                      <span className="text-muted-foreground">
+                      <span className="text-gray-400">
                         {totalRegistered}/{course.max_participants}
                       </span>
                     )}
@@ -564,7 +564,7 @@ export default function EmbedKursplan() {
         })}
 
         {coursesForSelectedDate.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-gray-400">
             Keine Kurse an diesem Tag verfügbar
           </div>
         )}
