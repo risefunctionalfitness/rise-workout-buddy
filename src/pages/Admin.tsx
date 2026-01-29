@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
-import { UserPlus, Edit, Trash2, Search, Mail, MessageSquare } from "lucide-react";
+import { UserPlus, Edit, Trash2, Search, Mail, MessageSquare, Copy } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countryCodes, countryCodeFlags } from "@/components/CountryFlags";
 import { Label } from "@/components/ui/label";
@@ -317,8 +317,25 @@ export default function Admin() {
         });
       } else {
         toast({
-          title: "Erfolg",
-          description: "Mitglied erfolgreich erstellt - kann sich sofort anmelden!",
+          title: "Mitglied erstellt",
+          description: (
+            <div className="flex flex-col gap-2">
+              <span>{newMemberFirstName} kann sich jetzt anmelden!</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-fit"
+                onClick={() => {
+                  const text = `Hallo ${newMemberFirstName},\n\nDeine Rise-Zugangsdaten:\nE-Mail: ${newMemberEmail}\nPasswort: ${newMemberCode}\n\nApp: https://rise-ff.lovable.app`;
+                  navigator.clipboard.writeText(text);
+                  toast({ title: "Kopiert!" });
+                }}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Zugangsdaten kopieren
+              </Button>
+            </div>
+          ),
         });
         setNewMemberFirstName("");
         setNewMemberLastName("");
