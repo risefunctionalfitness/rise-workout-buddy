@@ -11,7 +11,17 @@ interface WellpassRequest {
   lastName: string;
   email: string;
   accessCode: string;
+  phoneCountryCode?: string;
+  phoneNumber?: string;
 }
+
+// Helper function to format phone number for webhook
+const formatPhoneNumber = (countryCode: string, phone: string): string => {
+  // Remove + and spaces, combine country code and number
+  const cleanCountryCode = countryCode.replace(/[+\s]/g, '');
+  const cleanPhone = phone.replace(/\D/g, '');
+  return `${cleanCountryCode}${cleanPhone}`;
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -31,9 +41,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    const { firstName, lastName, email, accessCode }: WellpassRequest = await req.json();
+    const { firstName, lastName, email, accessCode, phoneCountryCode, phoneNumber }: WellpassRequest = await req.json();
 
-    console.log('Processing Wellpass registration:', { firstName, lastName, email });
+    console.log('Processing Wellpass registration:', { firstName, lastName, email, hasPhone: !!phoneNumber });
 
     // Validate inputs
     if (!firstName || !lastName || !email || !accessCode) {
@@ -88,7 +98,11 @@ const handler = async (req: Request): Promise<Response> => {
         access_code: accessCode,
         membership_type: 'Wellpass',
         authors: false,
-        show_in_leaderboard: true
+        show_in_leaderboard: true,
+        phone_country_code: phoneCountryCode || '+49',
+        phone_number: phoneNumber || '',
+        notify_whatsapp_enabled: !!phoneNumber,
+        notify_email_enabled: true
       }
     });
 
@@ -123,7 +137,10 @@ const handler = async (req: Request): Promise<Response> => {
         last_name: lastName,
         email: email,
         user_id: newUser.user!.id,
-        status: 'pending' // For admin notification badge
+        status: 'pending', // For admin notification badge
+        phone_country_code: phoneCountryCode || '+49',
+        phone_number: phoneNumber || null,
+        terms_accepted_at: new Date().toISOString()
       });
 
     if (wellpassError) {
@@ -145,7 +162,9 @@ const handler = async (req: Request): Promise<Response> => {
           access_code: accessCode,
           membership_type: 'Wellpass',
           created_at: new Date().toISOString(),
-          user_id: newUser.user!.id
+          user_id: newUser.user!.id,
+          notification_method: phoneNumber ? 'both' : 'email',
+          phone: phoneNumber ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) : null
         };
 
         console.log('Sending registration webhook to Make.com:', webhookData);
