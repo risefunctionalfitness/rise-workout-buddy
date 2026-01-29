@@ -944,6 +944,19 @@ export default function Admin() {
                            variant="outline"
                            size="sm"
                            className="text-xs px-2 py-1 h-8"
+                           onClick={() => {
+                             const name = member.first_name || member.display_name || '';
+                             const text = `Hallo ${name},\n\nDeine Rise-Zugangsdaten:\nE-Mail: ${member.email || ''}\nPasswort: ${member.access_code}\n\nApp: https://rise-ff.lovable.app`;
+                             navigator.clipboard.writeText(text);
+                             toast({ title: "Kopiert!" });
+                           }}
+                         >
+                           <Copy className="h-3 w-3" />
+                         </Button>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           className="text-xs px-2 py-1 h-8"
                            onClick={() => loadMemberEmailForEdit(member)}
                          >
                            <Edit className="h-3 w-3" />
@@ -1047,6 +1060,18 @@ export default function Admin() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
+                           <Button 
+                             variant="outline" 
+                             size="sm"
+                             onClick={() => {
+                               const name = member.first_name || member.display_name || '';
+                               const text = `Hallo ${name},\n\nDeine Rise-Zugangsdaten:\nE-Mail: ${member.email || ''}\nPasswort: ${member.access_code}\n\nApp: https://rise-ff.lovable.app`;
+                               navigator.clipboard.writeText(text);
+                               toast({ title: "Kopiert!" });
+                             }}
+                           >
+                             <Copy className="h-4 w-4" />
+                           </Button>
                            <Button 
                              variant="outline" 
                              size="sm"
