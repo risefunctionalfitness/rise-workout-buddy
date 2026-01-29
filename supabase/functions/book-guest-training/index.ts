@@ -11,7 +11,17 @@ interface BookingRequest {
   guestName: string;
   guestEmail: string;
   bookingType: 'drop_in' | 'probetraining';
+  phoneCountryCode?: string;
+  phoneNumber?: string;
 }
+
+// Helper function to format phone number for webhook
+const formatPhoneNumber = (countryCode: string, phone: string): string => {
+  // Remove + and spaces, combine country code and number
+  const cleanCountryCode = countryCode.replace(/[+\s]/g, '');
+  const cleanPhone = phone.replace(/\D/g, '');
+  return `${cleanCountryCode}${cleanPhone}`;
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -31,9 +41,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    const { courseId, guestName, guestEmail, bookingType }: BookingRequest = await req.json();
+    const { courseId, guestName, guestEmail, bookingType, phoneCountryCode, phoneNumber }: BookingRequest = await req.json();
 
-    console.log('Processing guest booking:', { courseId, guestName, guestEmail, bookingType });
+    console.log('Processing guest booking:', { courseId, guestName, guestEmail, bookingType, hasPhone: !!phoneNumber });
 
     // Validate inputs
     if (!courseId || !guestName || !guestEmail || !bookingType) {
@@ -108,7 +118,9 @@ const handler = async (req: Request): Promise<Response> => {
         guest_email: guestEmail,
         booking_type: bookingType,
         ticket_id: ticketId,
-        payment_status: bookingType === 'drop_in' ? 'pending' : 'paid'
+        payment_status: bookingType === 'drop_in' ? 'pending' : 'paid',
+        phone_country_code: phoneCountryCode || '+49',
+        phone_number: phoneNumber || null
       })
       .select()
       .single();
@@ -158,7 +170,9 @@ const handler = async (req: Request): Promise<Response> => {
           is_drop_in: bookingType === 'drop_in',
           is_probetraining: bookingType === 'probetraining',
           ticket: ticketData,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          notification_method: phoneNumber ? 'both' : 'email',
+          phone: phoneNumber ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) : null
         };
 
         const webhookResponse = await fetch(webhookUrl, {

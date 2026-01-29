@@ -166,11 +166,32 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
       return
     }
     
+    // Wenn WhatsApp ausgeschaltet werden soll UND Email auch aus ist → Email anschalten
+    if (!enabled && !notifyEmailEnabled) {
+      setNotifyEmailEnabled(true)
+      setNotifyWhatsappEnabled(false)
+      await saveNotificationSettings(true, false) // Email an, WhatsApp aus
+      toast({
+        title: "Email aktiviert",
+        description: "Email wurde automatisch aktiviert, da mindestens ein Kanal aktiv sein muss."
+      })
+      return
+    }
+    
     setNotifyWhatsappEnabled(enabled)
     await saveNotificationSettings(notifyEmailEnabled, enabled)
   }
 
   const handleEmailToggle = async (enabled: boolean) => {
+    // Wenn Email ausgeschaltet werden soll, aber WhatsApp auch aus ist → verhindern
+    if (!enabled && !notifyWhatsappEnabled) {
+      toast({
+        title: "Nicht möglich",
+        description: "Mindestens ein Benachrichtigungskanal muss aktiv bleiben.",
+        variant: "destructive"
+      })
+      return
+    }
     setNotifyEmailEnabled(enabled)
     await saveNotificationSettings(enabled, notifyWhatsappEnabled)
   }

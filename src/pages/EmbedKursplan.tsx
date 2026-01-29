@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addDays, startOfDay } from "date-fns";
@@ -13,6 +21,7 @@ import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
 import EmbedWeekTableView from "@/components/EmbedWeekTableView";
+import { countryCodes, CountryFlag } from "@/components/CountryFlags";
 
 interface Course {
   id: string;
@@ -54,6 +63,9 @@ export default function EmbedKursplan() {
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhoneCountryCode, setGuestPhoneCountryCode] = useState("+49");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
@@ -167,6 +179,11 @@ export default function EmbedKursplan() {
     e.preventDefault();
     if (!selectedCourse || !bookingType) return;
 
+    if (!termsAccepted) {
+      toast.error('Bitte akzeptiere die AGB und Datenschutzerklärung');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke('book-guest-training', {
@@ -174,7 +191,9 @@ export default function EmbedKursplan() {
           courseId: selectedCourse.id,
           guestName,
           guestEmail,
-          bookingType
+          bookingType,
+          phoneCountryCode: guestPhoneCountryCode,
+          phoneNumber: guestPhone || null
         }
       });
 
@@ -186,6 +205,8 @@ export default function EmbedKursplan() {
         setSuccessDialogOpen(true);
         setGuestName("");
         setGuestEmail("");
+        setGuestPhone("");
+        setTermsAccepted(false);
         loadCourses();
       } else {
         toast.error(data.error || 'Buchung fehlgeschlagen');
@@ -495,12 +516,62 @@ export default function EmbedKursplan() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label>Telefon (für WhatsApp-Bestätigung)</Label>
+                <div className="flex gap-2">
+                  <Select value={guestPhoneCountryCode} onValueChange={setGuestPhoneCountryCode}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countryCodes.map((cc) => (
+                        <SelectItem key={cc.code} value={cc.code}>
+                          <div className="flex items-center gap-2">
+                            <CountryFlag code={cc.code} />
+                            <span>{cc.code}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="15730440756"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Optional</p>
+              </div>
+
               {bookingType === 'drop_in' && (
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
                   <p className="font-medium text-yellow-800">💰 Zahlung vor Ort: 22€</p>
                   <p className="text-yellow-700 mt-1">Die Zahlung erfolgt direkt im Gym.</p>
                 </div>
               )}
+
+              <div className="flex items-start gap-3">
+                <Checkbox 
+                  id="terms-week"
+                  checked={termsAccepted} 
+                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="terms-week" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  Ich akzeptiere die{' '}
+                  <a href="https://rise-ff.lovable.app/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    AGB
+                  </a>{' '}
+                  und{' '}
+                  <a href="https://rise-ff.lovable.app/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    Datenschutzerklärung
+                  </a>{' '}
+                  *
+                </Label>
+              </div>
 
               <div className="flex gap-2">
                 <Button
@@ -511,7 +582,7 @@ export default function EmbedKursplan() {
                 >
                   Abbrechen
                 </Button>
-                <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                <Button type="submit" className="flex-1" disabled={isSubmitting || !termsAccepted}>
                   {isSubmitting ? 'Wird gebucht...' : 'Jetzt buchen'}
                 </Button>
               </div>
@@ -749,12 +820,62 @@ export default function EmbedKursplan() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>Telefon (für WhatsApp-Bestätigung)</Label>
+              <div className="flex gap-2">
+                <Select value={guestPhoneCountryCode} onValueChange={setGuestPhoneCountryCode}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryCodes.map((cc) => (
+                      <SelectItem key={cc.code} value={cc.code}>
+                        <div className="flex items-center gap-2">
+                          <CountryFlag code={cc.code} />
+                          <span>{cc.code}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="15730440756"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Optional</p>
+            </div>
+
             {bookingType === 'drop_in' && (
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
                 <p className="font-medium text-yellow-800">💰 Zahlung vor Ort: 22€</p>
                 <p className="text-yellow-700 mt-1">Die Zahlung erfolgt direkt im Gym.</p>
               </div>
             )}
+
+            <div className="flex items-start gap-3">
+              <Checkbox 
+                id="terms-list"
+                checked={termsAccepted} 
+                onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="terms-list" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                Ich akzeptiere die{' '}
+                <a href="https://rise-ff.lovable.app/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  AGB
+                </a>{' '}
+                und{' '}
+                <a href="https://rise-ff.lovable.app/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Datenschutzerklärung
+                </a>{' '}
+                *
+              </Label>
+            </div>
 
             <div className="flex gap-2">
               <Button
@@ -765,7 +886,7 @@ export default function EmbedKursplan() {
               >
                 Abbrechen
               </Button>
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              <Button type="submit" className="flex-1" disabled={isSubmitting || !termsAccepted}>
                 {isSubmitting ? 'Wird gebucht...' : 'Jetzt buchen'}
               </Button>
             </div>

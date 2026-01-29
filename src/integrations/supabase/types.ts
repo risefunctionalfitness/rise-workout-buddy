@@ -415,6 +415,8 @@ export type Database = {
           guest_name: string
           id: string
           payment_status: string
+          phone_country_code: string | null
+          phone_number: string | null
           status: string
           ticket_id: string
         }
@@ -426,6 +428,8 @@ export type Database = {
           guest_name: string
           id?: string
           payment_status?: string
+          phone_country_code?: string | null
+          phone_number?: string | null
           status?: string
           ticket_id: string
         }
@@ -437,6 +441,8 @@ export type Database = {
           guest_name?: string
           id?: string
           payment_status?: string
+          phone_country_code?: string | null
+          phone_number?: string | null
           status?: string
           ticket_id?: string
         }
@@ -1385,9 +1391,12 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          phone_country_code: string | null
+          phone_number: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          terms_accepted_at: string | null
           user_id: string | null
           wellpass_member_id: string | null
         }
@@ -1397,9 +1406,12 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          phone_country_code?: string | null
+          phone_number?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          terms_accepted_at?: string | null
           user_id?: string | null
           wellpass_member_id?: string | null
         }
@@ -1409,9 +1421,12 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          phone_country_code?: string | null
+          phone_number?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          terms_accepted_at?: string | null
           user_id?: string | null
           wellpass_member_id?: string | null
         }
