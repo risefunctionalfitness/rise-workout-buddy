@@ -21,15 +21,21 @@ interface Profile {
   last_name?: string;
   membership_type?: string;
   status?: string;
+  notify_email_enabled?: boolean;
+  notify_whatsapp_enabled?: boolean;
+  phone_country_code?: string;
+  phone_number?: string;
 }
 
-interface EmailRecipient {
+interface NewsRecipient {
   email: string;
   first_name: string;
   last_name: string;
   membership_type: string;
   subject: string;
   body: string;
+  notification_method: 'email' | 'whatsapp' | 'both';
+  phone: string | null;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -121,7 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Build query for recipients
     let profilesQuery = supabaseClient
       .from('profiles')
-      .select('user_id, display_name, first_name, last_name, membership_type')
+      .select('user_id, display_name, first_name, last_name, membership_type, notify_email_enabled, notify_whatsapp_enabled, phone_country_code, phone_number')
       .not('user_id', 'is', null);
 
     // Apply status filter
@@ -198,22 +204,44 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Mapped ${emailMap.size} email addresses for ${userIds.length} profiles`);
 
-    // Create recipient list with emails
-    const recipients: EmailRecipient[] = profiles
+    // Helper function to format phone number
+    const formatPhoneNumber = (countryCode: string, number: string): string => {
+      const cleanCode = countryCode.replace('+', '');
+      const cleanNumber = number.replace(/\D/g, '');
+      return `${cleanCode}${cleanNumber}`;
+    };
+
+    // Determine notification method based on user preferences
+    const getNotificationMethod = (profile: Profile): 'email' | 'whatsapp' | 'both' => {
+      const emailEnabled = profile.notify_email_enabled !== false; // default true
+      const whatsappEnabled = profile.notify_whatsapp_enabled === true && !!profile.phone_number;
+      
+      if (emailEnabled && whatsappEnabled) return 'both';
+      if (whatsappEnabled) return 'whatsapp';
+      return 'email';
+    };
+
+    // Create recipient list with emails and notification preferences
+    const recipients: NewsRecipient[] = profiles
       .map((profile: Profile) => {
         const email = emailMap.get(profile.user_id);
         if (!email) return null;
+
+        const notificationMethod = getNotificationMethod(profile);
+        const hasPhone = !!profile.phone_number && profile.notify_whatsapp_enabled;
 
         return {
           email,
           first_name: profile.first_name || '',
           last_name: profile.last_name || '',
           membership_type: profile.membership_type || 'Member',
-          subject: title, // Title is the subject
-          body: content  // Content is the body
+          subject: title,
+          body: content,
+          notification_method: notificationMethod,
+          phone: hasPhone ? formatPhoneNumber(profile.phone_country_code || '+49', profile.phone_number!) : null
         };
       })
-      .filter((r): r is EmailRecipient => r !== null);
+      .filter((r): r is NewsRecipient => r !== null);
 
     console.log(`Prepared ${recipients.length} recipients for email`);
 
