@@ -150,9 +150,22 @@ serve(async (req) => {
       // Send webhook to Make.com after successful member creation
       try {
         const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL')
+        
+        // Determine notification method based on phone availability
+        const hasPhone = !!user_metadata?.phone_number
+        const phoneCountryCode = user_metadata?.phone_country_code || '+49'
+        const phoneNumber = user_metadata?.phone_number || ''
+        const formattedPhone = hasPhone 
+          ? `${phoneCountryCode.replace('+', '')}${phoneNumber}` 
+          : null
+        
         const webhookData = {
           event_type: 'registration',
+          notification_method: hasPhone ? 'both' : 'email',
+          phone: formattedPhone,
           name: user_metadata?.display_name || 'Unbekannt',
+          first_name: user_metadata?.first_name || '',
+          last_name: user_metadata?.last_name || '',
           email: email,
           access_code: user_metadata?.access_code || '',
           membership_type: membershipType || 'Member',
