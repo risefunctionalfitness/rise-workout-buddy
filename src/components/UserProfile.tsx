@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { LogOut, Dumbbell, Target, Moon, Sun, RotateCcw, Eye, EyeOff, AlertTriangle } from "lucide-react"
+import { LogOut, Dumbbell, Target, Moon, Sun, RotateCcw, Eye, EyeOff, AlertTriangle, Pencil } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
@@ -610,17 +610,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
               
               {/* Show phone number if WhatsApp enabled and number exists */}
               {notifyWhatsappEnabled && phoneNumber && !showPhoneInput && (
-                <div className="ml-6 flex items-center justify-between">
+                <div className="ml-13 flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
                     {phoneCountryCode} {phoneNumber}
                   </p>
                   <Button 
-                    variant="outline" 
-                    size="sm"
+                    variant="ghost" 
+                    size="icon"
                     onClick={() => setShowPhoneInput(true)}
-                    className="text-xs"
+                    className="h-8 w-8"
                   >
-                    Bearbeiten
+                    <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
               )}
