@@ -575,8 +575,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white fill-current" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-muted-foreground fill-current" viewBox="0 0 24 24">
                       <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                     </svg>
                   </div>

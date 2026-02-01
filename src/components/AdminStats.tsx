@@ -404,21 +404,6 @@ export const AdminStats = ({ onStatsLoad }: AdminStatsProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Main Stats */}
-      <div className="grid grid-cols-1 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-primary" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Anmeldungen diesen Monat</p>
-                <p className="text-2xl font-bold">{stats.currentMonthEntries}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Monthly Registrations Line Chart */}
       <MonthlyRegistrationsChart />
 
