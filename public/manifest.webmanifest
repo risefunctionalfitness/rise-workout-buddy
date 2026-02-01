@@ -9,15 +9,9 @@
   "description": "Digitaler Trainingsbegleiter für RISE Functional Fitness",
   "icons": [
     {
-      "src": "/lovable-uploads/8a13e880-4305-4f6d-bb4a-1f2b4650dd36.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/lovable-uploads/e9739c50-a4ab-45ca-86ca-3aef0ad19461.png",
+      "src": "/app-icon.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ]
