@@ -192,9 +192,9 @@ export function AdminWidgetBookings() {
   const getTypeBadge = (type: BookingType) => {
     switch (type) {
       case 'probetraining':
-        return <Badge className="bg-slate-500 hover:bg-slate-600 text-white text-xs">Probe</Badge>;
+        return <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">Probe</Badge>;
       case 'drop_in':
-        return <Badge className="bg-amber-600 hover:bg-amber-700 text-white text-xs">Drop-In</Badge>;
+        return <Badge className="bg-[#d6242b] hover:bg-[#b91c22] text-white text-xs">Drop-In</Badge>;
       case 'wellpass':
         return <Badge className="bg-[#12a6b0] hover:bg-[#0e8a92] text-white text-xs">Wellpass</Badge>;
     }
@@ -262,8 +262,8 @@ export function AdminWidgetBookings() {
               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Letzte 7 Tage:</span>
             </span>
-            <span className="text-slate-500 font-medium">{stats.probetraining} Probe</span>
-            <span className="text-amber-600 font-medium">{stats.drop_in} Drop-In</span>
+            <span className="text-green-600 font-medium">{stats.probetraining} Probe</span>
+            <span className="text-[#d6242b] font-medium">{stats.drop_in} Drop-In</span>
             <span className="text-[#12a6b0] font-medium">{stats.wellpass} Wellpass</span>
           </div>
         </CardHeader>
