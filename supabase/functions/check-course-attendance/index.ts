@@ -110,22 +110,42 @@ serve(async (req) => {
         const userIds = registrations?.map(r => r.user_id) || []
         
         // Get user profiles with emails BEFORE cancelling
-        let participants: Array<{email: string | null, first_name: string, display_name: string | null}> = []
+        let participants: Array<{email: string | null, first_name: string, display_name: string | null, phone: string, notification_method: string}> = []
         
         if (userIds.length > 0) {
           const { data: profiles, error: profileError } = await supabase
             .from('profiles')
-            .select('user_id, display_name, first_name, email')
+            .select('user_id, display_name, first_name, email, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled')
             .in('user_id', userIds)
 
           if (profileError) {
             console.error(`Error fetching profiles:`, profileError)
           } else {
-            participants = profiles?.map(p => ({
-              email: p.email,
-              first_name: p.first_name || p.display_name || 'Mitglied',
-              display_name: p.display_name
-            })).filter(p => p.email) || []
+            participants = profiles?.map(p => {
+              // Determine notification method
+              const emailEnabled = p.notify_email_enabled !== false
+              const whatsappEnabled = p.notify_whatsapp_enabled === true && p.phone_number
+              let notificationMethod = 'email'
+              if (emailEnabled && whatsappEnabled) {
+                notificationMethod = 'both'
+              } else if (whatsappEnabled) {
+                notificationMethod = 'whatsapp'
+              }
+              
+              // Format phone number (country code + number without + or spaces)
+              let formattedPhone = ''
+              if (p.phone_country_code && p.phone_number) {
+                formattedPhone = p.phone_country_code.replace('+', '') + p.phone_number.replace(/\s/g, '')
+              }
+
+              return {
+                email: p.email,
+                first_name: p.first_name || p.display_name || 'Mitglied',
+                display_name: p.display_name,
+                phone: formattedPhone,
+                notification_method: notificationMethod
+              }
+            }).filter(p => p.email) || []
           }
         }
 
