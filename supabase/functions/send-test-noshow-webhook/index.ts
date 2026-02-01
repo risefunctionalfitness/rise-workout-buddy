@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL')
+    const webhookUrl = Deno.env.get('MAKE_NO_SHOW_WEBHOOK_URL')
     
-    if (!mainWebhookUrl) {
+    if (!webhookUrl) {
       return new Response(
-        JSON.stringify({ error: 'MAKE_MAIN_WEBHOOK_URL is not configured' }),
+        JSON.stringify({ error: 'MAKE_NO_SHOW_WEBHOOK_URL is not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -35,7 +35,7 @@ serve(async (req) => {
     
     console.log('Sending test no-show webhook:', webhookData)
     
-    const webhookResponse = await fetch(mainWebhookUrl, {
+    const webhookResponse = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(webhookData)
