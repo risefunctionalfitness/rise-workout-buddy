@@ -26,6 +26,7 @@ import { AdminLeaderboard } from "@/components/AdminLeaderboard";
 import AdminEmailManager from "@/components/AdminEmailManager";
 import { AdminRiskRadar } from "@/components/AdminRiskRadar";
 import { AdminMerchOrders } from "@/components/AdminMerchOrders";
+import { AdminWebhookTester } from "@/components/AdminWebhookTester";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -73,7 +74,7 @@ export default function Admin() {
   const [editedLastName, setEditedLastName] = useState('')
   const [editedPhoneCountryCode, setEditedPhoneCountryCode] = useState('+49')
   const [editedPhoneNumber, setEditedPhoneNumber] = useState('')
-  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'risk-radar' | 'orders'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'risk-radar' | 'orders' | 'webhooks'>('home');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
@@ -1155,6 +1156,8 @@ export default function Admin() {
         return <AdminRiskRadar />;
       case 'orders':
         return <AdminMerchOrders />;
+      case 'webhooks':
+        return <AdminWebhookTester />;
       default:
         return <AdminStats />;
     }
@@ -1166,7 +1169,7 @@ export default function Admin() {
         showAdminAccess={true}
         onLogout={handleLogout}
         activePage={activePage}
-        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'risk-radar' | 'orders')}
+        onPageChange={(page) => setActivePage(page as 'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'risk-radar' | 'orders' | 'webhooks')}
       />
       
       <div className="container mx-auto px-4 py-6">
