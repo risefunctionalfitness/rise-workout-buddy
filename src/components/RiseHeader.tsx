@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun, Trophy, Mail, Radio, ShoppingBag } from "lucide-react"
+import { MoreVertical, Home, Users, Calendar, Newspaper, Dumbbell, LogOut, CreditCard, Moon, Sun, Trophy, Mail, Radio, ShoppingBag, Webhook } from "lucide-react"
 import { useTheme } from "next-themes"
 import { supabase } from "@/integrations/supabase/client"
 import { Logo } from "@/components/Logo"
@@ -241,6 +241,16 @@ export const RiseHeader: React.FC<RiseHeaderProps> = ({
             >
               <ShoppingBag className="h-10 w-10 mb-3" />
               <span className="text-sm font-semibold">Bestellungen</span>
+            </div>
+            <div 
+              onClick={() => {
+                onPageChange?.('webhooks');
+                setDropdownOpen(false);
+              }}
+              className={`w-full flex flex-col items-center justify-center p-6 rounded-xl hover:bg-muted/50 hover:scale-105 cursor-pointer transition-all duration-300 border border-border/50 hover:border-primary/30 hover:shadow-lg ${activePage === 'webhooks' ? 'bg-primary/10 text-primary border-primary/50 shadow-md' : ''}`}
+            >
+              <Webhook className="h-10 w-10 mb-3" />
+              <span className="text-sm font-semibold">Webhooks</span>
             </div>
             {onLogout && (
               <div 
