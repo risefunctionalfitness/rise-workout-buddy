@@ -11,7 +11,7 @@ interface WebhookDefinition {
   name: string;
   description: string;
   eventType: string;
-  testFunction?: string;
+  testFunction: string;
   samplePayload: Record<string, unknown>;
 }
 
@@ -21,7 +21,7 @@ const webhookDefinitions: WebhookDefinition[] = [
     name: "Mitglieder-Registrierung",
     description: "Wird gesendet wenn ein Admin ein neues Mitglied anlegt",
     eventType: "registration",
-    testFunction: "create-member",
+    testFunction: "send-test-registration-webhook",
     samplePayload: {
       event_type: "registration",
       notification_method: "email | whatsapp | both",
@@ -37,8 +37,9 @@ const webhookDefinitions: WebhookDefinition[] = [
   {
     id: "wellpass_registration",
     name: "Wellpass Registrierung",
-    description: "Wird gesendet wenn sich jemand über das Wellpass-Widget registriert",
+    description: "Wird gesendet wenn sich jemand über das Wellpass-Widget registriert (gleiche Struktur wie Registrierung)",
     eventType: "registration",
+    testFunction: "send-test-registration-webhook",
     samplePayload: {
       event_type: "registration",
       notification_method: "email | whatsapp | both",
@@ -56,6 +57,7 @@ const webhookDefinitions: WebhookDefinition[] = [
     name: "Gast-Buchung (Drop-In/Probetraining)",
     description: "Wird gesendet wenn ein Gast über das Kursplan-Widget bucht",
     eventType: "guest_ticket",
+    testFunction: "send-test-guest-booking-webhook",
     samplePayload: {
       event_type: "guest_ticket",
       notification_method: "email | whatsapp | both",
@@ -75,6 +77,7 @@ const webhookDefinitions: WebhookDefinition[] = [
     name: "News Benachrichtigung",
     description: "Wird für jeden Empfänger einer News gesendet (in Batches)",
     eventType: "news_email",
+    testFunction: "send-test-news-webhook",
     samplePayload: {
       event_type: "news_email",
       notification_method: "email | whatsapp | both",
@@ -92,6 +95,7 @@ const webhookDefinitions: WebhookDefinition[] = [
     name: "Wartelisten-Aufrückung",
     description: "Wird gesendet wenn jemand von der Warteliste nachrückt",
     eventType: "waitlist_promotion",
+    testFunction: "send-test-waitlist-webhook",
     samplePayload: {
       event_type: "waitlist_promotion",
       notification_method: "email | whatsapp | both",
@@ -111,6 +115,7 @@ const webhookDefinitions: WebhookDefinition[] = [
     name: "No-Show Benachrichtigung",
     description: "Wird gesendet wenn jemand nicht zum Kurs erschienen ist",
     eventType: "no_show",
+    testFunction: "send-test-noshow-webhook",
     samplePayload: {
       event_type: "no_show",
       notification_method: "email | whatsapp | both",
@@ -129,6 +134,7 @@ const webhookDefinitions: WebhookDefinition[] = [
     name: "Kurs-Einladung",
     description: "Wird gesendet wenn ein Mitglied ein anderes zu einem Kurs einlädt",
     eventType: "course_invitation",
+    testFunction: "send-test-invitation-webhook",
     samplePayload: {
       event_type: "course_invitation",
       notification_method: "email | whatsapp | both",
@@ -200,6 +206,7 @@ const webhookDefinitions: WebhookDefinition[] = [
     name: "Mitglied inaktiv",
     description: "Wird gesendet wenn ein Mitglied eine bestimmte Zeit inaktiv war",
     eventType: "member_inactive",
+    testFunction: "send-test-inactivity-webhook",
     samplePayload: {
       event_type: "member_inactive",
       user_id: "uuid",
@@ -230,15 +237,6 @@ export const AdminWebhookTester = () => {
   };
 
   const testWebhook = async (webhook: WebhookDefinition) => {
-    if (!webhook.testFunction) {
-      toast({
-        title: "Kein Test verfügbar",
-        description: "Für diesen Webhook gibt es keine Test-Funktion. Nutze die Payload-Struktur für Make.com.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setLoading(webhook.id);
     try {
       const { data, error } = await supabase.functions.invoke(webhook.testFunction);
@@ -323,20 +321,18 @@ export const AdminWebhookTester = () => {
                   <Copy className="h-4 w-4 mr-2" />
                   Payload kopieren
                 </Button>
-                {webhook.testFunction && (
-                  <Button
-                    size="sm"
-                    onClick={() => testWebhook(webhook)}
-                    disabled={loading === webhook.id}
-                  >
-                    {loading === webhook.id ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4 mr-2" />
-                    )}
-                    Test senden
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  onClick={() => testWebhook(webhook)}
+                  disabled={loading === webhook.id}
+                >
+                  {loading === webhook.id ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  Test senden
+                </Button>
               </div>
             </CardContent>
           </Card>
