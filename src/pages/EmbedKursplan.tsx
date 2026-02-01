@@ -15,11 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, addDays, startOfDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { toast } from "sonner";
-import jsPDF from 'jspdf';
 import EmbedWeekTableView from "@/components/EmbedWeekTableView";
 import { countryCodes, CountryFlag } from "@/components/CountryFlags";
 
@@ -37,19 +36,6 @@ interface Course {
   guest_count: number;
 }
 
-interface TicketData {
-  ticketId: string;
-  guestName: string;
-  guestEmail: string;
-  bookingType: string;
-  courseTitle: string;
-  courseDate: string;
-  courseTime: string;
-  trainer: string;
-  paymentNote: string | null;
-  whatsappNumber: string;
-  whatsappMessage: string;
-}
 
 export default function EmbedKursplan() {
   const [searchParams] = useSearchParams();
@@ -67,7 +53,7 @@ export default function EmbedKursplan() {
   const [guestPhone, setGuestPhone] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [ticketData, setTicketData] = useState<TicketData | null>(null);
+  const [bookingInfo, setBookingInfo] = useState<{ email: string; isDropIn: boolean } | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekStart, setWeekStart] = useState<Date>(startOfDay(new Date()));
@@ -200,7 +186,7 @@ export default function EmbedKursplan() {
       if (error) throw error;
 
       if (data.success) {
-        setTicketData(data.ticket);
+        setBookingInfo({ email: guestEmail, isDropIn: bookingType === 'drop_in' });
         setBookingDialogOpen(false);
         setSuccessDialogOpen(true);
         setGuestName("");
@@ -219,164 +205,6 @@ export default function EmbedKursplan() {
     }
   };
 
-  const generateTicketPDF = () => {
-    if (!ticketData) return;
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const isDropIn = ticketData.bookingType === 'drop_in';
-    
-    // Colors
-    const riseRed = { r: 214, g: 36, b: 43 }; // #d6242b
-    const probeGreen = { r: 34, g: 197, b: 94 }; // #22c55e
-    const accentColor = isDropIn ? riseRed : probeGreen;
-    const darkGray = { r: 26, g: 26, b: 26 }; // #1a1a1a
-    const mediumGray = { r: 100, g: 100, b: 100 };
-    
-    // Header background
-    doc.setFillColor(accentColor.r, accentColor.g, accentColor.b);
-    doc.rect(0, 0, pageWidth, 55, 'F');
-    
-    // Header text
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(28);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RISE FITNESS', pageWidth / 2, 25, { align: 'center' });
-    
-    doc.setFontSize(18);
-    doc.text(isDropIn ? 'DROP-IN TICKET' : 'PROBETRAINING TICKET', pageWidth / 2, 42, { align: 'center' });
-    
-    // Ticket ID Box
-    doc.setFillColor(240, 240, 240);
-    doc.setDrawColor(accentColor.r, accentColor.g, accentColor.b);
-    doc.setLineWidth(1.5);
-    doc.roundedRect(20, 65, pageWidth - 40, 20, 3, 3, 'FD');
-    
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`TICKET-ID: ${ticketData.ticketId}`, pageWidth / 2, 77, { align: 'center' });
-    
-    // Course Details Section
-    let yPos = 100;
-    
-    doc.setFillColor(accentColor.r, accentColor.g, accentColor.b);
-    doc.rect(20, yPos, 4, 18, 'F');
-    
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('KURSDETAILS', 30, yPos + 7);
-    
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.5);
-    doc.line(30, yPos + 12, pageWidth - 20, yPos + 12);
-    
-    yPos += 25;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
-    
-    const labelX = 30;
-    const valueX = 70;
-    
-    doc.text('Kurs:', labelX, yPos);
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.setFont('helvetica', 'bold');
-    doc.text(ticketData.courseTitle, valueX, yPos);
-    
-    yPos += 12;
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
-    doc.text('Datum:', labelX, yPos);
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.text(ticketData.courseDate, valueX, yPos);
-    
-    yPos += 12;
-    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
-    doc.text('Uhrzeit:', labelX, yPos);
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.text(ticketData.courseTime, valueX, yPos);
-    
-    yPos += 12;
-    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
-    doc.text('Trainer:', labelX, yPos);
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.text(ticketData.trainer, valueX, yPos);
-    
-    // Guest Details Section
-    yPos += 25;
-    
-    doc.setFillColor(accentColor.r, accentColor.g, accentColor.b);
-    doc.rect(20, yPos, 4, 18, 'F');
-    
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TEILNEHMER', 30, yPos + 7);
-    
-    doc.setDrawColor(220, 220, 220);
-    doc.line(30, yPos + 12, pageWidth - 20, yPos + 12);
-    
-    yPos += 25;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
-    
-    doc.text('Name:', labelX, yPos);
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.setFont('helvetica', 'bold');
-    doc.text(ticketData.guestName, valueX, yPos);
-    
-    yPos += 12;
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
-    doc.text('E-Mail:', labelX, yPos);
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.text(ticketData.guestEmail, valueX, yPos);
-    
-    // Payment Box (only for Drop-In)
-    if (isDropIn && ticketData.paymentNote) {
-      yPos += 25;
-      doc.setFillColor(255, 243, 224);
-      doc.setDrawColor(riseRed.r, riseRed.g, riseRed.b);
-      doc.setLineWidth(1.5);
-      doc.roundedRect(20, yPos, pageWidth - 40, 25, 3, 3, 'FD');
-      
-      doc.setTextColor(riseRed.r, riseRed.g, riseRed.b);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ZAHLUNG VOR ORT: 22 EUR', pageWidth / 2, yPos + 16, { align: 'center' });
-    }
-    
-    // WhatsApp Contact Box
-    yPos = isDropIn ? yPos + 40 : yPos + 25;
-    doc.setFillColor(240, 240, 240);
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(20, yPos, pageWidth - 40, 30, 3, 3, 'FD');
-    
-    doc.setTextColor(mediumGray.r, mediumGray.g, mediumGray.b);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Bei Absage bitte per WhatsApp melden:', pageWidth / 2, yPos + 12, { align: 'center' });
-    
-    doc.setTextColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('+49 157 30440756', pageWidth / 2, yPos + 24, { align: 'center' });
-    
-    // Footer
-    doc.setFillColor(darkGray.r, darkGray.g, darkGray.b);
-    doc.rect(0, 275, pageWidth, 22, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('www.rise-gym.de', pageWidth / 2, 288, { align: 'center' });
-    
-    doc.save(`ticket-${ticketData.ticketId}.pdf`);
-  };
 
   // Get the 7 days for the week selector
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -598,38 +426,28 @@ export default function EmbedKursplan() {
                 Buchung erfolgreich!
               </DialogTitle>
             </DialogHeader>
-            {ticketData && (
+            {selectedCourse && bookingInfo && (
               <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
-                  <p><strong>Kurs:</strong> {ticketData.courseTitle}</p>
-                  <p><strong>Datum:</strong> {ticketData.courseDate}</p>
-                  <p><strong>Uhrzeit:</strong> {ticketData.courseTime}</p>
-                  <p><strong>Trainer:</strong> {ticketData.trainer}</p>
-                  {ticketData.paymentNote && (
-                    <p className="text-yellow-700 font-medium">{ticketData.paymentNote}</p>
+                  <p><strong>Kurs:</strong> {selectedCourse.title}</p>
+                  <p><strong>Datum:</strong> {format(new Date(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}</p>
+                  <p><strong>Uhrzeit:</strong> {selectedCourse.start_time.substring(0, 5)} - {selectedCourse.end_time.substring(0, 5)}</p>
+                  <p><strong>Trainer:</strong> {selectedCourse.trainer}</p>
+                  {bookingInfo.isDropIn && (
+                    <p className="text-yellow-700 font-medium">💰 Zahlung vor Ort: 22€</p>
                   )}
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  Du erhältst eine Bestätigung per E-Mail an {ticketData.guestEmail}
+                  Du erhältst eine Bestätigung per E-Mail an {bookingInfo.email}
                 </p>
 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={generateTicketPDF}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Ticket herunterladen
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={() => setSuccessDialogOpen(false)}
-                  >
-                    Fertig
-                  </Button>
-                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => setSuccessDialogOpen(false)}
+                >
+                  Fertig
+                </Button>
               </div>
             )}
           </DialogContent>
@@ -903,38 +721,28 @@ export default function EmbedKursplan() {
               Buchung erfolgreich!
             </DialogTitle>
           </DialogHeader>
-          {ticketData && (
+          {selectedCourse && bookingInfo && (
             <div className="space-y-4">
               <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
-                <p><strong>Kurs:</strong> {ticketData.courseTitle}</p>
-                <p><strong>Datum:</strong> {ticketData.courseDate}</p>
-                <p><strong>Uhrzeit:</strong> {ticketData.courseTime}</p>
-                <p><strong>Trainer:</strong> {ticketData.trainer}</p>
-                {ticketData.paymentNote && (
-                  <p className="text-yellow-700 font-medium">{ticketData.paymentNote}</p>
+                <p><strong>Kurs:</strong> {selectedCourse.title}</p>
+                <p><strong>Datum:</strong> {format(new Date(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}</p>
+                <p><strong>Uhrzeit:</strong> {selectedCourse.start_time.substring(0, 5)} - {selectedCourse.end_time.substring(0, 5)}</p>
+                <p><strong>Trainer:</strong> {selectedCourse.trainer}</p>
+                {bookingInfo.isDropIn && (
+                  <p className="text-yellow-700 font-medium">💰 Zahlung vor Ort: 22€</p>
                 )}
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Du erhältst eine Bestätigung per E-Mail an {ticketData.guestEmail}
+                Du erhältst eine Bestätigung per E-Mail an {bookingInfo.email}
               </p>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={generateTicketPDF}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Ticket herunterladen
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => setSuccessDialogOpen(false)}
-                >
-                  Fertig
-                </Button>
-              </div>
+              <Button
+                className="w-full"
+                onClick={() => setSuccessDialogOpen(false)}
+              >
+                Fertig
+              </Button>
             </div>
           )}
         </DialogContent>
