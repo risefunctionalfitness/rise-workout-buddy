@@ -55,6 +55,18 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
 
       if (coursesError) throw coursesError;
 
+      // Get all guest registrations in bulk for efficiency
+      const { data: guestRegistrations } = await supabase
+        .from("guest_registrations")
+        .select("course_id")
+        .eq("status", "registered");
+
+      // Create a map of guest counts per course
+      const guestCountMap = new Map<string, number>();
+      for (const guest of guestRegistrations || []) {
+        guestCountMap.set(guest.course_id, (guestCountMap.get(guest.course_id) || 0) + 1);
+      }
+
       // Get registration counts for all courses
       const coursesWithCounts = await Promise.all(
         (coursesData || []).map(async (course) => {
@@ -63,7 +75,9 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
             .select("status")
             .eq("course_id", course.id);
 
-          const registered_count = registrations?.filter(r => r.status === "registered").length || 0;
+          const memberCount = registrations?.filter(r => r.status === "registered").length || 0;
+          const guestCount = guestCountMap.get(course.id) || 0;
+          const registered_count = memberCount + guestCount;
           const waitlist_count = registrations?.filter(r => r.status === "waitlist").length || 0;
 
           return {
