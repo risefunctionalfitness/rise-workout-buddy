@@ -75,19 +75,42 @@ const webhookDefinitions: WebhookDefinition[] = [
   {
     id: "news_email",
     name: "News Benachrichtigung",
-    description: "Wird für jeden Empfänger einer News gesendet (in Batches)",
+    description: "Wird in Batches mit emails[] Array gesendet. Iterator in Make.com auf emails[] setzen!",
     eventType: "news_email",
     testFunction: "send-test-news-webhook",
     samplePayload: {
       event_type: "news_email",
-      notification_method: "email | whatsapp | both",
-      phone: "4915730440756",
-      email: "max@example.com",
-      first_name: "Max",
-      last_name: "Mustermann",
-      membership_type: "Premium Member",
-      subject: "News Titel",
-      body: "<p>HTML Inhalt der News...</p>"
+      batch_number: 1,
+      total_batches: 1,
+      total_recipients: 2,
+      timestamp: "2025-02-01T10:00:00Z",
+      news: {
+        id: "uuid",
+        title: "News Titel",
+        content: "<p>HTML Inhalt der News...</p>"
+      },
+      emails: [
+        {
+          email: "max@example.com",
+          first_name: "Max",
+          last_name: "Mustermann",
+          membership_type: "Premium Member",
+          subject: "News Titel",
+          body: "<p>HTML Inhalt der News...</p>",
+          notification_method: "both",
+          phone: "4915730440756"
+        },
+        {
+          email: "anna@example.com",
+          first_name: "Anna",
+          last_name: "Schmidt",
+          membership_type: "Basic Member",
+          subject: "News Titel",
+          body: "<p>HTML Inhalt der News...</p>",
+          notification_method: "email",
+          phone: null
+        }
+      ]
     }
   },
   {
@@ -268,14 +291,23 @@ export const AdminWebhookTester = () => {
         <p className="text-muted-foreground">
           Teste alle Webhooks und sieh dir die Payload-Strukturen für Make.com an.
         </p>
-        <div className="p-4 bg-muted rounded-lg">
-          <p className="text-sm font-medium mb-2">Filter in Make.com:</p>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• <code className="bg-background px-1 rounded">notification_method = "email"</code> → Nur Email senden</li>
-            <li>• <code className="bg-background px-1 rounded">notification_method = "whatsapp"</code> → Nur WhatsApp senden</li>
-            <li>• <code className="bg-background px-1 rounded">notification_method = "both"</code> → Beides senden</li>
-            <li>• <code className="bg-background px-1 rounded">phone</code> enthält formatierte Nummer ohne + (z.B. "4915730440756")</li>
-          </ul>
+        <div className="p-4 bg-muted rounded-lg space-y-3">
+          <div>
+            <p className="text-sm font-medium mb-2">Filter in Make.com:</p>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• <code className="bg-background px-1 rounded">notification_method = "email"</code> → Nur Email senden</li>
+              <li>• <code className="bg-background px-1 rounded">notification_method = "whatsapp"</code> → Nur WhatsApp senden</li>
+              <li>• <code className="bg-background px-1 rounded">notification_method = "both"</code> → Beides senden</li>
+              <li>• <code className="bg-background px-1 rounded">phone</code> enthält formatierte Nummer ohne + (z.B. "4915730440756")</li>
+            </ul>
+          </div>
+          <div className="border-t pt-2">
+            <p className="text-sm font-medium mb-1 text-amber-600">⚠️ Bei News Benachrichtigung:</p>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Iterator auf <code className="bg-background px-1 rounded">emails[]</code> setzen</li>
+              <li>• Pro Empfänger: <code className="bg-background px-1 rounded">emails[].notification_method</code> und <code className="bg-background px-1 rounded">emails[].phone</code></li>
+            </ul>
+          </div>
         </div>
       </div>
 
