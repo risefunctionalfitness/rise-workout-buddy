@@ -1,124 +1,55 @@
 
-## Plan: Widget-Buchungen Übersicht im Admin Dashboard
+# Fix: Calendar Views Not Showing Guest Registration Counts
 
-### Übersicht
-Eine neue Komponente zeigt alle Buchungen, die über die öffentlichen Widgets kommen:
-- **Probetraining** (aus `guest_registrations` mit `booking_type = 'probetraining'`)
-- **Drop-In** (aus `guest_registrations` mit `booking_type = 'drop_in'`)
-- **Wellpass Mitgliedschaft** (aus `wellpass_registrations`)
+## Problem
+The calendar views show 0/16 for the course at 18:00 on 13.02.2026, even though there are 2 people registered (both are guest/Probetraining bookings). This affects both member and admin views.
 
-### Datenquellen
-| Typ | Tabelle | Felder |
-|-----|---------|--------|
-| Probetraining / Drop-In | `guest_registrations` | guest_name, guest_email, booking_type, course_id, created_at, status |
-| Wellpass | `wellpass_registrations` | first_name, last_name, email, created_at, status |
+## Root Cause
+Both calendar components only count entries from `course_registrations` table but ignore `guest_registrations` table (which stores Drop-In and Probetraining bookings).
 
-### Neue Komponente: `AdminWidgetBookings.tsx`
+## Files to Update
 
-**Features:**
-1. **Live-Liste** der aktuellsten Widget-Buchungen (letzte 7 Tage)
-2. **Farbcodierte Badges** für den Buchungstyp:
-   - Probetraining: Grün (#22c55e)
-   - Drop-In: Rot (#d6242b) 
-   - Wellpass: Teal (#12a6b0)
-3. **Kurs-Info** bei Probetraining/Drop-In (Kursname, Datum, Uhrzeit)
-4. **Zeitstempel** wann gebucht wurde (relativ: "vor 2 Stunden")
-5. **Kontaktdaten** (Name, E-Mail)
-6. **Auto-Refresh** bei Änderungen (Realtime oder Polling)
+### 1. CoursesCalendarView.tsx (Member Calendar)
+**Current behavior (lines 61-102):** 
+- Fetches courses with embedded `course_registrations`
+- Only counts `course_registrations` for registered_count
 
-**Verbesserungsvorschläge:**
-- **Schnellaktionen**: Button zum Löschen/Stornieren einer Buchung
-- **Filter**: Nach Typ filtern (nur Probetraining, nur Drop-In, nur Wellpass)
-- **Benachrichtigungs-Badge**: Zeigt Anzahl neuer Buchungen seit letztem Besuch
-- **Export**: CSV-Download der Buchungen
-- **Statistik-Zusammenfassung**: "3 Probetrainings, 2 Drop-Ins, 1 Wellpass diese Woche"
+**Fix:** 
+- After loading courses, fetch guest registrations separately
+- Add guest count to the registered_count for each course
 
-### UI-Design
+### 2. AdminCoursesCalendarView.tsx (Admin Calendar)
+**Current behavior (lines 58-76):**
+- Fetches registration counts only from `course_registrations`
 
+**Fix:**
+- Also fetch from `guest_registrations` table
+- Add guest count to registered_count
+
+## Technical Implementation
+
+### CoursesCalendarView.tsx Changes
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│ 🔔 Neue Widget-Buchungen                              [Filter ▼] │
-├─────────────────────────────────────────────────────────────────┤
-│ Zusammenfassung: 3 Probetraining • 2 Drop-In • 1 Wellpass       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ [Probetraining]  Max Mustermann                  vor 2 Std  │ │
-│ │ max@example.com                                             │ │
-│ │ 📅 CrossFit • 15.01.2026 • 18:00                     [🗑️]  │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ [Drop-In]  Anna Schmidt                          vor 5 Std  │ │
-│ │ anna@example.com                                            │ │
-│ │ 📅 HIIT • 16.01.2026 • 10:00                         [🗑️]  │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ [Wellpass]  Lisa Meyer                          vor 1 Tag   │ │
-│ │ lisa@example.com                                            │ │
-│ │ Neue Mitgliedschaft                                  [🗑️]  │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│                    [Alle anzeigen →]                            │
-└─────────────────────────────────────────────────────────────────┘
+1. After fetching courses and user registrations, also fetch:
+   - Guest registrations for all course IDs where status = 'registered'
+
+2. When processing courses, add:
+   - guestCount from guest_registrations to registered_count
 ```
 
-### Technische Umsetzung
-
-**1. Neue Datei: `src/components/AdminWidgetBookings.tsx`**
-- Lädt Daten aus `guest_registrations` und `wellpass_registrations`
-- Joined `courses` für Kursdetails bei Guest-Buchungen
-- Sortiert nach `created_at` DESC
-- Zeigt max. 10 Einträge, mit "Alle anzeigen" Link
-
-**2. Änderung: `src/pages/Admin.tsx`**
-- Import der neuen Komponente
-- Einfügen vor `<AdminStats />` im `case 'home':` Block:
-```typescript
-case 'home':
-  return (
-    <div className="space-y-6">
-      <AdminWidgetBookings />  {/* NEU */}
-      <AdminStats />
-    </div>
-  );
+### AdminCoursesCalendarView.tsx Changes
+```text
+1. In the map function that gets registration counts:
+   - Also query guest_registrations for each course
+   - Add guest count to registered_count
+   
+2. Alternative (more efficient):
+   - Fetch all guest registrations in bulk first
+   - Then add to counts when processing courses
 ```
 
-**3. Datenbank-Abfragen:**
-```typescript
-// Guest Registrations (Probetraining + Drop-In)
-const { data: guestBookings } = await supabase
-  .from('guest_registrations')
-  .select(`
-    id, guest_name, guest_email, booking_type, created_at, status,
-    courses(id, title, course_date, start_time)
-  `)
-  .eq('status', 'registered')
-  .gte('created_at', sevenDaysAgo)
-  .order('created_at', { ascending: false })
+## Reference Implementation
+`DayCourseDialog.tsx` (lines 136-167) already implements this correctly and serves as the pattern to follow.
 
-// Wellpass Registrations
-const { data: wellpassBookings } = await supabase
-  .from('wellpass_registrations')
-  .select('id, first_name, last_name, email, created_at, status')
-  .gte('created_at', sevenDaysAgo)
-  .order('created_at', { ascending: false })
-```
-
-### Zusätzliche Verbesserungen (Optional)
-
-1. **Realtime-Updates**: Supabase Realtime Subscription für sofortige Aktualisierung
-2. **Sound-Benachrichtigung**: Dezenter Ton bei neuer Buchung (optional aktivierbar)
-3. **Detail-Dialog**: Klick auf Buchung öffnet Dialog mit allen Details + Aktionen
-4. **Telefonnummer anzeigen**: Falls vorhanden aus `phone_country_code` + `phone_number`
-5. **Status-Änderung**: Admins können Status direkt ändern (bestätigt/storniert)
-
-### Zusammenfassung
-
-| Datei | Änderung |
-|-------|----------|
-| `src/components/AdminWidgetBookings.tsx` | Neue Komponente erstellen |
-| `src/pages/Admin.tsx` | Import + Einbindung vor AdminStats |
-
-Die Komponente gibt Admins sofortige Übersicht über alle externen Buchungen und ermöglicht schnelles Handeln.
+## Expected Result
+After the fix, the calendar will show **2/16** for the Functional Fitness course at 18:00 on 13.02.2026, correctly including the 2 Probetraining guest bookings.
