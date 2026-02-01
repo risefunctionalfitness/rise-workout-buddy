@@ -58,7 +58,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
       const nowTime = now.toTimeString().slice(0, 8)
       const endDate = threeMonthsLater.toISOString().split('T')[0]
 
-      const [coursesResult, userRegistrationsResult] = await Promise.all([
+      const [coursesResult, userRegistrationsResult, guestRegistrationsResult] = await Promise.all([
         supabase
           .from('courses')
           .select(`
@@ -77,16 +77,29 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
           .from('course_registrations')
           .select('course_id, status')
           .eq('user_id', user.id)
-          .in('status', ['registered', 'waitlist'])
+          .in('status', ['registered', 'waitlist']),
+        supabase
+          .from('guest_registrations')
+          .select('course_id')
+          .eq('status', 'registered')
       ])
 
       if (coursesResult.error) throw coursesResult.error
       if (userRegistrationsResult.error) throw userRegistrationsResult.error
+      if (guestRegistrationsResult.error) throw guestRegistrationsResult.error
+
+      // Create a map of guest counts per course
+      const guestCountMap = new Map<string, number>()
+      for (const guest of guestRegistrationsResult.data || []) {
+        guestCountMap.set(guest.course_id, (guestCountMap.get(guest.course_id) || 0) + 1)
+      }
 
       // Process courses data
       const processedCourses = (coursesResult.data || []).map(course => {
         const registrations = course.course_registrations || []
-        const registered_count = registrations.filter(r => r.status === 'registered').length
+        const memberCount = registrations.filter(r => r.status === 'registered').length
+        const guestCount = guestCountMap.get(course.id) || 0
+        const registered_count = memberCount + guestCount
         const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
         
         const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
