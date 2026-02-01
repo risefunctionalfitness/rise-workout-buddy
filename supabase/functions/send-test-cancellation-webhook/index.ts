@@ -34,8 +34,8 @@ serve(async (req) => {
       registered_count: 2,
       minimum_required: 3,
       participants: [
-        { email: 'test1@example.com', first_name: 'Max', display_name: 'Max Mustermann' },
-        { email: 'test2@example.com', first_name: 'Anna', display_name: 'Anna Musterfrau' }
+        { email: 'test1@example.com', first_name: 'Max', display_name: 'Max Mustermann', phone: '4915730440756', notification_method: 'both' },
+        { email: 'test2@example.com', first_name: 'Anna', display_name: 'Anna Musterfrau', phone: '4917612345678', notification_method: 'email' }
       ],
       cancelled_at: new Date().toISOString()
     }

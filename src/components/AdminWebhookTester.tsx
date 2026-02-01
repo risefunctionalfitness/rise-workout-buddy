@@ -176,7 +176,7 @@ const webhookDefinitions: WebhookDefinition[] = [
       registered_count: 2,
       minimum_required: 3,
       participants: [
-        { email: "max@example.com", first_name: "Max", display_name: "Max Mustermann" }
+        { email: "max@example.com", first_name: "Max", display_name: "Max Mustermann", phone: "4915730440756", notification_method: "both" }
       ],
       cancelled_at: "2025-02-01T10:00:00Z"
     }
