@@ -192,7 +192,7 @@ export function AdminWidgetBookings() {
   const getTypeBadge = (type: BookingType) => {
     switch (type) {
       case 'probetraining':
-        return <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">Probe</Badge>;
+        return <Badge className="bg-green-600 hover:bg-green-700 text-white text-xs">Probe</Badge>;
       case 'drop_in':
         return <Badge className="bg-[#d6242b] hover:bg-[#b91c22] text-white text-xs">Drop-In</Badge>;
       case 'wellpass':
