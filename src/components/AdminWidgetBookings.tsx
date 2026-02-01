@@ -230,11 +230,11 @@ export function AdminWidgetBookings() {
   return (
     <>
       <Card>
-        <CardHeader className="pb-3 px-3 sm:px-6">
+        <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <CardTitle className="text-base sm:text-lg">Widget-Buchungen</CardTitle>
+              <Bell className="h-5 w-5 text-primary" />
+              <CardTitle>Widget-Buchungen</CardTitle>
               {bookings.length > 0 && (
                 <Badge variant="secondary" className="text-xs">{bookings.length}</Badge>
               )}
@@ -268,7 +268,7 @@ export function AdminWidgetBookings() {
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-1 px-3 sm:px-6 pt-0">
+        <CardContent className="space-y-1">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
