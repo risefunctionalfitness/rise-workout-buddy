@@ -529,7 +529,7 @@ export const NewsManager = () => {
 
       let query = supabase
         .from('profiles')
-        .select('display_name, first_name, last_name, user_id, membership_type, status')
+        .select('display_name, first_name, last_name, user_id, membership_type, status, notify_email_enabled, notify_whatsapp_enabled, phone_country_code, phone_number')
         .not('user_id', 'is', null)
 
       // Status-Filter
@@ -544,7 +544,30 @@ export const NewsManager = () => {
 
       if (error) throw error
 
-      setPreviewRecipients(profiles || [])
+      // Calculate notification_method and formatted phone for each recipient
+      const enrichedProfiles = (profiles || []).map(p => {
+        const emailEnabled = p.notify_email_enabled !== false // default true
+        const whatsappEnabled = p.notify_whatsapp_enabled === true && !!p.phone_number
+        
+        let notification_method: 'email' | 'whatsapp' | 'both' = 'email'
+        if (emailEnabled && whatsappEnabled) {
+          notification_method = 'both'
+        } else if (whatsappEnabled) {
+          notification_method = 'whatsapp'
+        }
+        
+        const phone = whatsappEnabled && p.phone_country_code && p.phone_number
+          ? `${p.phone_country_code.replace('+', '')}${p.phone_number.replace(/\D/g, '')}`
+          : null
+        
+        return {
+          ...p,
+          notification_method,
+          phone
+        }
+      })
+
+      setPreviewRecipients(enrichedProfiles)
     } catch (error) {
       console.error('Error loading preview:', error)
       toast.error('Fehler beim Laden der Vorschau')
@@ -981,15 +1004,42 @@ export const NewsManager = () => {
             </TabsContent>
             
             <TabsContent value="recipients" className="space-y-2">
+              {/* Summary of notification methods */}
+              <div className="flex gap-2 flex-wrap text-xs">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                  📧 Email: {previewRecipients.filter(r => r.notification_method === 'email').length}
+                </span>
+                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                  📱 WhatsApp: {previewRecipients.filter(r => r.notification_method === 'whatsapp').length}
+                </span>
+                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                  📧📱 Beides: {previewRecipients.filter(r => r.notification_method === 'both').length}
+                </span>
+              </div>
               <div className="max-h-[600px] overflow-y-auto border rounded-lg">
-                <div className="p-3 bg-muted/30 font-semibold sticky top-0">
-                  Empfänger ({previewRecipients.length})
+                <div className="p-3 bg-muted/30 font-semibold sticky top-0 grid grid-cols-4 gap-2 text-xs">
+                  <span>Name</span>
+                  <span>Mitgliedschaft</span>
+                  <span>Kanal</span>
+                  <span>Telefon</span>
                 </div>
                 <div className="divide-y">
                   {previewRecipients.map((recipient, idx) => (
-                    <div key={idx} className="p-2 text-sm flex justify-between">
-                      <span>{recipient.display_name || `${recipient.first_name} ${recipient.last_name}`}</span>
-                      <span className="text-muted-foreground text-xs">{recipient.membership_type}</span>
+                    <div key={idx} className="p-2 text-sm grid grid-cols-4 gap-2 items-center">
+                      <span className="truncate">{recipient.display_name || `${recipient.first_name} ${recipient.last_name}`}</span>
+                      <span className="text-muted-foreground text-xs truncate">{recipient.membership_type}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded inline-block w-fit ${
+                        recipient.notification_method === 'both' 
+                          ? 'bg-purple-100 text-purple-800'
+                          : recipient.notification_method === 'whatsapp'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {recipient.notification_method === 'both' ? '📧📱' : recipient.notification_method === 'whatsapp' ? '📱' : '📧'}
+                      </span>
+                      <span className="text-muted-foreground text-xs font-mono truncate">
+                        {recipient.phone || '—'}
+                      </span>
                     </div>
                   ))}
                 </div>
