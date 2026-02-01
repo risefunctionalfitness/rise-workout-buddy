@@ -28,6 +28,7 @@ import { AdminRiskRadar } from "@/components/AdminRiskRadar";
 import { AdminMerchOrders } from "@/components/AdminMerchOrders";
 import { AdminWebhookTester } from "@/components/AdminWebhookTester";
 import { AdminWidgetBookings } from "@/components/AdminWidgetBookings";
+import { AdminMonthlyStats } from "@/components/AdminMonthlyStats";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -1129,6 +1130,7 @@ export default function Admin() {
       case 'home':
         return (
           <div className="space-y-6">
+            <AdminMonthlyStats />
             <AdminWidgetBookings />
             <AdminStats />
           </div>
