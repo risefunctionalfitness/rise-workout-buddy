@@ -6,13 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface Course {
-  id: string;
-  title: string;
-  max_participants: number;
-  registered_count: number;
-  waitlisted_count: number;
-}
+// Format phone number: remove + and spaces
+const formatPhoneNumber = (countryCode: string, number: string): string => {
+  const cleanCountryCode = countryCode.replace(/^\+/, '').replace(/\s/g, '');
+  const cleanNumber = number.replace(/\s/g, '');
+  return `${cleanCountryCode}${cleanNumber}`;
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -41,7 +40,7 @@ serve(async (req) => {
         max_participants,
         course_date,
         start_time,
-        end_time,
+        trainer,
         course_registrations!inner(status)
       `)
       .gte('course_date', new Date().toISOString().split('T')[0])
@@ -137,30 +136,54 @@ serve(async (req) => {
           try {
             const webhookUrl = Deno.env.get('MAKE_WAITLIST_WEBHOOK_URL');
             if (webhookUrl) {
-              // Get user profile and email for webhook (fixed columns and filter)
+              // Get user profile with notification preferences
               const { data: profile } = await supabase
                 .from('profiles')
-                .select('display_name, membership_type')
+                .select('display_name, first_name, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled')
                 .eq('user_id', user.user_id)
                 .maybeSingle();
 
               const { data: { user: authUser } } = await supabase.auth.admin.getUserById(user.user_id);
 
+              // Determine notification method
+              const wantsEmail = profile?.notify_email_enabled !== false;
+              const wantsWhatsApp = profile?.notify_whatsapp_enabled && profile?.phone_number;
+              
+              let notification_method: string;
+              if (wantsEmail && wantsWhatsApp) {
+                notification_method = 'both';
+              } else if (wantsEmail) {
+                notification_method = 'email';
+              } else if (wantsWhatsApp) {
+                notification_method = 'whatsapp';
+              } else {
+                notification_method = 'none';
+              }
+
+              // Skip if no notifications wanted
+              if (notification_method === 'none') {
+                console.log(`⏭️ User ${user.user_id} has disabled all notifications`);
+                continue;
+              }
+
+              // Format phone number if available
+              const formattedPhone = (profile?.phone_number && profile?.notify_whatsapp_enabled)
+                ? formatPhoneNumber(profile.phone_country_code || '+49', profile.phone_number)
+                : null;
+
+              // Flat payload matching AdminWebhookTester format exactly
               const webhookData = {
-                event_type: 'waitlist_promoted',
-                promotion_type: 'automatic',
-                promoted_at: new Date().toISOString(),
-
-                course_id: course.id,
-                course_title: course.title,
-                course_date: (course as any).course_date ?? null,
-                start_time: (course as any).start_time ?? null,
-                end_time: (course as any).end_time ?? null,
-
+                event_type: 'waitlist_promotion',
+                notification_method,
+                phone: formattedPhone,
                 user_id: user.user_id,
-                user_email: authUser?.email || 'unknown',
-                user_name: profile?.display_name || 'Unbekannt',
-                membership: profile?.membership_type || 'Member'
+                display_name: profile?.display_name || 'Unbekannt',
+                first_name: profile?.first_name || '',
+                email: authUser?.email || '',
+                course_title: course.title,
+                course_date: (course as any).course_date ?? '',
+                course_time: (course as any).start_time?.substring(0, 5) ?? '',
+                trainer: (course as any).trainer ?? ''
               };
 
               const webhookResponse = await fetch(webhookUrl, {

@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Generate unique ticket ID
-    const ticketId = `${bookingType.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const ticketId = `RISE-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // Create guest registration
     const { data: registration, error: regError } = await supabaseClient
@@ -135,45 +135,34 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Guest registration created:', registration);
 
-    // Format course date and time
-    const courseDate = new Date(course.course_date);
-    const formattedDate = courseDate.toLocaleDateString('de-DE', {
-      weekday: 'long',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-
-    // Prepare ticket data for email
-    const ticketData = {
-      ticketId,
-      guestName,
-      guestEmail,
-      bookingType,
-      courseTitle: course.title,
-      courseDate: formattedDate,
-      courseTime: `${course.start_time.substring(0, 5)} - ${course.end_time.substring(0, 5)}`,
-      trainer: course.trainer,
-      paymentNote: bookingType === 'drop_in' ? 'Zahlung vor Ort: 22€' : null,
-      whatsappNumber: '+49 157 30440756',
-      whatsappMessage: 'Bei Absage bitte per WhatsApp melden'
-    };
-
-    // Send email via Make.com webhook
+    // Send webhook to Make.com with flat structure matching tester format
     const webhookUrl = Deno.env.get('MAKE_GUEST_TICKET_WEBHOOK_URL');
     
     if (webhookUrl) {
       try {
+        // Determine notification method
+        const hasPhone = !!phoneNumber;
+        const notificationMethod = hasPhone ? 'both' : 'email';
+        const formattedPhone = hasPhone 
+          ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) 
+          : null;
+
+        // Flat payload matching AdminWebhookTester format exactly
         const webhookPayload = {
           event_type: 'guest_ticket',
+          notification_method: notificationMethod,
+          phone: formattedPhone,
+          ticket_id: ticketId,
+          guest_name: guestName,
+          guest_email: guestEmail,
           booking_type: bookingType,
-          is_drop_in: bookingType === 'drop_in',
-          is_probetraining: bookingType === 'probetraining',
-          ticket: ticketData,
-          timestamp: new Date().toISOString(),
-          notification_method: phoneNumber ? 'both' : 'email',
-          phone: phoneNumber ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) : null
+          course_title: course.title,
+          course_date: course.course_date,
+          course_time: course.start_time.substring(0, 5),
+          trainer: course.trainer
         };
+
+        console.log('Sending webhook payload:', webhookPayload);
 
         const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
@@ -193,6 +182,29 @@ const handler = async (req: Request): Promise<Response> => {
     } else {
       console.warn('MAKE_GUEST_TICKET_WEBHOOK_URL not configured');
     }
+
+    // Prepare ticket data for response
+    const courseDate = new Date(course.course_date);
+    const formattedDate = courseDate.toLocaleDateString('de-DE', {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    const ticketData = {
+      ticketId,
+      guestName,
+      guestEmail,
+      bookingType,
+      courseTitle: course.title,
+      courseDate: formattedDate,
+      courseTime: `${course.start_time.substring(0, 5)} - ${course.end_time.substring(0, 5)}`,
+      trainer: course.trainer,
+      paymentNote: bookingType === 'drop_in' ? 'Zahlung vor Ort: 22€' : null,
+      whatsappNumber: '+49 157 30440756',
+      whatsappMessage: 'Bei Absage bitte per WhatsApp melden'
+    };
 
     return new Response(
       JSON.stringify({

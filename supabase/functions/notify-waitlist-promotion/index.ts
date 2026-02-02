@@ -56,10 +56,10 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Get course details
+    // Get course details including trainer
     const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('id, title')
+      .select('id, title, course_date, start_time, trainer')
       .eq('id', registration.course_id)
       .single()
 
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Get profile details including notification preferences
     const { data: profile } = await supabase
       .from('profiles')
-      .select('display_name, access_code, membership_type, first_name, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled')
+      .select('display_name, first_name, phone_country_code, phone_number, notify_email_enabled, notify_whatsapp_enabled')
       .eq('user_id', registration.user_id)
       .single()
 
@@ -110,18 +110,19 @@ Deno.serve(async (req) => {
       ? formatPhoneNumber(profile.phone_country_code || '+49', profile.phone_number)
       : null
 
+    // Flat payload matching AdminWebhookTester format exactly
     const webhookData = {
-      event_type: 'waitlist_promoted',
+      event_type: 'waitlist_promotion',
       notification_method,
-      user_id: registration.user_id,
-      name: profile?.first_name || profile?.display_name || 'Unbekannt',
-      email,
       phone: formattedPhone,
-      access_code: profile?.access_code || '',
-      membership_type: profile?.membership_type || 'Member',
-      course_id: course?.id,
-      course_title: course?.title,
-      promoted_at: new Date().toISOString(),
+      user_id: registration.user_id,
+      display_name: profile?.display_name || 'Unbekannt',
+      first_name: profile?.first_name || '',
+      email,
+      course_title: course?.title || '',
+      course_date: course?.course_date || '',
+      course_time: course?.start_time?.substring(0, 5) || '',
+      trainer: course?.trainer || ''
     }
 
     console.log('Sending waitlist promotion webhook:', webhookData, '->', waitlistWebhookUrl)
