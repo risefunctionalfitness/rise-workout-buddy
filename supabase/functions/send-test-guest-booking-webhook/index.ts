@@ -24,14 +24,16 @@ serve(async (req) => {
       event_type: 'guest_ticket',
       notification_method: 'both',
       phone: '4915730440756',
-      ticket_id: 'RISE-TEST123',
       guest_name: 'Max Mustermann (TEST)',
       guest_email: 'test@example.com',
       booking_type: 'probetraining',
-      course_title: 'Functional Fitness (TEST)',
-      course_date: new Date().toISOString().split('T')[0],
-      course_time: '18:00',
-      trainer: 'Flo'
+      ticket: {
+        ticketId: 'RISE-TEST123',
+        courseTitle: 'Functional Fitness (TEST)',
+        courseDate: new Date().toISOString().split('T')[0],
+        courseTime: '18:00',
+        trainer: 'Flo'
+      }
     }
     
     console.log('Sending test guest booking webhook:', webhookData)

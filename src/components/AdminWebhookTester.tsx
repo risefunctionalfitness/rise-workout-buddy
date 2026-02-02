@@ -62,14 +62,16 @@ const webhookDefinitions: WebhookDefinition[] = [
       event_type: "guest_ticket",
       notification_method: "email | whatsapp | both",
       phone: "4915730440756",
-      ticket_id: "RISE-ABC123",
       guest_name: "Max Mustermann",
       guest_email: "max@example.com",
       booking_type: "probetraining | drop_in",
-      course_title: "Functional Fitness",
-      course_date: "2025-02-01",
-      course_time: "18:00",
-      trainer: "Flo"
+      ticket: {
+        ticketId: "RISE-ABC123",
+        courseTitle: "Functional Fitness",
+        courseDate: "2025-02-01",
+        courseTime: "18:00",
+        trainer: "Flo"
+      }
     }
   },
   {
