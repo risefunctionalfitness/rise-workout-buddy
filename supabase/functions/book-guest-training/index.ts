@@ -147,19 +147,21 @@ const handler = async (req: Request): Promise<Response> => {
           ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) 
           : null;
 
-        // Flat payload matching AdminWebhookTester format exactly
+        // Payload with nested ticket object matching Make.com structure
         const webhookPayload = {
           event_type: 'guest_ticket',
           notification_method: notificationMethod,
           phone: formattedPhone,
-          ticket_id: ticketId,
           guest_name: guestName,
           guest_email: guestEmail,
           booking_type: bookingType,
-          course_title: course.title,
-          course_date: course.course_date,
-          course_time: course.start_time.substring(0, 5),
-          trainer: course.trainer
+          ticket: {
+            ticketId: ticketId,
+            courseTitle: course.title,
+            courseDate: course.course_date,
+            courseTime: course.start_time.substring(0, 5),
+            trainer: course.trainer
+          }
         };
 
         console.log('Sending webhook payload:', webhookPayload);
