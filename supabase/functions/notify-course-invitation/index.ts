@@ -63,7 +63,7 @@ serve(async (req) => {
     // Fetch course details
     const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('id, title, course_date, start_time, end_time, trainer')
+      .select('id, title, course_date, start_time, trainer')
       .eq('id', invitation.course_id)
       .single();
 
@@ -74,7 +74,7 @@ serve(async (req) => {
     // Fetch sender profile
     const { data: senderProfile, error: senderError } = await supabase
       .from('profiles')
-      .select('user_id, display_name, first_name, last_name, nickname, avatar_url')
+      .select('user_id, display_name, first_name, last_name, nickname')
       .eq('user_id', invitation.sender_id)
       .single();
 
@@ -132,52 +132,42 @@ serve(async (req) => {
       : null;
 
     // Format sender name - prioritize nickname
-    const senderName = senderProfile?.nickname ||
-                      senderProfile?.display_name || 
-                      `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim() ||
-                      'Ein Mitglied';
+    const senderDisplayName = senderProfile?.nickname ||
+                              senderProfile?.display_name || 
+                              `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim() ||
+                              'Ein Mitglied';
 
     // Format recipient name - prioritize nickname
-    const recipientName = recipientProfile?.nickname ||
-                         recipientProfile?.display_name ||
-                         `${recipientProfile?.first_name || ''} ${recipientProfile?.last_name || ''}`.trim() ||
-                         'Mitglied';
+    const recipientDisplayName = recipientProfile?.nickname ||
+                                 recipientProfile?.display_name ||
+                                 `${recipientProfile?.first_name || ''} ${recipientProfile?.last_name || ''}`.trim() ||
+                                 'Mitglied';
 
-    // Format course time
-    const courseTime = `${course.start_time.slice(0, 5)} - ${course.end_time.slice(0, 5)}`;
-
-    // Get the app URL - redirect to /pro with invitations panel open
-    const appUrl = 'https://rise-ff.lovable.app/pro?invitations=open';
-
-    // Construct webhook payload
+    // Payload matching AdminWebhookTester format exactly
     const webhookData = {
       event_type: 'course_invitation',
       notification_method,
-      invitation_id: invitation.id,
       sender: {
-        user_id: invitation.sender_id,
-        name: senderName,
-        avatar_url: senderProfile?.avatar_url || null,
+        display_name: senderDisplayName,
+        first_name: senderProfile?.first_name || ''
       },
       recipient: {
-        user_id: invitation.recipient_id,
-        name: recipientName,
+        display_name: recipientDisplayName,
+        first_name: recipientProfile?.first_name || '',
         email: recipientUser?.user?.email || null,
-        phone: formattedPhone,
+        phone: formattedPhone
       },
       course: {
-        id: course.id,
         title: course.title,
         date: course.course_date,
-        time: courseTime,
-        trainer: course.trainer,
+        time: course.start_time?.substring(0, 5) || '',
+        trainer: course.trainer
       },
-      invitation_link: appUrl,
-      message: invitation.message,
-      created_at: invitation.created_at,
+      message: invitation.message || ''
     };
 
     console.log('Sending webhook to:', webhookUrl);
+    console.log('Webhook payload:', webhookData);
 
     // Send webhook to Make.com
     const webhookResponse = await fetch(webhookUrl, {

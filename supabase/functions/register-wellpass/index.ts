@@ -150,21 +150,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Wellpass registration created successfully');
 
-    // Send registration webhook to Make.com (same as create-member)
+    // Send registration webhook to Make.com (same format as create-member)
     const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL');
 
     if (mainWebhookUrl) {
       try {
+        const hasPhone = !!phoneNumber;
+        const formattedPhone = hasPhone 
+          ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) 
+          : null;
+
+        // Flat payload matching AdminWebhookTester format exactly
         const webhookData = {
           event_type: 'registration',
-          name: firstName,
+          notification_method: hasPhone ? 'both' : 'email',
+          phone: formattedPhone,
+          name: `${firstName} ${lastName}`,
+          first_name: firstName,
+          last_name: lastName,
           email: email,
           access_code: accessCode,
-          membership_type: 'Wellpass',
-          created_at: new Date().toISOString(),
-          user_id: newUser.user!.id,
-          notification_method: phoneNumber ? 'both' : 'email',
-          phone: phoneNumber ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) : null
+          membership_type: 'Wellpass'
         };
 
         console.log('Sending registration webhook to Make.com:', webhookData);

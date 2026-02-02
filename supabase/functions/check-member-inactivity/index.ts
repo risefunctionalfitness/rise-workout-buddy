@@ -5,15 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface InactiveMember {
-  user_id: string;
-  display_name: string;
-  email: string;
-  membership_type: string;
-  last_registration_date: string | null;
-  days_inactive: number;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -56,7 +47,7 @@ Deno.serve(async (req) => {
     // Get all active members with their last course registration
     const { data: activeMembers, error: membersError } = await supabaseClient
       .from('profiles')
-      .select('user_id, display_name, email, membership_type, last_inactivity_webhook_sent_at')
+      .select('user_id, display_name, first_name, last_name, email, membership_type, last_inactivity_webhook_sent_at')
       .eq('status', 'active')
       .not('membership_type', 'in', '("Administrator","Admin")'); // Exclude admins
 
@@ -66,7 +57,7 @@ Deno.serve(async (req) => {
 
     console.log(`👥 Found ${activeMembers?.length || 0} active members to check`);
 
-    const inactiveMembers: InactiveMember[] = [];
+    const inactiveMembers: any[] = [];
     let processedCount = 0;
     let newInactiveCount = 0;
 
@@ -103,9 +94,11 @@ Deno.serve(async (req) => {
         inactiveMembers.push({
           user_id: member.user_id,
           display_name: member.display_name || 'Unknown',
+          first_name: member.first_name || '',
+          last_name: member.last_name || '',
           email: member.email || '',
           membership_type: member.membership_type || 'Member',
-          last_registration_date: lastRegistration.registered_at,
+          last_activity_date: lastRegistration.registered_at.split('T')[0],
           days_inactive: daysSinceLastReg
         });
 
@@ -125,23 +118,24 @@ Deno.serve(async (req) => {
 
         newInactiveCount++;
 
-        // Send webhook notification
+        // Send webhook notification with flat structure matching AdminWebhookTester format
         if (webhookUrl) {
           try {
+            // Flat payload matching AdminWebhookTester format exactly
             const webhookPayload = {
-              event_type: 'member_inactivity_detected',
-              member: {
-                id: member.user_id,
-                name: member.display_name || 'Unknown',
-                email: member.email || '',
-                membership_type: member.membership_type || 'Member',
-                last_course_registration: lastRegistration.registered_at,
-                days_inactive: daysSinceLastReg
-              },
-              detected_at: new Date().toISOString()
+              event_type: 'member_inactive',
+              user_id: member.user_id,
+              display_name: member.display_name || 'Unknown',
+              first_name: member.first_name || '',
+              last_name: member.last_name || '',
+              email: member.email || '',
+              membership_type: member.membership_type || 'Member',
+              days_inactive: daysSinceLastReg,
+              last_activity_date: lastRegistration.registered_at.split('T')[0],
+              was_ever_active: true
             };
 
-            console.log(`📤 Sending webhook for user ${member.display_name || member.user_id}`);
+            console.log(`📤 Sending webhook for user ${member.display_name || member.user_id}:`, webhookPayload);
 
             const webhookResponse = await fetch(webhookUrl, {
               method: 'POST',

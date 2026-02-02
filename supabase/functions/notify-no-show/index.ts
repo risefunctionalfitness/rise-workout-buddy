@@ -44,7 +44,7 @@ serve(async (req) => {
     // Get course details
     const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('id, title, course_date, start_time, end_time, trainer')
+      .select('id, title, course_date, start_time')
       .eq('id', course_id)
       .single()
 
@@ -107,20 +107,21 @@ serve(async (req) => {
       ? formatPhoneNumber(profile.phone_country_code || '+49', profile.phone_number)
       : null
 
-    // Prepare webhook payload
+    // Get display name - prioritize nickname
+    const displayName = profile.nickname || profile.display_name || 'Mitglied'
+
+    // Flat payload matching AdminWebhookTester format exactly
     const webhookPayload = {
       event_type: 'no_show',
       notification_method,
-      user_id: user_id,
-      email: userEmail,
       phone: formattedPhone,
-      name: profile.first_name || profile.nickname || profile.display_name || 'Mitglied',
-      course_id: course.id,
+      user_id: user_id,
+      display_name: displayName,
+      first_name: profile.first_name || '',
+      email: userEmail,
       course_title: course.title,
       course_date: course.course_date,
-      course_time: course.start_time,
-      trainer_name: course.trainer,
-      marked_at: new Date().toISOString()
+      course_time: course.start_time?.substring(0, 5) || ''
     }
 
     console.log('Sending webhook payload:', webhookPayload)

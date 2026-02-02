@@ -159,6 +159,7 @@ serve(async (req) => {
           ? `${phoneCountryCode.replace('+', '')}${phoneNumber}` 
           : null
         
+        // Flat payload matching AdminWebhookTester format exactly
         const webhookData = {
           event_type: 'registration',
           notification_method: hasPhone ? 'both' : 'email',
@@ -168,9 +169,7 @@ serve(async (req) => {
           last_name: user_metadata?.last_name || '',
           email: email,
           access_code: user_metadata?.access_code || '',
-          membership_type: membershipType || 'Member',
-          created_at: new Date().toISOString(),
-          user_id: data.user.id
+          membership_type: membershipType || 'Member'
         }
         
         console.log('Sending webhook to Make.com:', webhookData, '->', mainWebhookUrl)
