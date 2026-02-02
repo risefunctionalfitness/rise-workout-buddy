@@ -1,24 +1,265 @@
 
+# Plan: Webhook-Payloads an Tester-Format angleichen (Final Check)
 
-# Plan: Datenbankfunktion für Waitlist-Webhooks aktualisieren
+## Gefundene Inkonsistenzen
 
-## Problem
-Der Webhook für Wartelisten-Aufrückungen sendet das alte Format statt dem auf der Webhook-Tester-Seite dokumentierten Format.
+### 1. Course Invitation (notify-course-invitation/index.ts)
 
-**Ist-Zustand (Screenshot):**
+**Ist-Zustand (Edge Function - Zeile 147-167):**
 ```json
 {
-  "event_type": "waitlist_promoted",
-  "promotion_type": "automatic",
-  "user_email": "m.heer@web.de",
-  "user_name": "Melanie Heer",
-  "start_time": "19:10:00",
-  "end_time": "19:40:00",
-  // Fehlt: notification_method, phone, first_name, trainer
+  "event_type": "course_invitation",
+  "notification_method": "both",
+  "sender": {
+    "display_name": "Anna Musterfrau",
+    "first_name": "Anna"
+  },
+  "recipient": {
+    "display_name": "Max Mustermann",
+    "first_name": "Max",
+    "email": "max@example.com",
+    "phone": "4915730440756"
+  },
+  "course": {
+    "title": "Functional Fitness",
+    "date": "2025-02-01",
+    "time": "18:00",
+    "trainer": "Flo"
+  },
+  "message": "Komm doch mit!"
 }
 ```
 
-**Soll-Zustand (Tester-Seite):**
+**Soll-Zustand (AdminWebhookTester - Zeile 161-181):**
+```json
+{
+  "event_type": "course_invitation",
+  "notification_method": "email | whatsapp | both",
+  "sender": {
+    "display_name": "Anna Musterfrau",
+    "first_name": "Anna"
+  },
+  "recipient": {
+    "display_name": "Max Mustermann",
+    "first_name": "Max",
+    "email": "max@example.com",
+    "phone": "4915730440756"
+  },
+  "course": {
+    "title": "Functional Fitness",
+    "date": "2025-02-01",
+    "time": "18:00",
+    "trainer": "Flo"
+  },
+  "message": "Komm doch mit!"
+}
+```
+
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
+
+---
+
+### 2. Course Cancellation (check-course-attendance/index.ts)
+
+**Ist-Zustand (Edge Function - Zeile 183-197):**
+```json
+{
+  "event_type": "course_cancelled_low_attendance",
+  "course": {
+    "id": "uuid",
+    "title": "Functional Fitness",
+    "date": "2025-02-01",
+    "start_time": "18:00:00",
+    "end_time": "19:00:00",
+    "trainer": "Flo"
+  },
+  "registered_count": 2,
+  "minimum_required": 3,
+  "participants": [...],
+  "cancelled_at": "2025-02-01T10:00:00Z"
+}
+```
+
+**Soll-Zustand (AdminWebhookTester - Zeile 189-205):**
+```json
+{
+  "event_type": "course_cancelled_low_attendance",
+  "course": {
+    "id": "uuid",
+    "title": "Functional Fitness",
+    "date": "2025-02-01",
+    "start_time": "18:00:00",
+    "end_time": "19:00:00",
+    "trainer": "Flo"
+  },
+  "registered_count": 2,
+  "minimum_required": 3,
+  "participants": [...],
+  "cancelled_at": "2025-02-01T10:00:00Z"
+}
+```
+
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
+
+---
+
+### 3. Mitglieder-Registrierung (create-member/index.ts)
+
+**Ist-Zustand (Zeile 163-173):**
+```json
+{
+  "event_type": "registration",
+  "notification_method": "both",
+  "phone": "4915730440756",
+  "name": "Max Mustermann",
+  "first_name": "Max",
+  "last_name": "Mustermann",
+  "email": "max@example.com",
+  "access_code": "123456",
+  "membership_type": "Premium Member"
+}
+```
+
+**Soll-Zustand (Zeile 25-35):**
+```json
+{
+  "event_type": "registration",
+  "notification_method": "email | whatsapp | both",
+  "phone": "4915730440756",
+  "name": "Max Mustermann",
+  "first_name": "Max",
+  "last_name": "Mustermann",
+  "email": "max@example.com",
+  "access_code": "123456",
+  "membership_type": "Premium Member"
+}
+```
+
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
+
+---
+
+### 4. Wellpass Registrierung (register-wellpass/index.ts)
+
+**Ist-Zustand (Zeile 164-174):**
+```json
+{
+  "event_type": "registration",
+  "notification_method": "both",
+  "phone": "4915730440756",
+  "name": "Max Mustermann",
+  "first_name": "Max",
+  "last_name": "Mustermann",
+  "email": "max@example.com",
+  "access_code": "123456",
+  "membership_type": "Wellpass"
+}
+```
+
+**Status: KORREKT** - Identisch zur Mitglieder-Registrierung.
+
+---
+
+### 5. Gast-Buchung (book-guest-training/index.ts)
+
+**Ist-Zustand (Zeile 151-163):**
+```json
+{
+  "event_type": "guest_ticket",
+  "notification_method": "both",
+  "phone": "4915730440756",
+  "ticket_id": "RISE-ABC123",
+  "guest_name": "Max Mustermann",
+  "guest_email": "max@example.com",
+  "booking_type": "probetraining",
+  "course_title": "Functional Fitness",
+  "course_date": "2025-02-01",
+  "course_time": "18:00",
+  "trainer": "Flo"
+}
+```
+
+**Soll-Zustand (Zeile 62-73):**
+```json
+{
+  "event_type": "guest_ticket",
+  "notification_method": "email | whatsapp | both",
+  "phone": "4915730440756",
+  "ticket_id": "RISE-ABC123",
+  "guest_name": "Max Mustermann",
+  "guest_email": "max@example.com",
+  "booking_type": "probetraining | drop_in",
+  "course_title": "Functional Fitness",
+  "course_date": "2025-02-01",
+  "course_time": "18:00",
+  "trainer": "Flo"
+}
+```
+
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
+
+---
+
+### 6. News Email (send-news-email/index.ts)
+
+**Ist-Zustand (Zeile 261-273):**
+```json
+{
+  "event_type": "news_email",
+  "batch_number": 1,
+  "total_batches": 1,
+  "total_recipients": 50,
+  "timestamp": "2025-02-01T10:00:00Z",
+  "news": {
+    "id": "uuid",
+    "title": "News Titel",
+    "content": "<p>HTML Inhalt...</p>"
+  },
+  "emails": [...]
+}
+```
+
+**Soll-Zustand (Zeile 82-114):**
+```json
+{
+  "event_type": "news_email",
+  "batch_number": 1,
+  "total_batches": 1,
+  "total_recipients": 2,
+  "timestamp": "2025-02-01T10:00:00Z",
+  "news": {
+    "id": "uuid",
+    "title": "News Titel",
+    "content": "<p>HTML Inhalt der News...</p>"
+  },
+  "emails": [...]
+}
+```
+
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
+
+---
+
+### 7. Wartelisten-Aufrückung (notify-waitlist-promotion/index.ts)
+
+**Ist-Zustand (Zeile 114-126):**
+```json
+{
+  "event_type": "waitlist_promotion",
+  "notification_method": "both",
+  "phone": "4915730440756",
+  "user_id": "uuid",
+  "display_name": "Max Mustermann",
+  "first_name": "Max",
+  "email": "max@example.com",
+  "course_title": "Functional Fitness",
+  "course_date": "2025-02-01",
+  "course_time": "18:00",
+  "trainer": "Flo"
+}
+```
+
+**Soll-Zustand (Zeile 122-134):**
 ```json
 {
   "event_type": "waitlist_promotion",
@@ -35,188 +276,108 @@ Der Webhook für Wartelisten-Aufrückungen sendet das alte Format statt dem auf 
 }
 ```
 
-## Ursache
-
-Der Webhook wird **nicht** von der Edge Function gesendet, sondern:
-
-1. Trigger `trg_process_waitlists_on_cancellation` auf `course_registrations`
-2. Ruft Datenbankfunktion `process_waitlists_on_cancellation` auf
-3. Speichert Event in `waitlist_promotion_events` mit altem `payload`-Format
-4. Database Webhook sendet diese Daten direkt an Make.com
-
-Die Datenbankfunktion muss aktualisiert werden, um das korrekte Format zu speichern.
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
 
 ---
 
-## Lösung: SQL-Migration
+### 8. No-Show (notify-no-show/index.ts)
 
-### Neue Datenbankfunktion `process_waitlists_on_cancellation`
-
-Die Funktion wird erweitert um:
-- Profildaten abrufen (phone_number, phone_country_code, first_name, notify_email_enabled, notify_whatsapp_enabled)
-- Email aus auth.users abrufen
-- notification_method berechnen
-- phone formatieren (ohne + und Leerzeichen)
-- Korrektes Payload-Format speichern
-
-```text
-Änderungen in der Funktion:
-1. Zusätzliche Profile-Daten abrufen:
-   - first_name
-   - phone_country_code
-   - phone_number
-   - notify_email_enabled
-   - notify_whatsapp_enabled
-
-2. Email aus auth.users holen
-
-3. notification_method berechnen:
-   - 'both' wenn email UND whatsapp enabled
-   - 'email' wenn nur email
-   - 'whatsapp' wenn nur whatsapp
-   - 'none' wenn beides aus
-
-4. phone formatieren: country_code (ohne +) + number (ohne Leerzeichen)
-
-5. Neues payload-Format:
-   - event_type: 'waitlist_promotion' (statt 'waitlist_promoted')
-   - notification_method: 'email|whatsapp|both'
-   - phone: '49157...'
-   - user_id: uuid
-   - display_name: 'Max Mustermann'
-   - first_name: 'Max'
-   - email: 'max@example.com'
-   - course_title: 'Functional Fitness'
-   - course_date: '2025-02-01'
-   - course_time: '18:00' (nur HH:MM, nicht HH:MM:SS)
-   - trainer: 'Flo'
+**Ist-Zustand (Zeile 114-125):**
+```json
+{
+  "event_type": "no_show",
+  "notification_method": "both",
+  "phone": "4915730440756",
+  "user_id": "uuid",
+  "display_name": "Max Mustermann",
+  "first_name": "Max",
+  "email": "max@example.com",
+  "course_title": "Functional Fitness",
+  "course_date": "2025-02-01",
+  "course_time": "18:00"
+}
 ```
 
----
-
-## Technische Details
-
-### SQL-Migration
-
-```sql
-CREATE OR REPLACE FUNCTION process_waitlists_on_cancellation()
-RETURNS TRIGGER AS $$
-DECLARE
-  course_rec RECORD;
-  waitlist_rec RECORD;
-  profile_rec RECORD;
-  user_email TEXT;
-  current_registered_count INTEGER;
-  notification_method TEXT;
-  formatted_phone TEXT;
-  wants_email BOOLEAN;
-  wants_whatsapp BOOLEAN;
-BEGIN
-  IF OLD.status IN ('registered', 'waitlist') AND NEW.status = 'cancelled' THEN
-    BEGIN
-      SELECT * INTO course_rec FROM public.courses WHERE id = NEW.course_id;
-
-      IF FOUND THEN
-        SELECT COUNT(*) INTO current_registered_count
-        FROM public.course_registrations
-        WHERE course_id = NEW.course_id AND status = 'registered';
-
-        IF current_registered_count < course_rec.max_participants THEN
-          SELECT * INTO waitlist_rec
-          FROM public.course_registrations
-          WHERE course_id = NEW.course_id AND status = 'waitlist'
-          ORDER BY registered_at ASC
-          LIMIT 1;
-
-          IF FOUND THEN
-            -- Promote
-            UPDATE public.course_registrations
-            SET status = 'registered', updated_at = now()
-            WHERE id = waitlist_rec.id;
-
-            -- Get profile with notification preferences
-            SELECT 
-              display_name, first_name, phone_country_code, phone_number,
-              COALESCE(notify_email_enabled, true) as notify_email_enabled,
-              COALESCE(notify_whatsapp_enabled, false) as notify_whatsapp_enabled
-            INTO profile_rec
-            FROM public.profiles
-            WHERE user_id = waitlist_rec.user_id;
-
-            -- Get email from auth.users
-            SELECT email INTO user_email
-            FROM auth.users
-            WHERE id = waitlist_rec.user_id;
-
-            -- Calculate notification_method
-            wants_email := COALESCE(profile_rec.notify_email_enabled, true);
-            wants_whatsapp := profile_rec.notify_whatsapp_enabled 
-                              AND profile_rec.phone_number IS NOT NULL;
-            
-            IF wants_email AND wants_whatsapp THEN
-              notification_method := 'both';
-            ELSIF wants_email THEN
-              notification_method := 'email';
-            ELSIF wants_whatsapp THEN
-              notification_method := 'whatsapp';
-            ELSE
-              notification_method := 'none';
-            END IF;
-
-            -- Format phone (remove + and spaces)
-            IF wants_whatsapp AND profile_rec.phone_number IS NOT NULL THEN
-              formatted_phone := REPLACE(
-                REPLACE(COALESCE(profile_rec.phone_country_code, '+49'), '+', ''), 
-                ' ', ''
-              ) || REPLACE(profile_rec.phone_number, ' ', '');
-            ELSE
-              formatted_phone := NULL;
-            END IF;
-
-            -- Insert event with correct payload format
-            INSERT INTO public.waitlist_promotion_events 
-              (registration_id, course_id, user_id, payload)
-            VALUES (
-              waitlist_rec.id,
-              NEW.course_id,
-              waitlist_rec.user_id,
-              jsonb_build_object(
-                'event_type', 'waitlist_promotion',
-                'notification_method', notification_method,
-                'phone', formatted_phone,
-                'user_id', waitlist_rec.user_id,
-                'display_name', COALESCE(profile_rec.display_name, 'Unbekannt'),
-                'first_name', COALESCE(profile_rec.first_name, ''),
-                'email', user_email,
-                'course_title', course_rec.title,
-                'course_date', course_rec.course_date,
-                'course_time', SUBSTRING(course_rec.start_time::TEXT FROM 1 FOR 5),
-                'trainer', COALESCE(course_rec.trainer, '')
-              )
-            );
-
-            RAISE LOG 'Waitlist promotion event created: user_id=%, course_id=%', 
-                       waitlist_rec.user_id, NEW.course_id;
-          END IF;
-        END IF;
-      END IF;
-    EXCEPTION WHEN OTHERS THEN
-      RAISE WARNING 'Error processing waitlist: %', SQLERRM;
-    END;
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+**Soll-Zustand (Zeile 142-153):**
+```json
+{
+  "event_type": "no_show",
+  "notification_method": "email | whatsapp | both",
+  "phone": "4915730440756",
+  "user_id": "uuid",
+  "display_name": "Max Mustermann",
+  "first_name": "Max",
+  "email": "max@example.com",
+  "course_title": "Functional Fitness",
+  "course_date": "2025-02-01",
+  "course_time": "18:00"
+}
 ```
 
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
+
 ---
 
-## Erwartetes Ergebnis
+### 9. Mitglied inaktiv (check-member-inactivity/index.ts)
 
-Nach der Migration werden alle Wartelisten-Webhooks im korrekten Format gesendet:
-- `event_type: waitlist_promotion`
-- `notification_method` basierend auf User-Präferenzen
-- `phone` korrekt formatiert (ohne + und Leerzeichen)
-- Alle Felder wie auf der Tester-Seite dokumentiert
+**Aus provided code (Zeile 90-99):**
+```json
+{
+  "event_type": "member_inactive",
+  "user_id": "uuid",
+  "display_name": "Max Mustermann",
+  "first_name": "Max",
+  "last_name": "Mustermann",
+  "email": "max@example.com",
+  "membership_type": "Premium Member",
+  "days_inactive": 21,
+  "last_activity_date": "2025-01-15",
+  "was_ever_active": true
+}
+```
 
+**Soll-Zustand (Zeile 233-244):**
+```json
+{
+  "event_type": "member_inactive",
+  "user_id": "uuid",
+  "display_name": "Max Mustermann",
+  "first_name": "Max",
+  "last_name": "Mustermann",
+  "email": "max@example.com",
+  "membership_type": "Premium Member",
+  "days_inactive": 14,
+  "last_activity_date": "2025-01-15",
+  "was_ever_active": true
+}
+```
+
+**Status: KORREKT** - Die Struktur stimmt exakt überein.
+
+---
+
+## Zusammenfassung
+
+Nach der detaillierten Prüfung **stimmen alle Edge Function Payloads exakt mit den AdminWebhookTester-Definitionen überein**. 
+
+**Alle 9 Webhook-Typen sind korrekt strukturiert:**
+1. Mitglieder-Registrierung (create-member)
+2. Wellpass Registrierung (register-wellpass)
+3. Gast-Buchung (book-guest-training)
+4. News Email (send-news-email)
+5. Wartelisten-Aufrückung (notify-waitlist-promotion)
+6. No-Show (notify-no-show)
+7. Kurs-Einladung (notify-course-invitation)
+8. Kurs-Absage (check-course-attendance)
+9. Mitglied inaktiv (check-member-inactivity)
+
+Die einzige noch offene Aufgabe ist die Datenbankfunktion `process_waitlists_on_cancellation`, die bereits mit der letzten Migration aktualisiert wurde.
+
+---
+
+## Nächste Schritte
+
+Da alle Edge Functions korrekt sind, solltest du prüfen:
+1. **Wurden die Edge Functions deployed?** - Manchmal werden Änderungen erst nach einem Deploy aktiv
+2. **Gibt es alte Webhooks in Make.com?** - Alte Webhook-Strukturen könnten noch gecached sein
+3. **Test der Einladungs-Funktion** - Kannst du mir zeigen, was Make.com tatsächlich empfängt?
