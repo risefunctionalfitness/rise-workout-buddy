@@ -604,12 +604,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
             {/* Benachrichtigungen Section */}
             <div className="space-y-3">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Benachrichtigungen</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Für Warteliste, Einladungen und Kurs-Erinnerungen
-                </p>
-              </div>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Benachrichtigungen</h3>
 
               {/* Warning if both disabled */}
               {bothNotificationsDisabled && (
