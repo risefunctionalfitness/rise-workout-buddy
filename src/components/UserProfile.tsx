@@ -283,6 +283,33 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
     }
   }
 
+  const handleLeaderboardVisibilityToggle = async (visible: boolean) => {
+    setShowInLeaderboard(visible)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ show_in_leaderboard: visible })
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      toast({
+        title: "Gespeichert",
+        description: visible 
+          ? "Du wirst jetzt im Leaderboard angezeigt" 
+          : "Du wirst nicht mehr im Leaderboard angezeigt"
+      })
+    } catch (error) {
+      console.error('Error saving leaderboard visibility:', error)
+      setShowInLeaderboard(!visible) // Revert on error
+      toast({
+        title: "Fehler",
+        description: "Einstellung konnte nicht gespeichert werden",
+        variant: "destructive"
+      })
+    }
+  }
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
