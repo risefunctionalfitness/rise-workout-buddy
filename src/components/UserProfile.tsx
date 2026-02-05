@@ -78,6 +78,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
         setNotifyWhatsappEnabled(profile.notify_whatsapp_enabled ?? false)
         setPhoneCountryCode(profile.phone_country_code || "+49")
         setPhoneNumber(profile.phone_number || "")
+        setShowInLeaderboard(profile.show_in_leaderboard ?? true)
       }
     } catch (error) {
       console.error('Error loading profile:', error)
