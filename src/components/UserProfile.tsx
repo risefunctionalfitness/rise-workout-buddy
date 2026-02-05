@@ -590,12 +590,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
                   <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
                     <Trophy className="h-5 w-5 text-yellow-500" />
                   </div>
-                  <div>
-                    <Label className="text-base font-medium">Im Leaderboard anzeigen</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Du kannst das Leaderboard weiterhin sehen
-                    </p>
-                  </div>
+                  <Label className="text-base font-medium">Im Leaderboard anzeigen</Label>
                 </div>
                 <Switch
                   checked={showInLeaderboard}
@@ -609,12 +604,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
 
             {/* Benachrichtigungen Section */}
             <div className="space-y-3">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Benachrichtigungen</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Für Warteliste, Einladungen und Kurs-Erinnerungen
-                </p>
-              </div>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Benachrichtigungen</h3>
 
               {/* Warning if both disabled */}
               {bothNotificationsDisabled && (
