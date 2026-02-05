@@ -47,6 +47,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
   const [phoneCountryCode, setPhoneCountryCode] = useState("+49")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [showPhoneInput, setShowPhoneInput] = useState(false)
+  const [showInLeaderboard, setShowInLeaderboard] = useState(true)
   const [savingNotifications, setSavingNotifications] = useState(false)
 
   useEffect(() => {
