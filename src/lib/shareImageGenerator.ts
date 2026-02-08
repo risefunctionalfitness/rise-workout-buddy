@@ -256,36 +256,46 @@ function drawMainContent(
   const isStory = height > width;
   const centerX = width / 2;
   
-  // Calculate vertical positions - adjusted for new layout
-  const iconY = isStory ? height * 0.30 : height * 0.34;
-  const labelY = isStory ? height * 0.44 : height * 0.50;
-  const valueY = isStory ? height * 0.52 : height * 0.60;
-  const chartY = isStory ? height * 0.66 : height * 0.74;
+  // Calculate vertical positions - stacked layout like reference
+  const iconY = isStory ? height * 0.28 : height * 0.30;
+  const labelY = isStory ? height * 0.40 : height * 0.44;
+  const valueY = isStory ? height * 0.48 : height * 0.54;
+  const sublabelY = isStory ? height * 0.54 : height * 0.60;
+  const chartY = isStory ? height * 0.68 : height * 0.74;
 
-  // Draw main icon (large, centered) - bigger flame
-  drawMainIcon(ctx, centerX, iconY, options.type, width * 0.22);
+  // Draw main icon (Lucide-style, large)
+  drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
 
-  // Draw label (red/primary color, bold) - e.g. "Streak"
-  ctx.fillStyle = "#dc2626"; // red-600
+  // Draw label (red, bold) - e.g. "Streak"
+  ctx.fillStyle = "#dc2626";
   ctx.font = `700 ${width * 0.055}px system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(options.label, centerX, labelY);
 
-  // Draw main value (much larger, white, bold) - e.g. "7 Wochen"
+  // Draw main value (larger, white, bold) - e.g. "7 Wochen"
   ctx.fillStyle = "white";
-  ctx.font = `700 ${width * 0.10}px system-ui, -apple-system, sans-serif`;
+  ctx.font = `700 ${width * 0.095}px system-ui, -apple-system, sans-serif`;
   ctx.fillText(options.value, centerX, valueY);
 
-  // Draw progress chart with arrow
+  // Draw sublabel - e.g. "Längster Streak: 11 Wochen"
   if (options.type === "streak" && stats) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+    ctx.fillText(`Längster Streak: ${stats.longestStreak} Wochen`, centerX, sublabelY);
+    
+    // Draw chart with arrow
     drawStreakChart(ctx, centerX, chartY, width, stats.currentStreak, stats.longestStreak);
   } else if (options.type === "total" && stats) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+    ctx.fillText(`Kurse: ${stats.totalBookings} | Open Gym: ${stats.totalTrainings}`, centerX, sublabelY);
+    
     drawTotalChart(ctx, centerX, chartY, width, stats.totalBookings, stats.totalTrainings);
   } else if (options.sublabel) {
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
     ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(options.sublabel, centerX, chartY);
+    ctx.fillText(options.sublabel, centerX, sublabelY);
   }
 }
 
@@ -298,76 +308,55 @@ function drawMainIcon(
 ): void {
   ctx.save();
   
+  // Scale factor for 24px base icon
+  const scale = size / 24;
+  ctx.translate(x - size / 2, y - size / 2);
+  ctx.scale(scale, scale);
+  
+  ctx.fillStyle = "white";
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  
   if (type === "streak") {
-    // Beautiful multi-layered flame like in reference image
-    const scale = size / 120;
-    ctx.translate(x, y);
-    ctx.scale(scale, scale);
-    
-    // Main outer flame (white)
-    ctx.fillStyle = "white";
+    // Lucide Flame icon path - standard flame shape
     ctx.beginPath();
-    // Large flame shape with multiple peaks
-    ctx.moveTo(0, 60);
-    // Left side
-    ctx.bezierCurveTo(-35, 45, -45, 10, -30, -35);
-    ctx.bezierCurveTo(-25, -50, -15, -55, -8, -50);
-    // Left peak dip
-    ctx.bezierCurveTo(-5, -40, 0, -30, 0, -25);
-    // Right peak
-    ctx.bezierCurveTo(0, -30, 5, -40, 8, -50);
-    ctx.bezierCurveTo(15, -55, 25, -50, 30, -35);
-    // Right side
-    ctx.bezierCurveTo(45, 10, 35, 45, 0, 60);
+    // Main flame body
+    ctx.moveTo(12, 2);
+    ctx.bezierCurveTo(12, 2, 8.5, 6, 8.5, 10);
+    ctx.bezierCurveTo(8.5, 12, 9.5, 14, 12, 14);
+    ctx.bezierCurveTo(14.5, 14, 15.5, 12, 15.5, 10);
+    ctx.bezierCurveTo(15.5, 6, 12, 2, 12, 2);
     ctx.closePath();
     ctx.fill();
     
-    // Inner cutout (dark, creates depth)
-    ctx.fillStyle = "rgba(20, 10, 12, 0.9)";
+    // Outer flame
     ctx.beginPath();
-    ctx.moveTo(0, 55);
-    ctx.bezierCurveTo(-18, 40, -22, 15, -12, -5);
-    ctx.bezierCurveTo(-8, -12, -3, -10, 0, -5);
-    ctx.bezierCurveTo(3, -10, 8, -12, 12, -5);
-    ctx.bezierCurveTo(22, 15, 18, 40, 0, 55);
+    ctx.moveTo(12, 22);
+    ctx.bezierCurveTo(17, 22, 20, 18, 20, 14);
+    ctx.bezierCurveTo(20, 10, 18, 6, 14, 2);
+    ctx.bezierCurveTo(14, 6, 12, 8, 12, 10);
+    ctx.bezierCurveTo(12, 8, 10, 6, 10, 2);
+    ctx.bezierCurveTo(6, 6, 4, 10, 4, 14);
+    ctx.bezierCurveTo(4, 18, 7, 22, 12, 22);
     ctx.closePath();
     ctx.fill();
     
   } else if (type === "training" || type === "total") {
     // Dumbbell icon
-    ctx.translate(x - size / 2, y - size / 2);
-    ctx.scale(size / 24, size / 24);
-    
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = "round";
-    
     ctx.beginPath();
     ctx.moveTo(6, 12);
     ctx.lineTo(18, 12);
-    ctx.moveTo(4, 8);
-    ctx.lineTo(4, 16);
-    ctx.moveTo(7, 8);
-    ctx.lineTo(7, 16);
-    ctx.moveTo(4, 8);
-    ctx.lineTo(7, 8);
-    ctx.moveTo(4, 16);
-    ctx.lineTo(7, 16);
-    ctx.moveTo(17, 8);
-    ctx.lineTo(17, 16);
-    ctx.moveTo(20, 8);
-    ctx.lineTo(20, 16);
-    ctx.moveTo(17, 8);
-    ctx.lineTo(20, 8);
-    ctx.moveTo(17, 16);
-    ctx.lineTo(20, 16);
     ctx.stroke();
-  } else {
-    // Trophy icon (default)
-    ctx.translate(x - size / 2, y - size / 2);
-    ctx.scale(size / 24, size / 24);
     
-    ctx.fillStyle = "white";
+    // Left weight
+    ctx.strokeRect(3, 8, 4, 8);
+    // Right weight  
+    ctx.strokeRect(17, 8, 4, 8);
+    
+  } else {
+    // Trophy icon
     ctx.beginPath();
     ctx.moveTo(6, 3);
     ctx.lineTo(18, 3);
@@ -378,23 +367,11 @@ function drawMainIcon(
     ctx.closePath();
     ctx.fill();
     
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(6, 5);
-    ctx.bezierCurveTo(3, 5, 3, 9, 6, 9);
-    ctx.moveTo(18, 5);
-    ctx.bezierCurveTo(21, 5, 21, 9, 18, 9);
-    ctx.stroke();
-    
     ctx.beginPath();
     ctx.moveTo(12, 16);
-    ctx.lineTo(12, 19);
-    ctx.moveTo(8, 19);
-    ctx.lineTo(16, 19);
-    ctx.lineTo(16, 21);
-    ctx.lineTo(8, 21);
-    ctx.lineTo(8, 19);
+    ctx.lineTo(12, 20);
+    ctx.moveTo(8, 20);
+    ctx.lineTo(16, 20);
     ctx.stroke();
   }
   
@@ -410,43 +387,43 @@ function drawStreakChart(
   longest: number
 ): void {
   const chartWidth = width * 0.75;
-  const chartHeight = width * 0.18;
+  const chartHeight = width * 0.16;
   const startX = centerX - chartWidth / 2;
   const barCount = 10;
-  const barWidth = (chartWidth / barCount) * 0.75;
-  const barGap = (chartWidth / barCount) * 0.25;
+  const barWidth = (chartWidth / barCount) * 0.80;
+  const barGap = (chartWidth / barCount) * 0.20;
 
   // Draw bars with gradient heights (ascending pattern)
   for (let i = 0; i < barCount; i++) {
     const progress = (i + 1) / barCount;
-    const barHeight = chartHeight * (0.25 + progress * 0.75);
+    const barHeight = chartHeight * (0.30 + progress * 0.70);
     const x = startX + i * (barWidth + barGap);
     const barY = y + chartHeight - barHeight;
 
     // Red gradient for each bar
     const gradient = ctx.createLinearGradient(x, barY + barHeight, x, barY);
-    gradient.addColorStop(0, "#5c1515"); // darker red at bottom
-    gradient.addColorStop(0.5, "#8b1e1e"); // medium red
-    gradient.addColorStop(1, "#b91c1c"); // brighter red at top
+    gradient.addColorStop(0, "#6b1c1c");
+    gradient.addColorStop(0.5, "#991b1b");
+    gradient.addColorStop(1, "#dc2626");
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.roundRect(x, barY, barWidth, barHeight, 4);
+    ctx.roundRect(x, barY, barWidth, barHeight, 3);
     ctx.fill();
   }
 
-  // Draw trend line on top of bars with arrow
+  // Draw trend line with arrow on top
   ctx.strokeStyle = "white";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
   
   for (let i = 0; i < barCount; i++) {
     const progress = (i + 1) / barCount;
-    const barHeight = chartHeight * (0.25 + progress * 0.75);
+    const barHeight = chartHeight * (0.30 + progress * 0.70);
     const x = startX + i * (barWidth + barGap) + barWidth / 2;
-    const lineY = y + chartHeight - barHeight - 8;
+    const lineY = y + chartHeight - barHeight - 6;
     
     if (i === 0) {
       ctx.moveTo(x, lineY);
@@ -455,30 +432,29 @@ function drawStreakChart(
     }
   }
   
-  // Extend line with upward arrow
-  const lastBarX = startX + (barCount - 1) * (barWidth + barGap) + barWidth / 2;
-  const lastBarHeight = chartHeight * (0.25 + 1 * 0.75);
-  const lastLineY = y + chartHeight - lastBarHeight - 8;
-  
   // Arrow pointing up-right
-  const arrowEndX = lastBarX + 35;
-  const arrowEndY = lastLineY - 25;
+  const lastBarX = startX + (barCount - 1) * (barWidth + barGap) + barWidth / 2;
+  const lastBarHeight = chartHeight * (0.30 + 1 * 0.70);
+  const lastLineY = y + chartHeight - lastBarHeight - 6;
+  
+  const arrowEndX = lastBarX + 30;
+  const arrowEndY = lastLineY - 20;
   ctx.lineTo(arrowEndX, arrowEndY);
   ctx.stroke();
   
-  // Draw arrow head
+  // Arrow head
   ctx.beginPath();
   ctx.moveTo(arrowEndX, arrowEndY);
-  ctx.lineTo(arrowEndX - 12, arrowEndY + 5);
-  ctx.lineTo(arrowEndX - 5, arrowEndY + 12);
+  ctx.lineTo(arrowEndX - 10, arrowEndY + 4);
+  ctx.lineTo(arrowEndX - 4, arrowEndY + 10);
   ctx.closePath();
   ctx.fillStyle = "white";
   ctx.fill();
 
-  // Labels below chart - white text
-  const labelY = y + chartHeight + 45;
-  ctx.font = `400 ${width * 0.026}px system-ui, -apple-system, sans-serif`;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+  // Labels below chart
+  const labelY = y + chartHeight + 35;
+  ctx.font = `400 ${width * 0.024}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
   ctx.textAlign = "left";
   ctx.fillText(`Aktuell: ${current} Wochen`, startX, labelY);
   
