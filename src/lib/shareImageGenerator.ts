@@ -101,66 +101,109 @@ async function drawBackground(
 }
 
 function drawDecorativeElements(ctx: CanvasRenderingContext2D, width: number, height: number): void {
-  ctx.globalAlpha = 0.08;
-  
-  // Draw subtle dumbbell shapes in background
-  const dumbbellPositions = [
-    { x: width * 0.85, y: height * 0.15, size: 80, rotation: Math.PI / 4 },
-    { x: width * 0.1, y: height * 0.75, size: 60, rotation: -Math.PI / 6 },
-    { x: width * 0.9, y: height * 0.6, size: 50, rotation: Math.PI / 3 },
-  ];
-
+  ctx.globalAlpha = 0.06;
   ctx.strokeStyle = "white";
   ctx.lineWidth = 3;
 
-  dumbbellPositions.forEach(({ x, y, size, rotation }) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rotation);
-    
-    // Dumbbell shape
-    ctx.beginPath();
-    ctx.moveTo(-size/2, 0);
-    ctx.lineTo(size/2, 0);
-    ctx.stroke();
-    
-    // Left weight
-    ctx.beginPath();
-    ctx.roundRect(-size/2 - 15, -20, 15, 40, 3);
-    ctx.stroke();
-    
-    // Right weight
-    ctx.beginPath();
-    ctx.roundRect(size/2, -20, 15, 40, 3);
-    ctx.stroke();
-    
-    ctx.restore();
-  });
+  // Large dumbbell top-right
+  drawDumbbell(ctx, width * 0.82, height * 0.12, 120, Math.PI / 5);
+  
+  // Large dumbbell bottom-left
+  drawDumbbell(ctx, width * 0.15, height * 0.78, 100, -Math.PI / 4);
+  
+  // Medium dumbbell right side
+  drawDumbbell(ctx, width * 0.92, height * 0.55, 70, Math.PI / 2.5);
+  
+  // Small dumbbell left
+  drawDumbbell(ctx, width * 0.08, height * 0.35, 50, -Math.PI / 6);
+  
+  // Medium dumbbell bottom-right
+  drawDumbbell(ctx, width * 0.75, height * 0.85, 80, Math.PI / 3);
 
-  // Draw subtle circles
-  const circlePositions = [
-    { x: width * 0.15, y: height * 0.2, radius: 40 },
-    { x: width * 0.8, y: height * 0.4, radius: 30 },
-  ];
-
-  circlePositions.forEach(({ x, y, radius }) => {
+  // Concentric circles left side
+  ctx.globalAlpha = 0.05;
+  const circleCenter1 = { x: width * 0.12, y: height * 0.25 };
+  [60, 45, 30].forEach(radius => {
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.arc(circleCenter1.x, circleCenter1.y, radius, 0, Math.PI * 2);
     ctx.stroke();
   });
 
-  // Draw subtle curved lines
+  // Concentric circles right side
+  const circleCenter2 = { x: width * 0.88, y: height * 0.42 };
+  [50, 35, 20].forEach(radius => {
+    ctx.beginPath();
+    ctx.arc(circleCenter2.x, circleCenter2.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Single circles scattered
+  ctx.globalAlpha = 0.04;
+  [
+    { x: width * 0.25, y: height * 0.18, r: 25 },
+    { x: width * 0.7, y: height * 0.72, r: 35 },
+    { x: width * 0.05, y: height * 0.6, r: 20 },
+  ].forEach(({ x, y, r }) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Curved lines
+  ctx.globalAlpha = 0.05;
+  ctx.lineWidth = 2;
+  
+  // Top curved line
   ctx.beginPath();
-  ctx.moveTo(width * 0.7, height * 0.1);
-  ctx.quadraticCurveTo(width * 0.9, height * 0.2, width * 0.85, height * 0.35);
+  ctx.moveTo(width * 0.2, height * 0.08);
+  ctx.quadraticCurveTo(width * 0.35, height * 0.15, width * 0.3, height * 0.22);
   ctx.stroke();
 
+  // Right curved line
   ctx.beginPath();
-  ctx.moveTo(width * 0.1, height * 0.5);
-  ctx.quadraticCurveTo(width * 0.05, height * 0.6, width * 0.15, height * 0.7);
+  ctx.moveTo(width * 0.75, height * 0.18);
+  ctx.quadraticCurveTo(width * 0.95, height * 0.25, width * 0.88, height * 0.38);
+  ctx.stroke();
+
+  // Left curved line
+  ctx.beginPath();
+  ctx.moveTo(width * 0.08, height * 0.48);
+  ctx.quadraticCurveTo(width * 0.02, height * 0.58, width * 0.12, height * 0.68);
+  ctx.stroke();
+
+  // Bottom curved line
+  ctx.beginPath();
+  ctx.moveTo(width * 0.55, height * 0.88);
+  ctx.quadraticCurveTo(width * 0.7, height * 0.92, width * 0.85, height * 0.85);
   ctx.stroke();
 
   ctx.globalAlpha = 1;
+}
+
+function drawDumbbell(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, rotation: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  
+  // Bar
+  ctx.beginPath();
+  ctx.moveTo(-size/2, 0);
+  ctx.lineTo(size/2, 0);
+  ctx.stroke();
+  
+  // Left weight plates
+  const plateWidth = size * 0.15;
+  const plateHeight = size * 0.5;
+  ctx.beginPath();
+  ctx.roundRect(-size/2 - plateWidth, -plateHeight/2, plateWidth, plateHeight, 3);
+  ctx.stroke();
+  
+  // Right weight plates
+  ctx.beginPath();
+  ctx.roundRect(size/2, -plateHeight/2, plateWidth, plateHeight, 3);
+  ctx.stroke();
+  
+  ctx.restore();
 }
 
 async function drawLogo(ctx: CanvasRenderingContext2D, width: number): Promise<void> {
@@ -246,24 +289,20 @@ function drawMainIcon(
   ctx.fillStyle = "white";
   
   if (type === "streak") {
-    // Flame icon - larger, more detailed
+    // Double-peak flame silhouette (pure white, no inner color)
     ctx.beginPath();
-    ctx.moveTo(12, 1);
-    ctx.bezierCurveTo(12, 1, 5, 8, 5, 14);
-    ctx.bezierCurveTo(5, 18.5, 8, 22, 12, 22);
-    ctx.bezierCurveTo(16, 22, 19, 18.5, 19, 14);
-    ctx.bezierCurveTo(19, 8, 12, 1, 12, 1);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Inner flame detail
-    ctx.fillStyle = "#dc2626";
-    ctx.beginPath();
-    ctx.moveTo(12, 8);
-    ctx.bezierCurveTo(12, 8, 9, 12, 9, 15);
-    ctx.bezierCurveTo(9, 17.5, 10.5, 19, 12, 19);
-    ctx.bezierCurveTo(13.5, 19, 15, 17.5, 15, 15);
-    ctx.bezierCurveTo(15, 12, 12, 8, 12, 8);
+    // Left flame peak
+    ctx.moveTo(8, 22);
+    ctx.bezierCurveTo(4, 18, 3, 12, 6, 6);
+    ctx.bezierCurveTo(7, 4, 9, 2, 10, 1);
+    ctx.bezierCurveTo(10, 4, 11, 7, 12, 9);
+    // Valley between peaks
+    ctx.bezierCurveTo(12.5, 7, 13, 5, 14, 3);
+    // Right flame peak
+    ctx.bezierCurveTo(15, 1.5, 16, 1, 17, 2);
+    ctx.bezierCurveTo(19, 4, 21, 8, 20, 14);
+    ctx.bezierCurveTo(19, 18, 16, 22, 12, 22);
+    ctx.bezierCurveTo(10, 22, 9, 22, 8, 22);
     ctx.closePath();
     ctx.fill();
   } else if (type === "training" || type === "total") {
@@ -396,11 +435,11 @@ function drawStreakChart(
   ctx.fillStyle = "white";
   ctx.fill();
 
-  // Labels below chart
+  // Labels below chart - in red
   const labelY = y + chartHeight + 40;
   ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "left";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.fillStyle = "#dc2626";
   ctx.fillText(`Aktuell: ${current} Wochen`, startX, labelY);
   
   ctx.textAlign = "right";
@@ -460,7 +499,7 @@ function drawSparkle(ctx: CanvasRenderingContext2D, width: number, height: numbe
   const y = height - 60;
   const size = 20;
 
-  ctx.fillStyle = "#dc2626";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
   
   // Draw 4-pointed star
   ctx.beginPath();
