@@ -7,6 +7,7 @@ import { WorkoutGenerator } from "@/components/WorkoutGenerator"
 import { CourseBooking } from "@/components/CourseBooking"
 import { NewsSection } from "@/components/NewsSection"
 import ChallengeDetail from "@/components/ChallengeDetail"
+import { HighlightsDialog } from "@/components/HighlightsDialog"
 import { FirstLoginDialog } from "@/components/FirstLoginDialog"
 import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog"
 import { PhoneNumberDialog } from "@/components/PhoneNumberDialog"
@@ -76,6 +77,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [showProfile, setShowProfile] = useState(false)
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const [selectedChallenge, setSelectedChallenge] = useState<{challenge: any, progress: any} | null>(null)
+  const [showHighlightsDialog, setShowHighlightsDialog] = useState(false)
   const [currentChallenge, setCurrentChallenge] = useState<any>(null)
   const [wodStep, setWodStep] = useState(1)
   const [showFirstLoginDialog, setShowFirstLoginDialog] = useState(false)
@@ -749,39 +751,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
             <div className="flex-1 min-h-0">
               <DashboardTileGrid
                 userId={user.id}
-                currentChallenge={currentChallenge}
                 hasUnreadNews={hasUnreadNews}
-                onChallengeClick={async () => {
-                  if (currentChallenge && user?.id) {
-                    let { data: progress, error } = await supabase
-                      .from("user_challenge_progress")
-                      .select("*")
-                      .eq("user_id", user.id)
-                      .eq("challenge_id", currentChallenge.id)
-                      .single()
-
-                    if (error && error.code === 'PGRST116') {
-                      const { data: newProgress, error: createError } = await supabase
-                        .from("user_challenge_progress")
-                        .insert({
-                          user_id: user.id,
-                          challenge_id: currentChallenge.id,
-                          completed_checkpoints: 0,
-                          is_completed: false
-                        })
-                        .select()
-                        .single()
-
-                      if (createError) {
-                        console.error("Error creating progress:", createError)
-                        return
-                      }
-                      progress = newProgress
-                    }
-
-                    setSelectedChallenge({ challenge: currentChallenge, progress })
-                  }
-                }}
+                onHighlightsClick={() => setShowHighlightsDialog(true)}
                 onNewsClick={() => {
                   markNewsAsRead()
                   navigate('/news')
@@ -875,6 +846,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
           }}
         />
       )}
+
+      <HighlightsDialog
+        userId={user.id}
+        open={showHighlightsDialog}
+        onOpenChange={setShowHighlightsDialog}
+        currentChallenge={currentChallenge}
+        onChallengeClick={async () => {
+          if (currentChallenge && user?.id) {
+            let { data: progress, error } = await supabase
+              .from("user_challenge_progress")
+              .select("*")
+              .eq("user_id", user.id)
+              .eq("challenge_id", currentChallenge.id)
+              .single()
+
+            if (error && error.code === 'PGRST116') {
+              const { data: newProgress, error: createError } = await supabase
+                .from("user_challenge_progress")
+                .insert({
+                  user_id: user.id,
+                  challenge_id: currentChallenge.id,
+                  completed_checkpoints: 0,
+                  is_completed: false
+                })
+                .select()
+                .single()
+
+              if (createError) {
+                console.error("Error creating progress:", createError)
+                return
+              }
+              progress = newProgress
+            }
+
+            setSelectedChallenge({ challenge: currentChallenge, progress })
+          }
+        }}
+      />
 
       <TermsAcceptanceDialog 
         open={showTermsDialog}
