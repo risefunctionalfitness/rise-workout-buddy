@@ -291,10 +291,11 @@ function getAchievementLabel(type: string, value: number): string {
   return `${type} ${value}`;
 }
 
+// Returns icon type name for AchievementIcon component
 function getAchievementIcon(type: string): string {
-  if (type === "streak") return "🔥";
-  if (type === "training") return "💪";
-  return "🏆";
+  if (type === "streak") return "streak";
+  if (type === "training") return "training";
+  return "total";
 }
 
 function getAchievementDescription(type: string, value: number): string {

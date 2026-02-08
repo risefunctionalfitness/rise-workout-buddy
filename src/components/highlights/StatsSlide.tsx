@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Share2, Calendar, Dumbbell, Clock } from "lucide-react";
+import { Share2, Calendar, Dumbbell, Clock, BarChart3 } from "lucide-react";
 import { UserStats } from "@/hooks/useUserAchievements";
 import { ShareDialog } from "@/components/highlights/ShareDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { YearlyTrainingHeatmap } from "@/components/YearlyTrainingHeatmap";
+import { AchievementIcon } from "@/components/highlights/AchievementIcon";
 
 interface StatsSlideProps {
   userId: string;
@@ -31,7 +33,7 @@ export const StatsSlide = ({ userId, stats, isLoading }: StatsSlideProps) => {
   if (!stats) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="text-6xl mb-4">📊</div>
+        <BarChart3 className="h-16 w-16 text-muted-foreground/50 mb-4" />
         <h3 className="text-lg font-semibold mb-2">Keine Statistiken</h3>
         <p className="text-muted-foreground text-sm">
           Trainiere um deine ersten Statistiken zu sehen!
@@ -99,17 +101,30 @@ export const StatsSlide = ({ userId, stats, isLoading }: StatsSlideProps) => {
         </CardContent>
       </Card>
 
-      {/* Share button */}
-      <Button onClick={handleShare} className="w-full" size="lg">
-        <Share2 className="h-4 w-4 mr-2" />
-        Statistik teilen
-      </Button>
+      {/* Share button - subtle, right aligned */}
+      <div className="flex justify-end">
+        <Button onClick={handleShare} variant="ghost" size="sm" className="text-muted-foreground">
+          <Share2 className="h-4 w-4 mr-1.5" />
+          Teilen
+        </Button>
+      </div>
 
       {/* Detailed Stats */}
-      <div className="pt-2">
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-muted-foreground">
           Detaillierte Statistik
         </h3>
+
+        {/* Training Log - 12 Months Chart */}
+        <Card>
+          <CardContent className="p-4">
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              Trainingslog (12 Monate)
+            </h4>
+            <YearlyTrainingHeatmap userId={userId} />
+          </CardContent>
+        </Card>
 
         {/* Day distribution */}
         <Card>
@@ -151,7 +166,7 @@ export const StatsSlide = ({ userId, stats, isLoading }: StatsSlideProps) => {
         onOpenChange={setShareDialogOpen}
         shareData={{
           type: "stats",
-          icon: "📊",
+          icon: "stats",
           value: stats.totalSessions.toString(),
           label: "TRAININGS",
           sublabel: `${stats.totalBookings} Kurse • ${stats.totalTrainings} Open Gym`,

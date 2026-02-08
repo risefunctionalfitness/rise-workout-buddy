@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Award, Target, Trophy, Check, Star } from "lucide-react";
+import { Award, Target, Trophy, Check } from "lucide-react";
 import { NextMilestone } from "@/hooks/useUserAchievements";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { BadgeImage } from "@/components/BadgeIconMapper";
+import { AchievementIcon } from "@/components/highlights/AchievementIcon";
 
 interface MilestonesSlideProps {
   userId: string;
@@ -164,8 +164,10 @@ export const MilestonesSlide = ({
                 <Card key={idx}>
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{milestone.icon}</div>
-                      <div className="flex-1">
+                      <div className="flex-shrink-0">
+                        <AchievementIcon type={milestone.type} size={28} className="text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium">{milestone.label}</span>
                           <span className="text-xs text-muted-foreground">

@@ -5,6 +5,7 @@ import { Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Achievement, UserStats } from "@/hooks/useUserAchievements";
 import { ShareDialog } from "@/components/highlights/ShareDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AchievementIcon } from "@/components/highlights/AchievementIcon";
 
 interface AchievementsSlideProps {
   userId: string;
@@ -81,7 +82,9 @@ export const AchievementsSlide = ({
 
             {/* Main content */}
             <div className="text-center">
-              <div className="text-5xl mb-3">{currentCard.icon}</div>
+              <div className="mb-3 flex justify-center">
+                <AchievementIcon type={currentCard.type} size={56} className="text-white" />
+              </div>
               <div className="text-4xl font-bold mb-2">{currentCard.value}</div>
               <div className="text-lg font-medium text-gray-200">{currentCard.label}</div>
               {currentCard.sublabel && (
@@ -132,11 +135,13 @@ export const AchievementsSlide = ({
         </div>
       )}
 
-      {/* Share button */}
-      <Button onClick={handleShare} className="w-full" size="lg">
-        <Share2 className="h-4 w-4 mr-2" />
-        Teilen
-      </Button>
+      {/* Share button - subtle, right aligned */}
+      <div className="flex justify-end">
+        <Button onClick={handleShare} variant="ghost" size="sm" className="text-muted-foreground">
+          <Share2 className="h-4 w-4 mr-1.5" />
+          Teilen
+        </Button>
+      </div>
 
       {/* Share Dialog */}
       <ShareDialog
@@ -166,11 +171,20 @@ interface ShareableCard {
 function generateShareableCards(achievements: Achievement[], stats: UserStats | null): ShareableCard[] {
   const cards: ShareableCard[] = [];
 
-  // Add streak card if user has a streak
+  // Group achievements by type and get only the highest value per type
+  const highestByType = new Map<string, Achievement>();
+  achievements.forEach((achievement) => {
+    const existing = highestByType.get(achievement.type);
+    if (!existing || achievement.value > existing.value) {
+      highestByType.set(achievement.type, achievement);
+    }
+  });
+
+  // Add current streak card (live data, not milestone)
   if (stats?.currentStreak && stats.currentStreak >= 1) {
     cards.push({
       type: "streak",
-      icon: "🔥",
+      icon: "streak",
       value: stats.currentStreak.toString(),
       label: "WOCHEN STREAK",
       sublabel: stats.longestStreak > stats.currentStreak 
@@ -179,13 +193,16 @@ function generateShareableCards(achievements: Achievement[], stats: UserStats | 
     });
   }
 
-  // Add achievement cards
-  achievements.forEach((achievement) => {
+  // Add highest achievement per category (skip streak if already added as live)
+  highestByType.forEach((achievement, type) => {
+    if (type === "streak" && stats?.currentStreak && stats.currentStreak >= 1) {
+      return; // Skip - already showing current streak
+    }
     cards.push({
       type: achievement.type,
-      icon: achievement.icon,
+      icon: achievement.type, // Use type as icon key
       value: achievement.value.toString(),
-      label: achievement.type === "streak" ? "WOCHEN STREAK" : "TRAININGS",
+      label: achievement.type === "streak" ? "WOCHEN STREAK" : "TRAININGS MEILENSTEIN",
       sublabel: achievement.description,
       achievement,
     });
@@ -195,19 +212,12 @@ function generateShareableCards(achievements: Achievement[], stats: UserStats | 
   if (stats?.totalSessions && stats.totalSessions > 0) {
     cards.push({
       type: "total",
-      icon: "💪",
+      icon: "total",
       value: stats.totalSessions.toString(),
       label: "TRAININGS GESAMT",
       sublabel: `${stats.totalBookings} Kurse + ${stats.totalTrainings} Open Gym`,
     });
   }
 
-  // Remove duplicates (keep unique by type+value)
-  const seen = new Set<string>();
-  return cards.filter((card) => {
-    const key = `${card.type}-${card.value}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return cards;
 }
