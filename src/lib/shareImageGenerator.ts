@@ -32,22 +32,20 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<HT
   // Draw background
   await drawBackground(ctx, width, height, background, customBackgroundUrl);
 
-  // Draw dark overlay for readability
-  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-  ctx.fillRect(0, 0, width, height);
+  // Draw decorative elements
+  drawDecorativeElements(ctx, width, height);
 
-  // Draw Rise Logo (top left)
-  await drawLogo(ctx);
+  // Draw Rise Logo (top center)
+  await drawLogo(ctx, width);
 
-  // Draw Strava-style stacked stats
-  if (stats) {
-    drawStravaStyleStats(ctx, width, height, options, stats);
-  } else {
-    drawSingleStat(ctx, width, height, options);
-  }
+  // Draw main content based on type
+  drawMainContent(ctx, width, height, options, stats);
 
-  // Draw Instagram handle (bottom right)
+  // Draw Instagram handle (bottom center)
   drawHandle(ctx, width, height);
+
+  // Draw sparkle decoration (bottom right)
+  drawSparkle(ctx, width, height);
 
   return canvas;
 };
@@ -64,7 +62,6 @@ async function drawBackground(
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        // Cover the canvas while maintaining aspect ratio
         const imgRatio = img.width / img.height;
         const canvasRatio = width / height;
         
@@ -83,6 +80,10 @@ async function drawBackground(
         }
         
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+        
+        // Add dark overlay for readability
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(0, 0, width, height);
         resolve();
       };
       img.onerror = reject;
@@ -90,242 +91,387 @@ async function drawBackground(
     });
   }
 
-  // Preset backgrounds
-  switch (background) {
-    case "gradient":
-      const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, "#7f1d1d"); // red-900
-      gradient.addColorStop(1, "#111827"); // gray-900
-      ctx.fillStyle = gradient;
-      break;
-    case "gym":
-      ctx.fillStyle = "#1f2937"; // gray-800
-      break;
-    case "dark":
-    default:
-      ctx.fillStyle = "#0f0f0f"; // near black
-      break;
-  }
+  // Default: Dark red gradient (Rise brand)
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "#1a0a0a"); // Very dark red/black
+  gradient.addColorStop(0.5, "#2d1515"); // Dark maroon
+  gradient.addColorStop(1, "#1a0808"); // Dark red
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 }
 
-async function drawLogo(ctx: CanvasRenderingContext2D): Promise<void> {
+function drawDecorativeElements(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  ctx.globalAlpha = 0.08;
+  
+  // Draw subtle dumbbell shapes in background
+  const dumbbellPositions = [
+    { x: width * 0.85, y: height * 0.15, size: 80, rotation: Math.PI / 4 },
+    { x: width * 0.1, y: height * 0.75, size: 60, rotation: -Math.PI / 6 },
+    { x: width * 0.9, y: height * 0.6, size: 50, rotation: Math.PI / 3 },
+  ];
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 3;
+
+  dumbbellPositions.forEach(({ x, y, size, rotation }) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    // Dumbbell shape
+    ctx.beginPath();
+    ctx.moveTo(-size/2, 0);
+    ctx.lineTo(size/2, 0);
+    ctx.stroke();
+    
+    // Left weight
+    ctx.beginPath();
+    ctx.roundRect(-size/2 - 15, -20, 15, 40, 3);
+    ctx.stroke();
+    
+    // Right weight
+    ctx.beginPath();
+    ctx.roundRect(size/2, -20, 15, 40, 3);
+    ctx.stroke();
+    
+    ctx.restore();
+  });
+
+  // Draw subtle circles
+  const circlePositions = [
+    { x: width * 0.15, y: height * 0.2, radius: 40 },
+    { x: width * 0.8, y: height * 0.4, radius: 30 },
+  ];
+
+  circlePositions.forEach(({ x, y, radius }) => {
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Draw subtle curved lines
+  ctx.beginPath();
+  ctx.moveTo(width * 0.7, height * 0.1);
+  ctx.quadraticCurveTo(width * 0.9, height * 0.2, width * 0.85, height * 0.35);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(width * 0.1, height * 0.5);
+  ctx.quadraticCurveTo(width * 0.05, height * 0.6, width * 0.15, height * 0.7);
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
+}
+
+async function drawLogo(ctx: CanvasRenderingContext2D, width: number): Promise<void> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const logoHeight = 50;
+      const logoHeight = 70;
       const logoWidth = (img.width / img.height) * logoHeight;
-      ctx.globalAlpha = 0.95;
-      ctx.drawImage(img, 60, 60, logoWidth, logoHeight);
-      ctx.globalAlpha = 1;
+      const x = (width - logoWidth) / 2;
+      ctx.drawImage(img, x, 80, logoWidth, logoHeight);
       resolve();
     };
     img.onerror = () => {
-      // If logo fails to load, draw text fallback
-      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-      ctx.font = "bold 32px system-ui, -apple-system, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText("RISE", 60, 95);
+      // Fallback: Draw text
+      ctx.fillStyle = "white";
+      ctx.font = "bold 48px system-ui, -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("RISE", width / 2, 120);
+      
+      ctx.font = "300 20px system-ui, -apple-system, sans-serif";
+      ctx.fillText("Functional Fitness", width / 2, 150);
       resolve();
     };
     img.src = "/logos/rise_dark.png";
   });
 }
 
-// Strava-style: vertical stacked stats with small labels above large values
-function drawStravaStyleStats(
+function drawMainContent(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
   options: ShareImageOptions,
-  stats: UserStats
-): void {
-  const isStory = height > width;
-  const startY = isStory ? height * 0.28 : height * 0.25;
-  const spacing = isStory ? height * 0.12 : height * 0.15;
-  const leftMargin = 80;
-
-  // Stats to display
-  const statsToShow = [
-    { label: "Kursbuchungen", value: stats.totalBookings.toString() },
-    { label: "Open Gym", value: stats.totalTrainings.toString() },
-    { label: "Trainings gesamt", value: stats.totalSessions.toString() },
-  ];
-
-  if (stats.currentStreak > 0) {
-    statsToShow.push({ label: "Wochen Streak", value: `${stats.currentStreak}w` });
-  }
-
-  statsToShow.forEach((stat, index) => {
-    const y = startY + (index * spacing);
-    
-    // Small label above
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-    ctx.textAlign = "left";
-    ctx.fillText(stat.label.toUpperCase(), leftMargin, y);
-    
-    // Large value below
-    ctx.fillStyle = "white";
-    ctx.font = `700 ${width * 0.09}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(stat.value, leftMargin, y + (width * 0.09));
-  });
-
-  // Draw flame icon at the bottom (if streak)
-  if (stats.currentStreak > 0) {
-    drawFlameIcon(ctx, width, height, isStory);
-  }
-}
-
-// Single stat view (for achievement cards)
-function drawSingleStat(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  options: ShareImageOptions
+  stats?: UserStats | null
 ): void {
   const isStory = height > width;
   const centerX = width / 2;
-  const centerY = height * (isStory ? 0.42 : 0.45);
+  
+  // Calculate vertical positions
+  const iconY = isStory ? height * 0.28 : height * 0.32;
+  const labelY = isStory ? height * 0.42 : height * 0.50;
+  const valueY = isStory ? height * 0.50 : height * 0.60;
+  const chartY = isStory ? height * 0.62 : height * 0.72;
 
-  // Draw icon
-  if (options.type === "streak") {
-    drawFlameIconCentered(ctx, centerX, centerY - height * 0.12, width * 0.12);
-  } else if (options.type === "training" || options.type === "total") {
-    drawDumbbellIcon(ctx, centerX, centerY - height * 0.12, width * 0.12);
-  }
+  // Draw main icon (large, centered)
+  drawMainIcon(ctx, centerX, iconY, options.type, width * 0.18);
 
-  // Value (large number)
-  ctx.fillStyle = "white";
-  ctx.font = `700 ${width * 0.2}px system-ui, -apple-system, sans-serif`;
+  // Draw label (red/primary color)
+  ctx.fillStyle = "#dc2626"; // red-600
+  ctx.font = `500 ${width * 0.045}px system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(options.value, centerX, centerY + height * 0.02);
+  ctx.fillText(options.label, centerX, labelY);
 
-  // Label below value
-  ctx.font = `500 ${width * 0.04}px system-ui, -apple-system, sans-serif`;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-  ctx.fillText(options.label, centerX, centerY + height * 0.1);
+  // Draw main value (large, white)
+  ctx.fillStyle = "white";
+  ctx.font = `700 ${width * 0.12}px system-ui, -apple-system, sans-serif`;
+  ctx.fillText(options.value, centerX, valueY);
 
-  // Sublabel
-  if (options.sublabel) {
-    ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+  // Draw progress chart or sublabel
+  if (options.type === "streak" && stats) {
+    drawStreakChart(ctx, centerX, chartY, width, stats.currentStreak, stats.longestStreak);
+  } else if (options.type === "total" && stats) {
+    drawTotalChart(ctx, centerX, chartY, width, stats.totalBookings, stats.totalTrainings);
+  } else if (options.sublabel) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.fillText(options.sublabel, centerX, centerY + height * 0.15);
+    ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+    ctx.fillText(options.sublabel, centerX, chartY);
   }
 }
 
-// Draw flame icon as SVG path
-function drawFlameIcon(
+function drawMainIcon(
   ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  type: string,
+  size: number
+): void {
+  ctx.save();
+  ctx.translate(x - size / 2, y - size / 2);
+  ctx.scale(size / 24, size / 24);
+  
+  ctx.fillStyle = "white";
+  
+  if (type === "streak") {
+    // Flame icon - larger, more detailed
+    ctx.beginPath();
+    ctx.moveTo(12, 1);
+    ctx.bezierCurveTo(12, 1, 5, 8, 5, 14);
+    ctx.bezierCurveTo(5, 18.5, 8, 22, 12, 22);
+    ctx.bezierCurveTo(16, 22, 19, 18.5, 19, 14);
+    ctx.bezierCurveTo(19, 8, 12, 1, 12, 1);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Inner flame detail
+    ctx.fillStyle = "#dc2626";
+    ctx.beginPath();
+    ctx.moveTo(12, 8);
+    ctx.bezierCurveTo(12, 8, 9, 12, 9, 15);
+    ctx.bezierCurveTo(9, 17.5, 10.5, 19, 12, 19);
+    ctx.bezierCurveTo(13.5, 19, 15, 17.5, 15, 15);
+    ctx.bezierCurveTo(15, 12, 12, 8, 12, 8);
+    ctx.closePath();
+    ctx.fill();
+  } else if (type === "training" || type === "total") {
+    // Dumbbell icon
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    
+    ctx.beginPath();
+    // Bar
+    ctx.moveTo(6, 12);
+    ctx.lineTo(18, 12);
+    // Left weight
+    ctx.moveTo(4, 8);
+    ctx.lineTo(4, 16);
+    ctx.moveTo(7, 8);
+    ctx.lineTo(7, 16);
+    ctx.moveTo(4, 8);
+    ctx.lineTo(7, 8);
+    ctx.moveTo(4, 16);
+    ctx.lineTo(7, 16);
+    // Right weight
+    ctx.moveTo(17, 8);
+    ctx.lineTo(17, 16);
+    ctx.moveTo(20, 8);
+    ctx.lineTo(20, 16);
+    ctx.moveTo(17, 8);
+    ctx.lineTo(20, 8);
+    ctx.moveTo(17, 16);
+    ctx.lineTo(20, 16);
+    ctx.stroke();
+  } else {
+    // Trophy icon (default)
+    ctx.beginPath();
+    ctx.moveTo(6, 3);
+    ctx.lineTo(18, 3);
+    ctx.lineTo(18, 8);
+    ctx.bezierCurveTo(18, 13, 15, 15, 12, 16);
+    ctx.bezierCurveTo(9, 15, 6, 13, 6, 8);
+    ctx.lineTo(6, 3);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Handles
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(6, 5);
+    ctx.bezierCurveTo(3, 5, 3, 9, 6, 9);
+    ctx.moveTo(18, 5);
+    ctx.bezierCurveTo(21, 5, 21, 9, 18, 9);
+    ctx.stroke();
+    
+    // Base
+    ctx.beginPath();
+    ctx.moveTo(12, 16);
+    ctx.lineTo(12, 19);
+    ctx.moveTo(8, 19);
+    ctx.lineTo(16, 19);
+    ctx.lineTo(16, 21);
+    ctx.lineTo(8, 21);
+    ctx.lineTo(8, 19);
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+function drawStreakChart(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  y: number,
   width: number,
-  height: number,
-  isStory: boolean
+  current: number,
+  longest: number
 ): void {
-  const iconSize = width * 0.12;
-  const x = 80;
-  const y = isStory ? height * 0.75 : height * 0.7;
-  
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(iconSize / 24, iconSize / 24);
-  
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-  ctx.beginPath();
-  // Flame path from Lucide
-  ctx.moveTo(12, 2);
-  ctx.bezierCurveTo(12, 2, 12, 6.5, 12, 8);
-  ctx.bezierCurveTo(12, 10, 11, 11.5, 10, 12);
-  ctx.bezierCurveTo(9, 12.5, 8.5, 12.5, 8.5, 14.5);
-  ctx.bezierCurveTo(8.5, 16.5, 10.5, 17, 11, 17);
-  ctx.bezierCurveTo(11.5, 17, 13.5, 16.5, 14.5, 15);
-  ctx.bezierCurveTo(15.5, 13.5, 16, 12, 16, 10);
-  ctx.bezierCurveTo(16, 7, 14, 5, 12, 2);
-  ctx.closePath();
-  ctx.fill();
-  
-  ctx.restore();
-}
+  const chartWidth = width * 0.7;
+  const chartHeight = width * 0.15;
+  const startX = centerX - chartWidth / 2;
+  const barCount = 10;
+  const barWidth = (chartWidth / barCount) * 0.7;
+  const barGap = (chartWidth / barCount) * 0.3;
 
-function drawFlameIconCentered(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number
-): void {
-  ctx.save();
-  ctx.translate(x - size / 2, y - size / 2);
-  ctx.scale(size / 24, size / 24);
-  
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-  ctx.beginPath();
-  // Simplified flame path
-  ctx.moveTo(12, 2);
-  ctx.bezierCurveTo(8, 6, 8, 8, 8.5, 10);
-  ctx.bezierCurveTo(7, 11, 6, 12.5, 6, 15);
-  ctx.bezierCurveTo(6, 19, 9, 22, 12, 22);
-  ctx.bezierCurveTo(15, 22, 18, 19, 18, 15);
-  ctx.bezierCurveTo(18, 12, 16, 10, 14, 8);
-  ctx.bezierCurveTo(16, 10, 17, 11.5, 17, 13.5);
-  ctx.bezierCurveTo(17, 16.5, 14.5, 18.5, 12, 18.5);
-  ctx.bezierCurveTo(9.5, 18.5, 8, 16.5, 8, 14.5);
-  ctx.bezierCurveTo(8, 12.5, 10, 11, 11, 10);
-  ctx.bezierCurveTo(11, 8, 12, 4, 12, 2);
-  ctx.closePath();
-  ctx.fill();
-  
-  ctx.restore();
-}
+  // Draw bars with gradient heights (ascending pattern)
+  for (let i = 0; i < barCount; i++) {
+    const progress = (i + 1) / barCount;
+    const barHeight = chartHeight * (0.3 + progress * 0.7);
+    const x = startX + i * (barWidth + barGap);
+    const barY = y + chartHeight - barHeight;
 
-function drawDumbbellIcon(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number
-): void {
-  ctx.save();
-  ctx.translate(x - size / 2, y - size / 2);
-  ctx.scale(size / 24, size / 24);
-  
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-  ctx.lineWidth = 2;
-  ctx.lineCap = "round";
-  
-  // Dumbbell shape
+    // Gradient for each bar
+    const gradient = ctx.createLinearGradient(x, barY + barHeight, x, barY);
+    gradient.addColorStop(0, "#7f1d1d"); // dark red
+    gradient.addColorStop(1, "#dc2626"); // red-600
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(x, barY, barWidth, barHeight, 3);
+    ctx.fill();
+  }
+
+  // Draw trend line on top of bars
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  // Left weight
-  ctx.moveTo(6.5, 6.5);
-  ctx.lineTo(6.5, 17.5);
-  // Right weight
-  ctx.moveTo(17.5, 6.5);
-  ctx.lineTo(17.5, 17.5);
-  // Bar
-  ctx.moveTo(6.5, 12);
-  ctx.lineTo(17.5, 12);
-  // Left caps
-  ctx.moveTo(3, 8);
-  ctx.lineTo(3, 16);
-  ctx.moveTo(3, 8);
-  ctx.lineTo(6.5, 8);
-  ctx.moveTo(3, 16);
-  ctx.lineTo(6.5, 16);
-  // Right caps
-  ctx.moveTo(21, 8);
-  ctx.lineTo(21, 16);
-  ctx.moveTo(21, 8);
-  ctx.lineTo(17.5, 8);
-  ctx.moveTo(21, 16);
-  ctx.lineTo(17.5, 16);
+  for (let i = 0; i < barCount; i++) {
+    const progress = (i + 1) / barCount;
+    const barHeight = chartHeight * (0.3 + progress * 0.7);
+    const x = startX + i * (barWidth + barGap) + barWidth / 2;
+    const lineY = y + chartHeight - barHeight - 5;
+    
+    if (i === 0) {
+      ctx.moveTo(x, lineY);
+    } else {
+      ctx.lineTo(x, lineY);
+    }
+  }
+  // Arrow at end
+  const lastX = startX + (barCount - 1) * (barWidth + barGap) + barWidth / 2;
+  const lastY = y + chartHeight * 0.05;
+  ctx.lineTo(lastX + 20, lastY - 10);
   ctx.stroke();
   
-  ctx.restore();
+  // Arrow head
+  ctx.beginPath();
+  ctx.moveTo(lastX + 20, lastY - 10);
+  ctx.lineTo(lastX + 10, lastY - 5);
+  ctx.lineTo(lastX + 15, lastY - 15);
+  ctx.closePath();
+  ctx.fillStyle = "white";
+  ctx.fill();
+
+  // Labels below chart
+  const labelY = y + chartHeight + 40;
+  ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.fillText(`Aktuell: ${current} Wochen`, startX, labelY);
+  
+  ctx.textAlign = "right";
+  ctx.fillText(`Längste: ${longest} Wochen`, startX + chartWidth, labelY);
+}
+
+function drawTotalChart(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  y: number,
+  width: number,
+  bookings: number,
+  trainings: number
+): void {
+  const total = bookings + trainings;
+  const chartWidth = width * 0.6;
+  const chartHeight = 24;
+  const startX = centerX - chartWidth / 2;
+
+  // Background bar
+  ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+  ctx.beginPath();
+  ctx.roundRect(startX, y, chartWidth, chartHeight, 12);
+  ctx.fill();
+
+  // Bookings portion
+  const bookingsWidth = total > 0 ? (bookings / total) * chartWidth : chartWidth / 2;
+  const gradient1 = ctx.createLinearGradient(startX, y, startX + bookingsWidth, y);
+  gradient1.addColorStop(0, "#dc2626");
+  gradient1.addColorStop(1, "#b91c1c");
+  ctx.fillStyle = gradient1;
+  ctx.beginPath();
+  ctx.roundRect(startX, y, bookingsWidth, chartHeight, 12);
+  ctx.fill();
+
+  // Labels below
+  const labelY = y + chartHeight + 35;
+  ctx.font = `400 ${width * 0.026}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.textAlign = "left";
+  ctx.fillText(`Kursbuchungen: ${bookings}`, startX, labelY);
+  
+  ctx.textAlign = "right";
+  ctx.fillText(`Open Gym: ${trainings}`, startX + chartWidth, labelY);
 }
 
 function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number): void {
-  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-  ctx.font = `400 ${width * 0.022}px system-ui, -apple-system, sans-serif`;
-  ctx.textAlign = "right";
+  ctx.fillStyle = "#dc2626"; // Red to match brand
+  ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.fillText("@risefunctionalfitness", width - 60, height - 60);
+  ctx.fillText("@risefunctionalfitness", width / 2, height - 80);
+}
+
+function drawSparkle(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const x = width - 60;
+  const y = height - 60;
+  const size = 20;
+
+  ctx.fillStyle = "#dc2626";
+  
+  // Draw 4-pointed star
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x + size * 0.3, y - size * 0.3);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x + size * 0.3, y + size * 0.3);
+  ctx.lineTo(x, y + size);
+  ctx.lineTo(x - size * 0.3, y + size * 0.3);
+  ctx.lineTo(x - size, y);
+  ctx.lineTo(x - size * 0.3, y - size * 0.3);
+  ctx.closePath();
+  ctx.fill();
 }
