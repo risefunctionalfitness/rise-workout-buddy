@@ -1135,6 +1135,39 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achieved_at: string
+          achievement_type: string
+          achievement_value: number
+          created_at: string
+          id: string
+          seen_at: string | null
+          shared_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          achievement_type: string
+          achievement_value?: number
+          created_at?: string
+          id?: string
+          seen_at?: string | null
+          shared_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          achievement_type?: string
+          achievement_value?: number
+          created_at?: string
+          id?: string
+          seen_at?: string | null
+          shared_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           challenge_id: string

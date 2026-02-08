@@ -1,21 +1,19 @@
-import { DashboardChallengeCard } from "./DashboardChallengeCard";
+import { DashboardHighlightsCard } from "./DashboardHighlightsCard";
 import { DashboardNewsCard } from "./DashboardNewsCard";
 import { DashboardCreditsCard } from "./DashboardCreditsCard";
 import { DashboardShopCard } from "./DashboardShopCard";
 
 interface DashboardTileGridProps {
   userId: string;
-  currentChallenge: any;
   hasUnreadNews: boolean;
-  onChallengeClick: () => void;
+  onHighlightsClick: () => void;
   onNewsClick: () => void;
 }
 
 export const DashboardTileGrid = ({
   userId,
-  currentChallenge,
   hasUnreadNews,
-  onChallengeClick,
+  onHighlightsClick,
   onNewsClick,
 }: DashboardTileGridProps) => {
   return (
@@ -23,12 +21,11 @@ export const DashboardTileGrid = ({
       {/* Shop Card - Only shown when ordering is open */}
       <DashboardShopCard userId={userId} />
       
-      {/* Challenge Row */}
+      {/* Highlights Row */}
       <div className="flex-1">
-        <DashboardChallengeCard
+        <DashboardHighlightsCard
           userId={userId}
-          currentChallenge={currentChallenge}
-          onChallengeClick={onChallengeClick}
+          onHighlightsClick={onHighlightsClick}
         />
       </div>
       
