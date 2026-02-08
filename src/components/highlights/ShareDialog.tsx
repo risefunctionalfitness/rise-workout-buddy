@@ -147,7 +147,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
           {/* Preview */}
           <div 
             className="relative rounded-lg overflow-hidden bg-muted flex items-center justify-center"
-            style={{ aspectRatio: imageFormat === "story" ? "9/16" : "1/1", maxHeight: "300px" }}
+            style={{ aspectRatio: imageFormat === "story" ? "9/16" : "1/1", maxHeight: "320px" }}
           >
             {previewUrl ? (
               <img 
@@ -162,7 +162,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
 
           {/* Background Selection */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Hintergrund wählen:</label>
+            <label className="text-sm font-medium mb-2 block">Hintergrund:</label>
             <BackgroundSelector
               selected={selectedBackground}
               onSelect={setSelectedBackground}
@@ -198,7 +198,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
           <Button 
             onClick={handleShare} 
             className="w-full" 
-            size="lg"
+            size="default"
             disabled={isGenerating}
           >
             {isGenerating ? (
