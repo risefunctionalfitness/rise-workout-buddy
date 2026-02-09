@@ -486,7 +486,7 @@ export default function EmbedKursplan() {
       {/* Course List for Selected Day */}
       <div className="space-y-2">
         {coursesForSelectedDate.map((course) => {
-          const totalRegistered = course.registered_count + course.guest_count;
+          const totalRegistered = course.registered_count;
           const isFull = totalRegistered >= course.max_participants;
 
           return (
