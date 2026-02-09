@@ -132,8 +132,8 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: b
       ctx.fillStyle = "white";
       ctx.font = `bold ${isStory ? 56 : 44}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = isStory ? "center" : "left";
-      const x = isStory ? width / 2 : 30;
-      ctx.fillText("RISE", x, isStory ? 160 : 60);
+      const x = isStory ? width / 2 : 45;
+      ctx.fillText("RISE", x, isStory ? 160 : 75);
       resolve();
     };
     img.src = "/logos/rise_dark.png";
