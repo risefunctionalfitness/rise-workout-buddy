@@ -140,8 +140,11 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Bild erstellen</DialogTitle>
-        </DialogHeader>
+          <DialogTitle>Beitrag erstellen</DialogTitle>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+            <Instagram className="h-4 w-4" />
+            Tag uns auf Instagram
+          </p>
 
         <div className="space-y-4">
           {/* Preview */}
