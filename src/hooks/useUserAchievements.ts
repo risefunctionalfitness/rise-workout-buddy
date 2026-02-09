@@ -25,6 +25,8 @@ export interface UserStats {
   bookingsByDay: Record<string, number>;
   trainingsByDay: Record<string, number>;
   weeklyActivity: Array<{ week: string; bookings: number; trainings: number }>;
+  thisWeekTrainings: number;
+  weeklyGoal: number;
 }
 
 export interface NextMilestone {
