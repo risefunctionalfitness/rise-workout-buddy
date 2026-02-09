@@ -1,141 +1,42 @@
 
-# Share-Bild Design - Anpassungen an Referenzbild
 
-## Zusammenfassung
+# Streak-Anzeige in Achievements korrigieren
 
-Das aktuelle Design ist bereits sehr nah am Referenzbild. Es werden folgende Anpassungen vorgenommen:
+## Probleme
 
----
+1. **Falsches Icon**: Aktuell wird ein separates PNG-Asset (`streak-flame-icon.png`) geladen. Stattdessen soll das gleiche Lucide `Flame`-Icon verwendet werden, das auch im Header/StreakDisplay angezeigt wird.
 
-## Änderungen im Detail
+2. **Falsche Textanordnung**: Aktuell wird "WOCHEN STREAK" als Label und darunter nur die Zahl "8" angezeigt. Gewuenscht ist:
+   - Zeile 1: **Streak** (rot)
+   - Zeile 2: **8 Wochen** (gross, weiss)
 
-### 1. Flammen-Icon: Rein weiße Silhouette
+## Aenderungen
 
-**Aktuell:**
-- Weiße äußere Flamme mit rotem inneren Detail
+### 1. `src/components/highlights/AchievementsSlide.tsx`
 
-**Neu (wie Referenzbild):**
-- Komplett weiße Flammen-Silhouette ohne innere Farbe
-- Doppel-Flammen-Design (wie im Bild) mit zwei Flammen-Spitzen
+**Label und Value tauschen fuer Streak-Karten:**
+- Zeile 188-189: `value` aendern von `stats.currentStreak.toString()` zu `stats.currentStreak + " Wochen"`
+- `label` aendern von `"WOCHEN STREAK"` zu `"Streak"`
 
-```text
-     /\
-    /  \  /\
-   /    \/  \
-  |          |
-   \        /
-    \      /
-     \    /
-      \  /
-       \/
-```
+**Card-Preview Layout anpassen (Zeile 84-92):**
+- Reihenfolge umkehren: Zuerst Label (kleiner, rot/grau), dann Value (gross, bold)
+- Fuer Streak-Typ: Label in Rot anzeigen
 
-### 2. Chart-Labels in Rot
+### 2. `src/lib/shareImageGenerator.ts`
 
-**Aktuell:**
-```javascript
-ctx.fillStyle = "rgba(255, 255, 255, 0.7)"; // Semi-transparentes Weiß
-```
+**Custom Flame-Icon entfernen:**
+- Die `loadStreakFlameIcon`-Funktion und die zugehoerige Variable entfernen (Zeilen 249-268)
+- In `drawMainContent` den Streak-Sonderfall fuer das Custom-Icon entfernen (Zeilen 288-297)
+- Stattdessen fuer alle Typen einheitlich `drawMainIcon` verwenden
 
-**Neu:**
-```javascript
-ctx.fillStyle = "#dc2626"; // Rot wie Label
-```
+**Streak-Text bereits korrekt:** Die `drawMainContent`-Funktion rendert bei Streak schon "Streak" + "X Wochen" - das bleibt so.
 
-### 3. Erweiterte dekorative Hintergrund-Elemente
+### 3. `src/assets/streak-flame-icon.png`
 
-Das Referenzbild zeigt deutlich mehr und größere Dekorationselemente:
-- Große Dumbbell-Silhouetten (rechts oben, links unten)
-- Konzentrische Kreise/Ringe
-- Geschwungene Linien
-- Alle in sehr niedriger Opazität (~5-10%)
+Diese Datei wird nicht mehr referenziert und kann entfernt werden (optional, keine funktionale Auswirkung).
 
-**Neue Positionen:**
-```text
-┌────────────────────────────────────────────┐
-│                    ╱ ⦿╲                   │  ← Großer Dumbbell oben rechts
-│   ◠────◡                                  │  ← Geschwungene Linie
-│                                            │
-│                                            │
-│  ○                                         │  ← Kreise/Ringe links
-│   ◎                                        │
-│                                            │
-│                                            │
-│                                            │
-│                      ╲⦿╱                  │  ← Dumbbell unten
-│  ◠────◡                                   │
-└────────────────────────────────────────────┘
-```
+## Ergebnis
 
-### 4. Sparkle in Weiß/Grau
+- **Card-Preview**: Flame-Icon (Lucide) oben, "Streak" in der Mitte, "8 Wochen" gross darunter
+- **Share-Image**: Gezeichnetes Flame-Icon (Canvas), "Streak" rot, "8 Wochen" weiss gross
 
-**Aktuell:**
-- Sparkle in Rot (#dc2626)
-
-**Neu (wie Referenzbild):**
-- Sparkle in hellem Grau/Weiß (rgba(255,255,255,0.5))
-
----
-
-## Technische Änderungen
-
-### Datei: `src/lib/shareImageGenerator.ts`
-
-#### 1. `drawMainIcon()` - Flamme ohne inneren Teil
-
-```text
-// Nur die weiße äußere Flamme zeichnen
-// Den inneren roten Teil entfernen
-// Zwei Flammenspitzen wie im Referenzbild
-```
-
-#### 2. `drawStreakChart()` - Labels in Rot
-
-```text
-// Ändern von:
-ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-
-// Zu:
-ctx.fillStyle = "#dc2626"; // Rot
-```
-
-#### 3. `drawDecorativeElements()` - Mehr Elemente
-
-Erweiterte dekorative Elemente mit:
-- Größere Dumbbells an strategischen Positionen
-- Mehr Kreise/Ringe
-- Konzentrische Kreismuster
-- Mehr geschwungene Linien
-
-#### 4. `drawSparkle()` - Farbe ändern
-
-```text
-// Von rot zu weiß/grau
-ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-```
-
----
-
-## Vorher/Nachher
-
-| Element | Vorher | Nachher |
-|---------|--------|---------|
-| Flammen-Icon | Weiß + Roter Kern | Rein weiß, Doppel-Flamme |
-| Chart Labels | Weiß (70% opacity) | Rot (#dc2626) |
-| Hintergrund-Deko | 3 kleine Dumbbells | 5+ größere Elemente |
-| Sparkle | Rot | Weiß/Grau |
-
----
-
-## Implementierung
-
-Die Änderungen erfolgen in einer einzigen Datei:
-
-**`src/lib/shareImageGenerator.ts`**:
-
-1. Flammen-Icon anpassen (rein weiß, Doppelspitzen-Design)
-2. Chart-Label-Farbe auf rot ändern
-3. Dekorative Elemente erweitern und vergrößern
-4. Sparkle-Farbe auf weiß/grau ändern
-
-Die Hintergrund-Auswahl (Dark, Gradient, Gym, Custom Upload) bleibt vollständig erhalten.
