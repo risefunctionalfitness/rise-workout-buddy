@@ -412,4 +412,108 @@ function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number
   ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
 }
 
+// Milestone chart - shows dots/circles representing progress milestones
+function drawMilestoneChart(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  y: number,
+  width: number,
+  currentValue: number
+): void {
+  const chartWidth = width * 0.65;
+  const startX = centerX - chartWidth / 2;
+  const milestones = [10, 25, 50, 100, 150, 200, 300, 500];
+  const dotRadius = width * 0.012;
+  const spacing = chartWidth / (milestones.length - 1);
+
+  // Draw connecting line
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(startX, y + dotRadius);
+  ctx.lineTo(startX + chartWidth, y + dotRadius);
+  ctx.stroke();
+
+  // Draw filled portion
+  const filledCount = milestones.filter(m => currentValue >= m).length;
+  if (filledCount > 0) {
+    const filledWidth = (filledCount - 1) * spacing;
+    const gradient = ctx.createLinearGradient(startX, y, startX + filledWidth, y);
+    gradient.addColorStop(0, "#6b1c1c");
+    gradient.addColorStop(1, "#dc2626");
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(startX, y + dotRadius);
+    ctx.lineTo(startX + filledWidth, y + dotRadius);
+    ctx.stroke();
+  }
+
+  // Draw milestone dots
+  milestones.forEach((milestone, i) => {
+    const x = startX + i * spacing;
+    const reached = currentValue >= milestone;
+    
+    ctx.beginPath();
+    ctx.arc(x, y + dotRadius, dotRadius, 0, Math.PI * 2);
+    if (reached) {
+      const g = ctx.createRadialGradient(x, y + dotRadius, 0, x, y + dotRadius, dotRadius);
+      g.addColorStop(0, "#dc2626");
+      g.addColorStop(1, "#991b1b");
+      ctx.fillStyle = g;
+      ctx.fill();
+    } else {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  });
+
+  // Labels
+  const labelY2 = y + dotRadius * 2 + 30;
+  ctx.font = `400 ${width * 0.018}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+  ctx.textAlign = "center";
+  milestones.forEach((milestone, i) => {
+    if (i % 2 === 0 || milestones.length <= 6) {
+      const x = startX + i * spacing;
+      ctx.fillText(`${milestone}`, x, labelY2);
+    }
+  });
+}
+
+// Generic ascending bar chart (same style as streak chart but without labels)
+function drawGenericChart(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  y: number,
+  width: number
+): void {
+  const chartWidth = width * 0.6;
+  const chartHeight = width * 0.14;
+  const startX = centerX - chartWidth / 2;
+  const barCount = 8;
+  const barWidth = (chartWidth / barCount) * 0.80;
+  const barGap = (chartWidth / barCount) * 0.20;
+
+  for (let i = 0; i < barCount; i++) {
+    const progress = (i + 1) / barCount;
+    const barHeight = chartHeight * (0.25 + progress * 0.75);
+    const x = startX + i * (barWidth + barGap);
+    const barY = y + chartHeight - barHeight;
+
+    const gradient = ctx.createLinearGradient(x, barY + barHeight, x, barY);
+    gradient.addColorStop(0, "#6b1c1c");
+    gradient.addColorStop(0.5, "#991b1b");
+    gradient.addColorStop(1, "#dc2626");
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(x, barY, barWidth, barHeight, 3);
+    ctx.fill();
+  }
+}
+
 // Removed sparkle function - no longer used
