@@ -32,8 +32,9 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<HT
   // Draw background
   await drawBackground(ctx, width, height, background, customBackgroundUrl);
 
-  // Draw Rise Logo (top center)
-  await drawLogo(ctx, width);
+  // Draw Rise Logo
+  const isStory = format === "story";
+  await drawLogo(ctx, width, isStory);
 
   // Draw main content based on type
   await drawMainContent(ctx, width, height, options, stats);
