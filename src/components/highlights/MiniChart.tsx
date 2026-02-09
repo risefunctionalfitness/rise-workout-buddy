@@ -56,20 +56,10 @@ function MilestoneMiniChart({ currentValue }: { currentValue: number }) {
   const allMilestones = [10, 25, 50, 75, 100, 150, 200, 300, 500];
   const nextIdx = allMilestones.findIndex(m => m > currentValue);
   
-  // Show: last reached, current reached, next target (max 3)
-  const milestones: number[] = [];
-  if (nextIdx === -1) {
-    // All reached - show last 3
-    milestones.push(...allMilestones.slice(-3));
-  } else if (nextIdx === 0) {
-    milestones.push(allMilestones[0], allMilestones[1]);
-  } else {
-    const lastReached = allMilestones[nextIdx - 1];
-    const prev = nextIdx >= 2 ? allMilestones[nextIdx - 2] : null;
-    if (prev !== null) milestones.push(prev);
-    milestones.push(lastReached);
-    milestones.push(allMilestones[nextIdx]);
-  }
+  // Show all past milestones + the next target
+  const milestones = nextIdx === -1
+    ? allMilestones
+    : allMilestones.slice(0, nextIdx + 1);
 
   return (
     <div>
@@ -80,8 +70,9 @@ function MilestoneMiniChart({ currentValue }: { currentValue: number }) {
             <div key={m} className="flex items-center">
               {i > 0 && (
                 <div
-                  className="h-0.5 w-8"
+                  className="h-0.5"
                   style={{
+                    width: `${Math.max(12, 48 / milestones.length)}px`,
                     background: currentValue >= milestones[i - 1]
                       ? "linear-gradient(to right, #6b1c1c, #dc2626)"
                       : "rgba(255,255,255,0.15)",
@@ -89,7 +80,7 @@ function MilestoneMiniChart({ currentValue }: { currentValue: number }) {
                 />
               )}
               <div
-                className="w-5 h-5 rounded-full flex-shrink-0"
+                className="w-4 h-4 rounded-full flex-shrink-0"
                 style={{
                   background: reached
                     ? "radial-gradient(circle, #dc2626, #991b1b)"
