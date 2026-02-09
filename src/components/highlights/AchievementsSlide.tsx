@@ -6,6 +6,7 @@ import { Achievement, UserStats } from "@/hooks/useUserAchievements";
 import { ShareDialog } from "@/components/highlights/ShareDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AchievementIcon } from "@/components/highlights/AchievementIcon";
+import { MiniChart } from "@/components/highlights/MiniChart";
 
 interface AchievementsSlideProps {
   userId: string;
