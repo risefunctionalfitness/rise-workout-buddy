@@ -118,7 +118,7 @@ export const useUserAchievements = (userId: string) => {
     // Load streak data
     const { data: streakData } = await supabase
       .from("weekly_streaks")
-      .select("current_streak, longest_streak")
+      .select("current_streak, longest_streak, weekly_goal")
       .eq("user_id", userId)
       .maybeSingle();
 
