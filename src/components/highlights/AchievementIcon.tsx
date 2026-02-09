@@ -20,6 +20,8 @@ export const AchievementIcon = ({ type, className = "", size = 24 }: Achievement
       return <Medal {...iconProps} />;
     case "challenge":
       return <Award {...iconProps} />;
+    case "weekly":
+      return <CalendarCheck {...iconProps} />;
     default:
       return <Target {...iconProps} />;
   }
