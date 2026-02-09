@@ -16,7 +16,6 @@ interface Course {
   duration_minutes: number;
   color?: string;
   registered_count: number;
-  guest_count: number;
 }
 
 interface EmbedWeekTableViewProps {

@@ -557,7 +557,7 @@ export default function EmbedKursplan() {
                 <div>
                   <span className="text-muted-foreground">Teilnehmer:</span>
                   <p className="font-medium">
-                    {selectedCourse.registered_count + selectedCourse.guest_count} / {selectedCourse.max_participants}
+                    {selectedCourse.registered_count} / {selectedCourse.max_participants}
                   </p>
                 </div>
               </div>
