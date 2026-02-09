@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, BarChart3, Target } from "lucide-react";
 import { useUserAchievements } from "@/hooks/useUserAchievements";
 import { AchievementsSlide } from "@/components/highlights/AchievementsSlide";
@@ -25,62 +24,65 @@ export const HighlightsDialog = ({
   const [activeTab, setActiveTab] = useState("achievements");
   const { achievements, stats, nextMilestones, isLoading, markAchievementsSeen } = useUserAchievements(userId);
 
-  // Mark achievements as seen when dialog opens
   useEffect(() => {
     if (open) {
       markAchievementsSeen();
     }
   }, [open]);
 
+  const tabs = [
+    { id: "achievements", label: "Achievements", icon: Trophy },
+    { id: "stats", label: "Statistiken", icon: BarChart3 },
+    { id: "milestones", label: "Meilensteine", icon: Target },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden p-0">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="sticky top-0 bg-background z-10 border-b">
-            <TabsList className="w-full grid grid-cols-3 h-14 rounded-none bg-muted/50">
-              <TabsTrigger 
-                value="achievements" 
-                className="flex flex-col gap-0.5 text-xs data-[state=active]:bg-background"
+        {/* Custom pill navigation */}
+        <div className="sticky top-0 z-10 px-4 pt-4 pb-2 bg-background">
+          <div className="flex gap-1 p-1 rounded-xl bg-muted/60">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                <Trophy className="h-4 w-4" />
-                Achievements
-              </TabsTrigger>
-              <TabsTrigger 
-                value="stats" 
-                className="flex flex-col gap-0.5 text-xs data-[state=active]:bg-background"
-              >
-                <BarChart3 className="h-4 w-4" />
-                Statistiken
-              </TabsTrigger>
-              <TabsTrigger 
-                value="milestones" 
-                className="flex flex-col gap-0.5 text-xs data-[state=active]:bg-background"
-              >
-                <Target className="h-4 w-4" />
-                Meilensteine
-              </TabsTrigger>
-            </TabsList>
+                <tab.icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="overflow-y-auto max-h-[calc(85vh-56px)]">
-            <TabsContent value="achievements" className="m-0 p-4">
+        <div className="overflow-y-auto max-h-[calc(85vh-72px)]">
+          {activeTab === "achievements" && (
+            <div className="p-4">
               <AchievementsSlide 
                 userId={userId}
                 achievements={achievements} 
                 stats={stats}
                 isLoading={isLoading} 
               />
-            </TabsContent>
+            </div>
+          )}
 
-            <TabsContent value="stats" className="m-0 p-4">
+          {activeTab === "stats" && (
+            <div className="p-4">
               <StatsSlide 
                 userId={userId}
                 stats={stats} 
                 isLoading={isLoading} 
               />
-            </TabsContent>
+            </div>
+          )}
 
-            <TabsContent value="milestones" className="m-0 p-4">
+          {activeTab === "milestones" && (
+            <div className="p-4">
               <MilestonesSlide
                 userId={userId}
                 nextMilestones={nextMilestones}
@@ -88,9 +90,9 @@ export const HighlightsDialog = ({
                 onChallengeClick={onChallengeClick}
                 isLoading={isLoading}
               />
-            </TabsContent>
-          </div>
-        </Tabs>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
