@@ -73,7 +73,7 @@ function MilestoneMiniChart({ currentValue }: { currentValue: number }) {
                   <div
                     className="h-0.5"
                     style={{
-                      width: `${Math.max(12, 48 / milestones.length)}px`,
+                      width: `${Math.max(8, 36 / milestones.length)}px`,
                       background: currentValue >= milestones[i - 1]
                         ? "linear-gradient(to right, #6b1c1c, #dc2626)"
                         : "rgba(255,255,255,0.15)",
