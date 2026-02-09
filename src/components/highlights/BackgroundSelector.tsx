@@ -38,7 +38,7 @@ export const BackgroundSelector = ({
       {/* Dark option */}
       <button
         onClick={() => onSelect("dark")}
-        className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+        className={`relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
           selected === "dark"
             ? "border-primary ring-2 ring-primary/20"
             : "border-transparent hover:border-muted-foreground/30"
