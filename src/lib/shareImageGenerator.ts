@@ -39,7 +39,7 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<HT
   await drawLogo(ctx, width);
 
   // Draw main content based on type
-  drawMainContent(ctx, width, height, options, stats);
+  await drawMainContent(ctx, width, height, options, stats);
 
   // Draw Instagram handle (bottom center, white)
   drawHandle(ctx, width, height);
@@ -246,13 +246,34 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number): Promise<v
   });
 }
 
-function drawMainContent(
+// Preload the streak flame icon
+let streakFlameImage: HTMLImageElement | null = null;
+
+function loadStreakFlameIcon(): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    if (streakFlameImage) {
+      resolve(streakFlameImage);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      streakFlameImage = img;
+      resolve(img);
+    };
+    img.onerror = reject;
+    // Dynamic import for the asset
+    img.src = new URL('../assets/streak-flame-icon.png', import.meta.url).href;
+  });
+}
+
+async function drawMainContent(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
   options: ShareImageOptions,
   stats?: UserStats | null
-): void {
+): Promise<void> {
   const isStory = height > width;
   const centerX = width / 2;
   
@@ -263,39 +284,67 @@ function drawMainContent(
   const sublabelY = isStory ? height * 0.54 : height * 0.60;
   const chartY = isStory ? height * 0.68 : height * 0.74;
 
-  // Draw main icon (Lucide-style, large)
-  drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
+  // Draw main icon
+  if (options.type === "streak") {
+    // Use the custom flame icon for streak
+    try {
+      const flameImg = await loadStreakFlameIcon();
+      const iconSize = width * 0.18;
+      ctx.drawImage(flameImg, centerX - iconSize / 2, iconY - iconSize / 2, iconSize, iconSize);
+    } catch {
+      // Fallback to drawn icon
+      drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
+    }
+  } else {
+    drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
+  }
 
-  // Draw label (red, bold) - e.g. "Streak"
-  ctx.fillStyle = "#dc2626";
-  ctx.font = `700 ${width * 0.055}px system-ui, -apple-system, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(options.label, centerX, labelY);
-
-  // Draw main value (larger, white, bold) - e.g. "7 Wochen"
-  ctx.fillStyle = "white";
-  ctx.font = `700 ${width * 0.095}px system-ui, -apple-system, sans-serif`;
-  ctx.fillText(options.value, centerX, valueY);
-
-  // Draw sublabel - e.g. "Längster Streak: 11 Wochen"
+  // For streak: "Streak" label, then "X Wochen" value
   if (options.type === "streak" && stats) {
+    // Draw label (red, bold) - "Streak"
+    ctx.fillStyle = "#dc2626";
+    ctx.font = `700 ${width * 0.055}px system-ui, -apple-system, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Streak", centerX, labelY);
+
+    // Draw main value (larger, white, bold) - "X Wochen"
+    ctx.fillStyle = "white";
+    ctx.font = `700 ${width * 0.095}px system-ui, -apple-system, sans-serif`;
+    ctx.fillText(`${stats.currentStreak} Wochen`, centerX, valueY);
+
+    // Draw sublabel
     ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
     ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(`Längster Streak: ${stats.longestStreak} Wochen`, centerX, sublabelY);
+    ctx.fillText(`Längster: ${stats.longestStreak} Wochen`, centerX, sublabelY);
     
     // Draw chart with arrow
     drawStreakChart(ctx, centerX, chartY, width, stats.currentStreak, stats.longestStreak);
-  } else if (options.type === "total" && stats) {
-    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(`Kurse: ${stats.totalBookings} | Open Gym: ${stats.totalTrainings}`, centerX, sublabelY);
-    
-    drawTotalChart(ctx, centerX, chartY, width, stats.totalBookings, stats.totalTrainings);
-  } else if (options.sublabel) {
-    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(options.sublabel, centerX, sublabelY);
+  } else {
+    // Original logic for other types
+    // Draw label (red, bold)
+    ctx.fillStyle = "#dc2626";
+    ctx.font = `700 ${width * 0.055}px system-ui, -apple-system, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(options.label, centerX, labelY);
+
+    // Draw main value (larger, white, bold)
+    ctx.fillStyle = "white";
+    ctx.font = `700 ${width * 0.095}px system-ui, -apple-system, sans-serif`;
+    ctx.fillText(options.value, centerX, valueY);
+
+    if (options.type === "total" && stats) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+      ctx.fillText(`Kurse: ${stats.totalBookings} | Open Gym: ${stats.totalTrainings}`, centerX, sublabelY);
+      
+      drawTotalChart(ctx, centerX, chartY, width, stats.totalBookings, stats.totalTrainings);
+    } else if (options.sublabel) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+      ctx.fillText(options.sublabel, centerX, sublabelY);
+    }
   }
 }
 
