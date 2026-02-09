@@ -1297,6 +1297,7 @@ export type Database = {
           payload: Json | null
           registration_id: string
           user_id: string
+          webhook_sent_at: string | null
         }
         Insert: {
           course_id: string
@@ -1306,6 +1307,7 @@ export type Database = {
           payload?: Json | null
           registration_id: string
           user_id: string
+          webhook_sent_at?: string | null
         }
         Update: {
           course_id?: string
@@ -1315,6 +1317,7 @@ export type Database = {
           payload?: Json | null
           registration_id?: string
           user_id?: string
+          webhook_sent_at?: string | null
         }
         Relationships: []
       }
