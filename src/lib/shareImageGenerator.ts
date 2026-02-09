@@ -155,7 +155,7 @@ async function drawMainContent(
   const labelY = isStory ? height * 0.40 : height * 0.44;
   const valueY = isStory ? height * 0.48 : height * 0.54;
   const sublabelY = isStory ? height * 0.54 : height * 0.60;
-  const chartY = isStory ? height * 0.61 : height * 0.66;
+  const chartY = isStory ? height * 0.66 : height * 0.74;
 
   // Draw main icon (uniform for all types)
   drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
