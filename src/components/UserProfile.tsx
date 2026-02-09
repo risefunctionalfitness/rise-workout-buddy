@@ -435,29 +435,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
           </CardContent>
         </Card>
 
-        {/* Training Log */}
-        <Card className="border-primary/20 mb-4">
-          <CardHeader>
-            <CardTitle>Training Log</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Monatliche Trainingstage im letzten Jahr
-            </p>
-          </CardHeader>
-          <CardContent>
-            <YearlyTrainingHeatmap userId={userId} />
-          </CardContent>
-        </Card>
-
-        {/* Meine Abzeichen */}
-        <Card className="border-primary/20 mb-4">
-          <CardHeader>
-            <CardTitle>Meine Abzeichen</CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 pt-0 pb-4">
-            <UserBadges />
-          </CardContent>
-        </Card>
-
         {/* Navigation zu Kraftwerten und Übungen */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div 
