@@ -398,12 +398,17 @@ function drawTotalChart(
   ctx.fillText(`Open Gym: ${trainings}`, startX + chartWidth, labelY);
 }
 
-function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number, isStory: boolean): void {
   ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
   ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-  ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
+  if (isStory) {
+    ctx.textAlign = "center";
+    ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
+  } else {
+    ctx.textAlign = "right";
+    ctx.fillText("@risefunctionalfitness", width - 30, height - 20);
+  }
 }
 
 // Milestone chart - shows only nearby milestones for relevance
