@@ -90,11 +90,11 @@ async function drawBackground(
     });
   }
 
-  // Default: Very dark background (almost black with slight red tint)
+  // Default: Very dark background
   const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-  bgGradient.addColorStop(0, "#0d0a0c"); // Very dark
-  bgGradient.addColorStop(0.5, "#150d10"); // Slightly lighter dark
-  bgGradient.addColorStop(1, "#0a0608"); // Dark again
+  bgGradient.addColorStop(0, "#080607");
+  bgGradient.addColorStop(0.5, "#0c090a");
+  bgGradient.addColorStop(1, "#060405");
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
   
