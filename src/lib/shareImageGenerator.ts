@@ -118,7 +118,7 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: b
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const logoHeight = isStory ? 100 : 60;
+      const logoHeight = isStory ? 100 : 90;
       const logoWidth = (img.width / img.height) * logoHeight;
       if (isStory) {
         const x = (width - logoWidth) / 2;
@@ -130,7 +130,7 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: b
     };
     img.onerror = () => {
       ctx.fillStyle = "white";
-      ctx.font = `bold ${isStory ? 56 : 36}px system-ui, -apple-system, sans-serif`;
+      ctx.font = `bold ${isStory ? 56 : 44}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = isStory ? "center" : "left";
       const x = isStory ? width / 2 : 30;
       ctx.fillText("RISE", x, isStory ? 160 : 60);
