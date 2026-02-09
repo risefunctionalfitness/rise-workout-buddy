@@ -189,7 +189,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
                 onClick={() => setImageFormat("square")}
                 className="flex-1"
               >
-                Square 1:1
+                Beitrag
               </Button>
             </div>
           </div>
