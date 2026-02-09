@@ -171,6 +171,7 @@ export const AchievementsSlide = ({
           value: currentCard.value,
           label: currentCard.label,
           sublabel: currentCard.sublabel,
+          stats: stats ?? undefined,
         }}
       />
     </div>
