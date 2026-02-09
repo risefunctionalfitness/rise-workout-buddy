@@ -412,7 +412,7 @@ function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number
   ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
 }
 
-// Milestone chart - shows dots/circles representing progress milestones
+// Milestone chart - shows only nearby milestones for relevance
 function drawMilestoneChart(
   ctx: CanvasRenderingContext2D,
   centerX: number,
@@ -420,11 +420,18 @@ function drawMilestoneChart(
   width: number,
   currentValue: number
 ): void {
-  const chartWidth = width * 0.65;
+  const allMilestones = [10, 25, 50, 100, 150, 200, 300, 500];
+  
+  // Show only a window of milestones around the current value (max 5)
+  const nextIdx = allMilestones.findIndex(m => m > currentValue);
+  const startIdx = Math.max(0, (nextIdx === -1 ? allMilestones.length : nextIdx) - 3);
+  const endIdx = Math.min(allMilestones.length, startIdx + 5);
+  const milestones = allMilestones.slice(startIdx, endIdx);
+
+  const chartWidth = width * 0.6;
   const startX = centerX - chartWidth / 2;
-  const milestones = [10, 25, 50, 100, 150, 200, 300, 500];
-  const dotRadius = width * 0.012;
-  const spacing = chartWidth / (milestones.length - 1);
+  const dotRadius = width * 0.014;
+  const spacing = milestones.length > 1 ? chartWidth / (milestones.length - 1) : 0;
 
   // Draw connecting line
   ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
@@ -436,7 +443,7 @@ function drawMilestoneChart(
 
   // Draw filled portion
   const filledCount = milestones.filter(m => currentValue >= m).length;
-  if (filledCount > 0) {
+  if (filledCount > 0 && milestones.length > 1) {
     const filledWidth = (filledCount - 1) * spacing;
     const gradient = ctx.createLinearGradient(startX, y, startX + filledWidth, y);
     gradient.addColorStop(0, "#6b1c1c");
@@ -472,15 +479,13 @@ function drawMilestoneChart(
   });
 
   // Labels
-  const labelY2 = y + dotRadius * 2 + 30;
-  ctx.font = `400 ${width * 0.018}px system-ui, -apple-system, sans-serif`;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+  const labelY2 = y + dotRadius * 2 + 28;
+  ctx.font = `400 ${width * 0.022}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
   ctx.textAlign = "center";
   milestones.forEach((milestone, i) => {
-    if (i % 2 === 0 || milestones.length <= 6) {
-      const x = startX + i * spacing;
-      ctx.fillText(`${milestone}`, x, labelY2);
-    }
+    const x = startX + i * spacing;
+    ctx.fillText(`${milestone}`, x, labelY2);
   });
 }
 

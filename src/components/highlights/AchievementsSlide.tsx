@@ -240,5 +240,16 @@ function generateShareableCards(achievements: Achievement[], stats: UserStats | 
     });
   }
 
+  // Add this week's training card
+  if (stats) {
+    cards.push({
+      type: "weekly",
+      icon: "weekly",
+      value: `${stats.thisWeekTrainings}x`,
+      label: "DIESE WOCHE",
+      sublabel: `Ziel: ${stats.weeklyGoal}x pro Woche`,
+    });
+  }
+
   return cards;
 }
