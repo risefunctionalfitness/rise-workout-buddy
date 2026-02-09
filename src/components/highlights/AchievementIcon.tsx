@@ -1,4 +1,4 @@
-import { Flame, Dumbbell, Trophy, Medal, Award, Target } from "lucide-react";
+import { Flame, Dumbbell, Trophy, Medal, Award, Target, CalendarCheck } from "lucide-react";
 
 interface AchievementIconProps {
   type: string;
