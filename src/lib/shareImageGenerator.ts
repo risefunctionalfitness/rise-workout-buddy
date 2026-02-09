@@ -336,28 +336,10 @@ function drawMainIcon(
   ctx.lineJoin = "round";
   
   if (type === "streak") {
-    // Lucide Flame icon path - standard flame shape
-    ctx.beginPath();
-    // Main flame body
-    ctx.moveTo(12, 2);
-    ctx.bezierCurveTo(12, 2, 8.5, 6, 8.5, 10);
-    ctx.bezierCurveTo(8.5, 12, 9.5, 14, 12, 14);
-    ctx.bezierCurveTo(14.5, 14, 15.5, 12, 15.5, 10);
-    ctx.bezierCurveTo(15.5, 6, 12, 2, 12, 2);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Outer flame
-    ctx.beginPath();
-    ctx.moveTo(12, 22);
-    ctx.bezierCurveTo(17, 22, 20, 18, 20, 14);
-    ctx.bezierCurveTo(20, 10, 18, 6, 14, 2);
-    ctx.bezierCurveTo(14, 6, 12, 8, 12, 10);
-    ctx.bezierCurveTo(12, 8, 10, 6, 10, 2);
-    ctx.bezierCurveTo(6, 6, 4, 10, 4, 14);
-    ctx.bezierCurveTo(4, 18, 7, 22, 12, 22);
-    ctx.closePath();
-    ctx.fill();
+    // Lucide Flame icon - using exact SVG path
+    const flamePath = new Path2D("M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z");
+    ctx.fill(flamePath);
+    ctx.stroke(flamePath);
     
   } else if (type === "training" || type === "total") {
     // Dumbbell icon
