@@ -207,13 +207,20 @@ async function drawMainContent(
       }
       // Draw milestone progress chart for training milestones
       drawMilestoneChart(ctx, centerX, chartY, width, parseInt(options.value) || 0);
+    } else if (options.type === "weekly" && stats) {
+      if (options.sublabel) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+        ctx.fillText(options.sublabel, centerX, sublabelY);
+      }
+      // Draw weekly progress dots
+      drawWeeklyChart(ctx, centerX, chartY, width, stats.thisWeekTrainings, stats.weeklyGoal);
     } else {
       if (options.sublabel) {
         ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
         ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
         ctx.fillText(options.sublabel, centerX, sublabelY);
       }
-      // Generic ascending bar chart
       drawGenericChart(ctx, centerX, chartY, width);
     }
   }
