@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, Download, Upload, Check } from "lucide-react";
+import { Share2, Download, Upload, Check, Instagram } from "lucide-react";
 import { BackgroundSelector, BackgroundOption } from "@/components/highlights/BackgroundSelector";
 import { generateShareImage } from "@/lib/shareImageGenerator";
 import { useToast } from "@/hooks/use-toast";
