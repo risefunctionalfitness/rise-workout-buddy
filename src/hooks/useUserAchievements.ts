@@ -40,7 +40,7 @@ export interface NextMilestone {
 }
 
 const STREAK_MILESTONES = [4, 8, 12, 26, 52];
-const TRAINING_MILESTONES = [10, 25, 50, 100, 250, 500];
+const TRAINING_MILESTONES = [10, 25, 50, 75, 100, 250, 500];
 
 const getStreakLabel = (weeks: number) => `${weeks} Wochen Streak`;
 const getTrainingLabel = (count: number) => `${count} Trainings`;

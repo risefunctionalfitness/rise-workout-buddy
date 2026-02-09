@@ -380,7 +380,7 @@ function drawMilestoneChart(
   width: number,
   currentValue: number
 ): void {
-  const allMilestones = [10, 25, 50, 100, 150, 200, 300, 500];
+  const allMilestones = [10, 25, 50, 75, 100, 150, 200, 300, 500];
   
   // Show only a window of milestones around the current value (max 5)
   const nextIdx = allMilestones.findIndex(m => m > currentValue);

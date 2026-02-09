@@ -53,7 +53,7 @@ function StreakMiniChart({ stats }: { stats: UserStats | null }) {
 }
 
 function MilestoneMiniChart({ currentValue }: { currentValue: number }) {
-  const allMilestones = [10, 25, 50, 100, 150, 200, 300, 500];
+  const allMilestones = [10, 25, 50, 75, 100, 150, 200, 300, 500];
   const nextIdx = allMilestones.findIndex(m => m > currentValue);
   const startIdx = Math.max(0, (nextIdx === -1 ? allMilestones.length : nextIdx) - 3);
   const endIdx = Math.min(allMilestones.length, startIdx + 5);
