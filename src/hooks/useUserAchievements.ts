@@ -27,6 +27,8 @@ export interface UserStats {
   weeklyActivity: Array<{ week: string; bookings: number; trainings: number }>;
   thisWeekTrainings: number;
   weeklyGoal: number;
+  cancellations: number;
+  cancellationRate: number;
 }
 
 export interface NextMilestone {
