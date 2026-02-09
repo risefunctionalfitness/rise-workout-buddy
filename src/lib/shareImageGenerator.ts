@@ -381,12 +381,20 @@ function drawMilestoneChart(
   currentValue: number
 ): void {
   const allMilestones = [10, 25, 50, 75, 100, 150, 200, 300, 500];
-  
-  // Show only a window of milestones around the current value (max 5)
   const nextIdx = allMilestones.findIndex(m => m > currentValue);
-  const startIdx = Math.max(0, (nextIdx === -1 ? allMilestones.length : nextIdx) - 3);
-  const endIdx = Math.min(allMilestones.length, startIdx + 5);
-  const milestones = allMilestones.slice(startIdx, endIdx);
+  
+  // Show: last reached, current reached, next target (max 3)
+  const milestones: number[] = [];
+  if (nextIdx === -1) {
+    milestones.push(...allMilestones.slice(-3));
+  } else if (nextIdx === 0) {
+    milestones.push(allMilestones[0], allMilestones[1]);
+  } else {
+    const prev = nextIdx >= 2 ? allMilestones[nextIdx - 2] : null;
+    if (prev !== null) milestones.push(prev);
+    milestones.push(allMilestones[nextIdx - 1]);
+    milestones.push(allMilestones[nextIdx]);
+  }
 
   const chartWidth = width * 0.6;
   const startX = centerX - chartWidth / 2;
