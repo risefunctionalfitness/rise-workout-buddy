@@ -210,6 +210,10 @@ export const useUserAchievements = (userId: string) => {
       weeklyActivity: [],
       thisWeekTrainings,
       weeklyGoal,
+      cancellations: cancellationCount || 0,
+      cancellationRate: totalBookings + (cancellationCount || 0) > 0
+        ? Math.round(((cancellationCount || 0) / (totalBookings + (cancellationCount || 0))) * 100)
+        : 0,
     };
 
     setStats(statsData);
