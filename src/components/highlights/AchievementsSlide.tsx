@@ -144,13 +144,11 @@ export const AchievementsSlide = ({
         </div>
       )}
 
-      {/* Share button - subtle, right aligned */}
-      <div className="flex justify-end">
-        <Button onClick={handleShare} variant="ghost" size="sm" className="text-muted-foreground">
-          <Share2 className="h-4 w-4 mr-1.5" />
-          Teilen
-        </Button>
-      </div>
+      {/* Share button - prominent with Instagram icon */}
+      <Button onClick={handleShare} className="w-full" size="lg">
+        <Instagram className="h-5 w-5 mr-2" />
+        Auf Instagram teilen
+      </Button>
 
       {/* Share Dialog */}
       <ShareDialog
