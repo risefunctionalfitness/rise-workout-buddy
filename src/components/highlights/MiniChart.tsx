@@ -67,37 +67,35 @@ function MilestoneMiniChart({ currentValue }: { currentValue: number }) {
         {milestones.map((m, i) => {
           const reached = currentValue >= m;
           return (
-            <div key={m} className="flex items-center">
-              {i > 0 && (
+            <div key={m} className="flex flex-col items-center">
+              <div className="flex items-center">
+                {i > 0 && (
+                  <div
+                    className="h-0.5"
+                    style={{
+                      width: `${Math.max(12, 48 / milestones.length)}px`,
+                      background: currentValue >= milestones[i - 1]
+                        ? "linear-gradient(to right, #6b1c1c, #dc2626)"
+                        : "rgba(255,255,255,0.15)",
+                    }}
+                  />
+                )}
                 <div
-                  className="h-0.5"
+                  className="w-4 h-4 rounded-full flex-shrink-0"
                   style={{
-                    width: `${Math.max(12, 48 / milestones.length)}px`,
-                    background: currentValue >= milestones[i - 1]
-                      ? "linear-gradient(to right, #6b1c1c, #dc2626)"
-                      : "rgba(255,255,255,0.15)",
+                    background: reached
+                      ? "radial-gradient(circle, #dc2626, #991b1b)"
+                      : "rgba(255,255,255,0.1)",
+                    border: reached ? "none" : "1.5px solid rgba(255,255,255,0.3)",
                   }}
                 />
-              )}
-              <div
-                className="w-4 h-4 rounded-full flex-shrink-0"
-                style={{
-                  background: reached
-                    ? "radial-gradient(circle, #dc2626, #991b1b)"
-                    : "rgba(255,255,255,0.1)",
-                  border: reached ? "none" : "1.5px solid rgba(255,255,255,0.3)",
-                }}
-              />
+              </div>
+              <span className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {m}
+              </span>
             </div>
           );
         })}
-      </div>
-      <div className="flex justify-between mt-2 px-1">
-        {milestones.map((m) => (
-          <span key={m} className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-            {m}
-          </span>
-        ))}
       </div>
     </div>
   );

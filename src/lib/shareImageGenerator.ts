@@ -118,13 +118,13 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: b
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const logoHeight = isStory ? 120 : 100;
+      const logoHeight = isStory ? 140 : 120;
       const logoWidth = (img.width / img.height) * logoHeight;
       if (isStory) {
         const x = (width - logoWidth) / 2;
-        ctx.drawImage(img, x, 120, logoWidth, logoHeight);
+        ctx.drawImage(img, x, 100, logoWidth, logoHeight);
       } else {
-        ctx.drawImage(img, 45, 45, logoWidth, logoHeight);
+        ctx.drawImage(img, 40, 40, logoWidth, logoHeight);
       }
       resolve();
     };
