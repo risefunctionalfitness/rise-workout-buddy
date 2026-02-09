@@ -393,11 +393,11 @@ function drawTotalChart(
 }
 
 function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number): void {
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)"; // White, slightly transparent
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
   ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.fillText("@risefunctionalfitness", width / 2, height - 60);
+  ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
 }
 
 // Removed sparkle function - no longer used
