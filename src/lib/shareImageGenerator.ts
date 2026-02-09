@@ -40,7 +40,7 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<HT
   await drawMainContent(ctx, width, height, options, stats);
 
   // Draw Instagram handle (bottom center, white)
-  drawHandle(ctx, width, height);
+  drawHandle(ctx, width, height, isStory);
 
   // Sparkle removed as per user request
 
