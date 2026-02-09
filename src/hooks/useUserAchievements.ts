@@ -124,6 +124,13 @@ export const useUserAchievements = (userId: string) => {
       .eq("user_id", userId)
       .maybeSingle();
 
+    // Load cancellations
+    const { count: cancellationCount } = await supabase
+      .from("course_registrations")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "cancelled");
+
     // Load profile for member since
     const { data: profile } = await supabase
       .from("profiles")
