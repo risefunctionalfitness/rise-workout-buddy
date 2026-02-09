@@ -1,31 +1,23 @@
 
 
-# Share-Image bereinigen und Balkendiagramm sichtbar machen
+## Fixes
 
-## Aenderungen
+### 1. Milestone-Anzeige schmaler machen
+Die Breite des Meilenstein-Charts (`chartWidth`) wird von `width * 0.7` auf `width * 0.55` reduziert -- sowohl im Canvas-Share-Bild (`shareImageGenerator.ts`) als auch in der UI-Vorschau (`MiniChart.tsx`). Die vertikale Position bleibt unveraendert.
 
-### 1. Dekorative Hintergrund-Elemente entfernen (`src/lib/shareImageGenerator.ts`)
+### 2. Beitrags-Vorschau mittig zentrieren
+Im ShareDialog wird das Preview-Bild korrekt horizontal zentriert, indem der Container `w-full` und das Bild `w-auto max-h-full` erhaelt, sodass es bei beiden Formaten (Story und Beitrag) immer mittig sitzt.
 
-- Den Aufruf `drawDecorativeElements(ctx, width, height)` in Zeile 36 entfernen
-- Die komplette Funktion `drawDecorativeElements` (Zeilen 117-195) entfernen
-- Die komplette Funktion `drawDumbbell` (Zeilen 197-221) entfernen
+### Technische Details
 
-Das Ergebnis: Sauberer dunkler Hintergrund mit rotem Gradient von unten, ohne Dumbbells, Kreise oder geschwungene Linien.
+**`src/lib/shareImageGenerator.ts`** (Zeile 394):
+- `chartWidth` von `width * 0.7` auf `width * 0.55` aendern
 
-### 2. Balkendiagramm in der Card-Preview anzeigen (`src/components/highlights/AchievementsSlide.tsx`)
+**`src/components/highlights/MiniChart.tsx`** (Zeile 76):
+- Connecting-Line-Breite anpassen: `Math.max(8, 36 / milestones.length)` statt `Math.max(12, 48 / milestones.length)` fuer kompaktere Darstellung
+- Dot-Groesse von `w-4 h-4` auf `w-3.5 h-3.5` reduzieren
 
-Das Mini-Balkendiagramm (Zeilen 96-110) existiert bereits im Code, wird aber moeglicherweise durch Layout-Probleme nicht korrekt angezeigt. Es wird sichergestellt, dass es sichtbar bleibt und korrekt dargestellt wird.
-
-Das Balkendiagramm auf dem Canvas (`drawStreakChart`, Zeilen 379-461) bleibt ebenfalls erhalten -- es zeichnet die aufsteigenden roten Balken mit Trendlinie und Pfeil nach oben rechts, genau wie im Referenzbild.
-
-### Zusammenfassung
-
-| Element | Aktion |
-|---|---|
-| Dumbbells, Kreise, Kurven im Share-Image | Entfernen |
-| `drawDecorativeElements` + `drawDumbbell` Funktionen | Entfernen |
-| Balkendiagramm (Canvas: `drawStreakChart`) | Beibehalten |
-| Balkendiagramm (Card-Preview: Mini-Bars) | Beibehalten |
-| Flamme (stroke-only, kein Fill) | Keine Aenderung |
-| "Streak" / "X Wochen" Text | Keine Aenderung |
+**`src/components/highlights/ShareDialog.tsx`** (Zeile 148-161):
+- Preview-Container: `className="relative rounded-lg overflow-hidden bg-muted flex items-center justify-center w-full"`
+- Preview-Image: `className="max-h-full w-auto object-contain"`
 
