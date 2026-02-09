@@ -95,28 +95,13 @@ export default function EmbedKursplan() {
       );
       const statsResults = await Promise.all(statsPromises);
       
-      const courseCounts: Record<string, { registered: number; guests: number }> = {};
+      const courseCounts: Record<string, number> = {};
       statsResults.forEach((result, index) => {
         if (result.data && result.data[0]) {
           const courseId = courseIds[index];
-          // get_course_stats returns registered_count which includes members
-          courseCounts[courseId] = {
-            registered: result.data[0].registered_count || 0,
-            guests: 0 // guests are tracked separately
-          };
+          // get_course_stats now includes both members and guests in registered_count
+          courseCounts[courseId] = result.data[0].registered_count || 0;
         }
-      });
-
-      // Get guest registration counts separately
-      const { data: guestData } = await supabase
-        .from('guest_registrations')
-        .select('course_id')
-        .in('course_id', courseIds)
-        .eq('status', 'registered');
-
-      const guestCounts: Record<string, number> = {};
-      guestData?.forEach(g => {
-        guestCounts[g.course_id] = (guestCounts[g.course_id] || 0) + 1;
       });
 
       // Filter out past courses for today
@@ -130,13 +115,9 @@ export default function EmbedKursplan() {
           return course.course_date > nowDate;
         })
         .map(course => {
-          const counts = courseCounts[course.id] || { registered: 0, guests: 0 };
-          const guest_count = guestCounts[course.id] || 0;
-
           return {
             ...course,
-            registered_count: counts.registered,
-            guest_count
+            registered_count: courseCounts[course.id] || 0
           };
         });
 
