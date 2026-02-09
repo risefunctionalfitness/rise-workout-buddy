@@ -32,14 +32,15 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<HT
   // Draw background
   await drawBackground(ctx, width, height, background, customBackgroundUrl);
 
-  // Draw Rise Logo (top center)
-  await drawLogo(ctx, width);
+  // Draw Rise Logo
+  const isStory = format === "story";
+  await drawLogo(ctx, width, isStory);
 
   // Draw main content based on type
   await drawMainContent(ctx, width, height, options, stats);
 
   // Draw Instagram handle (bottom center, white)
-  drawHandle(ctx, width, height);
+  drawHandle(ctx, width, height, isStory);
 
   // Sparkle removed as per user request
 
@@ -112,26 +113,27 @@ function drawBottomGradient(ctx: CanvasRenderingContext2D, width: number, height
 }
 
 
-async function drawLogo(ctx: CanvasRenderingContext2D, width: number): Promise<void> {
+async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: boolean): Promise<void> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const logoHeight = 100; // Larger logo
+      const logoHeight = isStory ? 100 : 60;
       const logoWidth = (img.width / img.height) * logoHeight;
-      const x = (width - logoWidth) / 2;
-      ctx.drawImage(img, x, 120, logoWidth, logoHeight); // Lower position
+      if (isStory) {
+        const x = (width - logoWidth) / 2;
+        ctx.drawImage(img, x, 120, logoWidth, logoHeight);
+      } else {
+        ctx.drawImage(img, 30, 30, logoWidth, logoHeight);
+      }
       resolve();
     };
     img.onerror = () => {
-      // Fallback: Draw text - larger and lower
       ctx.fillStyle = "white";
-      ctx.font = "bold 56px system-ui, -apple-system, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("RISE", width / 2, 160);
-      
-      ctx.font = "300 24px system-ui, -apple-system, sans-serif";
-      ctx.fillText("Functional Fitness", width / 2, 195);
+      ctx.font = `bold ${isStory ? 56 : 36}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = isStory ? "center" : "left";
+      const x = isStory ? width / 2 : 30;
+      ctx.fillText("RISE", x, isStory ? 160 : 60);
       resolve();
     };
     img.src = "/logos/rise_dark.png";
@@ -306,45 +308,6 @@ function drawStreakChart(
     ctx.fill();
   }
 
-  // Draw trend line with arrow on top
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  
-  for (let i = 0; i < barCount; i++) {
-    const progress = (i + 1) / barCount;
-    const barHeight = chartHeight * (0.30 + progress * 0.70);
-    const x = startX + i * (barWidth + barGap) + barWidth / 2;
-    const lineY = y + chartHeight - barHeight - 6;
-    
-    if (i === 0) {
-      ctx.moveTo(x, lineY);
-    } else {
-      ctx.lineTo(x, lineY);
-    }
-  }
-  
-  // Arrow pointing up-right
-  const lastBarX = startX + (barCount - 1) * (barWidth + barGap) + barWidth / 2;
-  const lastBarHeight = chartHeight * (0.30 + 1 * 0.70);
-  const lastLineY = y + chartHeight - lastBarHeight - 6;
-  
-  const arrowEndX = lastBarX + 30;
-  const arrowEndY = lastLineY - 20;
-  ctx.lineTo(arrowEndX, arrowEndY);
-  ctx.stroke();
-  
-  // Arrow head
-  ctx.beginPath();
-  ctx.moveTo(arrowEndX, arrowEndY);
-  ctx.lineTo(arrowEndX - 10, arrowEndY + 4);
-  ctx.lineTo(arrowEndX - 4, arrowEndY + 10);
-  ctx.closePath();
-  ctx.fillStyle = "white";
-  ctx.fill();
-
   // Labels below chart
   const labelY = y + chartHeight + 35;
   ctx.font = `400 ${width * 0.024}px system-ui, -apple-system, sans-serif`;
@@ -396,12 +359,17 @@ function drawTotalChart(
   ctx.fillText(`Open Gym: ${trainings}`, startX + chartWidth, labelY);
 }
 
-function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number, isStory: boolean): void {
   ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
   ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-  ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
+  if (isStory) {
+    ctx.textAlign = "center";
+    ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
+  } else {
+    ctx.textAlign = "right";
+    ctx.fillText("@risefunctionalfitness", width - 30, height - 20);
+  }
 }
 
 // Milestone chart - shows only nearby milestones for relevance
