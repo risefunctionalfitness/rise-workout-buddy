@@ -207,13 +207,20 @@ async function drawMainContent(
       }
       // Draw milestone progress chart for training milestones
       drawMilestoneChart(ctx, centerX, chartY, width, parseInt(options.value) || 0);
+    } else if (options.type === "weekly" && stats) {
+      if (options.sublabel) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+        ctx.fillText(options.sublabel, centerX, sublabelY);
+      }
+      // Draw weekly progress dots
+      drawWeeklyChart(ctx, centerX, chartY, width, stats.thisWeekTrainings, stats.weeklyGoal);
     } else {
       if (options.sublabel) {
         ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
         ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
         ctx.fillText(options.sublabel, centerX, sublabelY);
       }
-      // Generic ascending bar chart
       drawGenericChart(ctx, centerX, chartY, width);
     }
   }
@@ -251,12 +258,31 @@ function drawMainIcon(
     ctx.moveTo(6, 12);
     ctx.lineTo(18, 12);
     ctx.stroke();
-    
-    // Left weight
     ctx.strokeRect(3, 8, 4, 8);
-    // Right weight  
     ctx.strokeRect(17, 8, 4, 8);
     
+  } else if (type === "weekly") {
+    // Calendar/check icon
+    ctx.beginPath();
+    ctx.roundRect(3, 4, 18, 18, 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(3, 9);
+    ctx.lineTo(21, 9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(16, 2);
+    ctx.lineTo(16, 6);
+    ctx.moveTo(8, 2);
+    ctx.lineTo(8, 6);
+    ctx.stroke();
+    // Checkmark inside
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(9, 15);
+    ctx.lineTo(11, 17);
+    ctx.lineTo(15, 13);
+    ctx.stroke();
   } else {
     // Trophy icon
     ctx.beginPath();
@@ -412,7 +438,7 @@ function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number
   ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
 }
 
-// Milestone chart - shows dots/circles representing progress milestones
+// Milestone chart - shows only nearby milestones for relevance
 function drawMilestoneChart(
   ctx: CanvasRenderingContext2D,
   centerX: number,
@@ -420,11 +446,18 @@ function drawMilestoneChart(
   width: number,
   currentValue: number
 ): void {
-  const chartWidth = width * 0.65;
+  const allMilestones = [10, 25, 50, 100, 150, 200, 300, 500];
+  
+  // Show only a window of milestones around the current value (max 5)
+  const nextIdx = allMilestones.findIndex(m => m > currentValue);
+  const startIdx = Math.max(0, (nextIdx === -1 ? allMilestones.length : nextIdx) - 3);
+  const endIdx = Math.min(allMilestones.length, startIdx + 5);
+  const milestones = allMilestones.slice(startIdx, endIdx);
+
+  const chartWidth = width * 0.6;
   const startX = centerX - chartWidth / 2;
-  const milestones = [10, 25, 50, 100, 150, 200, 300, 500];
-  const dotRadius = width * 0.012;
-  const spacing = chartWidth / (milestones.length - 1);
+  const dotRadius = width * 0.014;
+  const spacing = milestones.length > 1 ? chartWidth / (milestones.length - 1) : 0;
 
   // Draw connecting line
   ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
@@ -436,7 +469,7 @@ function drawMilestoneChart(
 
   // Draw filled portion
   const filledCount = milestones.filter(m => currentValue >= m).length;
-  if (filledCount > 0) {
+  if (filledCount > 0 && milestones.length > 1) {
     const filledWidth = (filledCount - 1) * spacing;
     const gradient = ctx.createLinearGradient(startX, y, startX + filledWidth, y);
     gradient.addColorStop(0, "#6b1c1c");
@@ -472,15 +505,13 @@ function drawMilestoneChart(
   });
 
   // Labels
-  const labelY2 = y + dotRadius * 2 + 30;
-  ctx.font = `400 ${width * 0.018}px system-ui, -apple-system, sans-serif`;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+  const labelY2 = y + dotRadius * 2 + 28;
+  ctx.font = `400 ${width * 0.022}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
   ctx.textAlign = "center";
   milestones.forEach((milestone, i) => {
-    if (i % 2 === 0 || milestones.length <= 6) {
-      const x = startX + i * spacing;
-      ctx.fillText(`${milestone}`, x, labelY2);
-    }
+    const x = startX + i * spacing;
+    ctx.fillText(`${milestone}`, x, labelY2);
   });
 }
 
@@ -514,6 +545,64 @@ function drawGenericChart(
     ctx.roundRect(x, barY, barWidth, barHeight, 3);
     ctx.fill();
   }
+}
+
+// Weekly training chart - shows day circles for the week (Mo-So)
+function drawWeeklyChart(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  y: number,
+  width: number,
+  completed: number,
+  goal: number
+): void {
+  const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const dotRadius = width * 0.022;
+  const totalWidth = days.length * (dotRadius * 2 + 16) - 16;
+  const startX = centerX - totalWidth / 2;
+
+  days.forEach((day, i) => {
+    const x = startX + i * (dotRadius * 2 + 16) + dotRadius;
+    const isCompleted = i < completed;
+    const isGoal = i < goal;
+
+    // Draw circle
+    ctx.beginPath();
+    ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+    if (isCompleted) {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, dotRadius);
+      g.addColorStop(0, "#dc2626");
+      g.addColorStop(1, "#991b1b");
+      ctx.fillStyle = g;
+      ctx.fill();
+      // Checkmark
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x - dotRadius * 0.35, y);
+      ctx.lineTo(x - dotRadius * 0.05, y + dotRadius * 0.3);
+      ctx.lineTo(x + dotRadius * 0.4, y - dotRadius * 0.3);
+      ctx.stroke();
+    } else if (isGoal) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(220, 38, 38, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Day label
+    ctx.fillStyle = isCompleted ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.4)";
+    ctx.font = `400 ${width * 0.018}px system-ui, -apple-system, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(day, x, y + dotRadius + 18);
+  });
 }
 
 // Removed sparkle function - no longer used

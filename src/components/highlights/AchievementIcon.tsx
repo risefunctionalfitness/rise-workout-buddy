@@ -1,4 +1,4 @@
-import { Flame, Dumbbell, Trophy, Medal, Award, Target } from "lucide-react";
+import { Flame, Dumbbell, Trophy, Medal, Award, Target, CalendarCheck } from "lucide-react";
 
 interface AchievementIconProps {
   type: string;
@@ -20,6 +20,8 @@ export const AchievementIcon = ({ type, className = "", size = 24 }: Achievement
       return <Medal {...iconProps} />;
     case "challenge":
       return <Award {...iconProps} />;
+    case "weekly":
+      return <CalendarCheck {...iconProps} />;
     default:
       return <Target {...iconProps} />;
   }

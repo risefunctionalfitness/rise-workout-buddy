@@ -25,6 +25,8 @@ export interface UserStats {
   bookingsByDay: Record<string, number>;
   trainingsByDay: Record<string, number>;
   weeklyActivity: Array<{ week: string; bookings: number; trainings: number }>;
+  thisWeekTrainings: number;
+  weeklyGoal: number;
 }
 
 export interface NextMilestone {
@@ -116,7 +118,7 @@ export const useUserAchievements = (userId: string) => {
     // Load streak data
     const { data: streakData } = await supabase
       .from("weekly_streaks")
-      .select("current_streak, longest_streak")
+      .select("current_streak, longest_streak, weekly_goal")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -161,6 +163,29 @@ export const useUserAchievements = (userId: string) => {
     const totalSessions = totalBookings + totalTrainings;
     const currentStreak = streakData?.current_streak || 0;
     const longestStreak = streakData?.longest_streak || 0;
+    const weeklyGoal = streakData?.weekly_goal || 2;
+
+    // Count this week's trainings (Mon-Sun)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() + mondayOffset);
+    weekStart.setHours(0, 0, 0, 0);
+
+    let thisWeekTrainings = 0;
+    bookings?.forEach((b: any) => {
+      if (b.courses?.course_date) {
+        const d = new Date(b.courses.course_date);
+        if (d >= weekStart && d <= now) thisWeekTrainings++;
+      }
+    });
+    trainings?.forEach((t: any) => {
+      if (t.date) {
+        const d = new Date(t.date);
+        if (d >= weekStart && d <= now) thisWeekTrainings++;
+      }
+    });
 
     const statsData: UserStats = {
       totalBookings,
@@ -174,6 +199,8 @@ export const useUserAchievements = (userId: string) => {
       bookingsByDay,
       trainingsByDay,
       weeklyActivity: [],
+      thisWeekTrainings,
+      weeklyGoal,
     };
 
     setStats(statsData);
