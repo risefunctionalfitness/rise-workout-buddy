@@ -69,7 +69,9 @@ export const AchievementsSlide = ({
     <div className="space-y-4">
       {/* Achievement Card Preview */}
       <div className="relative">
-        <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white border-0 overflow-hidden">
+        <Card className="text-white border-0 overflow-hidden" style={{ background: 'linear-gradient(to bottom right, #0d0a0c, #150d10, #0a0608)' }}>
+          {/* Red gradient overlay from bottom */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(139, 30, 30, 0.6) 0%, rgba(100, 20, 20, 0.3) 30%, transparent 100%)' }} />
           <CardContent className="p-6 flex flex-col items-center justify-center min-h-[280px] relative">
             {/* RISE Logo placeholder */}
             <div className="absolute top-4 left-4">
@@ -171,6 +173,7 @@ export const AchievementsSlide = ({
           value: currentCard.value,
           label: currentCard.label,
           sublabel: currentCard.sublabel,
+          stats: stats ?? undefined,
         }}
       />
     </div>
