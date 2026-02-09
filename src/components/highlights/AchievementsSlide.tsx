@@ -221,10 +221,10 @@ function generateShareableCards(achievements: Achievement[], stats: UserStats | 
     }
     cards.push({
       type: achievement.type,
-      icon: achievement.type, // Use type as icon key
-      value: achievement.value.toString(),
-      label: achievement.type === "streak" ? "WOCHEN STREAK" : "TRAININGS MEILENSTEIN",
-      sublabel: achievement.description,
+      icon: achievement.type,
+      value: `${achievement.value} Trainings`,
+      label: "Meilenstein",
+      sublabel: `${achievement.value} Trainingseinheiten absolviert`,
       achievement,
     });
   });
@@ -234,8 +234,8 @@ function generateShareableCards(achievements: Achievement[], stats: UserStats | 
     cards.push({
       type: "total",
       icon: "total",
-      value: stats.totalSessions.toString(),
-      label: "TRAININGS GESAMT",
+      value: `${stats.totalSessions} Trainings`,
+      label: "Gesamt",
       sublabel: `${stats.totalBookings} Kurse + ${stats.totalTrainings} Open Gym`,
     });
   }
@@ -246,7 +246,7 @@ function generateShareableCards(achievements: Achievement[], stats: UserStats | 
       type: "weekly",
       icon: "weekly",
       value: `${stats.thisWeekTrainings}x`,
-      label: "DIESE WOCHE",
+      label: "Diese Woche",
       sublabel: `Ziel: ${stats.weeklyGoal}x pro Woche`,
     });
   }
