@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Share2, ChevronLeft, ChevronRight, Instagram } from "lucide-react";
 import { Achievement, UserStats } from "@/hooks/useUserAchievements";
 import { ShareDialog } from "@/components/highlights/ShareDialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -144,13 +144,11 @@ export const AchievementsSlide = ({
         </div>
       )}
 
-      {/* Share button - subtle, right aligned */}
-      <div className="flex justify-end">
-        <Button onClick={handleShare} variant="ghost" size="sm" className="text-muted-foreground">
-          <Share2 className="h-4 w-4 mr-1.5" />
-          Teilen
-        </Button>
-      </div>
+      {/* Share button - prominent with Instagram icon */}
+      <Button onClick={handleShare} className="w-full" size="lg">
+        <Instagram className="h-5 w-5 mr-2" />
+        Auf Instagram teilen
+      </Button>
 
       {/* Share Dialog */}
       <ShareDialog
