@@ -258,12 +258,31 @@ function drawMainIcon(
     ctx.moveTo(6, 12);
     ctx.lineTo(18, 12);
     ctx.stroke();
-    
-    // Left weight
     ctx.strokeRect(3, 8, 4, 8);
-    // Right weight  
     ctx.strokeRect(17, 8, 4, 8);
     
+  } else if (type === "weekly") {
+    // Calendar/check icon
+    ctx.beginPath();
+    ctx.roundRect(3, 4, 18, 18, 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(3, 9);
+    ctx.lineTo(21, 9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(16, 2);
+    ctx.lineTo(16, 6);
+    ctx.moveTo(8, 2);
+    ctx.lineTo(8, 6);
+    ctx.stroke();
+    // Checkmark inside
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(9, 15);
+    ctx.lineTo(11, 17);
+    ctx.lineTo(15, 13);
+    ctx.stroke();
   } else {
     // Trophy icon
     ctx.beginPath();
