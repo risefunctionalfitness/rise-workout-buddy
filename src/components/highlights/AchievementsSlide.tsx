@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Share2, ChevronLeft, ChevronRight, Instagram } from "lucide-react";
 import { Achievement, UserStats } from "@/hooks/useUserAchievements";
 import { ShareDialog } from "@/components/highlights/ShareDialog";
 import { Skeleton } from "@/components/ui/skeleton";
