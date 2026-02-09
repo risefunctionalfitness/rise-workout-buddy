@@ -153,7 +153,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
               <img 
                 src={previewUrl} 
                 alt="Vorschau" 
-                className="w-full h-full object-contain"
+                className="h-full mx-auto object-contain"
               />
             ) : (
               <div className="text-muted-foreground text-sm">Lädt...</div>
