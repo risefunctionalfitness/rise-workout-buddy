@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Share2, Download, Upload, Check } from "lucide-react";
+import { Share2, Download, Upload, Check, Instagram } from "lucide-react";
 import { BackgroundSelector, BackgroundOption } from "@/components/highlights/BackgroundSelector";
 import { generateShareImage } from "@/lib/shareImageGenerator";
 import { useToast } from "@/hooks/use-toast";
@@ -140,7 +140,11 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Bild erstellen</DialogTitle>
+          <DialogTitle>Beitrag erstellen</DialogTitle>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+            <Instagram className="h-4 w-4" />
+            Tag uns auf Instagram
+          </p>
         </DialogHeader>
 
         <div className="space-y-4">
