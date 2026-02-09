@@ -199,10 +199,22 @@ async function drawMainContent(
       ctx.fillText(`Kurse: ${stats.totalBookings} | Open Gym: ${stats.totalTrainings}`, centerX, sublabelY);
       
       drawTotalChart(ctx, centerX, chartY, width, stats.totalBookings, stats.totalTrainings);
-    } else if (options.sublabel) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-      ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-      ctx.fillText(options.sublabel, centerX, sublabelY);
+    } else if (options.type === "training") {
+      if (options.sublabel) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+        ctx.fillText(options.sublabel, centerX, sublabelY);
+      }
+      // Draw milestone progress chart for training milestones
+      drawMilestoneChart(ctx, centerX, chartY, width, parseInt(options.value) || 0);
+    } else {
+      if (options.sublabel) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
+        ctx.fillText(options.sublabel, centerX, sublabelY);
+      }
+      // Generic ascending bar chart
+      drawGenericChart(ctx, centerX, chartY, width);
     }
   }
 }
