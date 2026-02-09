@@ -27,6 +27,8 @@ export interface UserStats {
   weeklyActivity: Array<{ week: string; bookings: number; trainings: number }>;
   thisWeekTrainings: number;
   weeklyGoal: number;
+  cancellations: number;
+  cancellationRate: number;
 }
 
 export interface NextMilestone {
@@ -122,6 +124,13 @@ export const useUserAchievements = (userId: string) => {
       .eq("user_id", userId)
       .maybeSingle();
 
+    // Load cancellations
+    const { count: cancellationCount } = await supabase
+      .from("course_registrations")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "cancelled");
+
     // Load profile for member since
     const { data: profile } = await supabase
       .from("profiles")
@@ -201,6 +210,10 @@ export const useUserAchievements = (userId: string) => {
       weeklyActivity: [],
       thisWeekTrainings,
       weeklyGoal,
+      cancellations: cancellationCount || 0,
+      cancellationRate: totalBookings + (cancellationCount || 0) > 0
+        ? Math.round(((cancellationCount || 0) / (totalBookings + (cancellationCount || 0))) * 100)
+        : 0,
     };
 
     setStats(statsData);
