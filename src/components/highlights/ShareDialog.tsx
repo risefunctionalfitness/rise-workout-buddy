@@ -138,7 +138,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Bild erstellen</DialogTitle>
         </DialogHeader>
