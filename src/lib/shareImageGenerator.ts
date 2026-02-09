@@ -308,45 +308,6 @@ function drawStreakChart(
     ctx.fill();
   }
 
-  // Draw trend line with arrow on top
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  
-  for (let i = 0; i < barCount; i++) {
-    const progress = (i + 1) / barCount;
-    const barHeight = chartHeight * (0.30 + progress * 0.70);
-    const x = startX + i * (barWidth + barGap) + barWidth / 2;
-    const lineY = y + chartHeight - barHeight - 6;
-    
-    if (i === 0) {
-      ctx.moveTo(x, lineY);
-    } else {
-      ctx.lineTo(x, lineY);
-    }
-  }
-  
-  // Arrow pointing up-right
-  const lastBarX = startX + (barCount - 1) * (barWidth + barGap) + barWidth / 2;
-  const lastBarHeight = chartHeight * (0.30 + 1 * 0.70);
-  const lastLineY = y + chartHeight - lastBarHeight - 6;
-  
-  const arrowEndX = lastBarX + 30;
-  const arrowEndY = lastLineY - 20;
-  ctx.lineTo(arrowEndX, arrowEndY);
-  ctx.stroke();
-  
-  // Arrow head
-  ctx.beginPath();
-  ctx.moveTo(arrowEndX, arrowEndY);
-  ctx.lineTo(arrowEndX - 10, arrowEndY + 4);
-  ctx.lineTo(arrowEndX - 4, arrowEndY + 10);
-  ctx.closePath();
-  ctx.fillStyle = "white";
-  ctx.fill();
-
   // Labels below chart
   const labelY = y + chartHeight + 35;
   ctx.font = `400 ${width * 0.024}px system-ui, -apple-system, sans-serif`;
