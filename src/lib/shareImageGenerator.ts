@@ -118,13 +118,13 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: b
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const logoHeight = isStory ? 100 : 90;
+      const logoHeight = isStory ? 100 : 100;
       const logoWidth = (img.width / img.height) * logoHeight;
       if (isStory) {
         const x = (width - logoWidth) / 2;
         ctx.drawImage(img, x, 120, logoWidth, logoHeight);
       } else {
-        ctx.drawImage(img, 30, 30, logoWidth, logoHeight);
+        ctx.drawImage(img, 45, 45, logoWidth, logoHeight);
       }
       resolve();
     };
@@ -132,8 +132,8 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: b
       ctx.fillStyle = "white";
       ctx.font = `bold ${isStory ? 56 : 44}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = isStory ? "center" : "left";
-      const x = isStory ? width / 2 : 30;
-      ctx.fillText("RISE", x, isStory ? 160 : 60);
+      const x = isStory ? width / 2 : 45;
+      ctx.fillText("RISE", x, isStory ? 160 : 75);
       resolve();
     };
     img.src = "/logos/rise_dark.png";
@@ -155,7 +155,7 @@ async function drawMainContent(
   const labelY = isStory ? height * 0.40 : height * 0.44;
   const valueY = isStory ? height * 0.48 : height * 0.54;
   const sublabelY = isStory ? height * 0.54 : height * 0.60;
-  const chartY = isStory ? height * 0.68 : height * 0.74;
+  const chartY = isStory ? height * 0.64 : height * 0.70;
 
   // Draw main icon (uniform for all types)
   drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
