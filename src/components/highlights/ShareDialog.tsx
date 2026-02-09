@@ -146,14 +146,14 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
         <div className="space-y-4">
           {/* Preview */}
           <div 
-            className="relative rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+            className="relative rounded-lg overflow-hidden bg-muted flex items-center justify-center w-full"
             style={{ aspectRatio: imageFormat === "story" ? "9/16" : "1/1", maxHeight: "320px" }}
           >
             {previewUrl ? (
               <img 
                 src={previewUrl} 
                 alt="Vorschau" 
-                className="h-full mx-auto object-contain"
+                className="max-h-full w-auto object-contain"
               />
             ) : (
               <div className="text-muted-foreground text-sm">Lädt...</div>
