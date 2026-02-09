@@ -131,8 +131,7 @@ export default function EmbedWeekTableView({
                         }`}
                       >
                         {slotCourses.map((course) => {
-                          const totalRegistered =
-                            course.registered_count + course.guest_count;
+                          const totalRegistered = course.registered_count;
                           const isFull =
                             totalRegistered >= course.max_participants;
 
