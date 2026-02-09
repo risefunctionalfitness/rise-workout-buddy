@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Upload, Check } from "lucide-react";
 
-export type BackgroundOption = "dark" | "gradient" | "gym" | "custom";
+export type BackgroundOption = "dark" | "custom";
 
 interface BackgroundSelectorProps {
   selected: BackgroundOption;
@@ -9,12 +9,6 @@ interface BackgroundSelectorProps {
   onCustomUpload: (file: File) => void;
   customUrl: string | null;
 }
-
-const BACKGROUNDS: { id: BackgroundOption; label: string; preview: string }[] = [
-  { id: "dark", label: "Dark", preview: "bg-gray-900" },
-  { id: "gradient", label: "Gradient", preview: "bg-gradient-to-br from-red-900 to-gray-900" },
-  { id: "gym", label: "Gym", preview: "bg-gray-700" },
-];
 
 export const BackgroundSelector = ({
   selected,
