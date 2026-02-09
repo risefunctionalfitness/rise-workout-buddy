@@ -85,8 +85,10 @@ export const AchievementsSlide = ({
               <div className="mb-3 flex justify-center">
                 <AchievementIcon type={currentCard.type} size={56} className="text-white" />
               </div>
-              <div className="text-4xl font-bold mb-2">{currentCard.value}</div>
-              <div className="text-lg font-medium text-gray-200">{currentCard.label}</div>
+              <div className={`text-lg font-medium mb-2 ${currentCard.type === "streak" ? "text-red-500" : "text-gray-200"}`}>
+                {currentCard.label}
+              </div>
+              <div className="text-4xl font-bold">{currentCard.value}</div>
               {currentCard.sublabel && (
                 <div className="text-sm text-gray-400 mt-1">{currentCard.sublabel}</div>
               )}
