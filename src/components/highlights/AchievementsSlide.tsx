@@ -187,8 +187,8 @@ function generateShareableCards(achievements: Achievement[], stats: UserStats | 
     cards.push({
       type: "streak",
       icon: "streak",
-      value: stats.currentStreak.toString(),
-      label: "WOCHEN STREAK",
+      value: `${stats.currentStreak} Wochen`,
+      label: "Streak",
       sublabel: stats.longestStreak > stats.currentStreak 
         ? `Längster: ${stats.longestStreak} Wochen` 
         : undefined,

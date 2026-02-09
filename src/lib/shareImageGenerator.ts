@@ -246,27 +246,6 @@ async function drawLogo(ctx: CanvasRenderingContext2D, width: number): Promise<v
   });
 }
 
-// Preload the streak flame icon
-let streakFlameImage: HTMLImageElement | null = null;
-
-function loadStreakFlameIcon(): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    if (streakFlameImage) {
-      resolve(streakFlameImage);
-      return;
-    }
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      streakFlameImage = img;
-      resolve(img);
-    };
-    img.onerror = reject;
-    // Dynamic import for the asset
-    img.src = new URL('../assets/streak-flame-icon.png', import.meta.url).href;
-  });
-}
-
 async function drawMainContent(
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -284,20 +263,8 @@ async function drawMainContent(
   const sublabelY = isStory ? height * 0.54 : height * 0.60;
   const chartY = isStory ? height * 0.68 : height * 0.74;
 
-  // Draw main icon
-  if (options.type === "streak") {
-    // Use the custom flame icon for streak
-    try {
-      const flameImg = await loadStreakFlameIcon();
-      const iconSize = width * 0.18;
-      ctx.drawImage(flameImg, centerX - iconSize / 2, iconY - iconSize / 2, iconSize, iconSize);
-    } catch {
-      // Fallback to drawn icon
-      drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
-    }
-  } else {
-    drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
-  }
+  // Draw main icon (uniform for all types)
+  drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
 
   // For streak: "Streak" label, then "X Wochen" value
   if (options.type === "streak" && stats) {
