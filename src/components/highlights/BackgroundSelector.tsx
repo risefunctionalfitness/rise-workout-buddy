@@ -34,11 +34,11 @@ export const BackgroundSelector = ({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="flex gap-2">
       {/* Dark option */}
       <button
         onClick={() => onSelect("dark")}
-        className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+        className={`relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
           selected === "dark"
             ? "border-primary ring-2 ring-primary/20"
             : "border-transparent hover:border-muted-foreground/30"
@@ -59,7 +59,7 @@ export const BackgroundSelector = ({
       {/* Custom Upload */}
       <button
         onClick={() => fileInputRef.current?.click()}
-        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+        className={`relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
           selected === "custom" 
             ? "border-primary ring-2 ring-primary/20" 
             : "border-dashed border-muted-foreground/30 hover:border-muted-foreground/50"
