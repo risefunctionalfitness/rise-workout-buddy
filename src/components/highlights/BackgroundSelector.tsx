@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Upload, Check } from "lucide-react";
 
-export type BackgroundOption = "dark" | "gradient" | "gym" | "custom";
+export type BackgroundOption = "dark" | "custom";
 
 interface BackgroundSelectorProps {
   selected: BackgroundOption;
@@ -9,12 +9,6 @@ interface BackgroundSelectorProps {
   onCustomUpload: (file: File) => void;
   customUrl: string | null;
 }
-
-const BACKGROUNDS: { id: BackgroundOption; label: string; preview: string }[] = [
-  { id: "dark", label: "Dark", preview: "bg-gray-900" },
-  { id: "gradient", label: "Gradient", preview: "bg-gradient-to-br from-red-900 to-gray-900" },
-  { id: "gym", label: "Gym", preview: "bg-gray-700" },
-];
 
 export const BackgroundSelector = ({
   selected,
@@ -40,28 +34,27 @@ export const BackgroundSelector = ({
   };
 
   return (
-    <div className="grid grid-cols-4 gap-2">
-      {BACKGROUNDS.map((bg) => (
-        <button
-          key={bg.id}
-          onClick={() => onSelect(bg.id)}
-          className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-            selected === bg.id 
-              ? "border-primary ring-2 ring-primary/20" 
-              : "border-transparent hover:border-muted-foreground/30"
-          }`}
-        >
-          <div className={`absolute inset-0 ${bg.preview}`} />
-          {selected === bg.id && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-              <Check className="h-4 w-4 text-white" />
-            </div>
-          )}
-          <span className="absolute bottom-1 left-0 right-0 text-center text-[10px] text-white font-medium drop-shadow">
-            {bg.label}
-          </span>
-        </button>
-      ))}
+    <div className="grid grid-cols-2 gap-2">
+      {/* Dark option */}
+      <button
+        onClick={() => onSelect("dark")}
+        className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+          selected === "dark"
+            ? "border-primary ring-2 ring-primary/20"
+            : "border-transparent hover:border-muted-foreground/30"
+        }`}
+      >
+        <div className="absolute inset-0 bg-gray-950" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(139,30,30,0.4), transparent)' }} />
+        {selected === "dark" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <Check className="h-4 w-4 text-white" />
+          </div>
+        )}
+        <span className="absolute bottom-1 left-0 right-0 text-center text-[10px] text-white font-medium drop-shadow">
+          Dark
+        </span>
+      </button>
 
       {/* Custom Upload */}
       <button

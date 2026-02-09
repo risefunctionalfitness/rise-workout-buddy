@@ -90,11 +90,11 @@ async function drawBackground(
     });
   }
 
-  // Default: Very dark background (almost black with slight red tint)
+  // Default: Very dark background
   const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-  bgGradient.addColorStop(0, "#0d0a0c"); // Very dark
-  bgGradient.addColorStop(0.5, "#150d10"); // Slightly lighter dark
-  bgGradient.addColorStop(1, "#0a0608"); // Dark again
+  bgGradient.addColorStop(0, "#080607");
+  bgGradient.addColorStop(0.5, "#0c090a");
+  bgGradient.addColorStop(1, "#060405");
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
   
@@ -158,71 +158,37 @@ async function drawMainContent(
   // Draw main icon (uniform for all types)
   drawMainIcon(ctx, centerX, iconY, options.type, width * 0.20);
 
-  // For streak: "Streak" label, then "X Wochen" value
-  if (options.type === "streak" && stats) {
-    // Draw label (red, bold) - "Streak"
-    ctx.fillStyle = "#dc2626";
-    ctx.font = `700 ${width * 0.055}px system-ui, -apple-system, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Streak", centerX, labelY);
+  // Unified layout for ALL types (same as streak reference)
+  // Draw label (red, bold)
+  ctx.fillStyle = "#dc2626";
+  ctx.font = `700 ${width * 0.055}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(options.label, centerX, labelY);
 
-    // Draw main value (larger, white, bold) - "X Wochen"
-    ctx.fillStyle = "white";
-    ctx.font = `700 ${width * 0.095}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(`${stats.currentStreak} Wochen`, centerX, valueY);
+  // Draw main value (larger, white, bold)
+  ctx.fillStyle = "white";
+  ctx.font = `700 ${width * 0.095}px system-ui, -apple-system, sans-serif`;
+  ctx.fillText(options.value, centerX, valueY);
 
-    // Draw sublabel
+  // Draw sublabel
+  if (options.sublabel) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
     ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(`Längster: ${stats.longestStreak} Wochen`, centerX, sublabelY);
-    
-    // Draw chart with arrow
+    ctx.fillText(options.sublabel, centerX, sublabelY);
+  }
+
+  // Draw type-specific chart
+  if (options.type === "streak" && stats) {
     drawStreakChart(ctx, centerX, chartY, width, stats.currentStreak, stats.longestStreak);
+  } else if (options.type === "total" && stats) {
+    drawTotalChart(ctx, centerX, chartY, width, stats.totalBookings, stats.totalTrainings);
+  } else if (options.type === "training") {
+    drawMilestoneChart(ctx, centerX, chartY, width, parseInt(options.value) || 0);
+  } else if (options.type === "weekly" && stats) {
+    drawWeeklyChart(ctx, centerX, chartY, width, stats.thisWeekTrainings, stats.weeklyGoal);
   } else {
-    // Original logic for other types
-    // Draw label (red, bold)
-    ctx.fillStyle = "#dc2626";
-    ctx.font = `700 ${width * 0.055}px system-ui, -apple-system, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(options.label, centerX, labelY);
-
-    // Draw main value (larger, white, bold)
-    ctx.fillStyle = "white";
-    ctx.font = `700 ${width * 0.095}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(options.value, centerX, valueY);
-
-    if (options.type === "total" && stats) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-      ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-      ctx.fillText(`Kurse: ${stats.totalBookings} | Open Gym: ${stats.totalTrainings}`, centerX, sublabelY);
-      
-      drawTotalChart(ctx, centerX, chartY, width, stats.totalBookings, stats.totalTrainings);
-    } else if (options.type === "training") {
-      if (options.sublabel) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-        ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-        ctx.fillText(options.sublabel, centerX, sublabelY);
-      }
-      // Draw milestone progress chart for training milestones
-      drawMilestoneChart(ctx, centerX, chartY, width, parseInt(options.value) || 0);
-    } else if (options.type === "weekly" && stats) {
-      if (options.sublabel) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-        ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-        ctx.fillText(options.sublabel, centerX, sublabelY);
-      }
-      // Draw weekly progress dots
-      drawWeeklyChart(ctx, centerX, chartY, width, stats.thisWeekTrainings, stats.weeklyGoal);
-    } else {
-      if (options.sublabel) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-        ctx.font = `400 ${width * 0.028}px system-ui, -apple-system, sans-serif`;
-        ctx.fillText(options.sublabel, centerX, sublabelY);
-      }
-      drawGenericChart(ctx, centerX, chartY, width);
-    }
+    drawGenericChart(ctx, centerX, chartY, width);
   }
 }
 
