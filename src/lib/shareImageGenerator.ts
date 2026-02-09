@@ -391,7 +391,7 @@ function drawMilestoneChart(
     milestones = allMilestones.slice(0, nextIdx + 1);
   }
 
-  const chartWidth = width * 0.7;
+  const chartWidth = width * 0.55;
   const startX = centerX - chartWidth / 2;
   const dotRadius = width * 0.014;
   const spacing = milestones.length > 1 ? chartWidth / (milestones.length - 1) : 0;
