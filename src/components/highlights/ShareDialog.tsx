@@ -181,7 +181,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
                 onClick={() => setImageFormat("story")}
                 className="flex-1"
               >
-                Story 9:16
+                Story
               </Button>
               <Button
                 variant={imageFormat === "square" ? "default" : "outline"}
