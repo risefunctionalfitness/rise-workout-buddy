@@ -59,7 +59,7 @@ export const BackgroundSelector = ({
       {/* Custom Upload */}
       <button
         onClick={() => fileInputRef.current?.click()}
-        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+        className={`relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
           selected === "custom" 
             ? "border-primary ring-2 ring-primary/20" 
             : "border-dashed border-muted-foreground/30 hover:border-muted-foreground/50"
