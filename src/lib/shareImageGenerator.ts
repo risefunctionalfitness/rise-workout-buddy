@@ -32,9 +32,6 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<HT
   // Draw background
   await drawBackground(ctx, width, height, background, customBackgroundUrl);
 
-  // Draw decorative elements
-  drawDecorativeElements(ctx, width, height);
-
   // Draw Rise Logo (top center)
   await drawLogo(ctx, width);
 
@@ -114,111 +111,6 @@ function drawBottomGradient(ctx: CanvasRenderingContext2D, width: number, height
   ctx.fillRect(0, 0, width, height);
 }
 
-function drawDecorativeElements(ctx: CanvasRenderingContext2D, width: number, height: number): void {
-  ctx.globalAlpha = 0.06;
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 3;
-
-  // Large dumbbell top-right
-  drawDumbbell(ctx, width * 0.82, height * 0.12, 120, Math.PI / 5);
-  
-  // Large dumbbell bottom-left
-  drawDumbbell(ctx, width * 0.15, height * 0.78, 100, -Math.PI / 4);
-  
-  // Medium dumbbell right side
-  drawDumbbell(ctx, width * 0.92, height * 0.55, 70, Math.PI / 2.5);
-  
-  // Small dumbbell left
-  drawDumbbell(ctx, width * 0.08, height * 0.35, 50, -Math.PI / 6);
-  
-  // Medium dumbbell bottom-right
-  drawDumbbell(ctx, width * 0.75, height * 0.85, 80, Math.PI / 3);
-
-  // Concentric circles left side
-  ctx.globalAlpha = 0.05;
-  const circleCenter1 = { x: width * 0.12, y: height * 0.25 };
-  [60, 45, 30].forEach(radius => {
-    ctx.beginPath();
-    ctx.arc(circleCenter1.x, circleCenter1.y, radius, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-
-  // Concentric circles right side
-  const circleCenter2 = { x: width * 0.88, y: height * 0.42 };
-  [50, 35, 20].forEach(radius => {
-    ctx.beginPath();
-    ctx.arc(circleCenter2.x, circleCenter2.y, radius, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-
-  // Single circles scattered
-  ctx.globalAlpha = 0.04;
-  [
-    { x: width * 0.25, y: height * 0.18, r: 25 },
-    { x: width * 0.7, y: height * 0.72, r: 35 },
-    { x: width * 0.05, y: height * 0.6, r: 20 },
-  ].forEach(({ x, y, r }) => {
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-
-  // Curved lines
-  ctx.globalAlpha = 0.05;
-  ctx.lineWidth = 2;
-  
-  // Top curved line
-  ctx.beginPath();
-  ctx.moveTo(width * 0.2, height * 0.08);
-  ctx.quadraticCurveTo(width * 0.35, height * 0.15, width * 0.3, height * 0.22);
-  ctx.stroke();
-
-  // Right curved line
-  ctx.beginPath();
-  ctx.moveTo(width * 0.75, height * 0.18);
-  ctx.quadraticCurveTo(width * 0.95, height * 0.25, width * 0.88, height * 0.38);
-  ctx.stroke();
-
-  // Left curved line
-  ctx.beginPath();
-  ctx.moveTo(width * 0.08, height * 0.48);
-  ctx.quadraticCurveTo(width * 0.02, height * 0.58, width * 0.12, height * 0.68);
-  ctx.stroke();
-
-  // Bottom curved line
-  ctx.beginPath();
-  ctx.moveTo(width * 0.55, height * 0.88);
-  ctx.quadraticCurveTo(width * 0.7, height * 0.92, width * 0.85, height * 0.85);
-  ctx.stroke();
-
-  ctx.globalAlpha = 1;
-}
-
-function drawDumbbell(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, rotation: number): void {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rotation);
-  
-  // Bar
-  ctx.beginPath();
-  ctx.moveTo(-size/2, 0);
-  ctx.lineTo(size/2, 0);
-  ctx.stroke();
-  
-  // Left weight plates
-  const plateWidth = size * 0.15;
-  const plateHeight = size * 0.5;
-  ctx.beginPath();
-  ctx.roundRect(-size/2 - plateWidth, -plateHeight/2, plateWidth, plateHeight, 3);
-  ctx.stroke();
-  
-  // Right weight plates
-  ctx.beginPath();
-  ctx.roundRect(size/2, -plateHeight/2, plateWidth, plateHeight, 3);
-  ctx.stroke();
-  
-  ctx.restore();
-}
 
 async function drawLogo(ctx: CanvasRenderingContext2D, width: number): Promise<void> {
   return new Promise((resolve) => {
