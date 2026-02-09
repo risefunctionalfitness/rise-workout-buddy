@@ -6,6 +6,7 @@ import { Achievement, UserStats } from "@/hooks/useUserAchievements";
 import { ShareDialog } from "@/components/highlights/ShareDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AchievementIcon } from "@/components/highlights/AchievementIcon";
+import { MiniChart } from "@/components/highlights/MiniChart";
 
 interface AchievementsSlideProps {
   userId: string;
@@ -94,21 +95,9 @@ export const AchievementsSlide = ({
               {currentCard.sublabel && (
                 <div className="text-sm text-gray-400 mt-1">{currentCard.sublabel}</div>
               )}
-              {/* Mini ascending bar chart */}
-              <div className="flex items-end justify-center gap-1 mt-4 h-10">
-                {Array.from({ length: 8 }).map((_, i) => {
-                  const height = 12 + (i / 7) * 28;
-                  return (
-                    <div
-                      key={i}
-                      className="w-3 rounded-sm"
-                      style={{
-                        height: `${height}px`,
-                        background: `linear-gradient(to top, #6b1c1c, #dc2626)`,
-                      }}
-                    />
-                  );
-                })}
+              {/* Type-specific chart */}
+              <div className="mt-4">
+                <MiniChart type={currentCard.type} stats={stats} value={currentCard.value} />
               </div>
             </div>
 
