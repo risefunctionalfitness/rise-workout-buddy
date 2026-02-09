@@ -113,7 +113,7 @@ export const AchievementsSlide = ({
             </div>
 
             {/* Instagram handle */}
-            <div className="absolute bottom-4 right-4 text-xs text-gray-400">
+            <div className="absolute bottom-2 right-4 text-xs text-gray-400">
               @risefunctionalfitness
             </div>
           </CardContent>
