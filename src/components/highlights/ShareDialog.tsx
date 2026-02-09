@@ -145,6 +145,7 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
             <Instagram className="h-4 w-4" />
             Tag uns auf Instagram
           </p>
+        </DialogHeader>
 
         <div className="space-y-4">
           {/* Preview */}
