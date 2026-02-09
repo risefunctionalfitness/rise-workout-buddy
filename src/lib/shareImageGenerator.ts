@@ -113,26 +113,27 @@ function drawBottomGradient(ctx: CanvasRenderingContext2D, width: number, height
 }
 
 
-async function drawLogo(ctx: CanvasRenderingContext2D, width: number): Promise<void> {
+async function drawLogo(ctx: CanvasRenderingContext2D, width: number, isStory: boolean): Promise<void> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const logoHeight = 100; // Larger logo
+      const logoHeight = isStory ? 100 : 60;
       const logoWidth = (img.width / img.height) * logoHeight;
-      const x = (width - logoWidth) / 2;
-      ctx.drawImage(img, x, 120, logoWidth, logoHeight); // Lower position
+      if (isStory) {
+        const x = (width - logoWidth) / 2;
+        ctx.drawImage(img, x, 120, logoWidth, logoHeight);
+      } else {
+        ctx.drawImage(img, 30, 30, logoWidth, logoHeight);
+      }
       resolve();
     };
     img.onerror = () => {
-      // Fallback: Draw text - larger and lower
       ctx.fillStyle = "white";
-      ctx.font = "bold 56px system-ui, -apple-system, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("RISE", width / 2, 160);
-      
-      ctx.font = "300 24px system-ui, -apple-system, sans-serif";
-      ctx.fillText("Functional Fitness", width / 2, 195);
+      ctx.font = `bold ${isStory ? 56 : 36}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = isStory ? "center" : "left";
+      const x = isStory ? width / 2 : 30;
+      ctx.fillText("RISE", x, isStory ? 160 : 60);
       resolve();
     };
     img.src = "/logos/rise_dark.png";
