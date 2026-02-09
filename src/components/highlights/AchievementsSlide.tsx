@@ -92,6 +92,22 @@ export const AchievementsSlide = ({
               {currentCard.sublabel && (
                 <div className="text-sm text-gray-400 mt-1">{currentCard.sublabel}</div>
               )}
+              {/* Mini ascending bar chart */}
+              <div className="flex items-end justify-center gap-1 mt-4 h-10">
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const height = 12 + (i / 7) * 28;
+                  return (
+                    <div
+                      key={i}
+                      className="w-3 rounded-sm"
+                      style={{
+                        height: `${height}px`,
+                        background: `linear-gradient(to top, #6b1c1c, #dc2626)`,
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </div>
 
             {/* Instagram handle */}
