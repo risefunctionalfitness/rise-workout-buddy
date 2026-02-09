@@ -383,20 +383,15 @@ function drawMilestoneChart(
   const allMilestones = [10, 25, 50, 75, 100, 150, 200, 300, 500];
   const nextIdx = allMilestones.findIndex(m => m > currentValue);
   
-  // Show: last reached, current reached, next target (max 3)
-  const milestones: number[] = [];
+  // Show all milestones up to and including the next target
+  let milestones: number[];
   if (nextIdx === -1) {
-    milestones.push(...allMilestones.slice(-3));
-  } else if (nextIdx === 0) {
-    milestones.push(allMilestones[0], allMilestones[1]);
+    milestones = allMilestones;
   } else {
-    const prev = nextIdx >= 2 ? allMilestones[nextIdx - 2] : null;
-    if (prev !== null) milestones.push(prev);
-    milestones.push(allMilestones[nextIdx - 1]);
-    milestones.push(allMilestones[nextIdx]);
+    milestones = allMilestones.slice(0, nextIdx + 1);
   }
 
-  const chartWidth = width * 0.6;
+  const chartWidth = width * 0.7;
   const startX = centerX - chartWidth / 2;
   const dotRadius = width * 0.014;
   const spacing = milestones.length > 1 ? chartWidth / (milestones.length - 1) : 0;
