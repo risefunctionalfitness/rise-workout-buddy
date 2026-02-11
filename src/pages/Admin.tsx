@@ -213,6 +213,14 @@ export default function Admin() {
         query = query.or(`display_name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,access_code.ilike.%${searchTerm}%`);
       }
       
+      if (filterMembershipType !== 'all') {
+        query = query.eq('membership_type', filterMembershipType);
+      }
+      
+      if (filterStatus !== 'all') {
+        query = query.eq('status', filterStatus);
+      }
+      
       const { data, error, count } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + membersPerPage - 1);
