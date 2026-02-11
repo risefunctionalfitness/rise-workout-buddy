@@ -78,6 +78,8 @@ export default function Admin() {
   const [editedPhoneNumber, setEditedPhoneNumber] = useState('')
   const [activePage, setActivePage] = useState<'home' | 'members' | 'courses' | 'templates' | 'news' | 'codes' | 'credits' | 'workouts' | 'challenges' | 'leaderboard' | 'emails' | 'risk-radar' | 'orders' | 'webhooks'>('home');
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterMembershipType, setFilterMembershipType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
   const membersPerPage = 10;
