@@ -126,7 +126,7 @@ export default function Admin() {
       // Mark pending Wellpass registrations as approved when viewing members
       markWellpassRegistrationsAsApproved();
     }
-  }, [activePage, isAdmin, currentPage, searchTerm]);
+  }, [activePage, isAdmin, currentPage, searchTerm, filterMembershipType, filterStatus]);
 
   const markWellpassRegistrationsAsApproved = async () => {
     try {
