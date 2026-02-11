@@ -188,7 +188,7 @@ async function drawMainContent(
   } else if (options.type === "training") {
     drawMilestoneChart(ctx, centerX, chartY, width, parseInt(options.value) || 0);
   } else if (options.type === "weekly" && stats) {
-    drawWeeklyChart(ctx, centerX, chartY, width, stats.thisWeekTrainings, stats.weeklyGoal);
+    drawWeeklyChart(ctx, centerX, chartY, width, stats.thisWeekTrainingDays, stats.weeklyGoal);
   } else {
     drawGenericChart(ctx, centerX, chartY, width);
   }
@@ -490,7 +490,7 @@ function drawWeeklyChart(
   centerX: number,
   y: number,
   width: number,
-  completed: number,
+  trainingDays: number[],
   goal: number
 ): void {
   const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -500,7 +500,7 @@ function drawWeeklyChart(
 
   days.forEach((day, i) => {
     const x = startX + i * (dotRadius * 2 + 16) + dotRadius;
-    const isCompleted = i < completed;
+    const isCompleted = trainingDays.includes(i);
     const isGoal = i < goal;
 
     // Draw circle

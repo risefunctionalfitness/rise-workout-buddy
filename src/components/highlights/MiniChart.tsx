@@ -127,14 +127,14 @@ function TotalMiniChart({ stats }: { stats: UserStats | null }) {
 }
 
 function WeeklyMiniChart({ stats }: { stats: UserStats | null }) {
-  const completed = stats?.thisWeekTrainings ?? 0;
+  const trainingDays = stats?.thisWeekTrainingDays ?? [];
   const goal = stats?.weeklyGoal ?? 3;
   const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
   return (
     <div className="flex justify-center gap-2">
       {days.map((day, i) => {
-        const isCompleted = i < completed;
+        const isCompleted = trainingDays.includes(i);
         const isGoal = i < goal;
         return (
           <div key={day} className="flex flex-col items-center gap-1">
