@@ -617,9 +617,9 @@ export default function Admin() {
                 </CardDescription>
                 </div>
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-wrap gap-2 items-center">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Suchen..."
                     value={searchTerm}
@@ -630,6 +630,27 @@ export default function Admin() {
                     className="pl-10 w-48"
                   />
                 </div>
+                <Select value={filterMembershipType} onValueChange={(v) => { setFilterMembershipType(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Mitgliedschaft" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Typen</SelectItem>
+                    {membershipTypes.map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Status</SelectItem>
+                    <SelectItem value="active">Aktiv</SelectItem>
+                    <SelectItem value="inactive">Inaktiv</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
                     <Button size="icon" title="Neues Mitglied erstellen">
