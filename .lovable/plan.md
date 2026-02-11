@@ -1,23 +1,49 @@
 
 
-## Fixes
+## Zwei Anpassungen an den Persoenlichen Highlights
 
-### 1. Milestone-Anzeige schmaler machen
-Die Breite des Meilenstein-Charts (`chartWidth`) wird von `width * 0.7` auf `width * 0.55` reduziert -- sowohl im Canvas-Share-Bild (`shareImageGenerator.ts`) als auch in der UI-Vorschau (`MiniChart.tsx`). Die vertikale Position bleibt unveraendert.
+### 1. Tatsaechliche Trainingstage anzeigen (statt sequentiell)
 
-### 2. Beitrags-Vorschau mittig zentrieren
-Im ShareDialog wird das Preview-Bild korrekt horizontal zentriert, indem der Container `w-full` und das Bild `w-auto max-h-full` erhaelt, sodass es bei beiden Formaten (Story und Beitrag) immer mittig sitzt.
+**Problem:** Aktuell wird nur die Anzahl der Trainings diese Woche gezaehlt (`thisWeekTrainings = 3`), und dann werden einfach die ersten 3 Tage (Mo, Di, Mi) markiert. Stattdessen muessen die tatsaechlichen Wochentage markiert werden.
+
+**Loesung:**
+
+- **`UserStats` Interface erweitern** (`src/hooks/useUserAchievements.ts`): Neues Feld `thisWeekTrainingDays: number[]` hinzufuegen (Array mit Wochentag-Indizes 0-6 fuer Mo-So).
+- **Berechnung anpassen** (`src/hooks/useUserAchievements.ts`): Beim Zaehlen der Wochentrainings auch den Wochentag jedes Trainings speichern (0=Mo, 1=Di, ..., 6=So).
+- **MiniChart aktualisieren** (`src/components/highlights/MiniChart.tsx`): `WeeklyMiniChart` nutzt `stats.thisWeekTrainingDays` statt `i < completed`, um die richtigen Tage zu markieren.
+- **Share-Image aktualisieren** (`src/lib/shareImageGenerator.ts`): `drawWeeklyChart` erhaelt das Array der tatsaechlichen Tage statt nur die Anzahl, und markiert die korrekten Kreise.
+
+### 2. Separater Download-Button im Share-Dialog
+
+**Problem:** Aktuell gibt es nur einen kombinierten "Teilen / Speichern"-Button, der zuerst die Web Share API versucht und nur als Fallback herunterlaed.
+
+**Loesung:**
+
+- **Zweiten Button hinzufuegen** (`src/components/highlights/ShareDialog.tsx`): Neben dem bestehenden Teilen-Button kommt ein separater "Herunterladen"-Button mit Download-Icon, der das Bild direkt als Datei speichert.
 
 ### Technische Details
 
-**`src/lib/shareImageGenerator.ts`** (Zeile 394):
-- `chartWidth` von `width * 0.7` auf `width * 0.55` aendern
+**Neues Feld in UserStats:**
+```text
+thisWeekTrainingDays: number[]  // z.B. [1, 4] fuer Di und Fr
+```
 
-**`src/components/highlights/MiniChart.tsx`** (Zeile 76):
-- Connecting-Line-Breite anpassen: `Math.max(8, 36 / milestones.length)` statt `Math.max(12, 48 / milestones.length)` fuer kompaktere Darstellung
-- Dot-Groesse von `w-4 h-4` auf `w-3.5 h-3.5` reduzieren
+**Berechnung der Trainingstage:**
+```text
+Fuer jede Buchung/Training dieser Woche:
+  -> Wochentag berechnen (0=Mo bis 6=So)
+  -> In Set sammeln (Duplikate vermeiden)
+  -> Als sortiertes Array speichern
+```
 
-**`src/components/highlights/ShareDialog.tsx`** (Zeile 148-161):
-- Preview-Container: `className="relative rounded-lg overflow-hidden bg-muted flex items-center justify-center w-full"`
-- Preview-Image: `className="max-h-full w-auto object-contain"`
+**Share-Dialog Layout:**
+```text
+[Instagram-Icon  Auf Instagram teilen]   (voller breite)
+[Download-Icon   Herunterladen      ]   (outline, volle Breite)
+```
 
+**Betroffene Dateien:**
+- `src/hooks/useUserAchievements.ts` - Stats-Interface und Berechnung
+- `src/components/highlights/MiniChart.tsx` - WeeklyMiniChart Anzeige
+- `src/lib/shareImageGenerator.ts` - drawWeeklyChart Funktion
+- `src/components/highlights/ShareDialog.tsx` - Download-Button
