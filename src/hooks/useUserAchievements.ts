@@ -26,6 +26,7 @@ export interface UserStats {
   trainingsByDay: Record<string, number>;
   weeklyActivity: Array<{ week: string; bookings: number; trainings: number }>;
   thisWeekTrainings: number;
+  thisWeekTrainingDays: number[];
   weeklyGoal: number;
   cancellations: number;
   cancellationRate: number;
@@ -183,16 +184,26 @@ export const useUserAchievements = (userId: string) => {
     weekStart.setHours(0, 0, 0, 0);
 
     let thisWeekTrainings = 0;
+    const thisWeekDaysSet = new Set<number>();
     bookings?.forEach((b: any) => {
       if (b.courses?.course_date) {
         const d = new Date(b.courses.course_date);
-        if (d >= weekStart && d <= now) thisWeekTrainings++;
+        if (d >= weekStart && d <= now) {
+          thisWeekTrainings++;
+          // Convert JS day (0=Sun) to Mon-based index (0=Mon..6=Sun)
+          const jsDay = d.getDay();
+          thisWeekDaysSet.add(jsDay === 0 ? 6 : jsDay - 1);
+        }
       }
     });
     trainings?.forEach((t: any) => {
       if (t.date) {
         const d = new Date(t.date);
-        if (d >= weekStart && d <= now) thisWeekTrainings++;
+        if (d >= weekStart && d <= now) {
+          thisWeekTrainings++;
+          const jsDay = d.getDay();
+          thisWeekDaysSet.add(jsDay === 0 ? 6 : jsDay - 1);
+        }
       }
     });
 
@@ -209,6 +220,7 @@ export const useUserAchievements = (userId: string) => {
       trainingsByDay,
       weeklyActivity: [],
       thisWeekTrainings,
+      thisWeekTrainingDays: Array.from(thisWeekDaysSet).sort((a, b) => a - b),
       weeklyGoal,
       cancellations: cancellationCount || 0,
       cancellationRate: totalBookings + (cancellationCount || 0) > 0

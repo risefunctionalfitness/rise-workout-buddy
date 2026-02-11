@@ -68,6 +68,26 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
     reader.readAsDataURL(file);
   };
 
+  const handleDownload = async () => {
+    setIsGenerating(true);
+    try {
+      const canvas = await generateShareImage({
+        ...shareData,
+        background: selectedBackground,
+        customBackgroundUrl,
+        format: imageFormat,
+      });
+      canvas.toBlob((blob) => {
+        if (blob) downloadImage(blob);
+      }, "image/png");
+    } catch (error) {
+      console.error("Error downloading:", error);
+      toast({ title: "Fehler", description: "Das Bild konnte nicht erstellt werden.", variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleShare = async () => {
     setIsGenerating(true);
     try {
@@ -200,22 +220,34 @@ export const ShareDialog = ({ open, onOpenChange, shareData }: ShareDialogProps)
             Tag uns auf Instagram
           </p>
 
-          {/* Share/Download Button */}
-          <Button 
-            onClick={handleShare} 
-            className="w-full" 
-            size="default"
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <>Wird erstellt...</>
-            ) : (
-              <>
-                <Share2 className="h-4 w-4 mr-2" />
-                Teilen / Speichern
-              </>
-            )}
-          </Button>
+          {/* Share/Download Buttons */}
+          <div className="flex flex-col gap-2">
+            <Button 
+              onClick={handleShare} 
+              className="w-full" 
+              size="default"
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <>Wird erstellt...</>
+              ) : (
+                <>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Teilen
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={handleDownload} 
+              variant="outline"
+              className="w-full" 
+              size="default"
+              disabled={isGenerating}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Herunterladen
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
