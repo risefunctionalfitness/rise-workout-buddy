@@ -43,6 +43,14 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
 
   useEffect(() => {
     loadCoursesData()
+    
+    const handleRegistrationChanged = () => {
+      loadCoursesData()
+    }
+    window.addEventListener('courseRegistrationChanged', handleRegistrationChanged)
+    return () => {
+      window.removeEventListener('courseRegistrationChanged', handleRegistrationChanged)
+    }
   }, [user.id])
 
   const loadCoursesData = async () => {
