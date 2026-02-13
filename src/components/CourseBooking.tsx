@@ -761,7 +761,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               </div>
 
               {/* Minimum participants warning */}
-              {selectedCourse.registered_count < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
+              {participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
                 <p className="text-xs text-muted-foreground">
                   Min. 3 Teilnehmer erforderlich
                 </p>
@@ -771,7 +771,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium text-sm text-muted-foreground">
-                    Teilnehmer ({selectedCourse.registered_count}/{selectedCourse.max_participants})
+                    Teilnehmer ({participants.filter(p => p.status === 'registered').length}/{selectedCourse.max_participants})
                   </h4>
                   <CourseInvitationButton
                     courseId={selectedCourse.id}
