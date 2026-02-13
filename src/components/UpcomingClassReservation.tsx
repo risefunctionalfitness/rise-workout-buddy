@@ -137,16 +137,24 @@ export const UpcomingClassReservation = ({
     if (!courseId) return;
 
     try {
-      const { data: registrations, error: regError } = await supabase
-        .from("course_registrations")
-        .select("status, user_id, registered_at")
-        .eq("course_id", courseId)
-        .in("status", ["registered", "waitlist"])
-        .order("registered_at", { ascending: true });
+      const [regResult, guestResult] = await Promise.all([
+        supabase
+          .from("course_registrations")
+          .select("status, user_id, registered_at")
+          .eq("course_id", courseId)
+          .in("status", ["registered", "waitlist"])
+          .order("registered_at", { ascending: true }),
+        supabase
+          .from("guest_registrations")
+          .select("id, guest_name, booking_type, created_at")
+          .eq("course_id", courseId)
+          .eq("status", "registered")
+          .order("created_at", { ascending: true })
+      ]);
 
-      if (regError) throw regError;
+      if (regResult.error) throw regResult.error;
 
-      const userIds = registrations?.map(r => r.user_id) || [];
+      const userIds = regResult.data?.map(r => r.user_id) || [];
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("user_id, display_name, first_name, nickname, avatar_url, membership_type")
@@ -154,12 +162,27 @@ export const UpcomingClassReservation = ({
 
       if (profileError) throw profileError;
 
-      const participantsWithProfiles = registrations?.map(reg => ({
+      const participantsWithProfiles = regResult.data?.map(reg => ({
         ...reg,
-        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: "Unbekannt" }
+        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: "Unbekannt" },
+        isGuest: false
       })) || [];
 
-      setParticipants(participantsWithProfiles);
+      // Convert guest registrations to participant format
+      const guestParticipants = (guestResult.data || []).map(guest => ({
+        user_id: guest.id,
+        status: 'registered' as const,
+        registered_at: guest.created_at,
+        profiles: {
+          display_name: guest.guest_name,
+          nickname: null,
+          membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+          avatar_url: null
+        },
+        isGuest: true
+      }));
+
+      setParticipants([...participantsWithProfiles, ...guestParticipants]);
     } catch (error) {
       console.error("Error loading participants:", error);
     }
