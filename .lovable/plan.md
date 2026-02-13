@@ -1,49 +1,30 @@
 
 
-## Zwei Anpassungen an den Persoenlichen Highlights
+# Fix: Kursanzahl zeigt Gäste nicht korrekt an
 
-### 1. Tatsaechliche Trainingstage anzeigen (statt sequentiell)
+## Problem
+Die Teilnehmeranzahl im Header "Teilnehmer (7/16)" verwendet `selectedCourse.registered_count`, das beim initialen Laden der Kursliste berechnet wird. Obwohl die Teilnehmerliste korrekt 8 Personen zeigt (7 Mitglieder + 1 Gast Julia Weidenauer), wird die Kopfzeile nicht aktualisiert.
 
-**Problem:** Aktuell wird nur die Anzahl der Trainings diese Woche gezaehlt (`thisWeekTrainings = 3`), und dann werden einfach die ersten 3 Tage (Mo, Di, Mi) markiert. Stattdessen muessen die tatsaechlichen Wochentage markiert werden.
+Das gleiche Problem betrifft auch die Kalender-Badges auf der rechten Seite und den Admin-Bereich.
 
-**Loesung:**
+## Loesung
 
-- **`UserStats` Interface erweitern** (`src/hooks/useUserAchievements.ts`): Neues Feld `thisWeekTrainingDays: number[]` hinzufuegen (Array mit Wochentag-Indizes 0-6 fuer Mo-So).
-- **Berechnung anpassen** (`src/hooks/useUserAchievements.ts`): Beim Zaehlen der Wochentrainings auch den Wochentag jedes Trainings speichern (0=Mo, 1=Di, ..., 6=So).
-- **MiniChart aktualisieren** (`src/components/highlights/MiniChart.tsx`): `WeeklyMiniChart` nutzt `stats.thisWeekTrainingDays` statt `i < completed`, um die richtigen Tage zu markieren.
-- **Share-Image aktualisieren** (`src/lib/shareImageGenerator.ts`): `drawWeeklyChart` erhaelt das Array der tatsaechlichen Tage statt nur die Anzahl, und markiert die korrekten Kreise.
+Zwei Ansaetze werden kombiniert:
 
-### 2. Separater Download-Button im Share-Dialog
+1. **Dynamische Anzeige aus geladenen Teilnehmern**: Wenn der Kurs-Dialog geoeffnet ist und Teilnehmer geladen wurden, wird `participants.length` (gefiltert auf "registered") fuer die Anzeige verwendet statt `selectedCourse.registered_count`. So stimmt die Zahl immer mit der tatsaechlich angezeigten Liste ueberein.
 
-**Problem:** Aktuell gibt es nur einen kombinierten "Teilen / Speichern"-Button, der zuerst die Web Share API versucht und nur als Fallback herunterlaed.
+2. **selectedCourse nach Laden der Teilnehmer aktualisieren**: Nach dem Laden der Teilnehmer wird `selectedCourse.registered_count` auf die korrekte Anzahl aktualisiert, damit alle Stellen konsistent sind.
 
-**Loesung:**
+## Technische Aenderungen
 
-- **Zweiten Button hinzufuegen** (`src/components/highlights/ShareDialog.tsx`): Neben dem bestehenden Teilen-Button kommt ein separater "Herunterladen"-Button mit Download-Icon, der das Bild direkt als Datei speichert.
+### Datei: `src/components/CourseBooking.tsx`
+- Zeile 774: Statt `selectedCourse.registered_count` wird die Anzahl der geladenen `participants` mit Status "registered" verwendet
+- In `loadParticipants`: Nach dem Laden wird `selectedCourse` mit dem korrekten Count aktualisiert (damit auch die Kursliste im Hintergrund stimmt)
 
-### Technische Details
+### Datei: `src/components/DayCourseDialog.tsx`
+- Gleiche Anpassung: Teilnehmer-Header verwendet `participants.filter(p => p.status === 'registered').length` statt `selectedCourse.registered_count`
+- Nach Laden der Teilnehmer wird der Count aktualisiert
 
-**Neues Feld in UserStats:**
-```text
-thisWeekTrainingDays: number[]  // z.B. [1, 4] fuer Di und Fr
-```
+### Datei: `src/components/CourseParticipantsList.tsx`
+- Pruefen ob dort auch ein statischer Count verwendet wird und ggf. auf die tatsaechliche Teilnehmerliste umstellen
 
-**Berechnung der Trainingstage:**
-```text
-Fuer jede Buchung/Training dieser Woche:
-  -> Wochentag berechnen (0=Mo bis 6=So)
-  -> In Set sammeln (Duplikate vermeiden)
-  -> Als sortiertes Array speichern
-```
-
-**Share-Dialog Layout:**
-```text
-[Instagram-Icon  Auf Instagram teilen]   (voller breite)
-[Download-Icon   Herunterladen      ]   (outline, volle Breite)
-```
-
-**Betroffene Dateien:**
-- `src/hooks/useUserAchievements.ts` - Stats-Interface und Berechnung
-- `src/components/highlights/MiniChart.tsx` - WeeklyMiniChart Anzeige
-- `src/lib/shareImageGenerator.ts` - drawWeeklyChart Funktion
-- `src/components/highlights/ShareDialog.tsx` - Download-Button
