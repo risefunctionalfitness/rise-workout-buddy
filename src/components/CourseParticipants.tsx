@@ -63,6 +63,20 @@ export const CourseParticipants = () => {
 
       if (error) throw error
 
+      // Get all guest registrations in bulk for efficiency
+      const courseIds = (data || []).map(c => c.id)
+      const { data: guestRegistrations } = await supabase
+        .from('guest_registrations')
+        .select('course_id')
+        .in('course_id', courseIds)
+        .eq('status', 'registered')
+
+      // Create a map of guest counts per course
+      const guestCountMap = new Map<string, number>()
+      for (const guest of guestRegistrations || []) {
+        guestCountMap.set(guest.course_id, (guestCountMap.get(guest.course_id) || 0) + 1)
+      }
+
       // Get registration counts for all courses
       const coursesWithCounts = await Promise.all(
         (data || []).map(async (course) => {
@@ -72,7 +86,9 @@ export const CourseParticipants = () => {
             .eq('course_id', course.id)
             .in('status', ['registered', 'waitlist'])
 
-          const registered_count = registrations?.filter(r => r.status === 'registered').length || 0
+          const memberCount = registrations?.filter(r => r.status === 'registered').length || 0
+          const guestCount = guestCountMap.get(course.id) || 0
+          const registered_count = memberCount + guestCount
           const waitlisted_count = registrations?.filter(r => r.status === 'waitlist').length || 0
 
           return {
