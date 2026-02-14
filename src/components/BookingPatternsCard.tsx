@@ -8,7 +8,8 @@ import { Clock, ChevronLeft, ChevronRight } from "lucide-react";
 interface BookingPattern {
   dayOfWeek: string;
   hour: string;
-  registrations: number;
+  avgUtilization: number;
+  courseCount: number;
   dayIndex: number;
 }
 
@@ -31,45 +32,64 @@ export const BookingPatternsCard = () => {
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: registrations, error } = await supabase
-        .from('course_registrations')
+      const { data: courses, error } = await supabase
+        .from('courses')
         .select(`
-          registered_at,
-          courses!inner(course_date, start_time)
+          course_date,
+          start_time,
+          max_participants,
+          course_registrations(status),
+          guest_registrations(status)
         `)
-        .eq('status', 'registered')
-        .gte('courses.course_date', thirtyDaysAgoStr)
-        .lt('courses.course_date', today);
+        .eq('is_cancelled', false)
+        .gte('course_date', thirtyDaysAgoStr)
+        .lt('course_date', today);
 
       if (error) throw error;
 
-      // Create pattern map
-      const patternMap = new Map<string, { dayOfWeek: string; hour: string; registrations: number; dayIndex: number }>();
+      // Group by dayOfWeek + hour
+      const patternMap = new Map<string, { dayOfWeek: string; hour: string; totalRegistered: number; totalCapacity: number; courseCount: number; dayIndex: number }>();
 
-      registrations?.forEach((reg: any) => {
-        if (!reg.courses?.start_time) return;
+      courses?.forEach((course: any) => {
+        if (!course.start_time) return;
 
-        const courseDate = new Date(reg.courses.course_date);
+        const courseDate = new Date(course.course_date);
         const dayIndex = courseDate.getDay();
         const dayOfWeek = dayNames[dayIndex];
-        const hour = reg.courses.start_time.split(':')[0];
+        const hour = course.start_time.split(':')[0];
         const key = `${dayOfWeek}-${hour}`;
+
+        const memberCount = course.course_registrations?.filter((r: any) => r.status === 'registered').length || 0;
+        const guestCount = course.guest_registrations?.filter((r: any) => r.status === 'registered').length || 0;
+        const registered = memberCount + guestCount;
 
         const existing = patternMap.get(key);
         if (existing) {
-          existing.registrations += 1;
+          existing.totalRegistered += registered;
+          existing.totalCapacity += (course.max_participants || 0);
+          existing.courseCount += 1;
         } else {
-          patternMap.set(key, { dayOfWeek, hour, registrations: 1, dayIndex });
+          patternMap.set(key, {
+            dayOfWeek,
+            hour,
+            totalRegistered: registered,
+            totalCapacity: course.max_participants || 0,
+            courseCount: 1,
+            dayIndex,
+          });
         }
       });
 
-      // Convert to array and sort
-      const patternsArray = Array.from(patternMap.values()).sort((a, b) => {
-        if (a.dayIndex !== b.dayIndex) {
-          return a.dayIndex - b.dayIndex;
-        }
-        return parseInt(a.hour) - parseInt(b.hour);
-      });
+      // Calculate avg utilization and sort by utilization descending
+      const patternsArray: BookingPattern[] = Array.from(patternMap.values())
+        .map(p => ({
+          dayOfWeek: p.dayOfWeek,
+          hour: p.hour,
+          avgUtilization: p.totalCapacity > 0 ? Math.round((p.totalRegistered / p.totalCapacity) * 100) : 0,
+          courseCount: p.courseCount,
+          dayIndex: p.dayIndex,
+        }))
+        .sort((a, b) => b.avgUtilization - a.avgUtilization);
 
       setPatterns(patternsArray);
     } catch (error) {
@@ -99,12 +119,7 @@ export const BookingPatternsCard = () => {
   const endIndex = startIndex + itemsPerPage;
   const displayPatterns = patterns.slice(startIndex, endIndex);
 
-  const mostPopular = patterns.reduce((max, pattern) =>
-    pattern.registrations > max.registrations ? pattern : max,
-    patterns[0] || { dayOfWeek: '-', hour: '-', registrations: 0, dayIndex: 0 }
-  );
-
-  const maxRegistrations = Math.max(...patterns.map(p => p.registrations), 1);
+  const mostPopular = patterns[0] || { dayOfWeek: '-', hour: '-', avgUtilization: 0, courseCount: 0, dayIndex: 0 };
 
   return (
     <Card>
@@ -113,7 +128,7 @@ export const BookingPatternsCard = () => {
           <Clock className="h-5 w-5 text-primary" />
           <CardTitle>Buchungsmuster</CardTitle>
         </div>
-        <p className="text-sm text-muted-foreground">Vergangene 30 Tage</p>
+        <p className="text-sm text-muted-foreground">Ø Kursauslastung der letzten 30 Tage</p>
       </CardHeader>
       <CardContent className="space-y-2">
         {displayPatterns.length === 0 ? (
@@ -127,9 +142,9 @@ export const BookingPatternsCard = () => {
               <div className="flex items-center gap-2">
                 <div
                   className="h-2 bg-primary rounded-full"
-                  style={{ width: `${(pattern.registrations / maxRegistrations) * 80}px` }}
+                  style={{ width: `${(pattern.avgUtilization / 100) * 80}px` }}
                 />
-                <span className="text-muted-foreground w-8 text-right">{pattern.registrations}</span>
+                <span className="text-muted-foreground w-10 text-right">{pattern.avgUtilization}%</span>
               </div>
             </div>
           ))
@@ -162,7 +177,7 @@ export const BookingPatternsCard = () => {
       )}
       <CardFooter>
         <p className="text-xs text-muted-foreground">
-          Meiste Buchungen: {mostPopular.dayOfWeek} {mostPopular.hour}:00 ({mostPopular.registrations} Buchungen)
+          Höchste Auslastung: {mostPopular.dayOfWeek} {mostPopular.hour}:00 ({mostPopular.avgUtilization}%)
         </p>
       </CardFooter>
     </Card>
