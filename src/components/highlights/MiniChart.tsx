@@ -135,7 +135,6 @@ function WeeklyMiniChart({ stats }: { stats: UserStats | null }) {
     <div className="flex justify-center gap-2">
       {days.map((day, i) => {
         const isCompleted = trainingDays.includes(i);
-        const isGoal = i < goal;
         return (
           <div key={day} className="flex flex-col items-center gap-1">
             <div
@@ -143,13 +142,9 @@ function WeeklyMiniChart({ stats }: { stats: UserStats | null }) {
               style={{
                 background: isCompleted
                   ? "radial-gradient(circle, #dc2626, #991b1b)"
-                  : isGoal
-                  ? "rgba(255,255,255,0.08)"
                   : "rgba(255,255,255,0.05)",
                 border: isCompleted
                   ? "none"
-                  : isGoal
-                  ? "2px solid rgba(220,38,38,0.5)"
                   : "1.5px solid rgba(255,255,255,0.2)",
               }}
             >
