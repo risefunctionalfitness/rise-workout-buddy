@@ -1,30 +1,33 @@
 
+# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-# Fix: Kursanzahl zeigt Gäste nicht korrekt an
+## Aenderung
 
-## Problem
-Die Teilnehmeranzahl im Header "Teilnehmer (7/16)" verwendet `selectedCourse.registered_count`, das beim initialen Laden der Kursliste berechnet wird. Obwohl die Teilnehmerliste korrekt 8 Personen zeigt (7 Mitglieder + 1 Gast Julia Weidenauer), wird die Kopfzeile nicht aktualisiert.
+Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
 
-Das gleiche Problem betrifft auch die Kalender-Badges auf der rechten Seite und den Admin-Bereich.
+## Berechnung
 
-## Loesung
+Fuer jede Wochentag-Uhrzeit-Kombination:
+- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
+- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
+- Durchschnitt ueber alle Kurse dieser Kombination bilden
+- Ergebnis als Prozentwert anzeigen
 
-Zwei Ansaetze werden kombiniert:
+## Technische Umsetzung
 
-1. **Dynamische Anzeige aus geladenen Teilnehmern**: Wenn der Kurs-Dialog geoeffnet ist und Teilnehmer geladen wurden, wird `participants.length` (gefiltert auf "registered") fuer die Anzeige verwendet statt `selectedCourse.registered_count`. So stimmt die Zahl immer mit der tatsaechlich angezeigten Liste ueberein.
+### Datei: `src/components/BookingPatternsCard.tsx`
 
-2. **selectedCourse nach Laden der Teilnehmer aktualisieren**: Nach dem Laden der Teilnehmer wird `selectedCourse.registered_count` auf die korrekte Anzahl aktualisiert, damit alle Stellen konsistent sind.
+1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
 
-## Technische Aenderungen
+2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
+   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
+   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
+   - Gruppierung nach Wochentag + Startzeit
+   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
 
-### Datei: `src/components/CourseBooking.tsx`
-- Zeile 774: Statt `selectedCourse.registered_count` wird die Anzahl der geladenen `participants` mit Status "registered" verwendet
-- In `loadParticipants`: Nach dem Laden wird `selectedCourse` mit dem korrekten Count aktualisiert (damit auch die Kursliste im Hintergrund stimmt)
+3. **Anzeige anpassen**:
+   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
+   - Zahl rechts zeigt `82%` statt `42`
+   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
 
-### Datei: `src/components/DayCourseDialog.tsx`
-- Gleiche Anpassung: Teilnehmer-Header verwendet `participants.filter(p => p.status === 'registered').length` statt `selectedCourse.registered_count`
-- Nach Laden der Teilnehmer wird der Count aktualisiert
-
-### Datei: `src/components/CourseParticipantsList.tsx`
-- Pruefen ob dort auch ein statischer Count verwendet wird und ggf. auf die tatsaechliche Teilnehmerliste umstellen
-
+4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen
