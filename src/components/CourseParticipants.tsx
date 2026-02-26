@@ -53,17 +53,17 @@ export const CourseParticipants = () => {
           start_time,
           end_time,
           max_participants,
-          color
+          color,
+          course_registrations(status)
         `)
         .eq('is_cancelled', false)
-        // Only future courses by date and time
         .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
         .order('course_date', { ascending: true })
         .order('start_time', { ascending: true })
 
       if (error) throw error
 
-      // Get all guest registrations in bulk for efficiency
+      // Get all guest registrations in bulk (single query)
       const courseIds = (data || []).map(c => c.id)
       const { data: guestRegistrations } = await supabase
         .from('guest_registrations')
@@ -71,33 +71,32 @@ export const CourseParticipants = () => {
         .in('course_id', courseIds)
         .eq('status', 'registered')
 
-      // Create a map of guest counts per course
       const guestCountMap = new Map<string, number>()
       for (const guest of guestRegistrations || []) {
         guestCountMap.set(guest.course_id, (guestCountMap.get(guest.course_id) || 0) + 1)
       }
 
-      // Get registration counts for all courses
-      const coursesWithCounts = await Promise.all(
-        (data || []).map(async (course) => {
-          const { data: registrations } = await supabase
-            .from('course_registrations')
-            .select('status')
-            .eq('course_id', course.id)
-            .in('status', ['registered', 'waitlist'])
+      // Count registrations from the joined data — no extra queries
+      const coursesWithCounts = (data || []).map((course) => {
+        const regs = (course as any).course_registrations || []
+        const memberCount = regs.filter((r: any) => r.status === 'registered').length
+        const guestCount = guestCountMap.get(course.id) || 0
+        const registered_count = memberCount + guestCount
+        const waitlisted_count = regs.filter((r: any) => r.status === 'waitlist').length
 
-          const memberCount = registrations?.filter(r => r.status === 'registered').length || 0
-          const guestCount = guestCountMap.get(course.id) || 0
-          const registered_count = memberCount + guestCount
-          const waitlisted_count = registrations?.filter(r => r.status === 'waitlist').length || 0
-
-          return {
-            ...course,
-            registered_count,
-            waitlisted_count
-          }
-        })
-      )
+        return {
+          id: course.id,
+          title: course.title,
+          trainer: course.trainer,
+          course_date: course.course_date,
+          start_time: course.start_time,
+          end_time: course.end_time,
+          max_participants: course.max_participants,
+          color: course.color,
+          registered_count,
+          waitlisted_count
+        }
+      })
 
       // Get only the next 10 unique course days
       const uniqueDates = new Set<string>()
