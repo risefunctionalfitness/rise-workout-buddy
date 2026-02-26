@@ -47,7 +47,7 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
 
       const { data: coursesData, error: coursesError } = await supabase
         .from("courses")
-        .select("*")
+        .select("*, course_registrations(status)")
         .gte("course_date", threeMonthsAgo.toISOString().split('T')[0])
         .lte("course_date", threeMonthsLater.toISOString().split('T')[0])
         .order("course_date", { ascending: true })
@@ -55,39 +55,34 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
 
       if (coursesError) throw coursesError;
 
-      // Get all guest registrations in bulk for efficiency
+      // Get all guest registrations in bulk (single query)
+      const courseIds = (coursesData || []).map(c => c.id);
       const { data: guestRegistrations } = await supabase
         .from("guest_registrations")
         .select("course_id")
+        .in("course_id", courseIds)
         .eq("status", "registered");
 
-      // Create a map of guest counts per course
       const guestCountMap = new Map<string, number>();
       for (const guest of guestRegistrations || []) {
         guestCountMap.set(guest.course_id, (guestCountMap.get(guest.course_id) || 0) + 1);
       }
 
-      // Get registration counts for all courses
-      const coursesWithCounts = await Promise.all(
-        (coursesData || []).map(async (course) => {
-          const { data: registrations } = await supabase
-            .from("course_registrations")
-            .select("status")
-            .eq("course_id", course.id);
+      // Count from joined data — no extra queries
+      const coursesWithCounts = (coursesData || []).map((course) => {
+        const regs = (course as any).course_registrations || [];
+        const memberCount = regs.filter((r: any) => r.status === "registered").length;
+        const guestCount = guestCountMap.get(course.id) || 0;
+        const registered_count = memberCount + guestCount;
+        const waitlist_count = regs.filter((r: any) => r.status === "waitlist").length;
 
-          const memberCount = registrations?.filter(r => r.status === "registered").length || 0;
-          const guestCount = guestCountMap.get(course.id) || 0;
-          const registered_count = memberCount + guestCount;
-          const waitlist_count = registrations?.filter(r => r.status === "waitlist").length || 0;
-
-          return {
-            ...course,
-            registered_count,
-            waitlist_count,
-            waitlisted_count: waitlist_count,
-          };
-        })
-      );
+        return {
+          ...course,
+          registered_count,
+          waitlist_count,
+          waitlisted_count: waitlist_count,
+        };
+      });
 
       setCourses(coursesWithCounts);
     } catch (error) {
