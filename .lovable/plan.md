@@ -1,33 +1,44 @@
 
-# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Aenderung
+# Performance-Fix: Kurse laden extrem langsam
 
-Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
+## Problem
 
-## Berechnung
+Zwei Komponenten verwenden ein "N+1 Query"-Muster: Fuer jeden einzelnen Kurs wird eine separate Datenbank-Abfrage gestartet, um die Teilnehmerzahl zu ermitteln. Bei 50 Kursen sind das 50+ einzelne Netzwerk-Requests statt einem einzigen.
 
-Fuer jede Wochentag-Uhrzeit-Kombination:
-- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
-- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
-- Durchschnitt ueber alle Kurse dieser Kombination bilden
-- Ergebnis als Prozentwert anzeigen
+**Betroffene Dateien:**
+- `src/components/CourseParticipants.tsx` (Admin-Listenansicht)
+- `src/components/AdminCoursesCalendarView.tsx` (Admin-Kalenderansicht)
 
-## Technische Umsetzung
+**Bereits korrekt:** `src/components/CoursesCalendarView.tsx` (User-Kalender) und `src/components/DayCourseDialog.tsx` nutzen bereits JOINs.
 
-### Datei: `src/components/BookingPatternsCard.tsx`
+## Loesung
 
-1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
+Das `Promise.all` mit einzelnen Queries pro Kurs wird ersetzt durch einen JOIN in der Hauptabfrage — genau wie es `CoursesCalendarView.tsx` bereits macht.
 
-2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
-   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
-   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
-   - Gruppierung nach Wochentag + Startzeit
-   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
+### Aenderung 1: `src/components/CourseParticipants.tsx`
 
-3. **Anzeige anpassen**:
-   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
-   - Zahl rechts zeigt `82%` statt `42`
-   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
+Statt:
+```text
+1. Alle Kurse laden (1 Query)
+2. Alle Gast-Registrierungen laden (1 Query)  
+3. Pro Kurs: course_registrations laden (N Queries) ← PROBLEM
+```
 
-4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen
+Wird zu:
+```text
+1. Alle Kurse MIT course_registrations laden via JOIN (1 Query)
+2. Alle Gast-Registrierungen laden (1 Query)
+3. Im Code zaehlen — kein weiterer DB-Request
+```
+
+### Aenderung 2: `src/components/AdminCoursesCalendarView.tsx`
+
+Gleiche Optimierung: `course_registrations(status)` als JOIN in die Hauptabfrage einbauen, `Promise.all`-Loop entfernen, Zaehlung im Code durchfuehren.
+
+## Ergebnis
+
+- **Vorher:** ~50+ Datenbank-Requests pro Seitenladung
+- **Nachher:** 2-3 Datenbank-Requests pro Seitenladung
+- Deutlich schnellere Ladezeit fuer beide Ansichten
+
