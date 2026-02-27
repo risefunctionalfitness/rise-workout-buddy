@@ -214,7 +214,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const userIds = registrations?.map(r => r.user_id) || []
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, nickname, membership_type, avatar_url')
+        .select('user_id, display_name, nickname, first_name, membership_type, avatar_url')
         .in('user_id', userIds)
 
       if (profileError) {
@@ -782,7 +782,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                     className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                                     onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
                                       imageUrl: participant.profiles.avatar_url, 
-                                      displayName: participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt' 
+                                      displayName: participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt' 
                                     })}
                                   >
                                     {participant.profiles?.avatar_url ? (
@@ -793,15 +793,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                       />
                                     ) : (
                                       <span className="text-xs font-medium">
-                                        {participant.profiles?.display_name?.charAt(0) || '?'}
+                                        {(participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || '?').charAt(0)}
                                       </span>
                                     )}
                                   </div>
                                   <span className={`font-medium ${participant.attendance_status === 'no_show' ? 'line-through text-muted-foreground' : ''}`}>
-                                    {(isTrainer || isAdmin) 
-                                      ? participant.profiles?.display_name || 'Unbekannt'
-                                      : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
-                                    }
+                                    {participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt'}
                                   </span>
                                   {participant.isGuest ? (
                                     <Badge 
@@ -872,7 +869,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                   className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                                   onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
                                     imageUrl: participant.profiles.avatar_url, 
-                                    displayName: participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt' 
+                                    displayName: participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt' 
                                   })}
                                 >
                                   {participant.profiles?.avatar_url ? (
@@ -883,15 +880,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                     />
                                   ) : (
                                     <span className="text-xs font-medium">
-                                      {participant.profiles?.display_name?.charAt(0) || '?'}
+                                      {(participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || '?').charAt(0)}
                                     </span>
                                   )}
                                 </div>
                                 <span className="font-medium">
-                                  {(isTrainer || isAdmin) 
-                                    ? participant.profiles?.display_name || 'Unbekannt'
-                                    : participant.profiles?.nickname || participant.profiles?.display_name || 'Unbekannt'
-                                  }
+                                  {participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt'}
                                 </span>
                                 <span className="text-xs text-yellow-700">
                                   Warteliste #{position}
