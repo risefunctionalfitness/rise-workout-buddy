@@ -365,10 +365,10 @@ function drawHandle(ctx: CanvasRenderingContext2D, width: number, height: number
   ctx.textBaseline = "bottom";
   if (isStory) {
     ctx.textAlign = "center";
-    ctx.fillText("@risefunctionalfitness", width / 2, height - 30);
+    ctx.fillText("@rise_functional_fitness", width / 2, height - 30);
   } else {
     ctx.textAlign = "right";
-    ctx.fillText("@risefunctionalfitness", width - 30, height - 20);
+    ctx.fillText("@rise_functional_fitness", width - 30, height - 20);
   }
 }
 

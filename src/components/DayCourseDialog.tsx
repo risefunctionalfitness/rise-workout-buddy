@@ -307,40 +307,17 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         return
       }
 
-      // Check existing registration
-      const { data: existingReg, error: regCheckError } = await supabase
-        .from('course_registrations')
-        .select('id, status')
-        .eq('course_id', courseId)
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Server-side atomic registration (handles capacity check + insert/update)
+      const { data: result, error: rpcError } = await supabase
+        .rpc('register_for_course', {
+          p_user_id: user.id,
+          p_course_id: courseId
+        })
 
-      if (regCheckError && regCheckError.code !== 'PGRST116') throw regCheckError
+      if (rpcError) throw rpcError
 
-      const isWaitlist = course.registered_count >= course.max_participants
-      const newStatus = isWaitlist ? 'waitlist' : 'registered'
-
-      if (existingReg) {
-        const { error } = await supabase
-          .from('course_registrations')
-          .update({ 
-            status: newStatus,
-            registered_at: new Date().toISOString()
-          })
-          .eq('id', existingReg.id)
-
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('course_registrations')
-          .insert({
-            course_id: courseId,
-            user_id: user.id,
-            status: newStatus
-          })
-
-        if (error) throw error
-      }
+      const newStatus = (result as any)?.status as string
+      const isWaitlist = newStatus === 'waitlist'
 
       toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
       

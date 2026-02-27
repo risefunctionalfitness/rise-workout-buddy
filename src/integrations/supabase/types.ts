@@ -1578,6 +1578,10 @@ export type Database = {
           workout_type: string
         }[]
       }
+      register_for_course: {
+        Args: { p_course_id: string; p_user_id: string }
+        Returns: Json
+      }
       run_weekly_streaks_now: { Args: never; Returns: undefined }
       update_leaderboard_entry: {
         Args: { session_date: string; user_id_param: string }
