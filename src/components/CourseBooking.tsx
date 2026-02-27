@@ -214,7 +214,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       const userIds = registrations?.map(r => r.user_id) || []
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, display_name, nickname, membership_type, avatar_url')
+        .select('user_id, display_name, nickname, first_name, membership_type, avatar_url')
         .in('user_id', userIds)
 
       if (profileError) {
