@@ -768,17 +768,39 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                   >
                     {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
-                ) : (
-                  <Button 
-                    onClick={() => handleRegistration(selectedCourse.id)}
-                    className="w-full"
-                  >
-                    {selectedCourse.registered_count >= selectedCourse.max_participants 
-                      ? 'Auf Warteliste' 
-                      : 'Anmelden'
-                    }
-                  </Button>
-                )}
+                ) : (() => {
+                  const isOutsideWindow = reliabilityScore && !isAdmin && !isTrainer && (() => {
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')
+                    const maxDate = new Date(today)
+                    maxDate.setDate(maxDate.getDate() + reliabilityScore.bookingWindowDays)
+                    return courseDate > maxDate
+                  })()
+
+                  if (isOutsideWindow && reliabilityScore) {
+                    const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')
+                    const availableDate = new Date(courseDate)
+                    availableDate.setDate(availableDate.getDate() - reliabilityScore.bookingWindowDays)
+                    return (
+                      <Button disabled className="w-full" variant="outline">
+                        Ab {format(availableDate, 'dd.MM.', { locale: de })} buchbar
+                      </Button>
+                    )
+                  }
+
+                  return (
+                    <Button 
+                      onClick={() => handleRegistration(selectedCourse.id)}
+                      className="w-full"
+                    >
+                      {selectedCourse.registered_count >= selectedCourse.max_participants 
+                        ? 'Auf Warteliste' 
+                        : 'Anmelden'
+                      }
+                    </Button>
+                  )
+                })()}
               </div>
             </div>
           )}
