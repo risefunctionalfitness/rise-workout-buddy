@@ -15,6 +15,7 @@ import { OpenGymCheckin } from "./OpenGymCheckin"
 import { CourseInvitationButton } from "./CourseInvitationButton"
 import { AddToCalendarButton } from "./AddToCalendarButton"
 import { ReliabilityScoreScale } from "./ReliabilityScoreScale"
+import { ReliabilityScoreBadge } from "./ReliabilityScoreBadge"
 import { FairnessCheckDialog } from "./FairnessCheckDialog"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 
