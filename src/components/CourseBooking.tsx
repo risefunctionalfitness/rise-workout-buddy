@@ -59,6 +59,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const [activeTab, setActiveTab] = useState<string>("liste")
   const scrollPositionRef = useRef<number>(0)
+  const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
+  const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
     let mounted = true
