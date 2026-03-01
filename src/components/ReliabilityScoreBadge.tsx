@@ -86,7 +86,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5">
+          <div className="max-h-[70vh] overflow-y-auto space-y-5 pr-1">
             {/* Big score display */}
             <div className="text-center py-2">
               <div className="text-5xl font-bold" style={{ color }}>
@@ -102,7 +102,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
             {variant === "detailed" && (
               <p className="text-sm text-muted-foreground text-center leading-relaxed">
                 Dein Fairness Score basiert auf deiner Stornierungsrate der letzten 90 Tage.
-                Je zuverlässiger du bist, desto weiter im Voraus kannst du Kurse buchen.
+                Je weniger oft du absagen musst, desto weiter im Voraus kannst du Kurse buchen.
               </p>
             )}
 
@@ -153,20 +153,26 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
 
             {/* One-time reset button - only in detailed view, only if not used yet */}
             {variant === "detailed" && userId && !hasUsedReset && (
-              <div className="pt-2 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-muted-foreground"
+              <div className="pt-3">
+                <button
                   onClick={handleReset}
                   disabled={resetting}
+                  className="w-full relative overflow-hidden rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 px-4 py-4 transition-all hover:border-primary/50 hover:from-primary/10 hover:to-primary/15 active:scale-[0.98] disabled:opacity-50"
                 >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  {resetting ? "Wird zurückgesetzt..." : "Score einmalig zurücksetzen"}
-                </Button>
-                <p className="text-[10px] text-muted-foreground text-center mt-1">
-                  Du kannst deinen Score einmalig auf 0 zurücksetzen. Diese Option kann nur einmal genutzt werden.
-                </p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <RotateCcw className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-foreground">
+                        {resetting ? "Wird zurückgesetzt..." : "Score einmalig zurücksetzen"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                        Starte mit 0% – diese Option kann nur einmal genutzt werden.
+                      </p>
+                    </div>
+                  </div>
+                </button>
               </div>
             )}
           </div>
