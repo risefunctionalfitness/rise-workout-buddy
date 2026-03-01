@@ -225,6 +225,17 @@ export const UpcomingClassReservation = ({
     return new Date() < cancellationDeadline;
   };
 
+  const inititateCancellation = () => {
+    if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
+
+    if (reliabilityScore && !isAdmin && !isTrainer) {
+      setFairnessCheckOpen(true);
+      return;
+    }
+
+    handleCancel();
+  };
+
   const handleCancel = async () => {
     if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
 
