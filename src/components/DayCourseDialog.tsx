@@ -383,6 +383,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (error) throw error
 
       toast.success('Anmeldung erfolgreich storniert')
+      refetchScore()
       
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       
