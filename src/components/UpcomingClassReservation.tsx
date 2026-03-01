@@ -249,6 +249,7 @@ export const UpcomingClassReservation = ({
       if (error) throw error;
 
       toast.success("Anmeldung erfolgreich storniert");
+      refetchScore();
 
       window.dispatchEvent(new CustomEvent("courseRegistrationChanged"));
       setShowDialog(false);
