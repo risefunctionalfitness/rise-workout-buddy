@@ -14,6 +14,7 @@ import { CoursesCalendarView } from "@/components/CoursesCalendarView"
 import { CourseInvitationButton } from "@/components/CourseInvitationButton"
 import { AddToCalendarButton } from "@/components/AddToCalendarButton"
 import { ReliabilityScoreBadge } from "@/components/ReliabilityScoreBadge"
+import { FairnessInfoDialog } from "@/components/FairnessInfoDialog"
 import { ReliabilityScoreScale } from "@/components/ReliabilityScoreScale"
 import { FairnessCheckDialog } from "@/components/FairnessCheckDialog"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
@@ -602,6 +603,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   return (
     <div className="p-4 space-y-4">
+      <FairnessInfoDialog userId={user.id} />
       {/* Membership limits display for Basic Member and 10er Karte */}
       {(userMembershipType === 'Basic Member' || userMembershipType === '10er Karte') && (
         <MembershipLimitDisplay 
