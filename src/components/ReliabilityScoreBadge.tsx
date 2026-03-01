@@ -55,7 +55,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
         .update({ fairness_score_reset_at: new Date().toISOString() } as any)
         .eq("user_id", userId);
       if (error) throw error;
-      toast.success("Fairness Score zurückgesetzt!");
+      toast.success("Stornierungsrate zurückgesetzt!");
       queryClient.invalidateQueries({ queryKey: ["reliability-score", userId] });
       queryClient.invalidateQueries({ queryKey: ["fairness-reset-status", userId] });
     } catch (error) {
