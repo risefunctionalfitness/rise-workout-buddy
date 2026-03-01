@@ -735,7 +735,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                   <>
                     <Button 
                       variant="destructive" 
-                      onClick={() => handleCancellation(selectedCourse.id)}
+                       onClick={() => initiateCancellation(selectedCourse.id)}
                       disabled={!canCancelCourse(selectedCourse)}
                       className="w-full"
                     >
