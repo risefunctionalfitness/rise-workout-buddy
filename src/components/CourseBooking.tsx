@@ -985,7 +985,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   </Button>
                 ) : (() => {
                   // Booking window restriction
-                  const isOutsideWindow = reliabilityScore && !isAdmin && !isTrainer && (() => {
+                  const isOutsideWindow = reliabilityScore && !isAdmin && (() => {
                     const today = new Date()
                     today.setHours(0, 0, 0, 0)
                     const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')

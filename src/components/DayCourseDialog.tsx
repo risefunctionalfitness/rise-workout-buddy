@@ -769,7 +769,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
                 ) : (() => {
-                  const isOutsideWindow = reliabilityScore && !isAdmin && !isTrainer && (() => {
+                  const isOutsideWindow = reliabilityScore && !isAdmin && (() => {
                     const today = new Date()
                     today.setHours(0, 0, 0, 0)
                     const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')
