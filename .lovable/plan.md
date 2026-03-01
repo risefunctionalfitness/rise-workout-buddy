@@ -1,33 +1,46 @@
 
-# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Aenderung
+# Fairness Score UI-Fixes
 
-Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
+## Probleme
 
-## Berechnung
+1. **Badge im Header**: Soll entfernt werden aus `TrainingPathHeader.tsx`
+2. **Badge zeigt "L4" Text**: Soll nur das Icon in der Farbe zeigen, groesser
+3. **Skala-Marker falsch positioniert**: Die Skala geht von 0% bis 50%+, aber der Marker nutzt `score.score` direkt als CSS-Prozent. Bei 43% Score landet der Marker bei 43% der Barbreite -- aber 43% auf einer 0-50-Skala muesste bei ~86% der Barbreite liegen
+4. **Score mit Dezimalstellen**: 43.478... statt gerundet
+5. **Design zu klein/unuebersichtlich**: Alles soll groesser, cleaner, moderner
 
-Fuer jede Wochentag-Uhrzeit-Kombination:
-- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
-- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
-- Durchschnitt ueber alle Kurse dieser Kombination bilden
-- Ergebnis als Prozentwert anzeigen
+## Aenderungen
 
-## Technische Umsetzung
+### 1. TrainingPathHeader.tsx
+- `ReliabilityScoreBadge` und `useReliabilityScore` Import + Nutzung entfernen
+- Nur Avatar, Logo, Streak, Admin-Button bleiben
 
-### Datei: `src/components/BookingPatternsCard.tsx`
+### 2. ReliabilityScoreBadge.tsx
+- "L{score.level}" Text entfernen -- nur Gauge-Icon
+- Icon groesser machen (h-7 w-7 statt h-5 w-5)
+- Modal-Design komplett ueberarbeiten:
+  - Score gross und zentral als Zahl anzeigen (ganzzahlig gerundet)
+  - Gradient-Skala groesser (h-4 statt h-3)
+  - Level-Tabelle mit mehr Abstand, groesserer Schrift
+  - Aktives Level staerker hervorgehoben (farbiger Rahmen statt nur bg-muted)
+  - Mehr whitespace, groessere Texte
 
-1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
+### 3. ReliabilityScoreScale.tsx
+- **Marker-Position fixen**: `markerPosition = (score.score / 50) * 100` statt direkt `score.score`. Die Skala repraesentiert 0-50%+, also muss der Score auf diese Spanne gemappt werden
+- Skala groesser (h-4), Marker groesser (w-5 h-5)
+- Labels groesser (text-xs statt text-[10px])
 
-2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
-   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
-   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
-   - Gruppierung nach Wochentag + Startzeit
-   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
+### 4. useReliabilityScore.ts
+- Score auf ganze Zahl runden: `Math.round(score)` statt Dezimalwert
+- `getProjectedScore` ebenfalls ganzzahlig runden
 
-3. **Anzeige anpassen**:
-   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
-   - Zahl rechts zeigt `82%` statt `42`
-   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
+## Betroffene Dateien
 
-4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen
+| Datei | Aenderung |
+|---|---|
+| `src/components/TrainingPathHeader.tsx` | Badge + Hook entfernen |
+| `src/components/ReliabilityScoreBadge.tsx` | Level-Text weg, Icon groesser, Modal-Design modern |
+| `src/components/ReliabilityScoreScale.tsx` | Marker-Position fixen (Score/50*100), alles groesser |
+| `src/hooks/useReliabilityScore.ts` | Score ganzzahlig runden |
+
