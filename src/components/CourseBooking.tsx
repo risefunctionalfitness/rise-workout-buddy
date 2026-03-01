@@ -409,7 +409,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       return
     }
 
-    if (reliabilityScore && !isAdmin && !isTrainer) {
+    if (reliabilityScore && !isAdmin) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
       return
