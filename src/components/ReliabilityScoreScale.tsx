@@ -6,16 +6,16 @@ interface ReliabilityScoreScaleProps {
 
 export const ReliabilityScoreScale = ({ score }: ReliabilityScoreScaleProps) => {
   const levelInfo = getLevelInfo(score.level);
-  // Clamp marker position between 2% and 98%
-  const markerPosition = Math.min(98, Math.max(2, score.score));
+  // Map score (0-50+) to bar position (0-100%), clamped
+  const markerPosition = Math.min(98, Math.max(2, (score.score / 50) * 100));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {/* Gradient bar */}
-      <div className="relative h-3 rounded-full overflow-hidden bg-gradient-to-r from-green-500 via-yellow-400 via-orange-500 to-red-500">
+      <div className="relative h-4 rounded-full overflow-hidden bg-gradient-to-r from-green-500 via-yellow-400 via-orange-500 to-red-500">
         {/* Marker */}
         <div
-          className="absolute top-[-2px] w-4 h-4 rounded-full bg-white border-2 shadow-md transition-all"
+          className="absolute top-[-3px] w-5 h-5 rounded-full bg-white border-[3px] shadow-lg transition-all"
           style={{
             left: `${markerPosition}%`,
             transform: "translateX(-50%)",
@@ -24,22 +24,13 @@ export const ReliabilityScoreScale = ({ score }: ReliabilityScoreScaleProps) => 
         />
       </div>
       {/* Labels */}
-      <div className="flex justify-between text-[10px] text-muted-foreground px-1">
+      <div className="flex justify-between text-xs text-muted-foreground px-1">
         <span>0%</span>
         <span>15%</span>
         <span>25%</span>
         <span>35%</span>
         <span>50%+</span>
       </div>
-      {/* Status text */}
-      <p className="text-xs text-center text-muted-foreground">
-        Status:{" "}
-        <span className="font-semibold" style={{ color: levelInfo.color }}>
-          {levelInfo.label}
-        </span>{" "}
-        | Buchungsfenster:{" "}
-        <span className="font-semibold">{score.bookingWindowDays} Tage</span>
-      </p>
     </div>
   );
 };

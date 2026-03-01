@@ -67,9 +67,6 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
 
       {/* Rechts: Streak Display + Admin Grid */}
       <div className="flex items-center gap-2 flex-1 justify-end">
-        {reliabilityScore && !isAdmin && (
-          <ReliabilityScoreBadge score={reliabilityScore} />
-        )}
         {user && <StreakDisplay user={user} />}
         {/* Admin-Zugang Button */}
         {isAdmin && (
