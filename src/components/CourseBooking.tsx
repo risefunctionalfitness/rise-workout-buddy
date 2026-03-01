@@ -768,6 +768,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                 )}
               </div>
 
+              {/* Reliability Score Scale */}
+              {reliabilityScore && !isAdmin && !isTrainer && (
+                <ReliabilityScoreScale score={reliabilityScore} />
+              )}
+
               {/* Minimum participants warning */}
               {participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
                 <p className="text-xs text-muted-foreground">
