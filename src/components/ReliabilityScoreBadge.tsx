@@ -105,7 +105,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
                 Je weniger oft du absagst, desto weiter im Voraus kannst du Kurse buchen.
                 {score.totalBookings < 4 && (
                   <span className="block mt-2 text-xs text-primary font-medium">
-                    Schonfrist aktiv – dein Score wird ab 4 Buchungen berechnet.
+                    Dein Score wird ab 4 Buchungen berechnet.
                   </span>
                 )}
               </p>
