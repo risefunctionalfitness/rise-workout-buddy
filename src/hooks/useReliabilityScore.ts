@@ -27,11 +27,11 @@ export const getLevelInfo = (level: number) => {
 export const getProjectedScore = (
   current: ReliabilityScore
 ): { score: number; level: number } => {
-  if (current.totalBookings < 5) {
+  if (current.totalBookings < 4) {
     // After this cancellation they'll have at least 1 cancellation
     const newTotal = current.totalBookings;
     const newCancellations = current.cancellations + 1;
-    if (newTotal < 5) return { score: 0, level: 1 };
+    if (newTotal < 4) return { score: 0, level: 1 };
     const score = Math.round((newCancellations / newTotal) * 100);
     const level = score <= 15 ? 1 : score <= 25 ? 2 : score <= 35 ? 3 : 4;
     return { score, level };

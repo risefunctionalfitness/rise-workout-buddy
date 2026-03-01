@@ -103,6 +103,11 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
               <p className="text-sm text-muted-foreground text-center leading-relaxed">
                 Deine Stornierungsrate basiert auf deinen Absagen der letzten 90 Tage.
                 Je weniger oft du absagst, desto weiter im Voraus kannst du Kurse buchen.
+                {score.totalBookings < 4 && (
+                  <span className="block mt-2 text-xs text-primary font-medium">
+                    Schonfrist aktiv – dein Score wird ab 4 Buchungen berechnet.
+                  </span>
+                )}
               </p>
             )}
 
