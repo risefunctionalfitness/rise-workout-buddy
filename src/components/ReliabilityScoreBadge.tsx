@@ -82,7 +82,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Gauge className="h-6 w-6" style={{ color }} />
-              Fairness Score
+              Stornierungsrate
             </DialogTitle>
           </DialogHeader>
 
