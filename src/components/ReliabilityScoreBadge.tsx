@@ -55,7 +55,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
         .update({ fairness_score_reset_at: new Date().toISOString() } as any)
         .eq("user_id", userId);
       if (error) throw error;
-      toast.success("Fairness Score zurückgesetzt!");
+      toast.success("Stornierungsrate zurückgesetzt!");
       queryClient.invalidateQueries({ queryKey: ["reliability-score", userId] });
       queryClient.invalidateQueries({ queryKey: ["fairness-reset-status", userId] });
     } catch (error) {
@@ -72,7 +72,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         className="flex items-center justify-center w-10 h-10 rounded-lg bg-background border-2 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none shadow-md"
         style={{ borderColor: color }}
-        title="Fairness Score"
+        title="Stornierungsrate"
       >
         <Gauge className="h-5 w-5" style={{ color }} />
       </button>
@@ -82,7 +82,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Gauge className="h-6 w-6" style={{ color }} />
-              Fairness Score
+              Stornierungsrate
             </DialogTitle>
           </DialogHeader>
 
@@ -101,8 +101,8 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
 
             {variant === "detailed" && (
               <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                Dein Fairness Score basiert auf deiner Stornierungsrate der letzten 90 Tage.
-                Je weniger oft du absagen musst, desto weiter im Voraus kannst du Kurse buchen.
+                Deine Stornierungsrate basiert auf deinen Absagen der letzten 90 Tage.
+                Je weniger oft du absagst, desto weiter im Voraus kannst du Kurse buchen.
               </p>
             )}
 
@@ -165,7 +165,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-semibold text-foreground">
-                        {resetting ? "Wird zurückgesetzt..." : "Score einmalig zurücksetzen"}
+                        {resetting ? "Wird zurückgesetzt..." : "Rate einmalig zurücksetzen"}
                       </p>
                       <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                         Starte mit 0% – diese Option kann nur einmal genutzt werden.

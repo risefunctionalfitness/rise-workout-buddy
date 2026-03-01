@@ -39,23 +39,24 @@ export const FairnessInfoDialog = ({ userId }: FairnessInfoDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
       <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Gauge className="h-6 w-6 text-primary" />
-            Dein Reliability Score
+        <div className="flex flex-col items-center text-center pt-2">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-3">
+            <Gauge className="h-7 w-7 text-primary" />
+          </div>
+          <DialogTitle className="text-xl font-bold">
+            Deine Stornierungsrate
           </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed mt-3 px-2">
             Fairness zählt! Um die Wartelisten für alle planbar zu halten, bestimmt ab sofort deine Stornierungsrate dein Buchungsfenster:
           </p>
+        </div>
 
+        <div className="space-y-4 pt-1">
           <div className="space-y-2">
             {RELIABILITY_LEVELS.map((lvl) => (
               <div
                 key={lvl.level}
-                className="flex items-center justify-between px-4 py-3 rounded-xl bg-muted/30"
+                className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/50 bg-muted/20"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -63,7 +64,6 @@ export const FairnessInfoDialog = ({ userId }: FairnessInfoDialogProps) => {
                     style={{ backgroundColor: lvl.color }}
                   />
                   <span className="text-sm font-medium">
-                    Level {lvl.level} (
                     {lvl.level === 1
                       ? "0–15%"
                       : lvl.level === 2
@@ -71,7 +71,6 @@ export const FairnessInfoDialog = ({ userId }: FairnessInfoDialogProps) => {
                       : lvl.level === 3
                       ? "26–35%"
                       : "36%+"}
-                    )
                   </span>
                 </div>
                 <span className="text-sm text-muted-foreground">
@@ -83,13 +82,13 @@ export const FairnessInfoDialog = ({ userId }: FairnessInfoDialogProps) => {
             ))}
           </div>
 
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed text-center px-2">
             Dein aktuelles Level findest du ab jetzt immer oben rechts über das{" "}
-            <Gauge className="inline h-4 w-4 text-primary align-text-bottom" />
+            <Gauge className="inline h-3.5 w-3.5 text-primary align-text-bottom" />
             -Icon. Bleib verlässlich und sichere dir deinen Platz!
           </p>
 
-          <Button className="w-full" onClick={handleDismiss}>
+          <Button className="w-full rounded-xl h-11 font-semibold" onClick={handleDismiss}>
             Alles klar!
           </Button>
         </div>
