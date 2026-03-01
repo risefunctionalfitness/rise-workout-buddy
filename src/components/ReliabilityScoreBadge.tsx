@@ -69,7 +69,7 @@ export const ReliabilityScoreBadge = ({ score }: ReliabilityScoreBadgeProps) => 
                         ? "ring-2 bg-muted/60"
                         : "bg-muted/20"
                     }`}
-                    style={isActive ? { ringColor: lvl.color } : undefined}
+                    style={isActive ? { borderColor: lvl.color, borderWidth: 2 } : undefined}
                   >
                     <div className="flex items-center gap-3">
                       <span
