@@ -72,7 +72,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
         className="flex items-center justify-center w-10 h-10 rounded-lg bg-background border-2 transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none shadow-md"
         style={{ borderColor: color }}
-        title="Fairness Score"
+        title="Stornierungsrate"
       >
         <Gauge className="h-5 w-5" style={{ color }} />
       </button>
