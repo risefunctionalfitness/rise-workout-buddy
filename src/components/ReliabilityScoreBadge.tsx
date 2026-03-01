@@ -7,14 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   RELIABILITY_LEVELS,
   getLevelColor,
   type ReliabilityScore,
@@ -33,77 +25,74 @@ export const ReliabilityScoreBadge = ({ score }: ReliabilityScoreBadgeProps) => 
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1 px-2 py-1 rounded-full transition-colors hover:bg-muted"
-        title="Reliability Score"
+        className="flex items-center px-2 py-1 rounded-full transition-colors hover:bg-muted"
+        title="Fairness Score"
       >
-        <Gauge className="h-5 w-5" style={{ color }} />
-        <span className="text-xs font-semibold" style={{ color }}>
-          L{score.level}
-        </span>
+        <Gauge className="h-7 w-7" style={{ color }} />
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Gauge className="h-5 w-5" style={{ color }} />
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Gauge className="h-6 w-6" style={{ color }} />
               Fairness Score
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Dein Fairness Score basiert auf deiner Stornierungsrate der letzten 90 Tage.
-              Je zuverlässiger du bist, desto weiter im Voraus kannst du Kurse buchen.
+          <div className="space-y-6">
+            {/* Big score display */}
+            <div className="text-center py-4">
+              <div className="text-5xl font-bold" style={{ color }}>
+                {score.score}%
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {score.cancellations} von {score.totalBookings} storniert
+              </p>
+            </div>
+
+            <p className="text-sm text-muted-foreground text-center leading-relaxed">
+              Dein Score basiert auf deiner Stornierungsrate der letzten 90 Tage.
+              Je zuverlässiger du bist, desto weiter im Voraus kannst du buchen.
             </p>
 
             <ReliabilityScoreScale score={score} />
 
-            <div className="text-sm text-center text-muted-foreground">
-              Dein Score: <span className="font-bold" style={{ color }}>{score.score}%</span>
-              {" "}({score.cancellations} von {score.totalBookings} storniert)
-            </div>
-
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Buchungsfenster</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {RELIABILITY_LEVELS.map((lvl) => (
-                  <TableRow
+            <div className="space-y-2">
+              {RELIABILITY_LEVELS.map((lvl) => {
+                const isActive = score.level === lvl.level;
+                return (
+                  <div
                     key={lvl.level}
-                    className={score.level === lvl.level ? "bg-muted/50 font-semibold" : ""}
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                      isActive
+                        ? "ring-2 bg-muted/60"
+                        : "bg-muted/20"
+                    }`}
+                    style={isActive ? { borderColor: lvl.color, borderWidth: 2 } : undefined}
                   >
-                    <TableCell>
+                    <div className="flex items-center gap-3">
                       <span
-                        className="inline-flex items-center gap-1.5"
-                        style={{ color: lvl.color }}
-                      >
-                        <span
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: lvl.color }}
-                        />
-                        {lvl.label}
+                        className="w-3 h-3 rounded-full shrink-0"
+                        style={{ backgroundColor: lvl.color }}
+                      />
+                      <span className={`text-sm ${isActive ? "font-bold" : "font-medium"}`}>
+                        {lvl.level === 1
+                          ? "0–15%"
+                          : lvl.level === 2
+                          ? "16–25%"
+                          : lvl.level === 3
+                          ? "26–35%"
+                          : "36%+"}
                       </span>
-                    </TableCell>
-                    <TableCell>
-                      {lvl.level === 1
-                        ? "0–15%"
-                        : lvl.level === 2
-                        ? "16–25%"
-                        : lvl.level === 3
-                        ? "26–35%"
-                        : "36%+"}
-                    </TableCell>
-                    <TableCell>{lvl.windowDays} Tage</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                    <span className={`text-sm ${isActive ? "font-bold" : "text-muted-foreground"}`}>
+                      {lvl.windowDays} Tage Buchungsfenster
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

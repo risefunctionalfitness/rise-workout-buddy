@@ -32,13 +32,12 @@ export const getProjectedScore = (
     const newTotal = current.totalBookings;
     const newCancellations = current.cancellations + 1;
     if (newTotal < 5) return { score: 0, level: 1 };
-    const score = Math.round((newCancellations / newTotal) * 1000) / 10;
+    const score = Math.round((newCancellations / newTotal) * 100);
     const level = score <= 15 ? 1 : score <= 25 ? 2 : score <= 35 ? 3 : 4;
     return { score, level };
   }
   const newCancellations = current.cancellations + 1;
-  const score =
-    Math.round((newCancellations / current.totalBookings) * 1000) / 10;
+  const score = Math.round((newCancellations / current.totalBookings) * 100);
   const level = score <= 15 ? 1 : score <= 25 ? 2 : score <= 35 ? 3 : 4;
   return { score, level };
 };
@@ -58,7 +57,7 @@ export const useReliabilityScore = (userId: string | undefined) => {
 
       const row = Array.isArray(data) ? data[0] : data;
       return {
-        score: Number(row.score) || 0,
+        score: Math.round(Number(row.score) || 0),
         level: Number(row.level) || 1,
         bookingWindowDays: Number(row.booking_window_days) || 14,
         totalBookings: Number(row.total_bookings) || 0,
