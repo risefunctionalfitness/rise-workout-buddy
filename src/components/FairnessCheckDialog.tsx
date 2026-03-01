@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, LogOut } from "lucide-react";
+import { ShieldCheck, LogOut, Annoyed } from "lucide-react";
 import {
   getProjectedScore,
   getLevelColor,
