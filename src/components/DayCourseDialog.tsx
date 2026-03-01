@@ -356,7 +356,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       return
     }
 
-    if (reliabilityScore && !isAdmin && !isTrainer) {
+    if (reliabilityScore && !isAdmin) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
       return
