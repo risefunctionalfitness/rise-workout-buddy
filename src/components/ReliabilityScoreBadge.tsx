@@ -101,8 +101,8 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
 
             {variant === "detailed" && (
               <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                Dein Fairness Score basiert auf deiner Stornierungsrate der letzten 90 Tage.
-                Je weniger oft du absagen musst, desto weiter im Voraus kannst du Kurse buchen.
+                Deine Stornierungsrate basiert auf deinen Absagen der letzten 90 Tage.
+                Je weniger oft du absagst, desto weiter im Voraus kannst du Kurse buchen.
               </p>
             )}
 
