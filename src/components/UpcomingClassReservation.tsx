@@ -18,6 +18,8 @@ import { ProfileImageViewer } from "./ProfileImageViewer";
 import { MembershipBadge } from "./MembershipBadge";
 import { CourseInvitationButton } from "./CourseInvitationButton";
 import { AddToCalendarButton } from "./AddToCalendarButton";
+import { FairnessCheckDialog } from "./FairnessCheckDialog";
+import { useReliabilityScore } from "@/hooks/useReliabilityScore";
 import {
   Carousel,
   CarouselContent,

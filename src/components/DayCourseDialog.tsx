@@ -796,6 +796,23 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         onCheckinComplete={handleQRCheckinComplete}
         date={new Date(date)}
       />
+
+      {reliabilityScore && pendingCancellationId && (
+        <FairnessCheckDialog
+          open={fairnessCheckOpen}
+          onOpenChange={(open) => {
+            setFairnessCheckOpen(open)
+            if (!open) setPendingCancellationId(null)
+          }}
+          currentScore={reliabilityScore}
+          onConfirmCancel={() => {
+            if (pendingCancellationId) {
+              handleCancellation(pendingCancellationId)
+              setPendingCancellationId(null)
+            }
+          }}
+        />
+      )}
     </>
   )
 }
