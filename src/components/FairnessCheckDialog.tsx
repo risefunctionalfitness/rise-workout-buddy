@@ -123,7 +123,7 @@ export const FairnessCheckDialog = ({
               }}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Trotzdem abmelden
+              Trotzdem abmelden <Annoyed className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>
