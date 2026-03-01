@@ -165,7 +165,7 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: Re
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-semibold text-foreground">
-                        {resetting ? "Wird zurückgesetzt..." : "Score einmalig zurücksetzen"}
+                        {resetting ? "Wird zurückgesetzt..." : "Rate einmalig zurücksetzen"}
                       </p>
                       <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                         Starte mit 0% – diese Option kann nur einmal genutzt werden.
