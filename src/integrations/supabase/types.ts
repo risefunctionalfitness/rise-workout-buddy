@@ -952,6 +952,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           extra_lifts: Json | null
+          fairness_score_reset_at: string | null
           first_name: string | null
           front_squat_1rm: number | null
           id: string
@@ -988,6 +989,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           extra_lifts?: Json | null
+          fairness_score_reset_at?: string | null
           first_name?: string | null
           front_squat_1rm?: number | null
           id?: string
@@ -1024,6 +1026,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           extra_lifts?: Json | null
+          fairness_score_reset_at?: string | null
           first_name?: string | null
           front_squat_1rm?: number | null
           id?: string

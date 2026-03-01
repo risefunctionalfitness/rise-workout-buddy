@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, LogOut, Annoyed } from "lucide-react";
+import { ShieldCheck, Annoyed } from "lucide-react";
 import {
   getProjectedScore,
   getLevelColor,
@@ -122,8 +122,8 @@ export const FairnessCheckDialog = ({
                 onOpenChange(false);
               }}
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Trotzdem abmelden <Annoyed className="h-4 w-4 ml-1" />
+              <Annoyed className="h-4 w-4 mr-2" />
+              Trotzdem abmelden
             </Button>
           </div>
         </div>

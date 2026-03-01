@@ -1,4 +1,4 @@
-import { Gauge } from "lucide-react";
+import { Gauge, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -6,21 +6,65 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   RELIABILITY_LEVELS,
   getLevelColor,
   type ReliabilityScore,
 } from "@/hooks/useReliabilityScore";
 import { ReliabilityScoreScale } from "./ReliabilityScoreScale";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface ReliabilityScoreBadgeProps {
   score: ReliabilityScore;
   variant?: "compact" | "detailed";
+  userId?: string;
 }
 
-export const ReliabilityScoreBadge = ({ score, variant = "compact" }: ReliabilityScoreBadgeProps) => {
+export const ReliabilityScoreBadge = ({ score, variant = "compact", userId }: ReliabilityScoreBadgeProps) => {
   const [open, setOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const color = getLevelColor(score.level);
+  const queryClient = useQueryClient();
+
+  // Check if user has already used their reset (only for detailed variant)
+  const { data: hasUsedReset } = useQuery({
+    queryKey: ["fairness-reset-status", userId],
+    queryFn: async () => {
+      if (!userId) return true;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("fairness_score_reset_at" as any)
+        .eq("user_id", userId)
+        .single();
+      if (error) return true;
+      return !!(data as any)?.fairness_score_reset_at;
+    },
+    enabled: !!userId && variant === "detailed",
+    staleTime: 60_000,
+  });
+
+  const handleReset = async () => {
+    if (!userId || resetting) return;
+    setResetting(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ fairness_score_reset_at: new Date().toISOString() } as any)
+        .eq("user_id", userId);
+      if (error) throw error;
+      toast.success("Fairness Score zurückgesetzt!");
+      queryClient.invalidateQueries({ queryKey: ["reliability-score", userId] });
+      queryClient.invalidateQueries({ queryKey: ["fairness-reset-status", userId] });
+    } catch (error) {
+      console.error("Error resetting score:", error);
+      toast.error("Fehler beim Zurücksetzen");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <>
@@ -104,6 +148,25 @@ export const ReliabilityScoreBadge = ({ score, variant = "compact" }: Reliabilit
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* One-time reset button - only in detailed view, only if not used yet */}
+            {variant === "detailed" && userId && !hasUsedReset && (
+              <div className="pt-2 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-muted-foreground"
+                  onClick={handleReset}
+                  disabled={resetting}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  {resetting ? "Wird zurückgesetzt..." : "Score einmalig zurücksetzen"}
+                </Button>
+                <p className="text-[10px] text-muted-foreground text-center mt-1">
+                  Du kannst deinen Score einmalig auf 0 zurücksetzen. Diese Option kann nur einmal genutzt werden.
+                </p>
               </div>
             )}
           </div>

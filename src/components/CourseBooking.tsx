@@ -615,7 +615,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         <h2 className="text-xl font-semibold mb-4">Kurse</h2>
         {reliabilityScore && !isAdmin && (
           <div className="absolute right-0 top-1">
-            <ReliabilityScoreBadge score={reliabilityScore} variant="detailed" />
+            <ReliabilityScoreBadge score={reliabilityScore} variant="detailed" userId={user.id} />
           </div>
         )}
       </div>
