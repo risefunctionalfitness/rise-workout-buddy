@@ -45,6 +45,8 @@ export const UpcomingClassReservation = ({
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false);
+  const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user?.id);
 
   useEffect(() => {
     if (!carouselApi) return;
