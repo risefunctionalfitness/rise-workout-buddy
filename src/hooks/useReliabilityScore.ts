@@ -58,7 +58,7 @@ export const useReliabilityScore = (userId: string | undefined) => {
 
       const row = Array.isArray(data) ? data[0] : data;
       return {
-        score: Number(row.score) || 0,
+        score: Math.round(Number(row.score) || 0),
         level: Number(row.level) || 1,
         bookingWindowDays: Number(row.booking_window_days) || 14,
         totalBookings: Number(row.total_bookings) || 0,
