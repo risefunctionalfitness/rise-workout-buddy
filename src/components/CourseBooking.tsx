@@ -603,6 +603,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   return (
     <div className="p-4 space-y-4">
+      <FairnessInfoDialog userId={user.id} />
       {/* Membership limits display for Basic Member and 10er Karte */}
       {(userMembershipType === 'Basic Member' || userMembershipType === '10er Karte') && (
         <MembershipLimitDisplay 
