@@ -468,7 +468,7 @@ export const UpcomingClassReservation = ({
               <div className="space-y-2">
                 <Button 
                   variant="destructive" 
-                  onClick={handleCancel}
+                  onClick={inititateCancellation}
                   disabled={!canCancelCourse(selectedCourse)}
                   className="w-full"
                 >
