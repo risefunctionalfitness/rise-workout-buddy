@@ -356,7 +356,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       return
     }
 
-    if (reliabilityScore && !isAdmin && !isTrainer) {
+    if (reliabilityScore && !isAdmin) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
       return
@@ -566,7 +566,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           <DialogHeader>
             <div className="flex items-center justify-between pr-8">
               <DialogTitle>{selectedCourse?.title}</DialogTitle>
-              {reliabilityScore && !isAdmin && !isTrainer && (
+              {reliabilityScore && !isAdmin && (
                 <ReliabilityScoreBadge score={reliabilityScore} />
               )}
             </div>
@@ -769,7 +769,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
                 ) : (() => {
-                  const isOutsideWindow = reliabilityScore && !isAdmin && !isTrainer && (() => {
+                  const isOutsideWindow = reliabilityScore && !isAdmin && (() => {
                     const today = new Date()
                     today.setHours(0, 0, 0, 0)
                     const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')

@@ -229,7 +229,7 @@ export const UpcomingClassReservation = ({
   const inititateCancellation = () => {
     if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
 
-    if (reliabilityScore && !isAdmin && !isTrainer) {
+    if (reliabilityScore && !isAdmin) {
       setFairnessCheckOpen(true);
       return;
     }
@@ -351,7 +351,7 @@ export const UpcomingClassReservation = ({
           <DialogHeader>
             <div className="flex items-center justify-between pr-8">
               <DialogTitle>{selectedCourse?.title}</DialogTitle>
-              {reliabilityScore && !isAdmin && !isTrainer && (
+              {reliabilityScore && !isAdmin && (
                 <ReliabilityScoreBadge score={reliabilityScore} />
               )}
             </div>

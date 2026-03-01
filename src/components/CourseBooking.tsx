@@ -409,7 +409,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       return
     }
 
-    if (reliabilityScore && !isAdmin && !isTrainer) {
+    if (reliabilityScore && !isAdmin) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
       return
@@ -613,7 +613,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       {/* Header */}
       <div className="flex items-center justify-center relative">
         <h2 className="text-xl font-semibold mb-4">Kurse</h2>
-        {reliabilityScore && !isAdmin && !isTrainer && (
+        {reliabilityScore && !isAdmin && (
           <div className="absolute right-0 top-0">
             <ReliabilityScoreBadge score={reliabilityScore} />
           </div>
@@ -744,7 +744,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           <DialogHeader>
             <div className="flex items-center justify-between pr-8">
               <DialogTitle>{selectedCourse?.title}</DialogTitle>
-              {reliabilityScore && !isAdmin && !isTrainer && (
+              {reliabilityScore && !isAdmin && (
                 <ReliabilityScoreBadge score={reliabilityScore} />
               )}
             </div>
@@ -985,7 +985,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   </Button>
                 ) : (() => {
                   // Booking window restriction
-                  const isOutsideWindow = reliabilityScore && !isAdmin && !isTrainer && (() => {
+                  const isOutsideWindow = reliabilityScore && !isAdmin && (() => {
                     const today = new Date()
                     today.setHours(0, 0, 0, 0)
                     const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')

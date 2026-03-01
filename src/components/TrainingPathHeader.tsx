@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { StreakDisplay } from "@/components/StreakDisplay";
+import { ReliabilityScoreBadge } from "@/components/ReliabilityScoreBadge";
+import { useReliabilityScore } from "@/hooks/useReliabilityScore";
 
 interface TrainingPathHeaderProps {
   user: any;
@@ -20,6 +22,8 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
   onAdminClick,
 }) => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const { data: reliabilityScore } = useReliabilityScore(user?.id);
+
   useEffect(() => {
     const checkRole = async () => {
       if (!user?.id) return;
@@ -65,7 +69,10 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
       </div>
 
       {/* Rechts: Streak Display + Admin Grid */}
-      <div className="flex items-center gap-3 flex-1 justify-end">
+      <div className="flex items-center gap-2 flex-1 justify-end">
+        {reliabilityScore && !isAdmin && (
+          <ReliabilityScoreBadge score={reliabilityScore} />
+        )}
         {user && <StreakDisplay user={user} />}
         {/* Admin-Zugang Button */}
         {isAdmin && (
