@@ -349,12 +349,7 @@ export const UpcomingClassReservation = ({
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <div className="flex items-center justify-between pr-8">
-              <DialogTitle>{selectedCourse?.title}</DialogTitle>
-              {reliabilityScore && !isAdmin && (
-                <ReliabilityScoreBadge score={reliabilityScore} />
-              )}
-            </div>
+            <DialogTitle>{selectedCourse?.title}</DialogTitle>
           </DialogHeader>
 
           {selectedCourse && (
