@@ -33,13 +33,10 @@ export const ReliabilityScoreBadge = ({ score }: ReliabilityScoreBadgeProps) => 
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1 px-2 py-1 rounded-full transition-colors hover:bg-muted"
-        title="Reliability Score"
+        className="flex items-center px-2 py-1 rounded-full transition-colors hover:bg-muted"
+        title="Fairness Score"
       >
-        <Gauge className="h-5 w-5" style={{ color }} />
-        <span className="text-xs font-semibold" style={{ color }}>
-          L{score.level}
-        </span>
+        <Gauge className="h-7 w-7" style={{ color }} />
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
