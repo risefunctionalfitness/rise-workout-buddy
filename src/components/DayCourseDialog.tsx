@@ -14,6 +14,9 @@ import { MembershipBadge } from "./MembershipBadge"
 import { OpenGymCheckin } from "./OpenGymCheckin"
 import { CourseInvitationButton } from "./CourseInvitationButton"
 import { AddToCalendarButton } from "./AddToCalendarButton"
+import { ReliabilityScoreScale } from "./ReliabilityScoreScale"
+import { FairnessCheckDialog } from "./FairnessCheckDialog"
+import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 
 interface Course {
   id: string
