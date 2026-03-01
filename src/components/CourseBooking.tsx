@@ -1005,6 +1005,23 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         imageUrl={selectedProfile?.imageUrl || null}
         displayName={selectedProfile?.displayName || ''}
       />
+
+      {reliabilityScore && pendingCancellationId && (
+        <FairnessCheckDialog
+          open={fairnessCheckOpen}
+          onOpenChange={(open) => {
+            setFairnessCheckOpen(open)
+            if (!open) setPendingCancellationId(null)
+          }}
+          currentScore={reliabilityScore}
+          onConfirmCancel={() => {
+            if (pendingCancellationId) {
+              handleCancellation(pendingCancellationId)
+              setPendingCancellationId(null)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
