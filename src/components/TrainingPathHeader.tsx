@@ -22,6 +22,8 @@ export const TrainingPathHeader: React.FC<TrainingPathHeaderProps> = ({
   onAdminClick,
 }) => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const { data: reliabilityScore } = useReliabilityScore(user?.id);
+
   useEffect(() => {
     const checkRole = async () => {
       if (!user?.id) return;
