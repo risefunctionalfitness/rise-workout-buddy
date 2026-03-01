@@ -951,7 +951,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   <>
                     <Button 
                       variant="destructive" 
-                      onClick={() => handleCancellation(selectedCourse.id)}
+                       onClick={() => inititateCancellation(selectedCourse.id)}
                       disabled={!canCancelCourse(selectedCourse)}
                       className="w-full"
                     >
