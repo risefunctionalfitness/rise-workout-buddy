@@ -65,6 +65,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [isAdmin, setIsAdmin] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const [showQRScanner, setShowQRScanner] = useState(false)
+  const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
+  const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
     if (open) {
