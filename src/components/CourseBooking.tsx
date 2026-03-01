@@ -400,6 +400,24 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     return now < cancellationDeadline
   }
 
+  const inititateCancellation = (courseId: string, course?: Course) => {
+    const targetCourse = course || selectedCourse
+    if (!targetCourse) return
+
+    if (!canCancelCourse(targetCourse)) {
+      toast.error(`Die Abmeldefrist ist bereits ${targetCourse.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+      return
+    }
+
+    if (reliabilityScore && !isAdmin && !isTrainer) {
+      setPendingCancellationId(courseId)
+      setFairnessCheckOpen(true)
+      return
+    }
+
+    handleCancellation(courseId, course)
+  }
+
   const handleCancellation = async (courseId: string, course?: Course) => {
     const targetCourse = course || selectedCourse
     if (!targetCourse) return
