@@ -346,6 +346,24 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
     }
   }
 
+  const initiateCancellation = (courseId: string) => {
+    const course = selectedCourse
+    if (!course) return
+
+    if (!canCancelCourse(course)) {
+      toast.error(`Die Abmeldefrist ist bereits ${course.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+      return
+    }
+
+    if (reliabilityScore && !isAdmin && !isTrainer) {
+      setPendingCancellationId(courseId)
+      setFairnessCheckOpen(true)
+      return
+    }
+
+    handleCancellation(courseId)
+  }
+
   const handleCancellation = async (courseId: string) => {
     const course = selectedCourse
     if (!course) return
