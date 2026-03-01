@@ -5,6 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ShieldCheck, LogOut } from "lucide-react";
 import {
   getProjectedScore,
   getLevelColor,
@@ -79,22 +80,22 @@ export const FairnessCheckDialog = ({
             </div>
           </div>
 
-          {/* Gradient bar showing projected position */}
-          <div className="relative h-3 rounded-full overflow-hidden bg-gradient-to-r from-green-500 via-yellow-400 via-orange-500 to-red-500">
+          {/* Gradient bar with corrected scale (0-50%) */}
+          <div className="relative h-4 rounded-full overflow-hidden bg-gradient-to-r from-green-500 via-yellow-400 via-orange-500 to-red-500">
             {/* Current marker */}
             <div
-              className="absolute top-[-2px] w-3.5 h-3.5 rounded-full bg-white border-2 shadow-md opacity-40"
+              className="absolute top-[-2px] w-4 h-4 rounded-full bg-white border-2 shadow-md opacity-40"
               style={{
-                left: `${Math.min(98, Math.max(2, currentScore.score))}%`,
+                left: `${Math.min(98, Math.max(2, (currentScore.score / 50) * 100))}%`,
                 transform: "translateX(-50%)",
                 borderColor: currentColor,
               }}
             />
             {/* Projected marker */}
             <div
-              className="absolute top-[-2px] w-4 h-4 rounded-full bg-white border-2 shadow-md"
+              className="absolute top-[-3px] w-5 h-5 rounded-full bg-white border-[3px] shadow-lg"
               style={{
-                left: `${Math.min(98, Math.max(2, projected.score))}%`,
+                left: `${Math.min(98, Math.max(2, (projected.score / 50) * 100))}%`,
                 transform: "translateX(-50%)",
                 borderColor: projectedColor,
               }}
@@ -107,20 +108,22 @@ export const FairnessCheckDialog = ({
 
           <div className="space-y-2">
             <Button
-              className="w-full"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
               onClick={() => onOpenChange(false)}
             >
-              Angemeldet bleiben 💪
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              Angemeldet bleiben
             </Button>
             <Button
-              variant="ghost"
-              className="w-full text-muted-foreground"
+              variant="outline"
+              className="w-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
               onClick={() => {
                 onConfirmCancel();
                 onOpenChange(false);
               }}
             >
-              Trotzdem abmelden 😢
+              <LogOut className="h-4 w-4 mr-2" />
+              Trotzdem abmelden
             </Button>
           </div>
         </div>
