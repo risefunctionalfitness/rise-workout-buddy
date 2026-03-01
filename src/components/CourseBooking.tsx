@@ -462,6 +462,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
       toast.success('Anmeldung erfolgreich storniert')
       
+      // Refresh reliability score after cancellation
+      refetchScore()
+      
       // Dispatch event to update other components  
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       
