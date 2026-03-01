@@ -229,7 +229,7 @@ export const UpcomingClassReservation = ({
   const inititateCancellation = () => {
     if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
 
-    if (reliabilityScore && !isAdmin && !isTrainer) {
+    if (reliabilityScore && !isAdmin) {
       setFairnessCheckOpen(true);
       return;
     }
