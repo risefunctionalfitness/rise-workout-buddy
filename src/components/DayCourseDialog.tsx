@@ -15,6 +15,7 @@ import { OpenGymCheckin } from "./OpenGymCheckin"
 import { CourseInvitationButton } from "./CourseInvitationButton"
 import { AddToCalendarButton } from "./AddToCalendarButton"
 import { ReliabilityScoreScale } from "./ReliabilityScoreScale"
+import { ReliabilityScoreBadge } from "./ReliabilityScoreBadge"
 import { FairnessCheckDialog } from "./FairnessCheckDialog"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 
@@ -563,7 +564,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{selectedCourse?.title}</DialogTitle>
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle>{selectedCourse?.title}</DialogTitle>
+              {reliabilityScore && !isAdmin && !isTrainer && (
+                <ReliabilityScoreBadge score={reliabilityScore} />
+              )}
+            </div>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 overflow-y-auto">
@@ -589,10 +595,6 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                 )}
               </div>
 
-              {/* Reliability Score Scale */}
-              {reliabilityScore && !isAdmin && !isTrainer && (
-                <ReliabilityScoreScale score={reliabilityScore} />
-              )}
 
               {/* Minimum participants warning */}
               {participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
@@ -766,17 +768,39 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                   >
                     {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
-                ) : (
-                  <Button 
-                    onClick={() => handleRegistration(selectedCourse.id)}
-                    className="w-full"
-                  >
-                    {selectedCourse.registered_count >= selectedCourse.max_participants 
-                      ? 'Auf Warteliste' 
-                      : 'Anmelden'
-                    }
-                  </Button>
-                )}
+                ) : (() => {
+                  const isOutsideWindow = reliabilityScore && !isAdmin && !isTrainer && (() => {
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')
+                    const maxDate = new Date(today)
+                    maxDate.setDate(maxDate.getDate() + reliabilityScore.bookingWindowDays)
+                    return courseDate > maxDate
+                  })()
+
+                  if (isOutsideWindow && reliabilityScore) {
+                    const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')
+                    const availableDate = new Date(courseDate)
+                    availableDate.setDate(availableDate.getDate() - reliabilityScore.bookingWindowDays)
+                    return (
+                      <Button disabled className="w-full" variant="outline">
+                        Ab {format(availableDate, 'dd.MM.', { locale: de })} buchbar
+                      </Button>
+                    )
+                  }
+
+                  return (
+                    <Button 
+                      onClick={() => handleRegistration(selectedCourse.id)}
+                      className="w-full"
+                    >
+                      {selectedCourse.registered_count >= selectedCourse.max_participants 
+                        ? 'Auf Warteliste' 
+                        : 'Anmelden'
+                      }
+                    </Button>
+                  )
+                })()}
               </div>
             </div>
           )}

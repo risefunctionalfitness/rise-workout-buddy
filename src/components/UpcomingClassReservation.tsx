@@ -20,6 +20,7 @@ import { CourseInvitationButton } from "./CourseInvitationButton";
 import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FairnessCheckDialog } from "./FairnessCheckDialog";
 import { useReliabilityScore } from "@/hooks/useReliabilityScore";
+import { ReliabilityScoreBadge } from "./ReliabilityScoreBadge";
 import {
   Carousel,
   CarouselContent,
@@ -348,7 +349,12 @@ export const UpcomingClassReservation = ({
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{selectedCourse?.title}</DialogTitle>
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle>{selectedCourse?.title}</DialogTitle>
+              {reliabilityScore && !isAdmin && !isTrainer && (
+                <ReliabilityScoreBadge score={reliabilityScore} />
+              )}
+            </div>
           </DialogHeader>
 
           {selectedCourse && (
