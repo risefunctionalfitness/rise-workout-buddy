@@ -7,14 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   RELIABILITY_LEVELS,
   getLevelColor,
   type ReliabilityScore,
