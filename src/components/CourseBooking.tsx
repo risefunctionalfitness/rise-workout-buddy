@@ -971,7 +971,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                 ) : selectedCourse.is_waitlisted ? (
                   <Button 
                     variant="destructive" 
-                    onClick={() => handleCancellation(selectedCourse.id)}
+                    onClick={() => inititateCancellation(selectedCourse.id)}
                     disabled={!canCancelCourse(selectedCourse)}
                     className="w-full"
                   >
