@@ -496,6 +496,15 @@ export const UpcomingClassReservation = ({
         imageUrl={selectedProfile?.imageUrl || null}
         displayName={selectedProfile?.displayName || ''}
       />
+
+      {reliabilityScore && (
+        <FairnessCheckDialog
+          open={fairnessCheckOpen}
+          onOpenChange={setFairnessCheckOpen}
+          currentScore={reliabilityScore}
+          onConfirmCancel={handleCancel}
+        />
+      )}
     </>
   );
 };
