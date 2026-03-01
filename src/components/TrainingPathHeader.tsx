@@ -5,8 +5,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { StreakDisplay } from "@/components/StreakDisplay";
-import { ReliabilityScoreBadge } from "@/components/ReliabilityScoreBadge";
-import { useReliabilityScore } from "@/hooks/useReliabilityScore";
 
 interface TrainingPathHeaderProps {
   user: any;
