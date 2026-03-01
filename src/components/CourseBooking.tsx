@@ -742,7 +742,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{selectedCourse?.title}</DialogTitle>
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle>{selectedCourse?.title}</DialogTitle>
+              {reliabilityScore && !isAdmin && !isTrainer && (
+                <ReliabilityScoreBadge score={reliabilityScore} />
+              )}
+            </div>
           </DialogHeader>
           {selectedCourse && (
             <div className="space-y-4 overflow-y-auto">
