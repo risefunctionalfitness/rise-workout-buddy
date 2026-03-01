@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  RELIABILITY_LEVELS,
   getLevelColor,
   type ReliabilityScore,
 } from "@/hooks/useReliabilityScore";
