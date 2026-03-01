@@ -611,8 +611,13 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       )}
       
       {/* Header */}
-      <div className="text-center">
+      <div className="flex items-center justify-center relative">
         <h2 className="text-xl font-semibold mb-4">Kurse</h2>
+        {reliabilityScore && !isAdmin && !isTrainer && (
+          <div className="absolute right-0 top-0">
+            <ReliabilityScoreBadge score={reliabilityScore} />
+          </div>
+        )}
       </div>
       
       {/* Tab Navigation */}
