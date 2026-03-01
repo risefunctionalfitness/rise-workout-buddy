@@ -1527,6 +1527,16 @@ export type Database = {
           was_ever_active: boolean
         }[]
       }
+      get_user_reliability_score: {
+        Args: { p_user_id: string }
+        Returns: {
+          booking_window_days: number
+          cancellations: number
+          level: number
+          score: number
+          total_bookings: number
+        }[]
+      }
       get_weekly_registrations_count: {
         Args: { check_date?: string; user_id_param: string }
         Returns: number

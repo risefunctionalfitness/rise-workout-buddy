@@ -18,6 +18,8 @@ import { ProfileImageViewer } from "./ProfileImageViewer";
 import { MembershipBadge } from "./MembershipBadge";
 import { CourseInvitationButton } from "./CourseInvitationButton";
 import { AddToCalendarButton } from "./AddToCalendarButton";
+import { FairnessCheckDialog } from "./FairnessCheckDialog";
+import { useReliabilityScore } from "@/hooks/useReliabilityScore";
 import {
   Carousel,
   CarouselContent,
@@ -43,6 +45,8 @@ export const UpcomingClassReservation = ({
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false);
+  const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user?.id);
 
   useEffect(() => {
     if (!carouselApi) return;
@@ -221,6 +225,17 @@ export const UpcomingClassReservation = ({
     return new Date() < cancellationDeadline;
   };
 
+  const inititateCancellation = () => {
+    if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
+
+    if (reliabilityScore && !isAdmin && !isTrainer) {
+      setFairnessCheckOpen(true);
+      return;
+    }
+
+    handleCancel();
+  };
+
   const handleCancel = async () => {
     if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
 
@@ -234,6 +249,7 @@ export const UpcomingClassReservation = ({
       if (error) throw error;
 
       toast.success("Anmeldung erfolgreich storniert");
+      refetchScore();
 
       window.dispatchEvent(new CustomEvent("courseRegistrationChanged"));
       setShowDialog(false);
@@ -452,7 +468,7 @@ export const UpcomingClassReservation = ({
               <div className="space-y-2">
                 <Button 
                   variant="destructive" 
-                  onClick={handleCancel}
+                  onClick={inititateCancellation}
                   disabled={!canCancelCourse(selectedCourse)}
                   className="w-full"
                 >
@@ -480,6 +496,15 @@ export const UpcomingClassReservation = ({
         imageUrl={selectedProfile?.imageUrl || null}
         displayName={selectedProfile?.displayName || ''}
       />
+
+      {reliabilityScore && (
+        <FairnessCheckDialog
+          open={fairnessCheckOpen}
+          onOpenChange={setFairnessCheckOpen}
+          currentScore={reliabilityScore}
+          onConfirmCancel={handleCancel}
+        />
+      )}
     </>
   );
 };

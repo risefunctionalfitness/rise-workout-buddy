@@ -1,115 +1,33 @@
 
+# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-# Reliability Score System - Implementierungsplan
+## Aenderung
 
-## Bewertung deines Konzepts
+Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
 
-Dein Plan ist durchdacht und adressiert die Kernprobleme aus den Daten (36,4% durchschnittliche Stornierungsrate, 64% der Stornierungen innerhalb von 24h vor Kursbeginn). Besonders stark:
+## Berechnung
 
-- **Fairness Check Dialog**: Die "Nudge"-Strategie mit Score-Vorschau ist psychologisch effektiv
-- **Abgestufte Konsequenzen**: 4 Level statt harter Sperren ist fair
-- **Transparenz**: Nutzer sehen ihren Status und verstehen das System
+Fuer jede Wochentag-Uhrzeit-Kombination:
+- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
+- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
+- Durchschnitt ueber alle Kurse dieser Kombination bilden
+- Ergebnis als Prozentwert anzeigen
 
-**Ein Hinweis**: Das Buchungsfenster-Limit (z.B. nur 3 Tage vorher) bestraft zwar Vielstornierer, schraenkt aber auch die Planbarkeit ein. Laut den Daten stornieren Spontanbucher (gleicher Tag) am wenigsten (24,3%), waehrend Fruehbucher (7+ Tage) am meisten stornieren (44,3%). Das System ist also konsistent mit den Daten.
+## Technische Umsetzung
 
----
+### Datei: `src/components/BookingPatternsCard.tsx`
 
-## Implementierungsschritte
+1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
 
-### 1. Datenbank: Reliability Score Funktion erstellen
+2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
+   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
+   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
+   - Gruppierung nach Wochentag + Startzeit
+   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
 
-Eine PostgreSQL-Funktion `get_user_reliability_score(p_user_id uuid)` die in Echtzeit berechnet:
-- Gesamtanzahl Buchungen (status IN ('registered', 'cancelled')) seit den letzten 90 Tagen
-- Anzahl Stornierungen (status = 'cancelled')
-- Score = (Stornierungen / Gesamt) * 100
-- Gibt zurueck: `score` (numeric), `level` (1-4), `booking_window_days` (14/7/5/3), `total_bookings`, `cancellations`
+3. **Anzeige anpassen**:
+   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
+   - Zahl rechts zeigt `82%` statt `42`
+   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
 
-Keine neue Tabelle noetig -- der Score wird live aus `course_registrations` berechnet.
-
-### 2. Hook: `useReliabilityScore`
-
-Ein React Hook der:
-- Den Score via `supabase.rpc('get_user_reliability_score')` laedt
-- Level, Farbe und Buchungsfenster ableitet
-- Den projizierten Score nach einer Stornierung berechnet
-- Caching mit React Query
-
-### 3. Buchungsfenster-Einschraenkung
-
-In `CourseBooking.tsx` und `DayCourseDialog.tsx`:
-- Kurse ausserhalb des Buchungsfensters des Users werden ausgegraut / nicht buchbar angezeigt
-- Hinweis: "Verfuegbar ab [Datum]" fuer zu fruehe Kurse
-- Admins und Trainer sind vom System ausgenommen
-
-### 4. Header Badge (Speedometer Icon)
-
-In `CourseBooking.tsx` (Kurslistenansicht):
-- Gauge/Speedometer Icon oben rechts mit Level-Farbe (gruen/gelb/orange/rot)
-- Klick oeffnet Info-Dialog mit Tabelle aller 4 Level und deren Buchungsfenster
-- Aktuelles Level des Users wird hervorgehoben
-
-### 5. Score-Anzeige in Kursdetails
-
-Im Kursdetail-Dialog (sowohl `CourseBooking` als auch `DayCourseDialog`):
-- Horizontale Farbskala (Gradient gruen nach rot)
-- Marker an der aktuellen Score-Position
-- Text darunter: "Status: Level [X] | Buchungsfenster: [X] Tage"
-
-### 6. Fairness Check Dialog
-
-Neue Komponente `FairnessCheckDialog.tsx`:
-- Wird bei Klick auf "Abmelden" geoeffnet (statt direkte Stornierung)
-- Zeigt aktuellen Score und projizierten Score nach Stornierung
-- Visualisiert die Aenderung auf der Farbskala
-- "Angemeldet bleiben" (primaer) vs "Trotzdem abmelden" (sekundaer)
-- Wird in alle 3 Stornierungsstellen integriert: `CourseBooking`, `DayCourseDialog`, `UpcomingClassReservation`
-
----
-
-## Betroffene Dateien
-
-| Datei | Aenderung |
-|---|---|
-| **Neue Dateien** | |
-| `src/hooks/useReliabilityScore.ts` | Hook fuer Score-Berechnung |
-| `src/components/FairnessCheckDialog.tsx` | Stornierungsbestaetigung |
-| `src/components/ReliabilityScoreBadge.tsx` | Header-Badge + Info-Modal |
-| `src/components/ReliabilityScoreScale.tsx` | Horizontale Farbskala |
-| **Bestehende Dateien** | |
-| `src/components/CourseBooking.tsx` | Badge einbinden, Score-Scale in Details, Buchungsfenster-Filter, Fairness Check |
-| `src/components/DayCourseDialog.tsx` | Score-Scale in Details, Fairness Check |
-| `src/components/UpcomingClassReservation.tsx` | Fairness Check bei Stornierung |
-| DB Migration | `get_user_reliability_score` Funktion |
-
----
-
-## Technische Details
-
-### Score-Berechnung (SQL Funktion)
-
-```text
-Zeitraum: Letzte 90 Tage (rollierend)
-Formel:  score = (cancelled / total) * 100
-Level:   1 (0-15%), 2 (16-25%), 3 (26-35%), 4 (36%+)
-Window:  14, 7, 5, 3 Tage
-Min. Buchungen: Unter 5 Buchungen = automatisch Level 1
-```
-
-### Buchungsfenster-Logik
-
-```text
-Wenn Kurs-Datum > heute + booking_window_days:
-  -> Button deaktiviert
-  -> Text: "Ab [Datum] buchbar"
-Ausnahme: Admins + Trainer = immer Level 1
-```
-
-### Farben
-
-```text
-Level 1: #22c55e (Gruen)
-Level 2: #eab308 (Gelb)  
-Level 3: #f97316 (Orange)
-Level 4: #ef4444 (Rot)
-```
-
+4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen

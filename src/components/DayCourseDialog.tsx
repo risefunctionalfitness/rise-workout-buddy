@@ -14,6 +14,9 @@ import { MembershipBadge } from "./MembershipBadge"
 import { OpenGymCheckin } from "./OpenGymCheckin"
 import { CourseInvitationButton } from "./CourseInvitationButton"
 import { AddToCalendarButton } from "./AddToCalendarButton"
+import { ReliabilityScoreScale } from "./ReliabilityScoreScale"
+import { FairnessCheckDialog } from "./FairnessCheckDialog"
+import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 
 interface Course {
   id: string
@@ -62,6 +65,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [isAdmin, setIsAdmin] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const [showQRScanner, setShowQRScanner] = useState(false)
+  const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
+  const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
     if (open) {
@@ -340,6 +346,24 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
     }
   }
 
+  const initiateCancellation = (courseId: string) => {
+    const course = selectedCourse
+    if (!course) return
+
+    if (!canCancelCourse(course)) {
+      toast.error(`Die Abmeldefrist ist bereits ${course.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+      return
+    }
+
+    if (reliabilityScore && !isAdmin && !isTrainer) {
+      setPendingCancellationId(courseId)
+      setFairnessCheckOpen(true)
+      return
+    }
+
+    handleCancellation(courseId)
+  }
+
   const handleCancellation = async (courseId: string) => {
     const course = selectedCourse
     if (!course) return
@@ -359,6 +383,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (error) throw error
 
       toast.success('Anmeldung erfolgreich storniert')
+      refetchScore()
       
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       
@@ -564,6 +589,11 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                 )}
               </div>
 
+              {/* Reliability Score Scale */}
+              {reliabilityScore && !isAdmin && !isTrainer && (
+                <ReliabilityScoreScale score={reliabilityScore} />
+              )}
+
               {/* Minimum participants warning */}
               {participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
                 <p className="text-xs text-muted-foreground">
@@ -710,7 +740,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                   <>
                     <Button 
                       variant="destructive" 
-                      onClick={() => handleCancellation(selectedCourse.id)}
+                       onClick={() => initiateCancellation(selectedCourse.id)}
                       disabled={!canCancelCourse(selectedCourse)}
                       className="w-full"
                     >
@@ -730,7 +760,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                 ) : selectedCourse.is_waitlisted ? (
                   <Button 
                     variant="destructive" 
-                    onClick={() => handleCancellation(selectedCourse.id)}
+                    onClick={() => initiateCancellation(selectedCourse.id)}
                     disabled={!canCancelCourse(selectedCourse)}
                     className="w-full"
                   >
@@ -766,6 +796,23 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         onCheckinComplete={handleQRCheckinComplete}
         date={new Date(date)}
       />
+
+      {reliabilityScore && pendingCancellationId && (
+        <FairnessCheckDialog
+          open={fairnessCheckOpen}
+          onOpenChange={(open) => {
+            setFairnessCheckOpen(open)
+            if (!open) setPendingCancellationId(null)
+          }}
+          currentScore={reliabilityScore}
+          onConfirmCancel={() => {
+            if (pendingCancellationId) {
+              handleCancellation(pendingCancellationId)
+              setPendingCancellationId(null)
+            }
+          }}
+        />
+      )}
     </>
   )
 }

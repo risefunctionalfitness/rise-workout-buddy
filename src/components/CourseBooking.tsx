@@ -13,6 +13,10 @@ import { ProfileImageViewer } from "@/components/ProfileImageViewer"
 import { CoursesCalendarView } from "@/components/CoursesCalendarView"
 import { CourseInvitationButton } from "@/components/CourseInvitationButton"
 import { AddToCalendarButton } from "@/components/AddToCalendarButton"
+import { ReliabilityScoreBadge } from "@/components/ReliabilityScoreBadge"
+import { ReliabilityScoreScale } from "@/components/ReliabilityScoreScale"
+import { FairnessCheckDialog } from "@/components/FairnessCheckDialog"
+import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -55,6 +59,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const [activeTab, setActiveTab] = useState<string>("liste")
   const scrollPositionRef = useRef<number>(0)
+  const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
+  const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
     let mounted = true
@@ -393,6 +400,24 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     return now < cancellationDeadline
   }
 
+  const inititateCancellation = (courseId: string, course?: Course) => {
+    const targetCourse = course || selectedCourse
+    if (!targetCourse) return
+
+    if (!canCancelCourse(targetCourse)) {
+      toast.error(`Die Abmeldefrist ist bereits ${targetCourse.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+      return
+    }
+
+    if (reliabilityScore && !isAdmin && !isTrainer) {
+      setPendingCancellationId(courseId)
+      setFairnessCheckOpen(true)
+      return
+    }
+
+    handleCancellation(courseId, course)
+  }
+
   const handleCancellation = async (courseId: string, course?: Course) => {
     const targetCourse = course || selectedCourse
     if (!targetCourse) return
@@ -436,6 +461,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       }
 
       toast.success('Anmeldung erfolgreich storniert')
+      
+      // Refresh reliability score after cancellation
+      refetchScore()
       
       // Dispatch event to update other components  
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
@@ -583,8 +611,13 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       )}
       
       {/* Header */}
-      <div className="text-center">
+      <div className="flex items-center justify-center relative">
         <h2 className="text-xl font-semibold mb-4">Kurse</h2>
+        {reliabilityScore && !isAdmin && !isTrainer && (
+          <div className="absolute right-0 top-0">
+            <ReliabilityScoreBadge score={reliabilityScore} />
+          </div>
+        )}
       </div>
       
       {/* Tab Navigation */}
@@ -734,6 +767,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   </div>
                 )}
               </div>
+
+              {/* Reliability Score Scale */}
+              {reliabilityScore && !isAdmin && !isTrainer && (
+                <ReliabilityScoreScale score={reliabilityScore} />
+              )}
 
               {/* Minimum participants warning */}
               {participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
@@ -918,7 +956,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                   <>
                     <Button 
                       variant="destructive" 
-                      onClick={() => handleCancellation(selectedCourse.id)}
+                       onClick={() => inititateCancellation(selectedCourse.id)}
                       disabled={!canCancelCourse(selectedCourse)}
                       className="w-full"
                     >
@@ -938,7 +976,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                 ) : selectedCourse.is_waitlisted ? (
                   <Button 
                     variant="destructive" 
-                    onClick={() => handleCancellation(selectedCourse.id)}
+                    onClick={() => inititateCancellation(selectedCourse.id)}
                     disabled={!canCancelCourse(selectedCourse)}
                     className="w-full"
                   >
@@ -967,6 +1005,23 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         imageUrl={selectedProfile?.imageUrl || null}
         displayName={selectedProfile?.displayName || ''}
       />
+
+      {reliabilityScore && pendingCancellationId && (
+        <FairnessCheckDialog
+          open={fairnessCheckOpen}
+          onOpenChange={(open) => {
+            setFairnessCheckOpen(open)
+            if (!open) setPendingCancellationId(null)
+          }}
+          currentScore={reliabilityScore}
+          onConfirmCancel={() => {
+            if (pendingCancellationId) {
+              handleCancellation(pendingCancellationId)
+              setPendingCancellationId(null)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
