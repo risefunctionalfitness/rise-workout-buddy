@@ -1,33 +1,40 @@
 
-# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Aenderung
+## Analysis of Two Issues
 
-Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
+### Issue 1: Courses not loading on iPhone (Safari)
 
-## Berechnung
+The problem is likely in the `.or()` filter used across multiple components (`CourseBooking.tsx`, `CourseParticipants.tsx`, `CoursesCalendarView.tsx`):
 
-Fuer jede Wochentag-Uhrzeit-Kombination:
-- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
-- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
-- Durchschnitt ueber alle Kurse dieser Kombination bilden
-- Ergebnis als Prozentwert anzeigen
+```
+.or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
+```
 
-## Technische Umsetzung
+The `nowTime` is generated via `now.toTimeString().slice(0, 8)`. On some Safari/WebKit versions, `toTimeString()` can return unexpected formats or include timezone abbreviations differently, causing the slice to produce an invalid time string. This would silently break the query filter, returning no results.
 
-### Datei: `src/components/BookingPatternsCard.tsx`
+**Fix:** Replace `now.toTimeString().slice(0, 8)` with a safer approach using explicit formatting:
+```typescript
+const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+```
 
-1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
+This needs to be fixed in 3 files:
+- `src/components/CourseBooking.tsx` (line 127)
+- `src/components/CourseParticipants.tsx` (line 51 area)
+- `src/components/CoursesCalendarView.tsx` (line 66)
 
-2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
-   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
-   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
-   - Gruppierung nach Wochentag + Startzeit
-   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
+### Issue 2: Email not showing in admin member edit dialog
 
-3. **Anzeige anpassen**:
-   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
-   - Zahl rechts zeigt `82%` statt `42`
-   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
+The `loadMemberEmailForEdit` function calls the `get-member-email` edge function. The edge function logs are completely empty, suggesting it may not be deployed or is failing before logging. However, the function file exists.
 
-4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen
+The more likely issue: the edge function uses `await req.json()` to parse the body, but `supabase.functions.invoke` sends the body as JSON automatically. The function should work, but it might be failing silently due to CORS or auth issues on mobile Safari.
+
+A simpler and more reliable fix: The `profiles` table already has an `email` column. Instead of calling an edge function, query the email directly from the profiles table first, and only fall back to the edge function if it's null. Many profiles may already have the email stored. Additionally, ensure the edge function is robust by adding better error handling.
+
+**Fix:** In `Admin.tsx`'s `loadMemberEmailForEdit`, first check `member.email` from the already-loaded profiles data (which includes `email`). Only call the edge function if the profile email is empty.
+
+**Files to modify:**
+1. `src/components/CourseBooking.tsx` - Safari-safe time formatting
+2. `src/components/CourseParticipants.tsx` - Safari-safe time formatting  
+3. `src/components/CoursesCalendarView.tsx` - Safari-safe time formatting
+4. `src/pages/Admin.tsx` - Use profile email first, edge function as fallback
+
