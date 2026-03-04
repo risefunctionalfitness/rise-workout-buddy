@@ -41,7 +41,7 @@ export const CourseParticipants = () => {
       // Get current date and time to filter out past courses
       const now = new Date()
       const nowDate = now.toISOString().split('T')[0]
-      const nowTime = now.toTimeString().slice(0, 8)
+      const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
 
       const { data, error } = await supabase
         .from('courses')
