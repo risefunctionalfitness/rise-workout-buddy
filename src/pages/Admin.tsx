@@ -260,30 +260,25 @@ export default function Admin() {
       return;
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('get-member-email', {
-        body: { userId: member.user_id }
-      });
-
-      if (error) {
-        console.error('Error loading member email:', error);
-        setEditedEmail('');
-        toast({
-          title: "Warnung",
-          description: "E-Mail-Adresse konnte nicht geladen werden",
-          variant: "destructive",
+    // Use profile email first, edge function as fallback
+    if (member.email) {
+      setEditedEmail(member.email);
+    } else {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-member-email', {
+          body: { userId: member.user_id }
         });
-      } else {
-        setEditedEmail(data?.email || '');
+
+        if (error) {
+          console.error('Error loading member email:', error);
+          setEditedEmail('');
+        } else {
+          setEditedEmail(data?.email || '');
+        }
+      } catch (error) {
+        console.error('Error in loadMemberEmailForEdit:', error);
+        setEditedEmail('');
       }
-    } catch (error) {
-      console.error('Error in loadMemberEmailForEdit:', error);
-      setEditedEmail('');
-      toast({
-        title: "Warnung", 
-        description: "E-Mail-Adresse konnte nicht geladen werden",
-        variant: "destructive",
-      });
     }
     
     setEditDialogOpen(true);

@@ -124,7 +124,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       // Get upcoming courses and limit to next 10 unique course days
       const now = new Date()
       const nowDate = now.toISOString().split('T')[0]
-      const nowTime = now.toTimeString().slice(0, 8)
+      const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
 
       const [coursesResult, userRegistrationsResult] = await Promise.all([
         supabase
