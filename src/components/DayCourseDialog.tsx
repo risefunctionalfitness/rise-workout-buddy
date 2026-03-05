@@ -140,15 +140,18 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (coursesResult.error) throw coursesResult.error
       if (userRegistrationsResult.error) throw userRegistrationsResult.error
 
-      // Get course IDs to fetch guest registrations
+      // Get course IDs to fetch guest registrations (guard against empty array)
       const courseIds = (coursesResult.data || []).map(c => c.id)
       
-      // Fetch guest registrations for all courses
-      const { data: guestRegistrations } = await supabase
-        .from('guest_registrations')
-        .select('course_id, status')
-        .in('course_id', courseIds)
-        .eq('status', 'registered')
+      let guestRegistrations: { course_id: string; status: string }[] = []
+      if (courseIds.length > 0) {
+        const { data: guestData } = await supabase
+          .from('guest_registrations')
+          .select('course_id, status')
+          .in('course_id', courseIds)
+          .eq('status', 'registered')
+        guestRegistrations = guestData || []
+      }
 
       // Process courses including guest counts
       const processedCourses = (coursesResult.data || []).map(course => {
