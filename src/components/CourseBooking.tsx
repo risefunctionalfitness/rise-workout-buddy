@@ -143,12 +143,16 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       // Get course IDs to fetch guest registrations
       const courseIds = (coursesResult.data || []).map(c => c.id)
       
-      // Fetch guest registrations for all courses
-      const { data: guestRegistrations } = await supabase
-        .from('guest_registrations')
-        .select('course_id, status')
-        .in('course_id', courseIds)
-        .eq('status', 'registered')
+      // Fetch guest registrations for all courses (guard against empty array)
+      let guestRegistrations: { course_id: string; status: string }[] = []
+      if (courseIds.length > 0) {
+        const { data } = await supabase
+          .from('guest_registrations')
+          .select('course_id, status')
+          .in('course_id', courseIds)
+          .eq('status', 'registered')
+        guestRegistrations = data || []
+      }
 
       // Process courses data including guest counts
       const processedCourses = (coursesResult.data || []).map(course => {
