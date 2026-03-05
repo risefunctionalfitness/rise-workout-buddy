@@ -298,6 +298,156 @@ export const AdminRiskRadar = () => {
         </div>
       </div>
 
+      {/* Global Member Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Mitglied suchen (kategorieübergreifend)..."
+          value={globalSearch}
+          onChange={(e) => setGlobalSearch(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Search Results */}
+      {globalSearch.trim().length >= 2 && (() => {
+        const query = globalSearch.toLowerCase().trim();
+        const matchName = (m: { display_name?: string | null; first_name?: string | null; last_name?: string | null }) => {
+          const full = [m.first_name, m.last_name, m.display_name].filter(Boolean).join(' ').toLowerCase();
+          return full.includes(query);
+        };
+
+        const matchedNeverActive = (allNeverActiveMembers || []).filter(matchName);
+        const matchedInactive = (allInactiveMembers || []).filter(matchName);
+        const totalResults = matchedNeverActive.length + matchedInactive.length;
+
+        return (
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">
+              Suchergebnisse ({totalResults})
+            </h3>
+            {totalResults === 0 ? (
+              <p className="text-sm text-muted-foreground">Kein Mitglied gefunden</p>
+            ) : (
+              <div className="space-y-4">
+                {matchedNeverActive.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Nie Aktiv ({matchedNeverActive.length})</h4>
+                    <div className="space-y-2">
+                      {matchedNeverActive.map((member) => (
+                        <Card key={member.user_id} className="p-4 flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold">
+                              {member.first_name && member.last_name
+                                ? `${member.first_name} ${member.last_name}`
+                                : member.display_name || 'Unbekannt'}
+                            </div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <span>{member.days_since_signup} Tage seit Anmeldung</span>
+                              <span>•</span>
+                              <span className="text-xs bg-muted px-2 py-0.5 rounded">{member.category}</span>
+                              <span>•</span>
+                              <MembershipBadge type={member.membership_type as any} />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setSelectedMemberDetails({
+                                  userId: member.user_id,
+                                  displayName: member.display_name || 'Unbekannt',
+                                  firstName: member.first_name || undefined,
+                                  lastName: member.last_name || undefined
+                                });
+                                setShowMemberStatsDialog(true);
+                              }}
+                              title="Statistiken anzeigen"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant={emailQueue.has(member.user_id) ? "default" : "ghost"}
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleAddToEmailQueue(member.user_id, member.display_name || 'Unbekannt')}
+                              title="Zur E-Mail-Liste hinzufügen"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {matchedInactive.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Inaktiv ({matchedInactive.length})</h4>
+                    <div className="space-y-2">
+                      {matchedInactive.map((member) => (
+                        <Card key={member.user_id} className="p-4 flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold">
+                              {member.first_name && member.last_name
+                                ? `${member.first_name} ${member.last_name}`
+                                : member.display_name || 'Unbekannt'}
+                            </div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <span>{member.days_since_last_activity} Tage seit letzter Aktivität</span>
+                              <span>•</span>
+                              <span className="text-xs bg-muted px-2 py-0.5 rounded">{member.category}</span>
+                              <span>•</span>
+                              <MembershipBadge type={member.membership_type as any} />
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {member.total_bookings} Buchungen • {member.total_training_sessions} Trainings
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setSelectedMemberDetails({
+                                  userId: member.user_id,
+                                  displayName: member.display_name || 'Unbekannt',
+                                  firstName: member.first_name || undefined,
+                                  lastName: member.last_name || undefined,
+                                  totalBookings: member.total_bookings,
+                                  totalTrainings: member.total_training_sessions,
+                                  cancellations: member.cancellations
+                                });
+                                setShowMemberStatsDialog(true);
+                              }}
+                              title="Statistiken anzeigen"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant={emailQueue.has(member.user_id) ? "default" : "ghost"}
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleAddToEmailQueue(member.user_id, member.display_name || 'Unbekannt')}
+                              title="Zur E-Mail-Liste hinzufügen"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        );
+      })()}
+
       {/* ===== NEVER ACTIVE DASHBOARD ===== */}
       <Card className="p-6">
         <h2 className="text-2xl font-semibold mb-6">Nie Aktiv</h2>
