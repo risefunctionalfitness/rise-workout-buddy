@@ -112,6 +112,15 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     try {
       setLoading(true)
 
+      // Ensure valid session before querying (prevents iOS auth token issues)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.warn('Session refresh failed:', refreshError.message)
+        }
+      }
+
       // Get upcoming courses and limit to next 10 unique course days
       const now = new Date()
       const nowDate = now.toISOString().split('T')[0]

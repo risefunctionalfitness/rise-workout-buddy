@@ -108,6 +108,15 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const loadCoursesForDay = async () => {
     setLoading(true)
     try {
+      // Ensure valid session before querying (prevents iOS auth token issues)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.warn('Session refresh failed:', refreshError.message)
+        }
+      }
+
       const now = new Date()
       const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
       const nowDate = now.toISOString().split('T')[0]
