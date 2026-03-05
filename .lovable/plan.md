@@ -1,27 +1,33 @@
 
+# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Fix: `check-course-attendance` Email Filter Bug
+## Aenderung
 
-The UI toggle logic in `UserProfile.tsx` is already correct -- it prevents both channels from being off simultaneously. The notification problem is in the **backend**.
+Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
 
-### The Bug
+## Berechnung
 
-In `supabase/functions/check-course-attendance/index.ts` (line 148):
-```typescript
-}).filter(p => p.email) || []
-```
+Fuer jede Wochentag-Uhrzeit-Kombination:
+- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
+- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
+- Durchschnitt ueber alle Kurse dieser Kombination bilden
+- Ergebnis als Prozentwert anzeigen
 
-This filters out any user whose `profiles.email` is null. Since ~91% of users only have their email in `auth.users` (not in `profiles`), they never receive any notification -- neither email nor WhatsApp -- when a course is cancelled due to low attendance.
+## Technische Umsetzung
 
-This was identified in the previous analysis but the fix was not applied to this file.
+### Datei: `src/components/BookingPatternsCard.tsx`
 
-### Fix
+1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
 
-1. Remove `.filter(p => p.email)` 
-2. After building the participants list from profiles, fetch actual emails from `auth.users` using `supabase.auth.admin.getUserById()` for each user
-3. Attach the auth email to each participant
-4. Only exclude participants where `notification_method` would be `'none'` (which the UI now prevents, but as a safety net)
+2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
+   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
+   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
+   - Gruppierung nach Wochentag + Startzeit
+   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
 
-### File to Modify
-- `supabase/functions/check-course-attendance/index.ts` -- Remove email filter, fetch auth emails
+3. **Anzeige anpassen**:
+   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
+   - Zahl rechts zeigt `82%` statt `42`
+   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
 
+4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen
