@@ -109,7 +109,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
     setLoading(true)
     try {
       const now = new Date()
-      const nowTime = now.toTimeString().slice(0, 8)
+      const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
       const nowDate = now.toISOString().split('T')[0]
       
       let query = supabase
