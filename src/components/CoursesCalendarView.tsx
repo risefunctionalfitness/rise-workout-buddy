@@ -56,6 +56,15 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
   const loadCoursesData = async () => {
     try {
       setLoading(true)
+
+      // Ensure valid session before querying (prevents iOS auth token issues)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.warn('Session refresh failed:', refreshError.message)
+        }
+      }
       
       // Get next 3 months of courses
       const now = new Date()

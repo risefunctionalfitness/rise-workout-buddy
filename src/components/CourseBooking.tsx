@@ -66,25 +66,16 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   useEffect(() => {
     let mounted = true
-    let timeoutId: NodeJS.Timeout
     
     const loadData = async () => {
       if (!mounted) return
-      
-      // Debounce to prevent rapid calls
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(async () => {
-        if (mounted) {
-          await Promise.all([loadCourses(), checkUserRoles()])
-        }
-      }, 100)
+      await Promise.all([loadCourses(), checkUserRoles()])
     }
     
     loadData()
     
     return () => {
       mounted = false
-      clearTimeout(timeoutId)
     }
   }, [currentWeek])
 
@@ -121,6 +112,15 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     try {
       setLoading(true)
 
+      // Ensure valid session before querying (prevents iOS auth token issues)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.warn('Session refresh failed:', refreshError.message)
+        }
+      }
+
       // Get upcoming courses and limit to next 10 unique course days
       const now = new Date()
       const nowDate = now.toISOString().split('T')[0]
@@ -152,12 +152,16 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       // Get course IDs to fetch guest registrations
       const courseIds = (coursesResult.data || []).map(c => c.id)
       
-      // Fetch guest registrations for all courses
-      const { data: guestRegistrations } = await supabase
-        .from('guest_registrations')
-        .select('course_id, status')
-        .in('course_id', courseIds)
-        .eq('status', 'registered')
+      // Fetch guest registrations for all courses (guard against empty array)
+      let guestRegistrations: { course_id: string; status: string }[] = []
+      if (courseIds.length > 0) {
+        const { data } = await supabase
+          .from('guest_registrations')
+          .select('course_id, status')
+          .in('course_id', courseIds)
+          .eq('status', 'registered')
+        guestRegistrations = data || []
+      }
 
       // Process courses data including guest counts
       const processedCourses = (coursesResult.data || []).map(course => {
@@ -166,7 +170,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
         
         // Add guest count to registered count
-        const guestCount = guestRegistrations?.filter(g => g.course_id === course.id).length || 0
+        const guestCount = guestRegistrations.filter(g => g.course_id === course.id).length
         const registered_count = regularRegisteredCount + guestCount
         
         const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)

@@ -1,74 +1,33 @@
 
+# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Analysis: iOS-specific Course Loading Failures
+## Aenderung
 
-### Root Causes Identified
+Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
 
-**1. Empty Array in `.in()` Query (Primary Suspect)**
+## Berechnung
 
-In `CourseBooking.tsx` (line 156-160), `CourseParticipants.tsx` (line 69-72), `AdminCoursesCalendarView.tsx` (line 60-64), `CoursesCalendarView.tsx`, and `DayCourseDialog.tsx`: after fetching courses, the code does:
+Fuer jede Wochentag-Uhrzeit-Kombination:
+- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
+- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
+- Durchschnitt ueber alle Kurse dieser Kombination bilden
+- Ergebnis als Prozentwert anzeigen
 
-```typescript
-const courseIds = (coursesResult.data || []).map(c => c.id)
-const { data: guestRegistrations } = await supabase
-  .from('guest_registrations')
-  .select('course_id')
-  .in('course_id', courseIds)  // <-- if courseIds is [], this generates invalid PostgREST filter
-```
+## Technische Umsetzung
 
-When `courseIds` is empty (e.g., due to a transient auth issue or no courses), Supabase's `.in('column', [])` generates a malformed PostgREST filter (`column=in.()`). Safari/WebKit is stricter about malformed network requests and may throw or hang, while Chrome tolerates it. This matches the "sometimes works, sometimes doesn't" pattern -- it fails when the first query returns empty due to timing.
+### Datei: `src/components/BookingPatternsCard.tsx`
 
-**2. Auth Token Refresh Failures on iOS**
+1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
 
-Console logs show `AuthApiError: Invalid Refresh Token: Refresh Token Not Found`. On iOS/Safari, `localStorage` is more restrictive (cleared more aggressively, especially after app backgrounding in Capacitor). When the refresh token is gone, all authenticated queries silently return empty arrays (due to RLS), which then triggers the empty array `.in()` problem above, creating a cascading failure.
+2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
+   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
+   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
+   - Gruppierung nach Wochentag + Startzeit
+   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
 
-**3. Debounce Pattern Race Condition**
+3. **Anzeige anpassen**:
+   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
+   - Zahl rechts zeigt `82%` statt `42`
+   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
 
-In `CourseBooking.tsx` (lines 67-89), the `useEffect` uses a `setTimeout` debounce. On iOS, when the component unmounts/remounts quickly (common with tab switching or Safari's aggressive memory management), the `mounted` flag may not prevent state updates correctly because the timeout closure captures the old `mounted` variable before cleanup runs.
-
-### Proposed Fixes
-
-**Fix 1: Guard all `.in()` calls against empty arrays**
-
-In all 5 files, add a check before the `.in()` call:
-```typescript
-let guestRegistrations = [];
-if (courseIds.length > 0) {
-  const { data } = await supabase
-    .from('guest_registrations')
-    .select('course_id')
-    .in('course_id', courseIds)
-    .eq('status', 'registered');
-  guestRegistrations = data || [];
-}
-```
-
-Files to update:
-- `src/components/CourseBooking.tsx`
-- `src/components/CourseParticipants.tsx`
-- `src/components/CoursesCalendarView.tsx`
-- `src/components/AdminCoursesCalendarView.tsx`
-- `src/components/DayCourseDialog.tsx`
-
-**Fix 2: Simplify CourseBooking useEffect debounce**
-
-Replace the error-prone `setTimeout` debounce with a direct async call using only the `mounted` flag for cleanup safety. The 100ms debounce isn't necessary since `currentWeek` only changes on user interaction.
-
-**Fix 3: Add auth session check before course loading**
-
-Before running course queries, verify the session is valid. If not, attempt a refresh. This prevents cascading failures from expired tokens on iOS.
-
-```typescript
-const { data: { session } } = await supabase.auth.getSession()
-if (!session) {
-  await supabase.auth.refreshSession()
-}
-```
-
-### Files to Modify
-1. `src/components/CourseBooking.tsx` - Guard `.in()`, fix debounce, add session check
-2. `src/components/CourseParticipants.tsx` - Guard `.in()`
-3. `src/components/CoursesCalendarView.tsx` - Guard `.in()`, add session check
-4. `src/components/AdminCoursesCalendarView.tsx` - Guard `.in()`
-5. `src/components/DayCourseDialog.tsx` - Guard `.in()`
-
+4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen

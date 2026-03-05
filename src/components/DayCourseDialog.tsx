@@ -108,8 +108,17 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const loadCoursesForDay = async () => {
     setLoading(true)
     try {
+      // Ensure valid session before querying (prevents iOS auth token issues)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.warn('Session refresh failed:', refreshError.message)
+        }
+      }
+
       const now = new Date()
-      const nowTime = now.toTimeString().slice(0, 8)
+      const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
       const nowDate = now.toISOString().split('T')[0]
       
       let query = supabase
@@ -140,15 +149,18 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (coursesResult.error) throw coursesResult.error
       if (userRegistrationsResult.error) throw userRegistrationsResult.error
 
-      // Get course IDs to fetch guest registrations
+      // Get course IDs to fetch guest registrations (guard against empty array)
       const courseIds = (coursesResult.data || []).map(c => c.id)
       
-      // Fetch guest registrations for all courses
-      const { data: guestRegistrations } = await supabase
-        .from('guest_registrations')
-        .select('course_id, status')
-        .in('course_id', courseIds)
-        .eq('status', 'registered')
+      let guestRegistrations: { course_id: string; status: string }[] = []
+      if (courseIds.length > 0) {
+        const { data: guestData } = await supabase
+          .from('guest_registrations')
+          .select('course_id, status')
+          .in('course_id', courseIds)
+          .eq('status', 'registered')
+        guestRegistrations = guestData || []
+      }
 
       // Process courses including guest counts
       const processedCourses = (coursesResult.data || []).map(course => {
@@ -157,7 +169,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
         
         // Add guest count to registered count
-        const guestCount = guestRegistrations?.filter(g => g.course_id === course.id).length || 0
+        const guestCount = guestRegistrations.filter(g => g.course_id === course.id).length
         const registered_count = regularRegisteredCount + guestCount
         
         const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
