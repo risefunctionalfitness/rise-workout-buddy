@@ -66,25 +66,16 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   useEffect(() => {
     let mounted = true
-    let timeoutId: NodeJS.Timeout
     
     const loadData = async () => {
       if (!mounted) return
-      
-      // Debounce to prevent rapid calls
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(async () => {
-        if (mounted) {
-          await Promise.all([loadCourses(), checkUserRoles()])
-        }
-      }, 100)
+      await Promise.all([loadCourses(), checkUserRoles()])
     }
     
     loadData()
     
     return () => {
       mounted = false
-      clearTimeout(timeoutId)
     }
   }, [currentWeek])
 
