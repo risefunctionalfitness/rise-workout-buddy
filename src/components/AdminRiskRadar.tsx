@@ -81,6 +81,7 @@ export const AdminRiskRadar = () => {
   const [emailQueue, setEmailQueue] = useState<Set<string>>(new Set());
   const [selectedNeverActiveCategory, setSelectedNeverActiveCategory] = useState<string | null>(null);
   const [selectedInactiveCategory, setSelectedInactiveCategory] = useState<string | null>(null);
+  const [globalSearch, setGlobalSearch] = useState('');
 
   // Load last 30 snapshots for "Never Active"
   const { data: neverActiveSnapshots, isLoading: neverActiveLoading } = useQuery({
