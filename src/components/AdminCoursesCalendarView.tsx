@@ -55,16 +55,20 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
 
       if (coursesError) throw coursesError;
 
-      // Get all guest registrations in bulk (single query)
+      // Get all guest registrations in bulk (guard against empty array)
       const courseIds = (coursesData || []).map(c => c.id);
-      const { data: guestRegistrations } = await supabase
-        .from("guest_registrations")
-        .select("course_id")
-        .in("course_id", courseIds)
-        .eq("status", "registered");
+      let guestRegistrations: { course_id: string }[] = [];
+      if (courseIds.length > 0) {
+        const { data: guestData } = await supabase
+          .from("guest_registrations")
+          .select("course_id")
+          .in("course_id", courseIds)
+          .eq("status", "registered");
+        guestRegistrations = guestData || [];
+      }
 
       const guestCountMap = new Map<string, number>();
-      for (const guest of guestRegistrations || []) {
+      for (const guest of guestRegistrations) {
         guestCountMap.set(guest.course_id, (guestCountMap.get(guest.course_id) || 0) + 1);
       }
 

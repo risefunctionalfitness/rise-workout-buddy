@@ -161,7 +161,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
         
         // Add guest count to registered count
-        const guestCount = guestRegistrations?.filter(g => g.course_id === course.id).length || 0
+        const guestCount = guestRegistrations.filter(g => g.course_id === course.id).length
         const registered_count = regularRegisteredCount + guestCount
         
         const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
