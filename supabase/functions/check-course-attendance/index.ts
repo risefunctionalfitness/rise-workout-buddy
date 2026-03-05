@@ -109,7 +109,7 @@ serve(async (req) => {
 
         const userIds = registrations?.map(r => r.user_id) || []
         
-        // Get user profiles with emails BEFORE cancelling
+        // Get user profiles with notification preferences BEFORE cancelling
         let participants: Array<{email: string | null, first_name: string, display_name: string | null, phone: string, notification_method: string}> = []
         
         if (userIds.length > 0) {
@@ -120,16 +120,33 @@ serve(async (req) => {
 
           if (profileError) {
             console.error(`Error fetching profiles:`, profileError)
-          } else {
-            participants = profiles?.map(p => {
+          } else if (profiles) {
+            // Fetch actual emails from auth.users for each participant
+            const authEmailMap = new Map<string, string>()
+            for (const p of profiles) {
+              if (p.user_id) {
+                try {
+                  const { data: userData } = await supabase.auth.admin.getUserById(p.user_id)
+                  if (userData?.user?.email) {
+                    authEmailMap.set(p.user_id, userData.user.email)
+                  }
+                } catch (e) {
+                  console.error(`Error fetching auth email for ${p.user_id}:`, e)
+                }
+              }
+            }
+
+            participants = profiles.map(p => {
               // Determine notification method
               const emailEnabled = p.notify_email_enabled !== false
               const whatsappEnabled = p.notify_whatsapp_enabled === true && p.phone_number
               let notificationMethod = 'email'
               if (emailEnabled && whatsappEnabled) {
                 notificationMethod = 'both'
-              } else if (whatsappEnabled) {
+              } else if (whatsappEnabled && !emailEnabled) {
                 notificationMethod = 'whatsapp'
+              } else if (!emailEnabled && !whatsappEnabled) {
+                notificationMethod = 'none'
               }
               
               // Format phone number (country code + number without + or spaces)
@@ -138,18 +155,21 @@ serve(async (req) => {
                 formattedPhone = p.phone_country_code.replace('+', '') + p.phone_number.replace(/\s/g, '')
               }
 
+              // Use auth email as primary, profile email as fallback
+              const email = authEmailMap.get(p.user_id) || p.email || null
+
               return {
-                email: p.email,
+                email,
                 first_name: p.first_name || p.display_name || 'Mitglied',
                 display_name: p.display_name,
                 phone: formattedPhone,
                 notification_method: notificationMethod
               }
-            }).filter(p => p.email) || []
+            }).filter(p => p.notification_method !== 'none') || []
           }
         }
 
-        console.log(`Found ${participants.length} participants with emails to notify`)
+        console.log(`Found ${participants.length} participants to notify`)
 
         // NOW mark course as cancelled due to low attendance
         const { error: updateError } = await supabase
