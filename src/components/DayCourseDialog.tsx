@@ -147,6 +147,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           .from('course_registrations')
           .select('course_id, status')
           .eq('user_id', user.id)
+          .in('status', ['registered', 'waitlist'])
       ])
 
       if (coursesResult.error) throw coursesResult.error
