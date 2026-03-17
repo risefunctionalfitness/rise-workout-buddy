@@ -421,6 +421,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       return
     }
 
+    // Skip fairness check for waitlist cancellations
+    if (targetCourse.is_waitlisted) {
+      handleCancellation(courseId, course)
+      return
+    }
+
     if (reliabilityScore && !isAdmin) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
