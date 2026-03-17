@@ -63,6 +63,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const scrollPositionRef = useRef<number>(0)
   const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
   const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
+  const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
