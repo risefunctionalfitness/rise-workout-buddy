@@ -865,6 +865,31 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           }}
         />
       )}
+
+      <AlertDialog open={duplicateWarningOpen} onOpenChange={setDuplicateWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bereits angemeldet</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du bist bereits für einen anderen Kurs an diesem Tag angemeldet. Bist du sicher, dass du dich trotzdem anmelden möchtest?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setDuplicateWarningOpen(false); setPendingRegistrationId(null) }}>
+              Abbrechen
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setDuplicateWarningOpen(false)
+              if (pendingRegistrationId) {
+                handleRegistration(pendingRegistrationId, true)
+                setPendingRegistrationId(null)
+              }
+            }}>
+              Trotzdem anmelden
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
