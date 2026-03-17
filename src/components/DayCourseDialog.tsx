@@ -69,6 +69,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
   const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
+  const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
