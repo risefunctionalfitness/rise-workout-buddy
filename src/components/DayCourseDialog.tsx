@@ -375,6 +375,12 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       return
     }
 
+    // Skip fairness check for waitlist cancellations
+    if (course.is_waitlisted) {
+      handleCancellation(courseId)
+      return
+    }
+
     if (reliabilityScore && !isAdmin) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
