@@ -446,9 +446,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     }
 
     try {
+      // Use waitlist_cancelled for waitlist cancellations (doesn't affect reliability score)
+      const newStatus = targetCourse.is_waitlisted ? 'waitlist_cancelled' : 'cancelled'
+      
       const { error } = await supabase
         .from('course_registrations')
-        .update({ status: 'cancelled' })
+        .update({ status: newStatus })
         .eq('course_id', courseId)
         .eq('user_id', user.id)
 
