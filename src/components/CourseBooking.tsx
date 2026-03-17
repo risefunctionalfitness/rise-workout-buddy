@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, ChevronLeft, ChevronRight, Clock, Users, User as UserIcon, AlertTriangle, UserX } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
@@ -62,6 +63,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const scrollPositionRef = useRef<number>(0)
   const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
   const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
+  const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
@@ -296,10 +299,24 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     }
   }, [dialogOpen])
 
-  const handleRegistration = async (courseId: string) => {
+  const handleRegistration = async (courseId: string, skipDuplicateCheck = false) => {
     try {
       const course = courses.find(c => c.id === courseId)
       if (!course) return
+
+      // Check for same-day registration (warning, not blocking)
+      if (!skipDuplicateCheck && !isAdmin && !isTrainer) {
+        const existingRegistration = courses.find(c => 
+          c.course_date === course.course_date && 
+          c.id !== courseId && 
+          (c.is_registered || c.is_waitlisted)
+        )
+        if (existingRegistration) {
+          setPendingRegistrationId(courseId)
+          setDuplicateWarningOpen(true)
+          return
+        }
+      }
 
       // Check if user can register (limits and credits)
       const { data: canRegister, error: checkError } = await supabase
@@ -309,17 +326,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         })
 
       if (checkError || !canRegister) {
-        // Check if user is already registered for same course title on same day
-        const existingRegistration = courses.find(c => 
-          c.title === course.title && 
-          c.course_date === course.course_date && 
-          c.id !== courseId && 
-          (c.is_registered || c.is_waitlisted)
-        )
-        
-        if (existingRegistration) {
-          toast.error(`Du bist bereits für "${course.title}" um ${existingRegistration.start_time.slice(0, 5)} Uhr angemeldet`)
-        } else if (userMembershipType === 'Basic Member') {
+        if (userMembershipType === 'Basic Member') {
           toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
         } else if (userMembershipType === '10er Karte') {
           toast.error("Du hast keine Credits mehr. Bitte lade deine 10er Karte am Empfang auf")
@@ -414,6 +421,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       return
     }
 
+    // Skip fairness check for waitlist cancellations
+    if (targetCourse.is_waitlisted) {
+      handleCancellation(courseId, course)
+      return
+    }
+
     if (reliabilityScore && !isAdmin) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
@@ -433,9 +446,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
     }
 
     try {
+      // Use waitlist_cancelled for waitlist cancellations (doesn't affect reliability score)
+      const newStatus = targetCourse.is_waitlisted ? 'waitlist_cancelled' : 'cancelled'
+      
       const { error } = await supabase
         .from('course_registrations')
-        .update({ status: 'cancelled' })
+        .update({ status: newStatus })
         .eq('course_id', courseId)
         .eq('user_id', user.id)
 
@@ -1054,6 +1070,31 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           }}
         />
       )}
+
+      <AlertDialog open={duplicateWarningOpen} onOpenChange={setDuplicateWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bereits angemeldet</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du bist bereits für einen anderen Kurs an diesem Tag angemeldet. Bist du sicher, dass du dich trotzdem anmelden möchtest?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setDuplicateWarningOpen(false); setPendingRegistrationId(null) }}>
+              Abbrechen
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setDuplicateWarningOpen(false)
+              if (pendingRegistrationId) {
+                handleRegistration(pendingRegistrationId, true)
+                setPendingRegistrationId(null)
+              }
+            }}>
+              Trotzdem anmelden
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

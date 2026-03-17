@@ -1,40 +1,33 @@
 
+# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Two Changes
+## Aenderung
 
-### 1. Warteliste-Abmeldung soll Stornierungsrate nicht beeinflussen
+Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
 
-**Problem**: Wenn jemand sich von der Warteliste abmeldet, wird `status = 'cancelled'` gesetzt -- genau wie bei einer normalen Stornierung. Die SQL-Funktion `get_user_reliability_score` zaehlt alle `cancelled`-Eintraege, egal ob der User vorher `registered` oder `waitlist` war.
+## Berechnung
 
-**Loesung**: Neuen Status `waitlist_cancelled` einfuehren, der bei Warteliste-Abmeldungen verwendet wird. Die Reliability-Score-Funktion ignoriert diesen Status automatisch, da sie nur `registered` und `cancelled` zaehlt.
+Fuer jede Wochentag-Uhrzeit-Kombination:
+- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
+- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
+- Durchschnitt ueber alle Kurse dieser Kombination bilden
+- Ergebnis als Prozentwert anzeigen
 
-**Aenderungen**:
-- **DB-Migration**: `get_user_reliability_score` braucht keine Aenderung (zaehlt nur `registered`/`cancelled`)
-- **`CourseBooking.tsx`** (`handleCancellation`): Wenn `targetCourse.is_waitlisted`, dann Status auf `'waitlist_cancelled'` statt `'cancelled'` setzen. Kein Fairness-Check-Dialog fuer Warteliste-Abmeldungen.
-- **`DayCourseDialog.tsx`** (`handleCancellation`): Gleiche Logik -- wenn `selectedCourse.is_waitlisted`, Status `'waitlist_cancelled'` verwenden und Fairness-Dialog ueberspringen.
-- **`UpcomingClassReservation.tsx`** (`handleCancel`): Gleiche Logik -- Warteliste-Status pruefen.
-- **`initiateCancellation`** in allen 3 Komponenten: Fairness-Check-Dialog ueberspringen wenn User auf Warteliste steht.
-- **DB-Migration**: Waitlist-Processing-Trigger/Funktion muss `waitlist_cancelled` nicht als aktiven Wartelistenplatz zaehlen (ist bereits der Fall, da nur `waitlist`/`waitlisted` als aktiv gelten).
+## Technische Umsetzung
 
-### 2. Gleichnamige Kurse am selben Tag: Warnung statt Blockierung
+### Datei: `src/components/BookingPatternsCard.tsx`
 
-**Problem**: `can_user_register_for_course` blockiert die Anmeldung wenn ein gleichnamiger Kurs am selben Tag bereits gebucht ist (`RETURN FALSE`).
+1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
 
-**Loesung**: Die Duplikat-Pruefung aus der DB-Funktion entfernen und stattdessen im Frontend einen Bestaetigungs-Dialog anzeigen.
+2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
+   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
+   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
+   - Gruppierung nach Wochentag + Startzeit
+   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
 
-**Aenderungen**:
-- **DB-Migration**: `can_user_register_for_course` aktualisieren -- den Block mit `existing_same_title` entfernen (Zeilen 40-52 der aktuellen Funktion).
-- **`CourseBooking.tsx`** (`handleRegistration`): Vor dem RPC-Call pruefen ob ein gleichnamiger Kurs am selben Tag existiert. Falls ja, einen Bestaetigungs-Dialog anzeigen ("Du bist bereits fuer einen anderen Kurs an diesem Tag angemeldet. Trotzdem anmelden?"). Bei Bestaetigung normal fortfahren.
-- **`DayCourseDialog.tsx`** (`handleRegistration`): Gleiche Logik.
-- **`CourseInvitationsPanel.tsx`**: Gleiches Pattern -- Warnung statt Blockierung.
+3. **Anzeige anpassen**:
+   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
+   - Zahl rechts zeigt `82%` statt `42`
+   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
 
-### Technische Details
-
-**Neuer Confirmation-State** in CourseBooking und DayCourseDialog:
-- `duplicateWarningOpen` (boolean) + `pendingRegistrationId` (string)
-- AlertDialog mit Warnung und "Trotzdem anmelden" / "Abbrechen" Buttons
-- Bei Bestaetigung wird `handleRegistration` mit einem `skipDuplicateCheck`-Flag erneut aufgerufen
-
-**DB-Migration** (eine Migration fuer beide Aenderungen):
-1. `can_user_register_for_course` ohne den `existing_same_title`-Block neu erstellen
-
+4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen

@@ -229,6 +229,8 @@ export const UpcomingClassReservation = ({
   const inititateCancellation = () => {
     if (!selectedCourse || !canCancelCourse(selectedCourse)) return;
 
+    // UpcomingClassReservation only shows 'registered' courses, 
+    // but keep the check for safety - skip fairness dialog for waitlist
     if (reliabilityScore && !isAdmin) {
       setFairnessCheckOpen(true);
       return;
