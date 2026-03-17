@@ -1,39 +1,33 @@
 
+# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Problem: Duplicate Warning Dialog Not Showing
+## Aenderung
 
-**Root Cause**: The duplicate check on line 308 of `CourseBooking.tsx` has this guard:
-```
-if (!skipDuplicateCheck && !isAdmin && !isTrainer)
-```
+Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
 
-If you are logged in as an admin or trainer, the check is completely skipped and no dialog appears. This was intentionally done to exempt admins/trainers, but based on your feedback it should show the warning for everyone.
+## Berechnung
 
-**Secondary issue**: The user registrations query (line 146-149) fetches ALL registrations without filtering by status. The `.find()` on line 179 could return a `cancelled` or `waitlist_cancelled` record instead of an active one, causing `is_registered` to be `false` even when the user has an active registration. This would also prevent the duplicate check from finding the existing booking.
+Fuer jede Wochentag-Uhrzeit-Kombination:
+- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
+- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
+- Durchschnitt ueber alle Kurse dieser Kombination bilden
+- Ergebnis als Prozentwert anzeigen
 
-## Plan
+## Technische Umsetzung
 
-### 1. Remove admin/trainer exemption from duplicate warning
-In both `CourseBooking.tsx` and `DayCourseDialog.tsx`, change the condition from:
-```
-if (!skipDuplicateCheck && !isAdmin && !isTrainer)
-```
-to:
-```
-if (!skipDuplicateCheck)
-```
-The warning is informational only (user can proceed), so there's no reason to skip it for admins/trainers.
+### Datei: `src/components/BookingPatternsCard.tsx`
 
-### 2. Fix user registration status query
-In `CourseBooking.tsx` line 146-149, filter the registrations query to only return active statuses:
-```
-.in('status', ['registered', 'waitlist'])
-```
-This ensures `is_registered` and `is_waitlisted` are correctly determined, and the duplicate check finds existing active bookings.
+1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
 
-Same fix in `DayCourseDialog.tsx` for its equivalent query.
+2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
+   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
+   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
+   - Gruppierung nach Wochentag + Startzeit
+   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
 
-### Files to Modify
-- `src/components/CourseBooking.tsx` (2 changes)
-- `src/components/DayCourseDialog.tsx` (2 changes)
+3. **Anzeige anpassen**:
+   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
+   - Zahl rechts zeigt `82%` statt `42`
+   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
 
+4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen

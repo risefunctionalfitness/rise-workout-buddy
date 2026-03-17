@@ -147,6 +147,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
           .from('course_registrations')
           .select('course_id, status')
           .eq('user_id', user.id)
+          .in('status', ['registered', 'waitlist'])
       ])
 
       if (coursesResult.error) throw coursesResult.error
@@ -284,7 +285,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (!course) return
 
       // Check for same-day registration (warning, not blocking)
-      if (!skipDuplicateCheck && !isAdmin && !isTrainer) {
+      if (!skipDuplicateCheck) {
         const existingRegistration = courses.find(c => 
           c.course_date === course.course_date && 
           c.id !== courseId && 
