@@ -306,7 +306,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       if (!course) return
 
       // Check for same-day registration (warning, not blocking)
-      if (!skipDuplicateCheck && !isAdmin && !isTrainer) {
+      if (!skipDuplicateCheck) {
         const existingRegistration = courses.find(c => 
           c.course_date === course.course_date && 
           c.id !== courseId && 
