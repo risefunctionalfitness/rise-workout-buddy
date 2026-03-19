@@ -18,6 +18,7 @@ import { ReliabilityScoreBadge } from "@/components/ReliabilityScoreBadge"
 import { FairnessInfoDialog } from "@/components/FairnessInfoDialog"
 import { ReliabilityScoreScale } from "@/components/ReliabilityScoreScale"
 import { FairnessCheckDialog } from "@/components/FairnessCheckDialog"
+import { DayCourseDialog } from "@/components/DayCourseDialog"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
@@ -65,6 +66,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
+  const [rebookDate, setRebookDate] = useState<string | null>(null)
+  const [rebookDialogOpen, setRebookDialogOpen] = useState(false)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
@@ -1069,6 +1072,42 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               setPendingCancellationId(null)
             }
           }}
+          onRebook={async () => {
+            if (pendingCancellationId) {
+              const course = courses.find(c => c.id === pendingCancellationId)
+              if (!course) return
+              try {
+                const { error } = await supabase
+                  .from('course_registrations')
+                  .update({ status: 'rebooked' })
+                  .eq('course_id', pendingCancellationId)
+                  .eq('user_id', user.id)
+                toast.success('Kurs storniert – wähle jetzt einen neuen Kurs')
+                refetchScore()
+                window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+                setDialogOpen(false)
+                setRebookDate(course.course_date)
+                setRebookDialogOpen(true)
+                await loadCourses()
+              } catch (error) {
+                console.error('Error rebooking:', error)
+                toast.error('Fehler beim Umbuchen')
+              }
+              setPendingCancellationId(null)
+            }
+          }}
+        />
+      )}
+
+      {rebookDate && (
+        <DayCourseDialog
+          open={rebookDialogOpen}
+          onOpenChange={(open) => {
+            setRebookDialogOpen(open)
+            if (!open) setRebookDate(null)
+          }}
+          date={rebookDate}
+          user={user}
         />
       )}
 

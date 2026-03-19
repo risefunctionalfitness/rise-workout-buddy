@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Annoyed } from "lucide-react";
+import { ShieldCheck, Annoyed, ArrowRightLeft } from "lucide-react";
 import {
   getProjectedScore,
   getLevelColor,
@@ -18,6 +18,7 @@ interface FairnessCheckDialogProps {
   onOpenChange: (open: boolean) => void;
   currentScore: ReliabilityScore;
   onConfirmCancel: () => void;
+  onRebook?: () => void;
 }
 
 export const FairnessCheckDialog = ({
@@ -25,6 +26,7 @@ export const FairnessCheckDialog = ({
   onOpenChange,
   currentScore,
   onConfirmCancel,
+  onRebook,
 }: FairnessCheckDialogProps) => {
   const projected = getProjectedScore(currentScore);
   const currentColor = getLevelColor(currentScore.level);
@@ -114,6 +116,19 @@ export const FairnessCheckDialog = ({
               <ShieldCheck className="h-4 w-4 mr-2" />
               Angemeldet bleiben
             </Button>
+            {onRebook && (
+              <Button
+                variant="outline"
+                className="w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                onClick={() => {
+                  onRebook();
+                  onOpenChange(false);
+                }}
+              >
+                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                Umbuchen
+              </Button>
+            )}
             <Button
               variant="outline"
               className="w-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white"

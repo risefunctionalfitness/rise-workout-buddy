@@ -19,6 +19,7 @@ import { MembershipBadge } from "./MembershipBadge";
 import { CourseInvitationButton } from "./CourseInvitationButton";
 import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FairnessCheckDialog } from "./FairnessCheckDialog";
+import { DayCourseDialog } from "./DayCourseDialog";
 import { useReliabilityScore } from "@/hooks/useReliabilityScore";
 import { ReliabilityScoreBadge } from "./ReliabilityScoreBadge";
 import {
@@ -47,6 +48,8 @@ export const UpcomingClassReservation = ({
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false);
+  const [rebookDate, setRebookDate] = useState<string | null>(null);
+  const [rebookDialogOpen, setRebookDialogOpen] = useState(false);
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user?.id);
 
   useEffect(() => {
@@ -511,6 +514,39 @@ export const UpcomingClassReservation = ({
           onOpenChange={setFairnessCheckOpen}
           currentScore={reliabilityScore}
           onConfirmCancel={handleCancel}
+          onRebook={async () => {
+            if (!selectedCourse) return
+            try {
+              const { error } = await supabase
+                .from("course_registrations")
+                .update({ status: "rebooked" })
+                .eq("course_id", selectedCourse.id)
+                .eq("user_id", user.id)
+              if (error) throw error
+              toast.success("Kurs storniert – wähle jetzt einen neuen Kurs")
+              refetchScore()
+              window.dispatchEvent(new CustomEvent("courseRegistrationChanged"))
+              setShowDialog(false)
+              setRebookDate(selectedCourse.course_date)
+              setRebookDialogOpen(true)
+              loadUpcomingReservations()
+            } catch (error) {
+              console.error("Error rebooking:", error)
+              toast.error("Fehler beim Umbuchen")
+            }
+          }}
+        />
+      )}
+
+      {rebookDate && (
+        <DayCourseDialog
+          open={rebookDialogOpen}
+          onOpenChange={(open) => {
+            setRebookDialogOpen(open)
+            if (!open) setRebookDate(null)
+          }}
+          date={rebookDate}
+          user={user}
         />
       )}
     </>
