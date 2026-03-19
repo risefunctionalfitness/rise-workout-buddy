@@ -47,6 +47,8 @@ export const UpcomingClassReservation = ({
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false);
+  const [rebookDate, setRebookDate] = useState<string | null>(null);
+  const [rebookDialogOpen, setRebookDialogOpen] = useState(false);
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user?.id);
 
   useEffect(() => {
