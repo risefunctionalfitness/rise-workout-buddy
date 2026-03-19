@@ -362,14 +362,16 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       const isWaitlist = newStatus === 'waitlist'
 
       toast.success(
-        rebookFromCourseId 
+        rebookFromId 
           ? (isWaitlist ? 'Umgebucht – du stehst auf der Warteliste' : 'Erfolgreich umgebucht!')
           : (isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
       )
       
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       
-      if (rebookFromCourseId) {
+      if (rebookFromId) {
+        setRebookFromId(null)
+        refetchScore()
         onRebookComplete?.()
         onOpenChange(false)
       }
