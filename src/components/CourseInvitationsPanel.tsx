@@ -277,38 +277,20 @@ export const CourseInvitationsPanel = ({
       }
 
       // Check if course is full - get current participant count and max
-      const { data: courseStats, error: statsError } = await supabase
-        .rpc('get_course_stats', { course_id_param: invitation.course_id });
-
-      if (statsError) {
-        console.error("Error getting course stats:", statsError);
-        toast.error("Fehler beim Prüfen der Kursverfügbarkeit");
-        return;
-      }
-
-      const stats = courseStats?.[0];
-      const isFull = stats && stats.registered_count >= stats.max_participants;
-      const registrationStatus = isFull ? "waitlist" : "registered";
-
-      // Try to register for the course with appropriate status
-      const { error: registrationError } = await supabase
-        .from("course_registrations")
-        .insert({
-          user_id: user.id,
-          course_id: invitation.course_id,
-          status: registrationStatus
+      // Use atomic register_for_course RPC for capacity check
+      const { data: rpcResult, error: registrationError } = await supabase
+        .rpc('register_for_course', {
+          p_user_id: user.id,
+          p_course_id: invitation.course_id
         });
 
       if (registrationError) {
-        // Check if already registered
-        if (registrationError.code === '23505') {
-          toast.error("Du bist bereits für diesen Kurs angemeldet");
-        } else {
-          toast.error("Fehler bei der Kursanmeldung: " + registrationError.message);
-          console.error("Error registering for course:", registrationError);
-        }
+        console.error("Error registering for course:", registrationError);
+        toast.error("Fehler bei der Kursanmeldung: " + registrationError.message);
         return;
       }
+
+      const registrationStatus = rpcResult?.status;
 
       // Update invitation status
       const { error: invitationError } = await supabase
@@ -323,7 +305,7 @@ export const CourseInvitationsPanel = ({
         console.error("Error updating invitation:", invitationError);
       }
 
-      if (isFull) {
+      if (registrationStatus === 'waitlist') {
         toast.success("Du wurdest auf die Warteliste gesetzt, da der Kurs voll ist");
       } else {
         toast.success("Du bist jetzt für den Kurs angemeldet!");
