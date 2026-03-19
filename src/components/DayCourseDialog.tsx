@@ -906,24 +906,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
               setPendingCancellationId(null)
             }
           }}
-          onRebook={async () => {
+          onRebook={() => {
             if (pendingCancellationId) {
-              try {
-                const { error } = await supabase
-                  .from('course_registrations')
-                  .update({ status: 'rebooked' })
-                  .eq('course_id', pendingCancellationId)
-                  .eq('user_id', user.id)
-                if (error) throw error
-                toast.success('Kurs storniert – wähle jetzt einen neuen Kurs')
-                refetchScore()
-                window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
-                setDetailDialogOpen(false)
-                await loadCoursesForDay()
-              } catch (error) {
-                console.error('Error rebooking:', error)
-                toast.error('Fehler beim Umbuchen')
-              }
+              setDetailDialogOpen(false)
+              setRebookFromId(pendingCancellationId)
               setPendingCancellationId(null)
             }
           }}
