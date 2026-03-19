@@ -340,11 +340,11 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       }
 
       // If rebooking, first cancel the old course with 'rebooked' status
-      if (rebookFromCourseId) {
+      if (rebookFromId) {
         const { error: rebookError } = await supabase
           .from('course_registrations')
           .update({ status: 'rebooked' })
-          .eq('course_id', rebookFromCourseId)
+          .eq('course_id', rebookFromId)
           .eq('user_id', user.id)
         if (rebookError) throw rebookError
       }
