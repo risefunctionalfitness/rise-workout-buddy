@@ -288,8 +288,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       const course = courses.find(c => c.id === courseId)
       if (!course) return
 
-      // Check for same-day registration (warning, not blocking)
-      if (!skipDuplicateCheck) {
+      // Skip duplicate check if rebooking (we're replacing a course on the same day)
+      if (!skipDuplicateCheck && !rebookFromCourseId) {
         const existingRegistration = courses.find(c => 
           c.course_date === course.course_date && 
           c.id !== courseId && 
@@ -338,6 +338,16 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         return
       }
 
+      // If rebooking, first cancel the old course with 'rebooked' status
+      if (rebookFromCourseId) {
+        const { error: rebookError } = await supabase
+          .from('course_registrations')
+          .update({ status: 'rebooked' })
+          .eq('course_id', rebookFromCourseId)
+          .eq('user_id', user.id)
+        if (rebookError) throw rebookError
+      }
+
       // Server-side atomic registration (handles capacity check + insert/update)
       const { data: result, error: rpcError } = await supabase
         .rpc('register_for_course', {
@@ -350,10 +360,19 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       const newStatus = (result as any)?.status as string
       const isWaitlist = newStatus === 'waitlist'
 
-      toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
+      toast.success(
+        rebookFromCourseId 
+          ? (isWaitlist ? 'Umgebucht – du stehst auf der Warteliste' : 'Erfolgreich umgebucht!')
+          : (isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
+      )
       
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       
+      if (rebookFromCourseId) {
+        onRebookComplete?.()
+        onOpenChange(false)
+      }
+
       await loadCoursesForDay()
       if (selectedCourse?.id === courseId) {
         await loadParticipants(courseId)
