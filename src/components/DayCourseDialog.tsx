@@ -47,6 +47,8 @@ interface DayCourseDialogProps {
   user: User
   userRole?: string
   preselectedCourseId?: string
+  rebookFromCourseId?: string
+  onRebookComplete?: () => void
 }
 
 export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
@@ -55,7 +57,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   date,
   user,
   userRole,
-  preselectedCourseId
+  preselectedCourseId,
+  rebookFromCourseId,
+  onRebookComplete
 }) => {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(false)
