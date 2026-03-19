@@ -513,8 +513,38 @@ export const UpcomingClassReservation = ({
           onOpenChange={setFairnessCheckOpen}
           currentScore={reliabilityScore}
           onConfirmCancel={handleCancel}
+          onRebook={async () => {
+            if (!selectedCourse) return
+            try {
+              const { error } = await supabase
+                .from("course_registrations")
+                .update({ status: "rebooked" })
+                .eq("course_id", selectedCourse.id)
+                .eq("user_id", user.id)
+              if (error) throw error
+              toast.success("Kurs storniert – wähle jetzt einen neuen Kurs")
+              refetchScore()
+              window.dispatchEvent(new CustomEvent("courseRegistrationChanged"))
+              setShowDialog(false)
+              setRebookDate(selectedCourse.course_date)
+              setRebookDialogOpen(true)
+              loadUpcomingReservations()
+            } catch (error) {
+              console.error("Error rebooking:", error)
+              toast.error("Fehler beim Umbuchen")
+            }
+          }}
         />
       )}
-    </>
-  );
-};
+
+      {rebookDate && (
+        <DayCourseDialog
+          open={rebookDialogOpen}
+          onOpenChange={(open) => {
+            setRebookDialogOpen(open)
+            if (!open) setRebookDate(null)
+          }}
+          date={rebookDate}
+          user={user}
+        />
+      )}
