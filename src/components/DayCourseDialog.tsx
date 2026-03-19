@@ -290,7 +290,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (!course) return
 
       // Skip duplicate check if rebooking (we're replacing a course on the same day)
-      if (!skipDuplicateCheck && !rebookFromCourseId) {
+      if (!skipDuplicateCheck && !rebookFromId) {
         const existingRegistration = courses.find(c => 
           c.course_date === course.course_date && 
           c.id !== courseId && 
