@@ -142,7 +142,7 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         // Update status for regular registrations
         const { error } = await supabase
           .from('course_registrations')
-          .update({ status: 'cancelled' })
+          .update({ status: 'admin_cancelled' })
           .eq('id', registrationId)
 
         if (error) throw error

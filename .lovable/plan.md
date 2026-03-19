@@ -1,30 +1,33 @@
 
+# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Admin-Entfernung ohne Stornierungsrate-Einfluss
+## Aenderung
 
-**Problem**: Wenn ein Admin einen Nutzer aus einem Kurs entfernt (`CourseParticipantsList.tsx`, Zeile 145), wird der Status auf `'cancelled'` gesetzt. Die `get_user_reliability_score`-Funktion zaehlt alle `'cancelled'`-Eintraege und erhoet damit die Stornierungsrate des Nutzers.
+Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
 
-**Loesung**: Einen neuen Status `'admin_cancelled'` einfuehren. Wenn der Admin einen Teilnehmer entfernt, wird dieser Status statt `'cancelled'` gesetzt. Die Reliability-Score-Funktion zaehlt nur `'cancelled'`, daher wird `'admin_cancelled'` automatisch ignoriert.
+## Berechnung
 
-### Aenderungen
+Fuer jede Wochentag-Uhrzeit-Kombination:
+- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
+- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
+- Durchschnitt ueber alle Kurse dieser Kombination bilden
+- Ergebnis als Prozentwert anzeigen
 
-**1. DB-Migration**: CHECK-Constraint um `'admin_cancelled'` erweitern + `handle_membership_limits` Trigger-Funktion aktualisieren (Credits/Limits zurueckgeben bei `admin_cancelled`).
+## Technische Umsetzung
 
-```sql
-ALTER TABLE public.course_registrations 
-DROP CONSTRAINT course_registrations_status_check;
+### Datei: `src/components/BookingPatternsCard.tsx`
 
-ALTER TABLE public.course_registrations 
-ADD CONSTRAINT course_registrations_status_check 
-CHECK (status = ANY (ARRAY['registered','waitlisted','cancelled','waitlist',
-  'waitlist_cancelled','admin_cancelled']));
-```
+1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
 
-Zusaetzlich `handle_membership_limits` erweitern, damit bei `admin_cancelled` Credits/Weekly-Limits zurueckgegeben werden (gleiche Logik wie bei `cancelled`).
+2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
+   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
+   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
+   - Gruppierung nach Wochentag + Startzeit
+   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
 
-**2. `CourseParticipantsList.tsx`** (Zeile 143-146): Status von `'cancelled'` auf `'admin_cancelled'` aendern in der `removeParticipant`-Funktion fuer regulaere (nicht-Gast) Teilnehmer.
+3. **Anzeige anpassen**:
+   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
+   - Zahl rechts zeigt `82%` statt `42`
+   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
 
-### Dateien
-- Neue DB-Migration (CHECK-Constraint + Trigger)
-- `src/components/CourseParticipantsList.tsx` (1 Zeile)
-
+4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen
