@@ -75,6 +75,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
+  const [rebookFromId, setRebookFromId] = useState<string | null>(rebookFromCourseId || null)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
