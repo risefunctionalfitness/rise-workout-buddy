@@ -50,6 +50,7 @@ export const UpcomingClassReservation = ({
   const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false);
   const [rebookDate, setRebookDate] = useState<string | null>(null);
   const [rebookDialogOpen, setRebookDialogOpen] = useState(false);
+  const [rebookCourseId, setRebookCourseId] = useState<string | null>(null);
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user?.id);
 
   useEffect(() => {
