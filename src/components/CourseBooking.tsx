@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, User as UserIcon, AlertTriangle, UserX } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, User as UserIcon, AlertTriangle, UserX, ArrowRightLeft } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
@@ -68,6 +68,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
   const [rebookDate, setRebookDate] = useState<string | null>(null)
   const [rebookDialogOpen, setRebookDialogOpen] = useState(false)
+  const [rebookCourseId, setRebookCourseId] = useState<string | null>(null)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
@@ -989,6 +990,21 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                     >
                       {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
                     </Button>
+                    {canCancelCourse(selectedCourse) && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                        onClick={() => {
+                          setDialogOpen(false)
+                          setRebookCourseId(selectedCourse.id)
+                          setRebookDate(selectedCourse.course_date)
+                          setRebookDialogOpen(true)
+                        }}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Umbuchen
+                      </Button>
+                    )}
                     <AddToCalendarButton
                       title={selectedCourse.title}
                       startDate={selectedCourse.course_date}
@@ -1072,27 +1088,14 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               setPendingCancellationId(null)
             }
           }}
-          onRebook={async () => {
+          onRebook={() => {
             if (pendingCancellationId) {
               const course = courses.find(c => c.id === pendingCancellationId)
               if (!course) return
-              try {
-                const { error } = await supabase
-                  .from('course_registrations')
-                  .update({ status: 'rebooked' })
-                  .eq('course_id', pendingCancellationId)
-                  .eq('user_id', user.id)
-                toast.success('Kurs storniert – wähle jetzt einen neuen Kurs')
-                refetchScore()
-                window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
-                setDialogOpen(false)
-                setRebookDate(course.course_date)
-                setRebookDialogOpen(true)
-                await loadCourses()
-              } catch (error) {
-                console.error('Error rebooking:', error)
-                toast.error('Fehler beim Umbuchen')
-              }
+              setDialogOpen(false)
+              setRebookCourseId(pendingCancellationId)
+              setRebookDate(course.course_date)
+              setRebookDialogOpen(true)
               setPendingCancellationId(null)
             }
           }}
@@ -1104,10 +1107,18 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           open={rebookDialogOpen}
           onOpenChange={(open) => {
             setRebookDialogOpen(open)
-            if (!open) setRebookDate(null)
+            if (!open) {
+              setRebookDate(null)
+              setRebookCourseId(null)
+            }
           }}
           date={rebookDate}
           user={user}
+          rebookFromCourseId={rebookCourseId || undefined}
+          onRebookComplete={() => {
+            refetchScore()
+            loadCourses()
+          }}
         />
       )}
 

@@ -4,7 +4,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Clock, User as UserIcon, Calendar, X, Dumbbell, AlertTriangle } from "lucide-react"
+import { Clock, User as UserIcon, Calendar, X, Dumbbell, AlertTriangle, ArrowRightLeft } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { User } from "@supabase/supabase-js"
@@ -47,6 +47,8 @@ interface DayCourseDialogProps {
   user: User
   userRole?: string
   preselectedCourseId?: string
+  rebookFromCourseId?: string
+  onRebookComplete?: () => void
 }
 
 export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
@@ -55,7 +57,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   date,
   user,
   userRole,
-  preselectedCourseId
+  preselectedCourseId,
+  rebookFromCourseId,
+  onRebookComplete
 }) => {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(false)
@@ -71,6 +75,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
+  const [rebookFromId, setRebookFromId] = useState<string | null>(rebookFromCourseId || null)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
@@ -284,8 +289,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       const course = courses.find(c => c.id === courseId)
       if (!course) return
 
-      // Check for same-day registration (warning, not blocking)
-      if (!skipDuplicateCheck) {
+      // Skip duplicate check if rebooking (we're replacing a course on the same day)
+      if (!skipDuplicateCheck && !rebookFromId) {
         const existingRegistration = courses.find(c => 
           c.course_date === course.course_date && 
           c.id !== courseId && 
@@ -334,6 +339,16 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         return
       }
 
+      // If rebooking, first cancel the old course with 'rebooked' status
+      if (rebookFromId) {
+        const { error: rebookError } = await supabase
+          .from('course_registrations')
+          .update({ status: 'rebooked' })
+          .eq('course_id', rebookFromId)
+          .eq('user_id', user.id)
+        if (rebookError) throw rebookError
+      }
+
       // Server-side atomic registration (handles capacity check + insert/update)
       const { data: result, error: rpcError } = await supabase
         .rpc('register_for_course', {
@@ -346,10 +361,21 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       const newStatus = (result as any)?.status as string
       const isWaitlist = newStatus === 'waitlist'
 
-      toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
+      toast.success(
+        rebookFromId 
+          ? (isWaitlist ? 'Umgebucht – du stehst auf der Warteliste' : 'Erfolgreich umgebucht!')
+          : (isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
+      )
       
       window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
       
+      if (rebookFromId) {
+        setRebookFromId(null)
+        refetchScore()
+        onRebookComplete?.()
+        onOpenChange(false)
+      }
+
       await loadCoursesForDay()
       if (selectedCourse?.id === courseId) {
         await loadParticipants(courseId)
@@ -486,7 +512,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center">
-              Kurse am {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
+              {rebookFromId 
+                ? `Umbuchen – ${format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}`
+                : `Kurse am ${format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}`
+              }
             </DialogTitle>
           </DialogHeader>
 
@@ -777,6 +806,19 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     >
                       {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
                     </Button>
+                    {canCancelCourse(selectedCourse) && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                        onClick={() => {
+                          setDetailDialogOpen(false)
+                          setRebookFromId(selectedCourse.id)
+                        }}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Umbuchen
+                      </Button>
+                    )}
                     <AddToCalendarButton
                       title={selectedCourse.title}
                       startDate={selectedCourse.course_date}
@@ -864,24 +906,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
               setPendingCancellationId(null)
             }
           }}
-          onRebook={async () => {
+          onRebook={() => {
             if (pendingCancellationId) {
-              try {
-                const { error } = await supabase
-                  .from('course_registrations')
-                  .update({ status: 'rebooked' })
-                  .eq('course_id', pendingCancellationId)
-                  .eq('user_id', user.id)
-                if (error) throw error
-                toast.success('Kurs storniert – wähle jetzt einen neuen Kurs')
-                refetchScore()
-                window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
-                setDetailDialogOpen(false)
-                await loadCoursesForDay()
-              } catch (error) {
-                console.error('Error rebooking:', error)
-                toast.error('Fehler beim Umbuchen')
-              }
+              setDetailDialogOpen(false)
+              setRebookFromId(pendingCancellationId)
               setPendingCancellationId(null)
             }
           }}

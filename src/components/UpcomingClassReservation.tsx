@@ -1,4 +1,4 @@
-import { Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock, User, ArrowRightLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
@@ -50,6 +50,7 @@ export const UpcomingClassReservation = ({
   const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false);
   const [rebookDate, setRebookDate] = useState<string | null>(null);
   const [rebookDialogOpen, setRebookDialogOpen] = useState(false);
+  const [rebookCourseId, setRebookCourseId] = useState<string | null>(null);
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user?.id);
 
   useEffect(() => {
@@ -485,6 +486,21 @@ export const UpcomingClassReservation = ({
                 >
                   {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
                 </Button>
+                {canCancelCourse(selectedCourse) && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                    onClick={() => {
+                      setShowDialog(false)
+                      setRebookCourseId(selectedCourse.id)
+                      setRebookDate(selectedCourse.course_date)
+                      setRebookDialogOpen(true)
+                    }}
+                  >
+                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                    Umbuchen
+                  </Button>
+                )}
                 <AddToCalendarButton
                   title={selectedCourse.title}
                   startDate={selectedCourse.course_date}
@@ -514,26 +530,12 @@ export const UpcomingClassReservation = ({
           onOpenChange={setFairnessCheckOpen}
           currentScore={reliabilityScore}
           onConfirmCancel={handleCancel}
-          onRebook={async () => {
+          onRebook={() => {
             if (!selectedCourse) return
-            try {
-              const { error } = await supabase
-                .from("course_registrations")
-                .update({ status: "rebooked" })
-                .eq("course_id", selectedCourse.id)
-                .eq("user_id", user.id)
-              if (error) throw error
-              toast.success("Kurs storniert – wähle jetzt einen neuen Kurs")
-              refetchScore()
-              window.dispatchEvent(new CustomEvent("courseRegistrationChanged"))
-              setShowDialog(false)
-              setRebookDate(selectedCourse.course_date)
-              setRebookDialogOpen(true)
-              loadUpcomingReservations()
-            } catch (error) {
-              console.error("Error rebooking:", error)
-              toast.error("Fehler beim Umbuchen")
-            }
+            setShowDialog(false)
+            setRebookCourseId(selectedCourse.id)
+            setRebookDate(selectedCourse.course_date)
+            setRebookDialogOpen(true)
           }}
         />
       )}
@@ -543,10 +545,18 @@ export const UpcomingClassReservation = ({
           open={rebookDialogOpen}
           onOpenChange={(open) => {
             setRebookDialogOpen(open)
-            if (!open) setRebookDate(null)
+            if (!open) {
+              setRebookDate(null)
+              setRebookCourseId(null)
+            }
           }}
           date={rebookDate}
           user={user}
+          rebookFromCourseId={rebookCourseId || undefined}
+          onRebookComplete={() => {
+            refetchScore()
+            loadUpcomingReservations()
+          }}
         />
       )}
     </>
