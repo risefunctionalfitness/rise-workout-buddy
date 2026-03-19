@@ -804,6 +804,19 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     >
                       {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
                     </Button>
+                    {canCancelCourse(selectedCourse) && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                        onClick={() => {
+                          setDetailDialogOpen(false)
+                          setRebookFromId(selectedCourse.id)
+                        }}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Umbuchen
+                      </Button>
+                    )}
                     <AddToCalendarButton
                       title={selectedCourse.title}
                       startDate={selectedCourse.course_date}
