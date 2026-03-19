@@ -19,6 +19,7 @@ import { MembershipBadge } from "./MembershipBadge";
 import { CourseInvitationButton } from "./CourseInvitationButton";
 import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FairnessCheckDialog } from "./FairnessCheckDialog";
+import { DayCourseDialog } from "./DayCourseDialog";
 import { useReliabilityScore } from "@/hooks/useReliabilityScore";
 import { ReliabilityScoreBadge } from "./ReliabilityScoreBadge";
 import {
