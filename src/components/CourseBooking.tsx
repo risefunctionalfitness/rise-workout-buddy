@@ -68,6 +68,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
   const [rebookDate, setRebookDate] = useState<string | null>(null)
   const [rebookDialogOpen, setRebookDialogOpen] = useState(false)
+  const [rebookCourseId, setRebookCourseId] = useState<string | null>(null)
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
