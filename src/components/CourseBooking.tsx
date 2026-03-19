@@ -1071,6 +1071,42 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               setPendingCancellationId(null)
             }
           }}
+          onRebook={async () => {
+            if (pendingCancellationId) {
+              const course = courses.find(c => c.id === pendingCancellationId)
+              if (!course) return
+              try {
+                const { error } = await supabase
+                  .from('course_registrations')
+                  .update({ status: 'rebooked' })
+                  .eq('course_id', pendingCancellationId)
+                  .eq('user_id', user.id)
+                toast.success('Kurs storniert – wähle jetzt einen neuen Kurs')
+                refetchScore()
+                window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+                setDialogOpen(false)
+                setRebookDate(course.course_date)
+                setRebookDialogOpen(true)
+                await loadCourses()
+              } catch (error) {
+                console.error('Error rebooking:', error)
+                toast.error('Fehler beim Umbuchen')
+              }
+              setPendingCancellationId(null)
+            }
+          }}
+        />
+      )}
+
+      {rebookDate && (
+        <DayCourseDialog
+          open={rebookDialogOpen}
+          onOpenChange={(open) => {
+            setRebookDialogOpen(open)
+            if (!open) setRebookDate(null)
+          }}
+          date={rebookDate}
+          user={user}
         />
       )}
 
