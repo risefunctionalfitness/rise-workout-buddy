@@ -105,17 +105,20 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
 
   const addParticipant = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('course_registrations')
-        .insert({
-          course_id: courseId,
-          user_id: userId,
-          status: 'registered'
+      const { data, error } = await supabase
+        .rpc('register_for_course', {
+          p_user_id: userId,
+          p_course_id: courseId
         })
 
       if (error) throw error
       
-      toast.success('Teilnehmer hinzugefügt')
+      const status = (data as any)?.status
+      if (status === 'waitlist') {
+        toast.success('Teilnehmer auf Warteliste gesetzt (Kurs voll)')
+      } else {
+        toast.success('Teilnehmer hinzugefügt')
+      }
       await loadRegisteredUsers()
       onParticipantAdded()
     } catch (error) {
