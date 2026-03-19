@@ -113,7 +113,7 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
 
       if (error) throw error
       
-      const status = data?.status
+      const status = (data as any)?.status
       if (status === 'waitlist') {
         toast.success('Teilnehmer auf Warteliste gesetzt (Kurs voll)')
       } else {

@@ -290,7 +290,7 @@ export const CourseInvitationsPanel = ({
         return;
       }
 
-      const registrationStatus = rpcResult?.status;
+      const registrationStatus = (rpcResult as any)?.status;
 
       // Update invitation status
       const { error: invitationError } = await supabase
