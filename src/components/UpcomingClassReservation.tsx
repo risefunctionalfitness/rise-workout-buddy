@@ -492,6 +492,7 @@ export const UpcomingClassReservation = ({
                     className="w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
                     onClick={() => {
                       setShowDialog(false)
+                      setRebookCourseId(selectedCourse.id)
                       setRebookDate(selectedCourse.course_date)
                       setRebookDialogOpen(true)
                     }}
