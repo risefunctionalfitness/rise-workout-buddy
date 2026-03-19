@@ -1,33 +1,29 @@
 
-# Buchungsmuster: Absolute Zahlen durch relative Kursauslastung ersetzen
 
-## Aenderung
+## Problem: Kurs-Ueberbuchung durch fehlende Kapazitaetspruefung
 
-Die Buchungsmuster-Karte im Admin-Bereich zeigt aktuell absolute Registrierungszahlen pro Wochentag/Uhrzeit (z.B. "Mo 17:00 → 42"). Stattdessen soll die **durchschnittliche Kursauslastung in Prozent** angezeigt werden (z.B. "Mo 17:00 → 82%").
+### Analyse
 
-## Berechnung
+Die Daten zeigen das Problem konkret: Kurs am 20.03. hat 16 Mitglieder + 1 Gast = 17 Teilnehmer bei max. 16 Plaetzen. Die `register_for_course` RPC-Funktion zaehlt zwar beide (Mitglieder + Gaeste), aber es gibt **zwei Stellen im Code, die diese Funktion umgehen**:
 
-Fuer jede Wochentag-Uhrzeit-Kombination:
-- Alle Kurse der letzten 30 Tage mit diesem Wochentag und dieser Startzeit ermitteln
-- Pro Kurs: Anzahl registrierter Teilnehmer (inkl. Gaeste) / max_participants
-- Durchschnitt ueber alle Kurse dieser Kombination bilden
-- Ergebnis als Prozentwert anzeigen
+1. **`AdminParticipantManager.tsx`** (Zeile 108-114): Admin fuegt Teilnehmer per direktem `.insert()` mit `status: 'registered'` hinzu -- keine Kapazitaetspruefung
+2. **`CourseInvitationsPanel.tsx`** (Zeile 294-298): Einladungsannahme per direktem `.insert()` -- keine Kapazitaetspruefung
 
-## Technische Umsetzung
+Beide Pfade schreiben `registered` unabhaengig davon, ob der Kurs voll ist.
 
-### Datei: `src/components/BookingPatternsCard.tsx`
+### Loesung
 
-1. **Interface anpassen**: `registrations` durch `avgUtilization` (number, 0-100) und `courseCount` ersetzen
+Beide Stellen auf die `register_for_course` RPC umstellen, damit die atomare Kapazitaetspruefung (Mitglieder + Gaeste) immer greift.
 
-2. **Datenladung umschreiben**: Statt nur `course_registrations` zu laden, werden `courses` mit `course_registrations` und `guest_registrations` geladen:
-   - Query: `courses` mit `course_date`, `start_time`, `max_participants`, `course_registrations(status)`, `guest_registrations(status)`
-   - Filter: `is_cancelled = false`, `course_date` im 30-Tage-Fenster
-   - Gruppierung nach Wochentag + Startzeit
-   - Pro Gruppe: Summe der registrierten Teilnehmer (Members + Gaeste) / Summe max_participants * 100
+### Aenderungen
 
-3. **Anzeige anpassen**:
-   - Balkenbreite basiert auf `avgUtilization` (0-100%) statt auf absoluten Zahlen
-   - Zahl rechts zeigt `82%` statt `42`
-   - Footer zeigt "Hoechste Auslastung: Mo 17:00 (82%)" statt absolute Buchungen
+**1. `src/components/AdminParticipantManager.tsx`**
+- Direkten `.insert()` durch `.rpc('register_for_course')` ersetzen
+- Admin kann weiterhin Teilnehmer hinzufuegen, aber der Status wird korrekt als `registered` oder `waitlist` gesetzt
 
-4. **Sortierung**: Nach Auslastung absteigend (hoechste zuerst) statt nach Wochentag/Uhrzeit, damit die relevantesten Slots oben stehen
+**2. `src/components/CourseInvitationsPanel.tsx`**
+- Direkten `.insert()` durch `.rpc('register_for_course')` ersetzen
+- Einladungsannahme respektiert die Kurskapazitaet
+
+Keine DB-Migration noetig -- die `register_for_course` Funktion ist bereits korrekt.
+
