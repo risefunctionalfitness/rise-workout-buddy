@@ -512,7 +512,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center">
-              {rebookFromCourseId 
+              {rebookFromId 
                 ? `Umbuchen – ${format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}`
                 : `Kurse am ${format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}`
               }
