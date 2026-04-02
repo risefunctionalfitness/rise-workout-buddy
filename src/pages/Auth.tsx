@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// Removed tabs import
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
@@ -15,6 +15,9 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,7 +29,6 @@ export default function Auth() {
       
       hasRedirected = true
       
-      // Use setTimeout to defer navigation and database calls
       setTimeout(async () => {
         if (!mounted) return
         
@@ -54,7 +56,6 @@ export default function Auth() {
       }, 100)
     }
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return
@@ -68,7 +69,6 @@ export default function Auth() {
       }
     )
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return
       
@@ -91,14 +91,12 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // Einheitlicher Login für alle: Email + Code
       if (!email || !accessCode) {
         toast.error("Bitte E-Mail und Code eingeben");
         setLoading(false);
         return;
       }
 
-      // Login mit Email und Code als Passwort
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password: accessCode,
@@ -112,8 +110,6 @@ export default function Auth() {
         }
         return;
       }
-
-      // Removed success toast - navigation is feedback enough
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Fehler beim Anmelden");
@@ -122,10 +118,37 @@ export default function Auth() {
     }
   };
 
-  // Signup functionality removed - members are created by admin only
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast.error("Bitte E-Mail eingeben");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-password', {
+        body: { email: resetEmail },
+      });
+
+      if (error) {
+        toast.error("Fehler beim Zurücksetzen des Passworts");
+        return;
+      }
+
+      toast.success("Falls die E-Mail existiert, wurde ein neuer Zugangscode versendet.");
+      setResetDialogOpen(false);
+      setResetEmail("");
+    } catch (error) {
+      console.error("Password reset error:", error);
+      toast.error("Fehler beim Zurücksetzen des Passworts");
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   if (user) {
-    return null; // User will be redirected
+    return null;
   }
 
   return (
@@ -165,8 +188,44 @@ export default function Auth() {
               {loading ? "Anmelden..." : "Anmelden"}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => setResetDialogOpen(true)}
+              className="text-sm text-muted-foreground hover:text-foreground underline"
+            >
+              Passwort vergessen?
+            </button>
+          </div>
         </CardContent>
       </Card>
+
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Passwort zurücksetzen</DialogTitle>
+            <DialogDescription>
+              Gib deine E-Mail-Adresse ein. Du erhältst einen neuen Zugangscode.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePasswordReset} className="space-y-4">
+            <Input
+              type="email"
+              placeholder="E-Mail"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              required
+            />
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={resetLoading}
+            >
+              {resetLoading ? "Wird gesendet..." : "Neuen Zugangscode anfordern"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
