@@ -88,17 +88,12 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Get webhook URL for password_reset
-    const { data: webhookData } = await supabaseAdmin
-      .from("webhook_settings")
-      .select("webhook_url")
-      .eq("webhook_type", "password_reset")
-      .eq("is_active", true)
-      .maybeSingle();
+    // Get webhook URL from environment secret
+    const webhookUrl = Deno.env.get("MAKE_PASSWORD_RESET_WEBHOOK_URL");
 
-    if (webhookData?.webhook_url) {
+    if (webhookUrl) {
       try {
-        await fetch(webhookData.webhook_url, {
+        await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -114,7 +109,7 @@ Deno.serve(async (req) => {
         console.error("Error sending webhook:", webhookError);
       }
     } else {
-      console.warn("No active password_reset webhook configured");
+      console.warn("MAKE_PASSWORD_RESET_WEBHOOK_URL is not set");
     }
 
     return new Response(
