@@ -1,61 +1,42 @@
 
 
-## Fix: Password Reset findet User nicht + fehlendes Logging
+## Problem: Check-ins der letzten 12 Monate aktualisiert nicht
 
-### Problem
-1. **`listUsers()` ist paginiert**: Standardmaessig werden nur 50 User zurueckgegeben. Bei mehr als 50 Usern wird die E-Mail nicht gefunden, die Funktion gibt `success: true` zurueck ohne Webhook-Aufruf.
-2. **Kein Logging**: Es gibt keine `console.log`-Ausgaben, die den Ablauf dokumentieren. Deshalb sehen wir in den Logs nichts.
+### Ursache
+Die Supabase-Abfrage in `MonthlyRegistrationsChart.tsx` hat ein **1000-Zeilen-Limit** (Supabase-Standard). Es gibt aktuell **1223 Eintraege** in `leaderboard_entries` fuer `year >= 2025`, wodurch 223 Eintraege abgeschnitten werden. Das fuehrt zu unvollstaendigen oder fehlenden Daten in der Grafik.
+
+Dasselbe Problem betrifft auch die Profil-Abfrage (`.in('user_id', userIds)`) -- bei ueber 1000 User-IDs werden nicht alle Profile geladen.
 
 ### Loesung
 
-**`supabase/functions/reset-password/index.ts`**:
+**Datei: `src/components/MonthlyRegistrationsChart.tsx`**
 
-1. **User-Suche per E-Mail statt `listUsers()`**: Statt alle User zu laden und clientseitig zu filtern, nutze die Supabase Admin API mit Seitenweise-Iteration oder besser: direkt `listUsers({ filter: email })` verwenden. Alternativ: Paginierung implementieren.
+1. Leaderboard-Abfrage mit explizitem Limit erhoehen oder die Daten serverseitig aggregieren. Einfachste Loesung: Die Abfrage auf die tatsaechlich benoetigten 12 Monate einschraenken (statt alle Daten ab `year - 1` zu laden), und ein `.range(0, 4999)` setzen um das Limit zu erhoehen.
 
-   Beste Loesung: Die Supabase Admin API unterstuetzt keinen direkten Email-Filter in `listUsers()`. Stattdessen den User ueber die `profiles`-Tabelle suchen (dort ist die E-Mail oder `user_id` gespeichert) und dann per `getUserById()` den Auth-User holen.
+2. Konkret:
+   - Filter verfeinern: Statt nur `gte('year', 2025)` auch den Monat beruecksichtigen, damit nicht unnoetig alte Daten geladen werden
+   - `.select(...).gte('year', ...).range(0, 4999)` oder besser zwei separate Abfragen pro Jahr/Monat-Kombination
+   - Profil-Abfrage: Deduplizierte User-IDs verwenden und ebenfalls `.range(0, 4999)` setzen
 
-   Konkret:
-   ```typescript
-   // Statt listUsers():
-   const { data: profileData } = await supabaseAdmin
-     .from("profiles")
-     .select("user_id")
-     .eq("email", email.toLowerCase())
-     .maybeSingle();
-   
-   if (!profileData) {
-     // User nicht gefunden - generische Antwort
-     return genericSuccess();
-   }
-   
-   const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(profileData.user_id);
-   ```
+### Technische Aenderung
 
-   Falls `profiles` kein `email`-Feld hat, alternative Loesung: **alle Seiten von `listUsers()` durchiterieren**:
-   ```typescript
-   let allUsers = [];
-   let page = 1;
-   const perPage = 1000;
-   while (true) {
-     const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-     allUsers.push(...data.users);
-     if (data.users.length < perPage) break;
-     page++;
-   }
-   ```
+```typescript
+// Zeile 34-37: Range hinzufuegen
+const { data: leaderboardData, error } = await supabase
+  .from('leaderboard_entries')
+  .select('user_id, year, month, training_count')
+  .gte('year', now.getFullYear() - 1)
+  .range(0, 4999)
 
-2. **Logging hinzufuegen**: An allen kritischen Stellen `console.log` einfuegen:
-   - Email empfangen
-   - User gefunden/nicht gefunden
-   - Webhook URL vorhanden/nicht vorhanden
-   - Webhook Response Status
-
-3. **Webhook Response pruefen**: `fetch`-Response loggen, um zu sehen ob Make.com die Anfrage akzeptiert:
-   ```typescript
-   const res = await fetch(webhookUrl, { ... });
-   console.log("Webhook response:", res.status, await res.text());
-   ```
+// Zeile 42-46: Deduplizierte IDs + Range
+const uniqueUserIds = [...new Set(leaderboardData?.map(e => e.user_id) || [])]
+const { data: profiles } = await supabase
+  .from('profiles')
+  .select('user_id, membership_type')
+  .in('user_id', uniqueUserIds)
+  .range(0, 4999)
+```
 
 ### Dateien
-- `supabase/functions/reset-password/index.ts` (Paginierung + Logging + Response-Check)
+- `src/components/MonthlyRegistrationsChart.tsx` (Range-Limits + deduplizierte User-IDs)
 
