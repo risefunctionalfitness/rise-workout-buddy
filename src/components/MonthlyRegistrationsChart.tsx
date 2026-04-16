@@ -35,15 +35,17 @@ export const MonthlyRegistrationsChart = () => {
         .from('leaderboard_entries')
         .select('user_id, year, month, training_count')
         .gte('year', now.getFullYear() - 1)
+        .range(0, 4999)
       
       if (error) throw error
       
-      // Get all user profiles to map membership types
-      const userIds = leaderboardData?.map(entry => entry.user_id) || []
+      // Get all user profiles to map membership types (deduplicated)
+      const uniqueUserIds = [...new Set(leaderboardData?.map(entry => entry.user_id) || [])]
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, membership_type')
-        .in('user_id', userIds)
+        .in('user_id', uniqueUserIds)
+        .range(0, 4999)
       
       // Create membership map
       const membershipMap = new Map(
