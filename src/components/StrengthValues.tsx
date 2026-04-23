@@ -79,7 +79,7 @@ export const StrengthValues = () => {
         supabase
           .from("profiles")
           .select(
-            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm"
+            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm, extra_lifts"
           )
           .eq("user_id", user.id)
           .maybeSingle(),
@@ -100,6 +100,22 @@ export const StrengthValues = () => {
         })
       }
       setProfileValues(profileMap)
+
+      // Parse legacy extra_lifts from profile (free-text exercises stored before strength_history existed)
+      const rawExtras = (profile?.extra_lifts as any[]) ?? []
+      const parsedExtras: { name: string; weight: number }[] = []
+      rawExtras.forEach((entry) => {
+        const name = (entry?.name ?? "").toString().trim()
+        if (!name) return
+        // weight may be e.g. "60", "60kg", "60 kg", "85 " — extract first number
+        const rawWeight = (entry?.weight ?? "").toString()
+        const match = rawWeight.match(/-?\d+([.,]\d+)?/)
+        if (!match) return
+        const weight = parseFloat(match[0].replace(",", "."))
+        if (isNaN(weight) || weight <= 0) return
+        parsedExtras.push({ name, weight })
+      })
+      setLegacyExtraLifts(parsedExtras)
       setHistory((historyRes.data as HistoryRow[]) ?? [])
     } catch (error) {
       console.error("Error loading strength values:", error)
