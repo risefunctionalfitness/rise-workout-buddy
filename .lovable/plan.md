@@ -1,125 +1,62 @@
 
 
-## Plan: Kraftwerte-Seite modernisieren + erweiterte Standard-Lifts + Datum
+## Problem
 
-### 1. Erweiterte Standard-Lifts (nur diese, keine anderen)
+Meine Migration vom 23.04. (`20260423084955`) hat die Audit-Trigger-Funktion `log_registration_change()` eingeführt. Diese ist an **beide** Tabellen `course_registrations` und `guest_registrations` gekoppelt und enthält:
 
-Bestand bleibt: Front Squat, Back Squat, Deadlift, Bench Press, Snatch, Clean, Jerk, Clean & Jerk.
-
-Neu hinzu:
-- **Olympic**: Power Snatch, Power Clean, Hang Snatch, Hang Clean, Push Jerk, Split Jerk, Squat Snatch, Squat Clean
-- **Pressing**: Strict Press, Push Press
-- **Squat**: Overhead Squat
-
-Damit die `profiles`-Tabelle nicht mit 11 neuen Spalten aufgebläht wird, kommen die neuen Lifts in die in vorherigem Plan vereinbarte Tabelle `strength_history`. Die alten 8 bleiben weiter in `profiles` (kein Datenverlust, keine Migration der Werte nötig).
-
-### 2. Modernisierte Kraftwerte-Seite (`StrengthValues.tsx`)
-
-**Heute**: Liste aus 8 Inputs untereinander mit Label links, kleinem Input rechts. Eigene Übungen als Karten darunter. Alles sehr listig, kein Datum, keine Gruppierung, keine Visualisierung.
-
-**Neu** – ein Screen, drei Sektionen, Mobile-first für 390px:
-
-```text
-┌──────────────────────────────────────┐
-│  ← Kraftwerte                        │
-├──────────────────────────────────────┤
-│  [ Squat | Pull | Press | Olympic |  │  ← Segmented Tabs
-│    Eigene ]                          │
-├──────────────────────────────────────┤
-│  Squat                               │
-│  ┌────────────────────────────────┐  │
-│  │ Back Squat                     │  │
-│  │ 140 kg                          │  │  ← Aktueller Wert prominent
-│  │ zuletzt 04.04.2026             │  │  ← Datum
-│  │                          [✎]   │  │  ← Edit-Button
-│  └────────────────────────────────┘  │
-│  ┌────────────────────────────────┐  │
-│  │ Front Squat                    │  │
-│  │ — kg   "noch nicht erfasst"    │  │  ← Empty State
-│  │                          [+]   │  │
-│  └────────────────────────────────┘  │
-│  ┌────────────────────────────────┐  │
-│  │ Overhead Squat                 │  │
-│  │ — kg                           │  │
-│  │                          [+]   │  │
-│  └────────────────────────────────┘  │
-│  ...                                 │
-└──────────────────────────────────────┘
-
-                                   ⊕   ← Floating + Button
+```sql
+CASE WHEN TG_TABLE_NAME = 'guest_registrations' THEN NEW.guest_email END
 ```
 
-**Gruppierung der Tabs**:
-- **Squat**: Front Squat, Back Squat, Overhead Squat
-- **Pull**: Deadlift
-- **Press**: Bench Press, Strict Press, Push Press
-- **Olympic**: Snatch, Power Snatch, Hang Snatch, Squat Snatch, Clean, Power Clean, Hang Clean, Squat Clean, Jerk, Push Jerk, Split Jerk, Clean & Jerk
-- **Eigene**: alle Custom-Lifts aus `strength_history` mit `lift_type='custom'`
+PL/pgSQL prüft Feldzugriffe auf `NEW` zur Laufzeit gegen das **tatsächliche Record-Layout** der Trigger-Tabelle. Da `course_registrations` keine Spalte `guest_email` hat, schlägt der Ausdruck mit `record "new" has no field "guest_email"` fehl — bei **jeder** Course-Registrierung. Der `CASE WHEN ... END` wird leider nicht "lazy" evaluiert.
 
-**Lift-Card Design**:
-- `rounded-xl border border-primary/10 bg-card p-4`
-- Übungsname oben (medium font)
-- Wert groß und primary-color (`text-2xl font-bold text-primary`)
-- Datum klein muted darunter
-- Wenn kein Wert: gedämpft, "—  noch nicht erfasst", Plus-Icon-Button rechts
-- Wenn Wert vorhanden: Edit-Pencil-Icon rechts, öffnet Dialog vorausgefüllt
+Effekte:
+- Niemand kann sich mehr für Kurse anmelden (Status 400 bei `register_for_course`).
+- Das `registration_audit_log` ist leer (Insert kracht jedes Mal).
+- Die Credit-Logik in `handle_membership_limits()` wird nie erreicht.
 
-### 3. Edit-/Add-Dialog (gemeinsam mit Prozentrechner)
+## Lösung
 
-Eine wiederverwendbare Komponente `AddStrengthValueDialog.tsx`:
-- Modus `add` oder `edit`
-- Felder: Übung (gesperrt im Edit-Modus, sonst Select / freier Name), Gewicht (kg), Datum (Shadcn-Datepicker, Default heute, max heute, deutsche Locale, `pointer-events-auto`)
-- Bei Edit zusätzlich Button "Eintrag löschen" (mit Confirm)
-- Speichern: für die 8 alten Standard-Lifts ZUSÄTZLICH `profiles.*_1rm` updaten (Synchronität), neue Standard-Lifts und Custom-Lifts nur in `strength_history`
-- Nach Speichern Toast + Liste neu laden
+Eine einzige Migration, die `log_registration_change()` so umbaut, dass `NEW.guest_email` **nur dann** referenziert wird, wenn der Trigger wirklich auf `guest_registrations` läuft. Umsetzung mit zwei getrennten Code-Pfaden statt eines CASE-Ausdrucks:
 
-### 4. Floating "+" Button
-
-Auch auf der Kraftwerte-Seite unten rechts (`fixed bottom-6 right-4 h-14 w-14 rounded-full shadow-lg`). Öffnet denselben Dialog im `add`-Modus, vor-selektierter Tab-Kontext bestimmt nichts (User wählt Übung selbst).
-
-Der bisherige "Übung hinzufügen"-Workflow (Inline-Karten unten) wird durch den Dialog abgelöst – sauberer, mit Datum, ohne Doppellogik.
-
-### 5. Verlauf pro Übung (optional, klein)
-
-Tap auf eine Lift-Card öffnet darunter einen Aufklapp-Bereich mit den letzten 5 Einträgen aus `strength_history` für diese Übung (Datum · Gewicht · kleiner Trend-Pfeil ↑/↓ vs. vorigem Wert). Verlauf zeigt nur, was tatsächlich erfasst wurde – keine künstliche History für die alten Profil-Werte.
-
-### 6. Datenmodell – `strength_history` (wie zuvor abgesegnet)
-
-```text
-strength_history
-├── id           uuid PK
-├── user_id      uuid (Index)
-├── lift_type    text  ('standard' | 'custom')
-├── lift_name    text
-├── weight_kg    numeric
-├── achieved_on  date
-├── created_at   timestamptz
-└── updated_at   timestamptz
+```sql
+CREATE OR REPLACE FUNCTION public.log_registration_change()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_guest_email text := NULL;
+  v_user_id uuid := NULL;
+BEGIN
+  IF TG_TABLE_NAME = 'guest_registrations' THEN
+    IF TG_OP = 'DELETE' THEN
+      v_guest_email := (to_jsonb(OLD) ->> 'guest_email');
+    ELSE
+      v_guest_email := (to_jsonb(NEW) ->> 'guest_email');
+    END IF;
+  ELSE
+    IF TG_OP = 'DELETE' THEN
+      v_user_id := (to_jsonb(OLD) ->> 'user_id')::uuid;
+    ELSE
+      v_user_id := (to_jsonb(NEW) ->> 'user_id')::uuid;
+    END IF;
+  END IF;
+  -- restlicher Insert-Logik analog, aber ohne direkten NEW.guest_email-Zugriff
+  ...
+END $$;
 ```
 
-RLS: User CRUD eigene Zeilen; Admins lesen alles. Index `(user_id, lift_name, achieved_on DESC)`.
+Der Trick: `to_jsonb(NEW) ->> 'guest_email'` umgeht die statische Feld-Prüfung von PL/pgSQL — es liefert `NULL`, wenn die Spalte fehlt, statt zu crashen.
 
-### 7. Lade-Strategie (Single Source of Truth)
+## Verifikation nach Deploy
 
-`StrengthValues` und `PercentageCalculator` laden parallel:
-1. `profiles` für die 8 alten 1RM-Felder
-2. `strength_history` für ALLE Werte mit Datum
+1. Mit Test-Account auf einen Kurs anmelden → muss erfolgreich sein.
+2. `SELECT * FROM registration_audit_log ORDER BY created_at DESC LIMIT 5;` → Eintrag muss existieren.
+3. Bei Warteliste-Promotion eines „10er Karte"-Mitglieds: `credits_remaining` muss um 1 sinken.
+4. Bei Storno aus `registered`: `credits_remaining` muss um 1 steigen (für 10er Karte).
 
-Pro `lift_name` wird der **aktuellste Wert** angezeigt (Vergleich über `achieved_on`). Bei Konflikt zwischen Profil-Wert (kein Datum) und History-Eintrag gewinnt der History-Eintrag, da datiert.
+Die bestehende Credit-Logik in `handle_membership_limits()` bleibt komplett unangetastet — nur der Audit-Trigger wird gefixt.
 
-### 8. Geänderte / neue Dateien
+## Dateien
 
-- **Neue Migration**: Tabelle `strength_history` + RLS + `updated_at`-Trigger
-- **Neue Konstante** `src/constants/standardLifts.ts`: alle Standard-Lifts mit Gruppe ('squat' | 'pull' | 'press' | 'olympic')
-- **Neue Komponente** `src/components/AddStrengthValueDialog.tsx`: Add + Edit + Delete + Datepicker
-- **Überarbeitet** `src/components/StrengthValues.tsx`: Tabs, Lift-Cards mit Datum, Floating-Button, Verlauf-Aufklapp, Dialog-Integration; alte Inline-Inputs/Custom-Karten ersetzt
-- **Überarbeitet** `src/components/PercentageCalculator.tsx` (parallel zur vorigen Plan-Iteration): nutzt dieselben Datenquellen und denselben Dialog, Floating-Button öffnet identischen Add-Dialog
-
-### Ergebnis
-
-- Übersichtliche, moderne Kraftwerte-Seite mit Gruppierung statt langer Liste
-- Genau die gewünschten neuen Standard-Lifts ergänzt, nichts darüber hinaus
-- Datum sauber pro Wert gespeichert, Verlauf je Übung anzeigbar
-- Ein Add/Edit-Dialog wird sowohl von der Kraftwerte-Seite als auch vom Prozentrechner genutzt – keine Duplikation
-- Die 8 alten Profil-Spalten werden weiter synchron gepflegt, damit nichts in der App bricht
+- **Neu**: `supabase/migrations/<timestamp>_fix_audit_trigger_guest_email.sql`
 
