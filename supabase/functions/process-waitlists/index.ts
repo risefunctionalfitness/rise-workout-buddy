@@ -82,9 +82,21 @@ serve(async (req) => {
 
         const registeredCount = registrations?.filter(r => r.status === 'registered').length || 0;
         const waitlistedCount = registrations?.filter(r => r.status === 'waitlist').length || 0;
-        const availableSpots = course.max_participants - registeredCount;
 
-        console.log(`📊 Course ${course.title}: ${registeredCount}/${course.max_participants} registered, ${waitlistedCount} waitlisted, ${availableSpots} spots available`);
+        // CRITICAL: also count guest registrations (drop-ins / probetraining)
+        // Bug history: prior to this fix, guests were ignored here, causing
+        // waitlist users to be promoted into seats actually held by guests,
+        // leading to overbookings (e.g. 20/16) on courses with widget bookings.
+        const { count: guestRegisteredCount } = await supabase
+          .from('guest_registrations')
+          .select('*', { count: 'exact', head: true })
+          .eq('course_id', course.id)
+          .eq('status', 'registered');
+
+        const totalRegistered = registeredCount + (guestRegisteredCount || 0);
+        const availableSpots = course.max_participants - totalRegistered;
+
+        console.log(`📊 Course ${course.title}: ${registeredCount} members + ${guestRegisteredCount || 0} guests = ${totalRegistered}/${course.max_participants} registered, ${waitlistedCount} waitlisted, ${availableSpots} spots available`);
 
         if (availableSpots <= 0 || waitlistedCount === 0) {
           console.log(`⏭️ Skipping course ${course.title}: no spots or no waitlist`);
