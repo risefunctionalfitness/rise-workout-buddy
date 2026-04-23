@@ -50,6 +50,9 @@ export const StrengthValues = () => {
   const [activeTab, setActiveTab] = useState<LiftGroup | "custom">("squat")
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [profileValues, setProfileValues] = useState<Record<string, number>>({})
+  const [legacyExtraLifts, setLegacyExtraLifts] = useState<
+    { name: string; weight: number }[]
+  >([])
   const [loading, setLoading] = useState(true)
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null)
 
@@ -76,7 +79,7 @@ export const StrengthValues = () => {
         supabase
           .from("profiles")
           .select(
-            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm"
+            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm, extra_lifts"
           )
           .eq("user_id", user.id)
           .maybeSingle(),
@@ -97,6 +100,22 @@ export const StrengthValues = () => {
         })
       }
       setProfileValues(profileMap)
+
+      // Parse legacy extra_lifts from profile (free-text exercises stored before strength_history existed)
+      const rawExtras = (profile?.extra_lifts as any[]) ?? []
+      const parsedExtras: { name: string; weight: number }[] = []
+      rawExtras.forEach((entry) => {
+        const name = (entry?.name ?? "").toString().trim()
+        if (!name) return
+        // weight may be e.g. "60", "60kg", "60 kg", "85 " — extract first number
+        const rawWeight = (entry?.weight ?? "").toString()
+        const match = rawWeight.match(/-?\d+([.,]\d+)?/)
+        if (!match) return
+        const weight = parseFloat(match[0].replace(",", "."))
+        if (isNaN(weight) || weight <= 0) return
+        parsedExtras.push({ name, weight })
+      })
+      setLegacyExtraLifts(parsedExtras)
       setHistory((historyRes.data as HistoryRow[]) ?? [])
     } catch (error) {
       console.error("Error loading strength values:", error)
@@ -138,17 +157,30 @@ export const StrengthValues = () => {
       })
     })
 
-    return map
-  }, [profileValues, history])
+    // Add legacy extra_lifts (no date) only if no history entry exists for that name
+    legacyExtraLifts.forEach((lift) => {
+      if (map.has(lift.name)) return
+      map.set(lift.name, {
+        liftName: lift.name,
+        liftType: "custom",
+        weightKg: lift.weight,
+        achievedOn: null,
+        entryId: null,
+      })
+    })
 
-  // Custom lifts: distinct names from history with type=custom
+    return map
+  }, [profileValues, history, legacyExtraLifts])
+
+  // Custom lifts: distinct names from history (custom) AND legacy extra_lifts
   const customLiftNames = useMemo(() => {
     const set = new Set<string>()
     history.forEach((h) => {
       if (h.lift_type === "custom") set.add(h.lift_name)
     })
+    legacyExtraLifts.forEach((l) => set.add(l.name))
     return Array.from(set)
-  }, [history])
+  }, [history, legacyExtraLifts])
 
   const liftsForTab = (tab: LiftGroup | "custom") => {
     if (tab === "custom") return customLiftNames

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { format, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
 import { useNavigate } from "react-router-dom"
-import { Calculator, Plus, TrendingUp } from "lucide-react"
+import { Calculator, ChevronRight, Plus, Settings, TrendingUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
@@ -66,7 +66,7 @@ export const PercentageCalculator = () => {
         supabase
           .from("profiles")
           .select(
-            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm"
+            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm, extra_lifts"
           )
           .eq("user_id", user.id)
           .maybeSingle(),
@@ -108,6 +108,20 @@ export const PercentageCalculator = () => {
           achievedOn: row.achieved_on,
         })
         if (row.lift_type === "custom") customSet.add(row.lift_name)
+      })
+
+      // Legacy extra_lifts from profile (no date) — only if no history exists for that name
+      const rawExtras = (profile?.extra_lifts as any[]) ?? []
+      rawExtras.forEach((entry) => {
+        const name = (entry?.name ?? "").toString().trim()
+        if (!name || map.has(name)) return
+        const rawWeight = (entry?.weight ?? "").toString()
+        const match = rawWeight.match(/-?\d+([.,]\d+)?/)
+        if (!match) return
+        const weight = parseFloat(match[0].replace(",", "."))
+        if (isNaN(weight) || weight <= 0) return
+        map.set(name, { name, weight, achievedOn: null })
+        customSet.add(name)
       })
 
       const all = Array.from(map.values()).filter((l) => l.weight > 0)
@@ -167,16 +181,38 @@ export const PercentageCalculator = () => {
     <div className="mx-4 space-y-4">
       <Card className="border-primary/10 shadow-sm">
         <CardContent className="space-y-5 p-5">
-          {/* Mode Tabs */}
-          <Tabs
-            value={mode}
-            onValueChange={(v) => setMode(v as "saved" | "free")}
+          {/* Mode Tabs + Manage link */}
+          <div className="flex items-center gap-2">
+            <Tabs
+              value={mode}
+              onValueChange={(v) => setMode(v as "saved" | "free")}
+              className="flex-1"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="saved">Gespeichert</TabsTrigger>
+                <TabsTrigger value="free">Frei</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate("/pro/strength-values")}
+              aria-label="Kraftwerte verwalten"
+              title="Kraftwerte verwalten"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Quick link as text below for discoverability */}
+          <button
+            type="button"
+            onClick={() => navigate("/pro/strength-values")}
+            className="-mt-3 flex w-full items-center justify-end gap-1 text-xs text-muted-foreground hover:text-primary"
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="saved">Gespeichert</TabsTrigger>
-              <TabsTrigger value="free">Frei</TabsTrigger>
-            </TabsList>
-          </Tabs>
+            Alle Kraftwerte verwalten
+            <ChevronRight className="h-3 w-3" />
+          </button>
 
           {/* Saved Mode */}
           {mode === "saved" && (
