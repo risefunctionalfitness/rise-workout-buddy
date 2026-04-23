@@ -181,16 +181,38 @@ export const PercentageCalculator = () => {
     <div className="mx-4 space-y-4">
       <Card className="border-primary/10 shadow-sm">
         <CardContent className="space-y-5 p-5">
-          {/* Mode Tabs */}
-          <Tabs
-            value={mode}
-            onValueChange={(v) => setMode(v as "saved" | "free")}
+          {/* Mode Tabs + Manage link */}
+          <div className="flex items-center gap-2">
+            <Tabs
+              value={mode}
+              onValueChange={(v) => setMode(v as "saved" | "free")}
+              className="flex-1"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="saved">Gespeichert</TabsTrigger>
+                <TabsTrigger value="free">Frei</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate("/pro/strength-values")}
+              aria-label="Kraftwerte verwalten"
+              title="Kraftwerte verwalten"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Quick link as text below for discoverability */}
+          <button
+            type="button"
+            onClick={() => navigate("/pro/strength-values")}
+            className="-mt-3 flex w-full items-center justify-end gap-1 text-xs text-muted-foreground hover:text-primary"
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="saved">Gespeichert</TabsTrigger>
-              <TabsTrigger value="free">Frei</TabsTrigger>
-            </TabsList>
-          </Tabs>
+            Alle Kraftwerte verwalten
+            <ChevronRight className="h-3 w-3" />
+          </button>
 
           {/* Saved Mode */}
           {mode === "saved" && (
