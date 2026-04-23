@@ -391,7 +391,8 @@ export const StrengthValues = () => {
                                         {formatDate(row.achieved_on)}
                                       </span>
                                       <span className="flex items-center gap-2 font-medium">
-                                        {row.weight_kg} kg
+                                        {row.weight_kg}
+                                        {row.lift_type === "custom" ? "" : " kg"}
                                         {trend !== 0 && (
                                           <span
                                             className={cn(
