@@ -1,213 +1,413 @@
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
-import { supabase } from "@/integrations/supabase/client"
+import { useEffect, useMemo, useState } from "react"
+import { format, parseISO } from "date-fns"
+import { de } from "date-fns/locale"
 import { useNavigate } from "react-router-dom"
-import { useToast } from "@/hooks/use-toast"
+import {
+  ArrowLeft,
+  Pencil,
+  Plus,
+  TrendingUp,
+  History as HistoryIcon,
+} from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import { supabase } from "@/integrations/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AddStrengthValueDialog,
+  type StrengthEntry,
+} from "@/components/AddStrengthValueDialog"
+import {
+  STANDARD_LIFTS,
+  GROUP_LABELS,
+  GROUP_ORDER,
+  findStandardLift,
+  type LiftGroup,
+} from "@/constants/standardLifts"
+
+interface HistoryRow {
+  id: string
+  lift_name: string
+  lift_type: "standard" | "custom"
+  weight_kg: number
+  achieved_on: string
+}
+
+interface CurrentValue {
+  liftName: string
+  liftType: "standard" | "custom"
+  weightKg: number | null
+  achievedOn: string | null // null = legacy profile-only value
+  entryId: string | null // null when value comes from profile column
+}
 
 export const StrengthValues = () => {
   const navigate = useNavigate()
-  const { toast } = useToast()
-  
+
+  const [activeTab, setActiveTab] = useState<LiftGroup | "custom">("squat")
+  const [history, setHistory] = useState<HistoryRow[]>([])
+  const [profileValues, setProfileValues] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
+  const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null)
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<StrengthEntry | null>(null)
+  const [defaultLift, setDefaultLift] = useState<string | undefined>(undefined)
+
   const handleBack = () => {
-    navigate('/pro?openProfile=true')
+    navigate("/pro?openProfile=true")
   }
-  
-  // Standard 1RM Werte
-  const [frontSquat1rm, setFrontSquat1rm] = useState("")
-  const [backSquat1rm, setBackSquat1rm] = useState("")
-  const [deadlift1rm, setDeadlift1rm] = useState("")
-  const [benchPress1rm, setBenchPress1rm] = useState("")
-  const [snatch1rm, setSnatch1rm] = useState("")
-  const [clean1rm, setClean1rm] = useState("")
-  const [jerk1rm, setJerk1rm] = useState("")
-  const [cleanAndJerk1rm, setCleanAndJerk1rm] = useState("")
-  
-  // Zusätzliche Übungen
-  const [extraLifts, setExtraLifts] = useState<{name: string, weight: string}[]>([])
+
+  const loadAll = async () => {
+    setLoading(true)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      const [profileRes, historyRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select(
+            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm"
+          )
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("strength_history")
+          .select("id, lift_name, lift_type, weight_kg, achieved_on")
+          .eq("user_id", user.id)
+          .order("achieved_on", { ascending: false }),
+      ])
+
+      const profile = profileRes.data as any
+      const profileMap: Record<string, number> = {}
+      if (profile) {
+        STANDARD_LIFTS.forEach((lift) => {
+          if (lift.profileColumn && profile[lift.profileColumn] != null) {
+            profileMap[lift.name] = parseFloat(profile[lift.profileColumn])
+          }
+        })
+      }
+      setProfileValues(profileMap)
+      setHistory((historyRes.data as HistoryRow[]) ?? [])
+    } catch (error) {
+      console.error("Error loading strength values:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    loadStrengthValues()
+    loadAll()
   }, [])
 
-  const loadStrengthValues = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+  // Compute the "current" value per lift name, merging profile + history.
+  const currentValues = useMemo(() => {
+    const map = new Map<string, CurrentValue>()
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm, extra_lifts')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (profile) {
-        setFrontSquat1rm((profile as any).front_squat_1rm?.toString() || "")
-        setBackSquat1rm((profile as any).back_squat_1rm?.toString() || "")
-        setDeadlift1rm((profile as any).deadlift_1rm?.toString() || "")
-        setBenchPress1rm((profile as any).bench_press_1rm?.toString() || "")
-        setSnatch1rm((profile as any).snatch_1rm?.toString() || "")
-        setClean1rm((profile as any).clean_1rm?.toString() || "")
-        setJerk1rm((profile as any).jerk_1rm?.toString() || "")
-        setCleanAndJerk1rm((profile as any).clean_and_jerk_1rm?.toString() || "")
-        setExtraLifts(((profile as any).extra_lifts as {name: string, weight: string}[]) || [])
-      }
-    } catch (error) {
-      console.error('Error loading strength values:', error)
-    }
-  }
-
-  const saveStrengthValues = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          front_squat_1rm: frontSquat1rm ? parseFloat(frontSquat1rm) : null,
-          back_squat_1rm: backSquat1rm ? parseFloat(backSquat1rm) : null,
-          deadlift_1rm: deadlift1rm ? parseFloat(deadlift1rm) : null,
-          bench_press_1rm: benchPress1rm ? parseFloat(benchPress1rm) : null,
-          snatch_1rm: snatch1rm ? parseFloat(snatch1rm) : null,
-          clean_1rm: clean1rm ? parseFloat(clean1rm) : null,
-          jerk_1rm: jerk1rm ? parseFloat(jerk1rm) : null,
-          clean_and_jerk_1rm: cleanAndJerk1rm ? parseFloat(cleanAndJerk1rm) : null,
-          extra_lifts: extraLifts
-        })
-        .eq('user_id', user.id)
-
-      if (error) throw error
-
-      toast({
-        title: "Kraftwerte gespeichert",
-        description: "Deine Kraftwerte wurden erfolgreich gespeichert."
+    // Seed from profile (no date)
+    Object.entries(profileValues).forEach(([liftName, weight]) => {
+      map.set(liftName, {
+        liftName,
+        liftType: "standard",
+        weightKg: weight,
+        achievedOn: null,
+        entryId: null,
       })
-    } catch (error) {
-      console.error('Error saving strength values:', error)
-      toast({
-        title: "Fehler",
-        description: "Kraftwerte konnten nicht gespeichert werden.",
-        variant: "destructive"
+    })
+
+    // Override with history if newer (history is sorted desc, so first occurrence wins)
+    const seenInHistory = new Set<string>()
+    history.forEach((row) => {
+      if (seenInHistory.has(row.lift_name)) return
+      seenInHistory.add(row.lift_name)
+      map.set(row.lift_name, {
+        liftName: row.lift_name,
+        liftType: row.lift_type,
+        weightKg: parseFloat(row.weight_kg as unknown as string),
+        achievedOn: row.achieved_on,
+        entryId: row.id,
       })
+    })
+
+    return map
+  }, [profileValues, history])
+
+  // Custom lifts: distinct names from history with type=custom
+  const customLiftNames = useMemo(() => {
+    const set = new Set<string>()
+    history.forEach((h) => {
+      if (h.lift_type === "custom") set.add(h.lift_name)
+    })
+    return Array.from(set)
+  }, [history])
+
+  const liftsForTab = (tab: LiftGroup | "custom") => {
+    if (tab === "custom") return customLiftNames
+    return STANDARD_LIFTS.filter((l) => l.group === tab).map((l) => l.name)
+  }
+
+  const historyForLift = (liftName: string) =>
+    history.filter((h) => h.lift_name === liftName).slice(0, 5)
+
+  const openAdd = (defaultName?: string) => {
+    setEditing(null)
+    setDefaultLift(defaultName)
+    setDialogOpen(true)
+  }
+
+  const openEdit = (current: CurrentValue) => {
+    if (!current.entryId || !current.achievedOn || current.weightKg == null) {
+      // Profile-only value → seed dialog with current value, save creates a history entry
+      openAdd(current.liftName)
+      return
     }
+    setEditing({
+      id: current.entryId,
+      liftName: current.liftName,
+      liftType: current.liftType,
+      weightKg: current.weightKg,
+      achievedOn: parseISO(current.achievedOn),
+    })
+    setDefaultLift(undefined)
+    setDialogOpen(true)
   }
 
-  const addExtraLift = () => {
-    setExtraLifts([...extraLifts, { name: "", weight: "" }])
-  }
-
-  const removeExtraLift = (index: number) => {
-    setExtraLifts(extraLifts.filter((_, i) => i !== index))
-  }
-
-  const updateExtraLift = (index: number, field: 'name' | 'weight', value: string) => {
-    const newLifts = [...extraLifts]
-    newLifts[index][field] = value
-    setExtraLifts(newLifts)
-  }
+  const formatDate = (iso: string) =>
+    format(parseISO(iso), "dd.MM.yyyy", { locale: de })
 
   return (
-    <div className="fixed inset-0 bg-background z-50 overflow-auto">
-      <div className="max-w-2xl mx-auto p-4 pb-24">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-2xl font-bold">Kraftwerte</h1>
+    <div className="fixed inset-0 z-50 overflow-auto bg-background">
+      <div className="mx-auto max-w-2xl p-4 pb-32">
+        {/* Header */}
+        <div className="mb-6 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={handleBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Kraftwerte</h1>
+            <p className="text-sm text-muted-foreground">
+              Verwalte deine 1RM-Werte mit Datum.
+            </p>
           </div>
         </div>
 
-        {/* Standard Kraftwerte */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>1RM Grundübungen</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Gib deine 1 rep max ein für zukünftige Trainingsreferenzen.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { name: "Front Squat", value: frontSquat1rm, setter: setFrontSquat1rm },
-              { name: "Back Squat", value: backSquat1rm, setter: setBackSquat1rm },
-              { name: "Deadlift", value: deadlift1rm, setter: setDeadlift1rm },
-              { name: "Bench Press", value: benchPress1rm, setter: setBenchPress1rm },
-              { name: "Snatch", value: snatch1rm, setter: setSnatch1rm },
-              { name: "Clean", value: clean1rm, setter: setClean1rm },
-              { name: "Jerk", value: jerk1rm, setter: setJerk1rm },
-              { name: "Clean & Jerk", value: cleanAndJerk1rm, setter: setCleanAndJerk1rm }
-            ].map(({ name, value, setter }) => (
-              <div key={name} className="flex gap-2 items-center">
-                <Label className="text-sm font-medium min-w-24 text-right">{name}:</Label>
-                <Input 
-                  type="number" 
-                  step="0.5" 
-                  value={value} 
-                  onChange={(e) => setter(e.target.value)} 
-                  placeholder="kg" 
-                  className="w-20" 
-                />
-                <span className="text-sm text-muted-foreground">kg</span>
-              </div>
+        {/* Tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as LiftGroup | "custom")}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-5">
+            {GROUP_ORDER.map((g) => (
+              <TabsTrigger key={g} value={g} className="text-xs sm:text-sm">
+                {GROUP_LABELS[g]}
+              </TabsTrigger>
             ))}
-          </CardContent>
-        </Card>
+            <TabsTrigger value="custom" className="text-xs sm:text-sm">
+              Eigene
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Zusätzliche Übungen */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Weitere Übungen</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Füge beliebige weitere Übungen und deren Werte hinzu.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {extraLifts.map((lift, index) => (
-              <div key={index} className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <Label>Übungsname</Label>
-                  <Input
-                    placeholder="z.B. Overhead Press"
-                    value={lift.name}
-                    onChange={(e) => updateExtraLift(index, 'name', e.target.value)}
-                  />
-                </div>
-                <div className="flex-1">
-                  <Label>Gewicht/Reps</Label>
-                  <Input
-                    placeholder="z.B. 60kg oder 15 reps"
-                    type="text"
-                    value={lift.weight}
-                    onChange={(e) => updateExtraLift(index, 'weight', e.target.value)}
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeExtraLift(index)}
-                  className="mb-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            
-            <Button variant="outline" onClick={addExtraLift} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              Übung hinzufügen
-            </Button>
-          </CardContent>
-        </Card>
+          {([...GROUP_ORDER, "custom"] as Array<LiftGroup | "custom">).map(
+            (tab) => {
+              const lifts = liftsForTab(tab)
+              return (
+                <TabsContent key={tab} value={tab} className="mt-4 space-y-3">
+                  {loading ? (
+                    <>
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                    </>
+                  ) : lifts.length === 0 ? (
+                    <Card className="border-dashed p-8 text-center">
+                      <p className="mb-3 text-sm text-muted-foreground">
+                        Noch keine eigenen Übungen erfasst.
+                      </p>
+                      <Button variant="outline" onClick={() => openAdd()}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Übung hinzufügen
+                      </Button>
+                    </Card>
+                  ) : (
+                    lifts.map((liftName) => {
+                      const current = currentValues.get(liftName)
+                      const hasValue = current?.weightKg != null
+                      const hist = historyForLift(liftName)
+                      const isOpen = openHistoryFor === liftName
 
+                      return (
+                        <Card
+                          key={liftName}
+                          className={cn(
+                            "overflow-hidden border-primary/10 transition-all",
+                            hasValue ? "bg-card" : "bg-muted/30"
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3 p-4">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                hist.length > 0
+                                  ? setOpenHistoryFor(isOpen ? null : liftName)
+                                  : undefined
+                              }
+                              className="flex-1 text-left"
+                            >
+                              <div className="text-sm font-medium text-foreground">
+                                {liftName}
+                              </div>
+                              {hasValue ? (
+                                <>
+                                  <div className="mt-1 text-2xl font-bold text-primary">
+                                    {current!.weightKg} kg
+                                  </div>
+                                  {current!.achievedOn && (
+                                    <div className="mt-0.5 text-xs text-muted-foreground">
+                                      zuletzt {formatDate(current!.achievedOn)}
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <div className="mt-1 text-sm italic text-muted-foreground">
+                                  noch nicht erfasst
+                                </div>
+                              )}
+                            </button>
 
-        <Button onClick={saveStrengthValues} className="w-full bg-rise-accent hover:bg-rise-accent-dark text-white">
-          Kraftwerte speichern
-        </Button>
+                            <div className="flex flex-col gap-1">
+                              {hasValue ? (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openEdit(current!)}
+                                  aria-label="Bearbeiten"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openAdd(liftName)}
+                                  aria-label="Hinzufügen"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {hist.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    setOpenHistoryFor(isOpen ? null : liftName)
+                                  }
+                                  aria-label="Verlauf"
+                                >
+                                  <HistoryIcon className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+
+                          {isOpen && hist.length > 0 && (
+                            <div className="border-t border-primary/10 bg-muted/30 p-3">
+                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                Verlauf
+                              </div>
+                              <div className="space-y-1.5">
+                                {hist.map((row, idx) => {
+                                  const prev = hist[idx + 1]
+                                  const trend = prev
+                                    ? parseFloat(row.weight_kg as any) -
+                                      parseFloat(prev.weight_kg as any)
+                                    : 0
+                                  return (
+                                    <button
+                                      key={row.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setEditing({
+                                          id: row.id,
+                                          liftName: row.lift_name,
+                                          liftType: row.lift_type,
+                                          weightKg: parseFloat(
+                                            row.weight_kg as any
+                                          ),
+                                          achievedOn: parseISO(row.achieved_on),
+                                        })
+                                        setDefaultLift(undefined)
+                                        setDialogOpen(true)
+                                      }}
+                                      className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-background"
+                                    >
+                                      <span className="text-muted-foreground">
+                                        {formatDate(row.achieved_on)}
+                                      </span>
+                                      <span className="flex items-center gap-2 font-medium">
+                                        {row.weight_kg} kg
+                                        {trend !== 0 && (
+                                          <span
+                                            className={cn(
+                                              "flex items-center text-xs",
+                                              trend > 0
+                                                ? "text-primary"
+                                                : "text-muted-foreground"
+                                            )}
+                                          >
+                                            <TrendingUp
+                                              className={cn(
+                                                "h-3 w-3",
+                                                trend < 0 && "rotate-180"
+                                              )}
+                                            />
+                                            {trend > 0 ? "+" : ""}
+                                            {trend.toFixed(1)}
+                                          </span>
+                                        )}
+                                      </span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    })
+                  )}
+                </TabsContent>
+              )
+            }
+          )}
+        </Tabs>
       </div>
+
+      {/* Floating Action Button */}
+      <Button
+        onClick={() => openAdd()}
+        className="fixed bottom-6 right-4 z-50 h-14 w-14 rounded-full shadow-lg"
+        aria-label="Kraftwert hinzufügen"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
+
+      <AddStrengthValueDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSaved={loadAll}
+        initialEntry={editing}
+        defaultLiftName={defaultLift}
+      />
     </div>
   )
 }

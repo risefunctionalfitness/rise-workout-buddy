@@ -1106,6 +1106,39 @@ export type Database = {
         }
         Relationships: []
       }
+      strength_history: {
+        Row: {
+          achieved_on: string
+          created_at: string
+          id: string
+          lift_name: string
+          lift_type: string
+          updated_at: string
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          achieved_on?: string
+          created_at?: string
+          id?: string
+          lift_name: string
+          lift_type?: string
+          updated_at?: string
+          user_id: string
+          weight_kg: number
+        }
+        Update: {
+          achieved_on?: string
+          created_at?: string
+          id?: string
+          lift_name?: string
+          lift_type?: string
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       training_plans: {
         Row: {
           created_at: string
