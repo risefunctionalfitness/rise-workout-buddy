@@ -1,77 +1,125 @@
 
 
-## Ursache gefunden: Edge Function `process-waitlists` ignoriert Gäste
+## Plan: Kraftwerte-Seite modernisieren + erweiterte Standard-Lifts + Datum
 
-### Smoking Gun
+### 1. Erweiterte Standard-Lifts (nur diese, keine anderen)
 
-Die Edge Function `supabase/functions/process-waitlists/index.ts` läuft alle 5 Minuten als Cron-Job (`*/5 * * * *`) und prüft, ob in einem Kurs Plätze frei sind, um Waitlist-User hochzubefördern. Zeile 83–85:
+Bestand bleibt: Front Squat, Back Squat, Deadlift, Bench Press, Snatch, Clean, Jerk, Clean & Jerk.
 
-```ts
-const registeredCount = registrations?.filter(r => r.status === 'registered').length || 0;
-const availableSpots = course.max_participants - registeredCount;
+Neu hinzu:
+- **Olympic**: Power Snatch, Power Clean, Hang Snatch, Hang Clean, Push Jerk, Split Jerk, Squat Snatch, Squat Clean
+- **Pressing**: Strict Press, Push Press
+- **Squat**: Overhead Squat
+
+Damit die `profiles`-Tabelle nicht mit 11 neuen Spalten aufgebläht wird, kommen die neuen Lifts in die in vorherigem Plan vereinbarte Tabelle `strength_history`. Die alten 8 bleiben weiter in `profiles` (kein Datenverlust, keine Migration der Werte nötig).
+
+### 2. Modernisierte Kraftwerte-Seite (`StrengthValues.tsx`)
+
+**Heute**: Liste aus 8 Inputs untereinander mit Label links, kleinem Input rechts. Eigene Übungen als Karten darunter. Alles sehr listig, kein Datum, keine Gruppierung, keine Visualisierung.
+
+**Neu** – ein Screen, drei Sektionen, Mobile-first für 390px:
+
+```text
+┌──────────────────────────────────────┐
+│  ← Kraftwerte                        │
+├──────────────────────────────────────┤
+│  [ Squat | Pull | Press | Olympic |  │  ← Segmented Tabs
+│    Eigene ]                          │
+├──────────────────────────────────────┤
+│  Squat                               │
+│  ┌────────────────────────────────┐  │
+│  │ Back Squat                     │  │
+│  │ 140 kg                          │  │  ← Aktueller Wert prominent
+│  │ zuletzt 04.04.2026             │  │  ← Datum
+│  │                          [✎]   │  │  ← Edit-Button
+│  └────────────────────────────────┘  │
+│  ┌────────────────────────────────┐  │
+│  │ Front Squat                    │  │
+│  │ — kg   "noch nicht erfasst"    │  │  ← Empty State
+│  │                          [+]   │  │
+│  └────────────────────────────────┘  │
+│  ┌────────────────────────────────┐  │
+│  │ Overhead Squat                 │  │
+│  │ — kg                           │  │
+│  │                          [+]   │  │
+│  └────────────────────────────────┘  │
+│  ...                                 │
+└──────────────────────────────────────┘
+
+                                   ⊕   ← Floating + Button
 ```
 
-**Sie zählt ausschließlich Mitglieder (`course_registrations`), Gäste (`guest_registrations`) werden komplett ignoriert.** Folge: ein Kurs mit 12 Members + 4 Gästen (=16/16) sieht für die Funktion wie 12/16 aus → 4 freie Plätze → 4 Waitlist-User werden auf `registered` gesetzt → **20/16**.
+**Gruppierung der Tabs**:
+- **Squat**: Front Squat, Back Squat, Overhead Squat
+- **Pull**: Deadlift
+- **Press**: Bench Press, Strict Press, Push Press
+- **Olympic**: Snatch, Power Snatch, Hang Snatch, Squat Snatch, Clean, Power Clean, Hang Clean, Squat Clean, Jerk, Push Jerk, Split Jerk, Clean & Jerk
+- **Eigene**: alle Custom-Lifts aus `strength_history` mit `lift_type='custom'`
 
-### Warum die Mathematik exakt passt
+**Lift-Card Design**:
+- `rounded-xl border border-primary/10 bg-card p-4`
+- Übungsname oben (medium font)
+- Wert groß und primary-color (`text-2xl font-bold text-primary`)
+- Datum klein muted darunter
+- Wenn kein Wert: gedämpft, "—  noch nicht erfasst", Plus-Icon-Button rechts
+- Wenn Wert vorhanden: Edit-Pencil-Icon rechts, öffnet Dialog vorausgefüllt
 
-Beispiel **Functional Fitness 04.04.2026** (max 16, am Ende 20):
-- Bis 01.04. 18:38 sind 12 Members + 4 Gäste = 16/16 ✅ Kurs voll
-- 01.04. 20:48 bis 02.04. 11:55: 8 weitere Members buchen
-- `register_for_course` setzt sie korrekt auf `waitlist` (zählt Gäste mit)
-- Jeder 5-Minuten-Tick von `process-waitlists` sieht "12 members → 4 freie Plätze" und befördert 4 Waitlist-User
-- Beim nächsten Tick: "13 members → 3 freie Plätze" → noch einer hoch
-- Etc., bis alle 8 Waitlist-User auf `registered` stehen → **16 + 4 = 20**
+### 3. Edit-/Add-Dialog (gemeinsam mit Prozentrechner)
 
-Das gleiche Muster passt zu allen 5 Functional-Fitness-Kursen mit Gästen, die überbucht waren.
+Eine wiederverwendbare Komponente `AddStrengthValueDialog.tsx`:
+- Modus `add` oder `edit`
+- Felder: Übung (gesperrt im Edit-Modus, sonst Select / freier Name), Gewicht (kg), Datum (Shadcn-Datepicker, Default heute, max heute, deutsche Locale, `pointer-events-auto`)
+- Bei Edit zusätzlich Button "Eintrag löschen" (mit Confirm)
+- Speichern: für die 8 alten Standard-Lifts ZUSÄTZLICH `profiles.*_1rm` updaten (Synchronität), neue Standard-Lifts und Custom-Lifts nur in `strength_history`
+- Nach Speichern Toast + Liste neu laden
 
-### Warum es bei reinen Member-Kursen (Mobility 21.01., FF 21.11. usw.) trotzdem passiert ist
+### 4. Floating "+" Button
 
-Bei diesen Kursen gibt es eine **andere, kleinere Ursache** (vermutlich knappes Doppel-Promotion-Race in `process_waitlists_on_cancellation` durch parallele Stornierungen). Diese Fälle sind selten (16/15 oder 17/16 statt 20/16) und durch denselben Capacity-Trigger trotzdem mitabgefangen.
+Auch auf der Kraftwerte-Seite unten rechts (`fixed bottom-6 right-4 h-14 w-14 rounded-full shadow-lg`). Öffnet denselben Dialog im `add`-Modus, vor-selektierter Tab-Kontext bestimmt nichts (User wählt Übung selbst).
 
-### Fix-Plan
+Der bisherige "Übung hinzufügen"-Workflow (Inline-Karten unten) wird durch den Dialog abgelöst – sauberer, mit Datum, ohne Doppellogik.
 
-**1. `process-waitlists` Edge Function reparieren** – die kritische Zeile fixen:
+### 5. Verlauf pro Übung (optional, klein)
 
-```ts
-// Vorher: nur members
-const registeredCount = registrations?.filter(r => r.status === 'registered').length || 0;
+Tap auf eine Lift-Card öffnet darunter einen Aufklapp-Bereich mit den letzten 5 Einträgen aus `strength_history` für diese Übung (Datum · Gewicht · kleiner Trend-Pfeil ↑/↓ vs. vorigem Wert). Verlauf zeigt nur, was tatsächlich erfasst wurde – keine künstliche History für die alten Profil-Werte.
 
-// Nachher: members + guests
-const { count: guestCount } = await supabase
-  .from('guest_registrations')
-  .select('*', { count: 'exact', head: true })
-  .eq('course_id', course.id)
-  .eq('status', 'registered');
-const totalRegistered = registeredCount + (guestCount || 0);
-const availableSpots = course.max_participants - totalRegistered;
+### 6. Datenmodell – `strength_history` (wie zuvor abgesegnet)
+
+```text
+strength_history
+├── id           uuid PK
+├── user_id      uuid (Index)
+├── lift_type    text  ('standard' | 'custom')
+├── lift_name    text
+├── weight_kg    numeric
+├── achieved_on  date
+├── created_at   timestamptz
+└── updated_at   timestamptz
 ```
 
-Damit hört der Bug sofort auf – ab dem nächsten Cron-Tick werden keine fälschlichen Promotions mehr durchgeführt.
+RLS: User CRUD eigene Zeilen; Admins lesen alles. Index `(user_id, lift_name, achieved_on DESC)`.
 
-**2. BEFORE-Trigger `assert_course_capacity` als Sicherheitsnetz** auf `course_registrations` und `guest_registrations`. Wirft Exception, wenn die Operation den Kurs überbuchen würde. Damit ist Überbuchung **technisch unmöglich**, egal über welchen Pfad – auch falls in Zukunft jemand wieder versehentlich Gäste vergisst zu zählen, oder eine andere Edge Function ähnlichen Bug hat.
+### 7. Lade-Strategie (Single Source of Truth)
 
-**3. `register_for_course` und `book-guest-training` fangen die Capacity-Exception ab.** `register_for_course` gibt `status='waitlist'` zurück (Verhalten unverändert), `book-guest-training` gibt 400 mit "Kurs ist voll" zurück.
+`StrengthValues` und `PercentageCalculator` laden parallel:
+1. `profiles` für die 8 alten 1RM-Felder
+2. `strength_history` für ALLE Werte mit Datum
 
-**4. Audit-Log-Tabelle `registration_audit_log`** mit Trigger – protokolliert OLD/NEW + `current_user` bei jedem INSERT/UPDATE auf beide Tabellen. Damit sehen wir bei künftigen Anomalien innerhalb von Sekunden, wer was wann geändert hat.
+Pro `lift_name` wird der **aktuellste Wert** angezeigt (Vergleich über `achieved_on`). Bei Konflikt zwischen Profil-Wert (kein Datum) und History-Eintrag gewinnt der History-Eintrag, da datiert.
 
-**5. Waitlist-Logik bleibt unverändert.** `process_waitlists_on_cancellation` (DB-Trigger) und `process-waitlists` (Cron) machen weiterhin Promotions – nur jetzt mit korrekter Capacity-Berechnung. Niemand wird automatisch auf Waitlist verschoben oder anders behandelt.
+### 8. Geänderte / neue Dateien
 
-**6. Bestehende überbuchte Kurse:** ich liefere dir die Liste, du entscheidest manuell im Admin-UI, wer entfernt wird.
-
-### Geänderte/neue Dateien
-
-- `supabase/functions/process-waitlists/index.ts` – Capacity-Berechnung inkl. Gäste (eigentlicher Fix)
-- `supabase/functions/book-guest-training/index.ts` – Capacity-Exception abfangen
-- Neue Migration: BEFORE-Trigger `assert_course_capacity` auf beiden Tabellen
-- Neue Migration: `register_for_course` mit EXCEPTION-Handling für Capacity-Fehler
-- Neue Migration: Tabelle `registration_audit_log` + AFTER-Trigger
-- Liste der aktuell überbuchten Kurse als Output für deine manuelle Bereinigung
+- **Neue Migration**: Tabelle `strength_history` + RLS + `updated_at`-Trigger
+- **Neue Konstante** `src/constants/standardLifts.ts`: alle Standard-Lifts mit Gruppe ('squat' | 'pull' | 'press' | 'olympic')
+- **Neue Komponente** `src/components/AddStrengthValueDialog.tsx`: Add + Edit + Delete + Datepicker
+- **Überarbeitet** `src/components/StrengthValues.tsx`: Tabs, Lift-Cards mit Datum, Floating-Button, Verlauf-Aufklapp, Dialog-Integration; alte Inline-Inputs/Custom-Karten ersetzt
+- **Überarbeitet** `src/components/PercentageCalculator.tsx` (parallel zur vorigen Plan-Iteration): nutzt dieselben Datenquellen und denselben Dialog, Floating-Button öffnet identischen Add-Dialog
 
 ### Ergebnis
 
-- Der Hauptbug (Gäste werden vom Cron-Job vergessen) ist sofort behoben
-- Capacity-Trigger garantiert auf DB-Ebene, dass künftig kein Pfad mehr überbucht
-- Audit-Log macht künftige Anomalien sofort diagnostizierbar
-- Waitlist-Verhalten für Member identisch zu heute, niemand wird automatisch verschoben
+- Übersichtliche, moderne Kraftwerte-Seite mit Gruppierung statt langer Liste
+- Genau die gewünschten neuen Standard-Lifts ergänzt, nichts darüber hinaus
+- Datum sauber pro Wert gespeichert, Verlauf je Übung anzeigbar
+- Ein Add/Edit-Dialog wird sowohl von der Kraftwerte-Seite als auch vom Prozentrechner genutzt – keine Duplikation
+- Die 8 alten Profil-Spalten werden weiter synchron gepflegt, damit nichts in der App bricht
 
