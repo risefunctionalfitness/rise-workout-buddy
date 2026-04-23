@@ -61,7 +61,11 @@ export const StrengthValues = () => {
   const [defaultLift, setDefaultLift] = useState<string | undefined>(undefined)
 
   const handleBack = () => {
-    navigate("/pro?openProfile=true")
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate("/pro?openProfile=true")
+    }
   }
 
   const loadAll = async () => {
