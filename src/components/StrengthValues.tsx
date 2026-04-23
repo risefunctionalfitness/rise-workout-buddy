@@ -50,6 +50,9 @@ export const StrengthValues = () => {
   const [activeTab, setActiveTab] = useState<LiftGroup | "custom">("squat")
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [profileValues, setProfileValues] = useState<Record<string, number>>({})
+  const [legacyExtraLifts, setLegacyExtraLifts] = useState<
+    { name: string; weight: number }[]
+  >([])
   const [loading, setLoading] = useState(true)
   const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null)
 
