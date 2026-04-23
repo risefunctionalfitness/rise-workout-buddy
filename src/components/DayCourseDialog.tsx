@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
@@ -76,6 +76,8 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
   const [rebookFromId, setRebookFromId] = useState<string | null>(rebookFromCourseId || null)
+  // Tracks the timestamp of recent registrations per course (for "accidental cancel" detection)
+  const recentRegistrationsRef = useRef<Map<string, number>>(new Map())
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
@@ -361,6 +363,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       const newStatus = (result as any)?.status as string
       const isWaitlist = newStatus === 'waitlist'
 
+      // Remember registration time for accidental-cancel detection
+      recentRegistrationsRef.current.set(courseId, Date.now())
+
       toast.success(
         rebookFromId 
           ? (isWaitlist ? 'Umgebucht – du stehst auf der Warteliste' : 'Erfolgreich umgebucht!')
@@ -404,6 +409,13 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
     // Skip fairness check for waitlist cancellations
     if (course.is_waitlisted) {
+      handleCancellation(courseId)
+      return
+    }
+
+    // Skip fairness warning for accidental cancellations (within 5s of registering)
+    const registeredAt = recentRegistrationsRef.current.get(courseId)
+    if (registeredAt && Date.now() - registeredAt < 5000) {
       handleCancellation(courseId)
       return
     }
