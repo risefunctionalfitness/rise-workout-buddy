@@ -69,6 +69,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [rebookDate, setRebookDate] = useState<string | null>(null)
   const [rebookDialogOpen, setRebookDialogOpen] = useState(false)
   const [rebookCourseId, setRebookCourseId] = useState<string | null>(null)
+  // Tracks the timestamp of recent registrations per course (for "accidental cancel" detection)
+  const recentRegistrationsRef = useRef<Map<string, number>>(new Map())
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
 
   useEffect(() => {
@@ -395,6 +397,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         } : null)
       }
 
+      // Remember registration time for accidental-cancel detection
+      recentRegistrationsRef.current.set(courseId, Date.now())
+
       toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
       
       // Dispatch event to update other components
@@ -428,6 +433,13 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
     // Skip fairness check for waitlist cancellations
     if (targetCourse.is_waitlisted) {
+      handleCancellation(courseId, course)
+      return
+    }
+
+    // Skip fairness warning for accidental cancellations (within 5s of registering)
+    const registeredAt = recentRegistrationsRef.current.get(courseId)
+    if (registeredAt && Date.now() - registeredAt < 5000) {
       handleCancellation(courseId, course)
       return
     }
