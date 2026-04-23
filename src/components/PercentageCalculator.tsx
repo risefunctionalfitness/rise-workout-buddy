@@ -66,7 +66,7 @@ export const PercentageCalculator = () => {
         supabase
           .from("profiles")
           .select(
-            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm"
+            "front_squat_1rm, back_squat_1rm, deadlift_1rm, bench_press_1rm, snatch_1rm, clean_1rm, jerk_1rm, clean_and_jerk_1rm, extra_lifts"
           )
           .eq("user_id", user.id)
           .maybeSingle(),
@@ -108,6 +108,20 @@ export const PercentageCalculator = () => {
           achievedOn: row.achieved_on,
         })
         if (row.lift_type === "custom") customSet.add(row.lift_name)
+      })
+
+      // Legacy extra_lifts from profile (no date) — only if no history exists for that name
+      const rawExtras = (profile?.extra_lifts as any[]) ?? []
+      rawExtras.forEach((entry) => {
+        const name = (entry?.name ?? "").toString().trim()
+        if (!name || map.has(name)) return
+        const rawWeight = (entry?.weight ?? "").toString()
+        const match = rawWeight.match(/-?\d+([.,]\d+)?/)
+        if (!match) return
+        const weight = parseFloat(match[0].replace(",", "."))
+        if (isNaN(weight) || weight <= 0) return
+        map.set(name, { name, weight, achievedOn: null })
+        customSet.add(name)
       })
 
       const all = Array.from(map.values()).filter((l) => l.weight > 0)
