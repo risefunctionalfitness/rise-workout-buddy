@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { format, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
 import { useNavigate } from "react-router-dom"
-import { Calculator, Plus, TrendingUp } from "lucide-react"
+import { Calculator, ChevronRight, Plus, Settings, TrendingUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
