@@ -127,6 +127,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (regError) {
       console.error('Error creating guest registration:', regError);
+      // Capacity guard trigger fires SQLSTATE P0001 'Course capacity exceeded'
+      // when the course is full at insert time (race-condition safe).
+      const isCapacityError =
+        regError.code === 'P0001' ||
+        (typeof regError.message === 'string' &&
+          regError.message.toLowerCase().includes('course capacity exceeded'));
+      if (isCapacityError) {
+        return new Response(
+          JSON.stringify({ error: 'Der Kurs ist leider ausgebucht' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       return new Response(
         JSON.stringify({ error: 'Fehler bei der Registrierung' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

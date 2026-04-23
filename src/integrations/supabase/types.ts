@@ -1055,6 +1055,57 @@ export type Database = {
         }
         Relationships: []
       }
+      registration_audit_log: {
+        Row: {
+          app_name: string | null
+          course_id: string | null
+          created_at: string
+          db_user: string
+          guest_email: string | null
+          id: string
+          new_row: Json | null
+          new_status: string | null
+          old_row: Json | null
+          old_status: string | null
+          operation: string
+          table_name: string
+          txid: number
+          user_id: string | null
+        }
+        Insert: {
+          app_name?: string | null
+          course_id?: string | null
+          created_at?: string
+          db_user?: string
+          guest_email?: string | null
+          id?: string
+          new_row?: Json | null
+          new_status?: string | null
+          old_row?: Json | null
+          old_status?: string | null
+          operation: string
+          table_name: string
+          txid?: number
+          user_id?: string | null
+        }
+        Update: {
+          app_name?: string | null
+          course_id?: string | null
+          created_at?: string
+          db_user?: string
+          guest_email?: string | null
+          id?: string
+          new_row?: Json | null
+          new_status?: string | null
+          old_row?: Json | null
+          old_status?: string | null
+          operation?: string
+          table_name?: string
+          txid?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       training_plans: {
         Row: {
           created_at: string
