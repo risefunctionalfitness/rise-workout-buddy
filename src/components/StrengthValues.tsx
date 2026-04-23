@@ -305,7 +305,8 @@ export const StrengthValues = () => {
                               {hasValue ? (
                                 <>
                                   <div className="mt-1 text-2xl font-bold text-primary">
-                                    {current!.weightKg} kg
+                                    {current!.weightKg}
+                                    {current!.liftType === "custom" ? "" : " kg"}
                                   </div>
                                   {current!.achievedOn && (
                                     <div className="mt-0.5 text-xs text-muted-foreground">
