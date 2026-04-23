@@ -61,7 +61,11 @@ export const StrengthValues = () => {
   const [defaultLift, setDefaultLift] = useState<string | undefined>(undefined)
 
   const handleBack = () => {
-    navigate("/pro?openProfile=true")
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate("/pro?openProfile=true")
+    }
   }
 
   const loadAll = async () => {
@@ -301,7 +305,8 @@ export const StrengthValues = () => {
                               {hasValue ? (
                                 <>
                                   <div className="mt-1 text-2xl font-bold text-primary">
-                                    {current!.weightKg} kg
+                                    {current!.weightKg}
+                                    {current!.liftType === "custom" ? "" : " kg"}
                                   </div>
                                   {current!.achievedOn && (
                                     <div className="mt-0.5 text-xs text-muted-foreground">
@@ -386,7 +391,8 @@ export const StrengthValues = () => {
                                         {formatDate(row.achieved_on)}
                                       </span>
                                       <span className="flex items-center gap-2 font-medium">
-                                        {row.weight_kg} kg
+                                        {row.weight_kg}
+                                        {row.lift_type === "custom" ? "" : " kg"}
                                         {trend !== 0 && (
                                           <span
                                             className={cn(

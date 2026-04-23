@@ -270,7 +270,7 @@ export const PercentageCalculator = () => {
                               <span className="flex w-full items-center justify-between gap-4">
                                 <span>{lift.name}</span>
                                 <span className="font-semibold text-primary">
-                                  {lift.weight} kg
+                                  {lift.weight}
                                 </span>
                               </span>
                             </SelectItem>
@@ -357,31 +357,41 @@ export const PercentageCalculator = () => {
           )}
 
           {/* Result */}
-          {(mode === "free" || hasAny) && (
-            <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5">
-              <div className="text-center">
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Ergebnis
+          {(mode === "free" || hasAny) && (() => {
+            const isCustom =
+              mode === "saved" &&
+              !!selected &&
+              customLifts.some((l) => l.name === selected.name)
+            const unit = isCustom ? "" : " kg"
+            const baseUnit = isCustom ? "" : " kg"
+            return (
+              <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5">
+                <div className="text-center">
+                  <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Ergebnis
+                  </div>
+                  <div className="text-4xl font-bold text-primary">
+                    {result != null ? `${result.toFixed(1)}${unit}` : "—"}
+                  </div>
+                  {result != null && (
+                    <>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {mode === "saved"
+                          ? `${percentage}% von ${selected?.weight}${baseUnit} (${selected?.name})`
+                          : `${freePercent}% von ${freeWeight} kg`}
+                      </p>
+                      {!isCustom && (
+                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-background/60 px-3 py-1 text-xs text-foreground">
+                          <TrendingUp className="h-3 w-3" />
+                          Stange: {roundToBar(result).toFixed(1)} kg
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-                <div className="text-4xl font-bold text-primary">
-                  {result != null ? `${result.toFixed(1)} kg` : "—"}
-                </div>
-                {result != null && (
-                  <>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {mode === "saved"
-                        ? `${percentage}% von ${selected?.weight} kg (${selected?.name})`
-                        : `${freePercent}% von ${freeWeight} kg`}
-                    </p>
-                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-background/60 px-3 py-1 text-xs text-foreground">
-                      <TrendingUp className="h-3 w-3" />
-                      Stange: {roundToBar(result).toFixed(1)} kg
-                    </div>
-                  </>
-                )}
               </div>
-            </div>
-          )}
+            )
+          })()}
         </CardContent>
       </Card>
 
