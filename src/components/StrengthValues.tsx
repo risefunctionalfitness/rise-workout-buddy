@@ -157,17 +157,30 @@ export const StrengthValues = () => {
       })
     })
 
-    return map
-  }, [profileValues, history])
+    // Add legacy extra_lifts (no date) only if no history entry exists for that name
+    legacyExtraLifts.forEach((lift) => {
+      if (map.has(lift.name)) return
+      map.set(lift.name, {
+        liftName: lift.name,
+        liftType: "custom",
+        weightKg: lift.weight,
+        achievedOn: null,
+        entryId: null,
+      })
+    })
 
-  // Custom lifts: distinct names from history with type=custom
+    return map
+  }, [profileValues, history, legacyExtraLifts])
+
+  // Custom lifts: distinct names from history (custom) AND legacy extra_lifts
   const customLiftNames = useMemo(() => {
     const set = new Set<string>()
     history.forEach((h) => {
       if (h.lift_type === "custom") set.add(h.lift_name)
     })
+    legacyExtraLifts.forEach((l) => set.add(l.name))
     return Array.from(set)
-  }, [history])
+  }, [history, legacyExtraLifts])
 
   const liftsForTab = (tab: LiftGroup | "custom") => {
     if (tab === "custom") return customLiftNames
