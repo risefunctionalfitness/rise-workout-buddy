@@ -270,7 +270,7 @@ export const PercentageCalculator = () => {
                               <span className="flex w-full items-center justify-between gap-4">
                                 <span>{lift.name}</span>
                                 <span className="font-semibold text-primary">
-                                  {lift.weight} kg
+                                  {lift.weight}
                                 </span>
                               </span>
                             </SelectItem>
