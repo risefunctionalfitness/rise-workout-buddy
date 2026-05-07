@@ -38,7 +38,7 @@ interface Course {
 
 export default function EmbedKursplan() {
   const [searchParams] = useSearchParams();
-  const viewMode = searchParams.get('view') === 'week' ? 'week' : 'list';
+  const viewMode = searchParams.get('view') === 'list' ? 'list' : 'week';
   
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
