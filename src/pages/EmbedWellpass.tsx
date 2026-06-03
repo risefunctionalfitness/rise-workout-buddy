@@ -47,8 +47,8 @@ export default function EmbedWellpass() {
           lastName,
           email,
           accessCode,
-          phoneCountryCode,
-          phoneNumber: phoneNumber || null
+          phoneCountryCode: WHATSAPP_ENABLED ? phoneCountryCode : null,
+          phoneNumber: WHATSAPP_ENABLED ? (phoneNumber || null) : null
         }
       });
 
