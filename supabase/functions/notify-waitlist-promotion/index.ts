@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { WHATSAPP_ENABLED } from '../_shared/features.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
