@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { countryCodes, CountryFlag } from "@/components/CountryFlags";
+import { WHATSAPP_ENABLED } from "@/config/features";
 
 export default function EmbedWellpass() {
   const [firstName, setFirstName] = useState("");
@@ -183,37 +184,39 @@ export default function EmbedWellpass() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-gray-300">Telefon (für WhatsApp-Benachrichtigungen)</Label>
-              <div className="flex gap-2">
-                <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
-                  <SelectTrigger className="w-[100px] bg-[#333] border-[#444] text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#333] border-[#444]">
-                    {countryCodes.map((cc) => (
-                      <SelectItem key={cc.code} value={cc.code} className="text-white hover:bg-[#444]">
-                        <div className="flex items-center gap-2">
-                          <CountryFlag code={cc.code} />
-                          <span>{cc.code}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="15730440756"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                  className="flex-1 bg-[#333] border-[#444] text-white placeholder:text-gray-500"
-                />
+            {WHATSAPP_ENABLED && (
+              <div className="space-y-2">
+                <Label className="text-gray-300">Telefon (für WhatsApp-Benachrichtigungen)</Label>
+                <div className="flex gap-2">
+                  <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
+                    <SelectTrigger className="w-[100px] bg-[#333] border-[#444] text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#333] border-[#444]">
+                      {countryCodes.map((cc) => (
+                        <SelectItem key={cc.code} value={cc.code} className="text-white hover:bg-[#444]">
+                          <div className="flex items-center gap-2">
+                            <CountryFlag code={cc.code} />
+                            <span>{cc.code}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="15730440756"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1 bg-[#333] border-[#444] text-white placeholder:text-gray-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Optional - für Buchungsbestätigungen per WhatsApp
+                </p>
               </div>
-              <p className="text-xs text-gray-500">
-                Optional - für Buchungsbestätigungen per WhatsApp
-              </p>
-            </div>
+            )}
 
             <div className="flex items-start gap-3 pt-2">
               <Checkbox 
