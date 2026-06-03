@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,26 @@ export const PhoneNumberDialog: React.FC<PhoneNumberDialogProps> = ({
   const [countryCode, setCountryCode] = useState("+49")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [saving, setSaving] = useState(false)
+
+  // WhatsApp temporär deaktiviert: Dialog überspringen und direkt onComplete
+  useEffect(() => {
+    if (!WHATSAPP_ENABLED && open) {
+      ;(async () => {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ phone_prompt_shown: true })
+            .eq('user_id', userId)
+        } catch (e) {
+          console.error('Error skipping phone prompt:', e)
+        }
+        onComplete()
+        onOpenChange(false)
+      })()
+    }
+  }, [open, userId, onComplete, onOpenChange])
+
+  if (!WHATSAPP_ENABLED) return null
 
   const handlePhoneChange = (value: string) => {
     // Only allow numbers and remove spaces
