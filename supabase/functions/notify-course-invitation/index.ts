@@ -105,7 +105,7 @@ serve(async (req) => {
 
     // Determine notification method
     const wantsEmail = recipientProfile?.notify_email_enabled !== false; // Default true
-    const wantsWhatsApp = recipientProfile?.notify_whatsapp_enabled && recipientProfile?.phone_number;
+    const wantsWhatsApp = WHATSAPP_ENABLED && (recipientProfile?.notify_whatsapp_enabled && recipientProfile?.phone_number);
 
     let notification_method: string;
     if (wantsEmail && wantsWhatsApp) {
@@ -128,7 +128,7 @@ serve(async (req) => {
     }
 
     // Format phone number if available
-    const formattedPhone = (recipientProfile?.phone_number && recipientProfile?.notify_whatsapp_enabled)
+    const formattedPhone = (WHATSAPP_ENABLED && (recipientProfile?.phone_number && recipientProfile?.notify_whatsapp_enabled))
       ? formatPhoneNumber(recipientProfile.phone_country_code || '+49', recipientProfile.phone_number)
       : null;
 
