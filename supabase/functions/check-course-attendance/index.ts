@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { WHATSAPP_ENABLED } from "../_shared/features.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -139,7 +140,7 @@ serve(async (req) => {
             participants = profiles.map(p => {
               // Determine notification method
               const emailEnabled = p.notify_email_enabled !== false
-              const whatsappEnabled = p.notify_whatsapp_enabled === true && p.phone_number
+              const whatsappEnabled = WHATSAPP_ENABLED && p.notify_whatsapp_enabled === true && p.phone_number
               let notificationMethod = 'email'
               if (emailEnabled && whatsappEnabled) {
                 notificationMethod = 'both'
@@ -151,7 +152,7 @@ serve(async (req) => {
               
               // Format phone number (country code + number without + or spaces)
               let formattedPhone = ''
-              if (p.phone_country_code && p.phone_number) {
+              if (WHATSAPP_ENABLED && p.phone_country_code && p.phone_number) {
                 formattedPhone = p.phone_country_code.replace('+', '') + p.phone_number.replace(/\s/g, '')
               }
 

@@ -1,62 +1,70 @@
+## Ziel
 
+WhatsApp-Funktionalität app-weit temporär deaktivieren, aber so, dass sie mit einem einzigen Schalter wieder aktiviert werden kann, sobald das Business-Cloud-Problem gefixt ist.
 
-## Problem
+## Ansatz: zentraler Feature-Flag
 
-Meine Migration vom 23.04. (`20260423084955`) hat die Audit-Trigger-Funktion `log_registration_change()` eingeführt. Diese ist an **beide** Tabellen `course_registrations` und `guest_registrations` gekoppelt und enthält:
+Neue Datei `src/config/features.ts` (und Spiegel `supabase/functions/_shared/features.ts`):
 
-```sql
-CASE WHEN TG_TABLE_NAME = 'guest_registrations' THEN NEW.guest_email END
+```ts
+export const WHATSAPP_ENABLED = false;
 ```
 
-PL/pgSQL prüft Feldzugriffe auf `NEW` zur Laufzeit gegen das **tatsächliche Record-Layout** der Trigger-Tabelle. Da `course_registrations` keine Spalte `guest_email` hat, schlägt der Ausdruck mit `record "new" has no field "guest_email"` fehl — bei **jeder** Course-Registrierung. Der `CASE WHEN ... END` wird leider nicht "lazy" evaluiert.
+Wenn das Problem gefixt ist → einfach auf `true` setzen, fertig.
 
-Effekte:
-- Niemand kann sich mehr für Kurse anmelden (Status 400 bei `register_for_course`).
-- Das `registration_audit_log` ist leer (Insert kracht jedes Mal).
-- Die Credit-Logik in `handle_membership_limits()` wird nie erreicht.
+## Frontend-Änderungen
 
-## Lösung
+**Widgets (Telefon-Eingabe entfernen, wenn Flag aus):**
+- `src/pages/EmbedKursplan.tsx` (Zeilen 328–355 und 622–650): Telefon-Block in `{WHATSAPP_ENABLED && (...)}` einwickeln. Beim Submit `phoneNumber: null` senden, wenn Flag aus.
+- `src/pages/EmbedWellpass.tsx` (Zeilen 187–215): gleich.
 
-Eine einzige Migration, die `log_registration_change()` so umbaut, dass `NEW.guest_email` **nur dann** referenziert wird, wenn der Trigger wirklich auf `guest_registrations` läuft. Umsetzung mit zwei getrennten Code-Pfaden statt eines CASE-Ausdrucks:
+**App-UI (Eingabe/Toggle ausblenden, wenn Flag aus):**
+- `src/components/PhoneNumberDialog.tsx`: Dialog rendert `null`, wenn Flag aus (kein Onboarding-Prompt mehr).
+- `src/components/UserProfile.tsx`: WhatsApp-Toggle + Telefon-Felder ausblenden, wenn Flag aus. Bestehende gespeicherte Nummern bleiben in der DB unverändert.
+- `src/components/FirstLoginDialog.tsx` / Onboarding-Flow: Phone-Prompt-Schritt überspringen, wenn Flag aus.
 
-```sql
-CREATE OR REPLACE FUNCTION public.log_registration_change()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
-AS $$
-DECLARE
-  v_guest_email text := NULL;
-  v_user_id uuid := NULL;
-BEGIN
-  IF TG_TABLE_NAME = 'guest_registrations' THEN
-    IF TG_OP = 'DELETE' THEN
-      v_guest_email := (to_jsonb(OLD) ->> 'guest_email');
-    ELSE
-      v_guest_email := (to_jsonb(NEW) ->> 'guest_email');
-    END IF;
-  ELSE
-    IF TG_OP = 'DELETE' THEN
-      v_user_id := (to_jsonb(OLD) ->> 'user_id')::uuid;
-    ELSE
-      v_user_id := (to_jsonb(NEW) ->> 'user_id')::uuid;
-    END IF;
-  END IF;
-  -- restlicher Insert-Logik analog, aber ohne direkten NEW.guest_email-Zugriff
-  ...
-END $$;
-```
+Hinweis: Wir löschen keine bestehenden Nummern in der DB – nur UI verstecken und keine neuen Sends auslösen.
 
-Der Trick: `to_jsonb(NEW) ->> 'guest_email'` umgeht die statische Feld-Prüfung von PL/pgSQL — es liefert `NULL`, wenn die Spalte fehlt, statt zu crashen.
+## Backend-Änderungen (Edge Functions)
 
-## Verifikation nach Deploy
+In allen Webhook-sendenden Functions: `notification_method` darf nie `whatsapp` oder `both` enthalten, `phone` immer `null`, solange Flag aus. Effektiv wird `wantsWhatsApp` hart auf `false` gezwungen.
 
-1. Mit Test-Account auf einen Kurs anmelden → muss erfolgreich sein.
-2. `SELECT * FROM registration_audit_log ORDER BY created_at DESC LIMIT 5;` → Eintrag muss existieren.
-3. Bei Warteliste-Promotion eines „10er Karte"-Mitglieds: `credits_remaining` muss um 1 sinken.
-4. Bei Storno aus `registered`: `credits_remaining` muss um 1 steigen (für 10er Karte).
+Betroffen:
+- `supabase/functions/notify-no-show/index.ts`
+- `supabase/functions/notify-waitlist-promotion/index.ts`
+- `supabase/functions/notify-course-invitation/index.ts`
+- `supabase/functions/process-waitlists/index.ts`
+- `supabase/functions/dispatch-waitlist-webhooks/index.ts`
+- `supabase/functions/check-course-attendance/index.ts`
+- `supabase/functions/book-guest-training/index.ts` (Gast-Buchung Webhook)
+- `supabase/functions/register-wellpass/index.ts`
+- `supabase/functions/send-news-email/index.ts`
+- `supabase/functions/create-member/index.ts`
 
-Die bestehende Credit-Logik in `handle_membership_limits()` bleibt komplett unangetastet — nur der Audit-Trigger wird gefixt.
+Zentraler Helper `supabase/functions/_shared/features.ts` mit `WHATSAPP_ENABLED = false` + Helper `resolveNotificationMethod(profile)` der nur noch `'email'` oder `'none'` zurückgibt, wenn Flag aus. Jede Function importiert diesen Helper statt eigener Logik.
+
+Wenn ein User **nur** WhatsApp aktiviert hatte (Email aus, WhatsApp an) → fallback auf `email`, damit er nicht komplett ohne Benachrichtigung dasteht (sonst würden viele User aktuell gar nichts mehr bekommen).
+
+## Admin-Hinweis (optional, klein)
+
+In `AdminWebhookTester.tsx` einen kleinen Hinweis „WhatsApp aktuell deaktiviert" anzeigen, wenn Flag aus, damit Admin nicht verwirrt ist.
+
+## Re-Aktivierung später
+
+Sobald Business Cloud wieder läuft:
+1. `WHATSAPP_ENABLED = true` in `src/config/features.ts` **und** `supabase/functions/_shared/features.ts`
+2. Edge Functions werden automatisch deployed.
+
+Keine DB-Migration, keine Datenverluste, alle bestehenden Telefonnummern & Präferenzen bleiben erhalten.
 
 ## Dateien
 
-- **Neu**: `supabase/migrations/<timestamp>_fix_audit_trigger_guest_email.sql`
+**Neu:**
+- `src/config/features.ts`
+- `supabase/functions/_shared/features.ts`
 
+**Geändert:**
+- `src/pages/EmbedKursplan.tsx`, `src/pages/EmbedWellpass.tsx`
+- `src/components/PhoneNumberDialog.tsx`, `src/components/UserProfile.tsx`, `src/components/FirstLoginDialog.tsx`
+- `src/components/AdminWebhookTester.tsx` (Hinweis)
+- 10 Edge Functions (siehe Liste oben)

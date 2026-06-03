@@ -21,6 +21,7 @@ import { de } from "date-fns/locale";
 import { toast } from "sonner";
 import EmbedWeekTableView from "@/components/EmbedWeekTableView";
 import { countryCodes, CountryFlag } from "@/components/CountryFlags";
+import { WHATSAPP_ENABLED } from "@/config/features";
 
 interface Course {
   id: string;
@@ -158,8 +159,8 @@ export default function EmbedKursplan() {
           guestName,
           guestEmail,
           bookingType,
-          phoneCountryCode: guestPhoneCountryCode,
-          phoneNumber: guestPhone || null
+          phoneCountryCode: WHATSAPP_ENABLED ? guestPhoneCountryCode : null,
+          phoneNumber: WHATSAPP_ENABLED ? (guestPhone || null) : null
         }
       });
 
@@ -324,35 +325,37 @@ export default function EmbedKursplan() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Telefon (für WhatsApp-Bestätigung)</Label>
-                <div className="flex gap-2">
-                  <Select value={guestPhoneCountryCode} onValueChange={setGuestPhoneCountryCode}>
-                    <SelectTrigger className="w-[100px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countryCodes.map((cc) => (
-                        <SelectItem key={cc.code} value={cc.code}>
-                          <div className="flex items-center gap-2">
-                            <CountryFlag code={cc.code} />
-                            <span>{cc.code}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="tel"
-                    inputMode="numeric"
-                    placeholder="15730440756"
-                    value={guestPhone}
-                    onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
-                    className="flex-1"
-                  />
+              {WHATSAPP_ENABLED && (
+                <div className="space-y-2">
+                  <Label>Telefon (für WhatsApp-Bestätigung)</Label>
+                  <div className="flex gap-2">
+                    <Select value={guestPhoneCountryCode} onValueChange={setGuestPhoneCountryCode}>
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countryCodes.map((cc) => (
+                          <SelectItem key={cc.code} value={cc.code}>
+                            <div className="flex items-center gap-2">
+                              <CountryFlag code={cc.code} />
+                              <span>{cc.code}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="15730440756"
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Optional</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Optional</p>
-              </div>
+              )}
 
               {bookingType === 'drop_in' && (
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
@@ -618,35 +621,37 @@ export default function EmbedKursplan() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Telefon (für WhatsApp-Bestätigung)</Label>
-              <div className="flex gap-2">
-                <Select value={guestPhoneCountryCode} onValueChange={setGuestPhoneCountryCode}>
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countryCodes.map((cc) => (
-                      <SelectItem key={cc.code} value={cc.code}>
-                        <div className="flex items-center gap-2">
-                          <CountryFlag code={cc.code} />
-                          <span>{cc.code}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="15730440756"
-                  value={guestPhone}
-                  onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
-                  className="flex-1"
-                />
+            {WHATSAPP_ENABLED && (
+              <div className="space-y-2">
+                <Label>Telefon (für WhatsApp-Bestätigung)</Label>
+                <div className="flex gap-2">
+                  <Select value={guestPhoneCountryCode} onValueChange={setGuestPhoneCountryCode}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countryCodes.map((cc) => (
+                        <SelectItem key={cc.code} value={cc.code}>
+                          <div className="flex items-center gap-2">
+                            <CountryFlag code={cc.code} />
+                            <span>{cc.code}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="15730440756"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Optional</p>
               </div>
-              <p className="text-xs text-muted-foreground">Optional</p>
-            </div>
+            )}
 
             {bookingType === 'drop_in' && (
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">

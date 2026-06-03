@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { WHATSAPP_ENABLED } from "../_shared/features.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -153,7 +154,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (webhookUrl) {
       try {
         // Determine notification method
-        const hasPhone = !!phoneNumber;
+        const hasPhone = WHATSAPP_ENABLED && !!phoneNumber;
         const notificationMethod = hasPhone ? 'both' : 'email';
         const formattedPhone = hasPhone 
           ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) 

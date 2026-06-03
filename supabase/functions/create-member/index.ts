@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { WHATSAPP_ENABLED } from "../_shared/features.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -152,7 +153,7 @@ serve(async (req) => {
         const mainWebhookUrl = Deno.env.get('MAKE_MAIN_WEBHOOK_URL')
         
         // Determine notification method based on phone availability
-        const hasPhone = !!user_metadata?.phone_number
+        const hasPhone = WHATSAPP_ENABLED && !!user_metadata?.phone_number
         const phoneCountryCode = user_metadata?.phone_country_code || '+49'
         const phoneNumber = user_metadata?.phone_number || ''
         const formattedPhone = hasPhone 
