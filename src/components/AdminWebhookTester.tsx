@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { WHATSAPP_ENABLED } from "@/config/features";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -293,6 +294,11 @@ export const AdminWebhookTester = () => {
         <p className="text-muted-foreground">
           Teste alle Webhooks und sieh dir die Payload-Strukturen für Make.com an.
         </p>
+        {!WHATSAPP_ENABLED && (
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg text-sm text-amber-900 dark:text-amber-200">
+            ⚠️ <strong>WhatsApp aktuell deaktiviert</strong> (Business Cloud Problem). Alle Webhooks senden nur noch <code className="bg-background px-1 rounded">notification_method = "email"</code> und <code className="bg-background px-1 rounded">phone = null</code>.
+          </div>
+        )}
         <div className="p-4 bg-muted rounded-lg space-y-3">
           <div>
             <p className="text-sm font-medium mb-2">Filter in Make.com:</p>
