@@ -215,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Determine notification method based on user preferences
     const getNotificationMethod = (profile: Profile): 'email' | 'whatsapp' | 'both' => {
       const emailEnabled = profile.notify_email_enabled !== false; // default true
-      const whatsappEnabled = profile.notify_whatsapp_enabled === true && !!profile.phone_number;
+      const whatsappEnabled = WHATSAPP_ENABLED && profile.notify_whatsapp_enabled === true && !!profile.phone_number;
       
       if (emailEnabled && whatsappEnabled) return 'both';
       if (whatsappEnabled) return 'whatsapp';
@@ -229,7 +229,7 @@ const handler = async (req: Request): Promise<Response> => {
         if (!email) return null;
 
         const notificationMethod = getNotificationMethod(profile);
-        const hasPhone = !!profile.phone_number && profile.notify_whatsapp_enabled;
+        const hasPhone = WHATSAPP_ENABLED && !!profile.phone_number && profile.notify_whatsapp_enabled;
 
         return {
           email,

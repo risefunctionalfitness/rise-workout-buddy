@@ -156,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (mainWebhookUrl) {
       try {
-        const hasPhone = !!phoneNumber;
+        const hasPhone = WHATSAPP_ENABLED && !!phoneNumber;
         const formattedPhone = hasPhone 
           ? formatPhoneNumber(phoneCountryCode || '+49', phoneNumber) 
           : null;
