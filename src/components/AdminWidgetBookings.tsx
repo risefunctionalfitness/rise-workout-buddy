@@ -75,6 +75,7 @@ export function AdminWidgetBookings() {
   const [bookings, setBookings] = useState<UnifiedBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<BookingType | 'all'>('all');
+  const [weeksRange, setWeeksRange] = useState<number>(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState<UnifiedBooking | null>(null);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
@@ -84,7 +85,7 @@ export function AdminWidgetBookings() {
   const loadBookings = async () => {
     setLoading(true);
     try {
-      const sevenDaysAgo = subDays(new Date(), 7).toISOString();
+      const sevenDaysAgo = subDays(new Date(), weeksRange * 7).toISOString();
 
       const { data: guestData, error: guestError } = await supabase
         .from('guest_registrations')
@@ -154,7 +155,7 @@ export function AdminWidgetBookings() {
 
   useEffect(() => {
     loadBookings();
-  }, []);
+  }, [weeksRange]);
 
   const handleDeleteBooking = async () => {
     if (!bookingToDelete) return;
@@ -240,6 +241,17 @@ export function AdminWidgetBookings() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <Select value={String(weeksRange)} onValueChange={(v) => { setWeeksRange(Number(v)); setCurrentPage(1); }}>
+                <SelectTrigger className="w-[100px] sm:w-[120px] h-8 text-xs sm:text-sm">
+                  <SelectValue placeholder="Zeitraum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Woche</SelectItem>
+                  <SelectItem value="2">2 Wochen</SelectItem>
+                  <SelectItem value="3">3 Wochen</SelectItem>
+                  <SelectItem value="4">4 Wochen</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={filter} onValueChange={(v) => { setFilter(v as BookingType | 'all'); setCurrentPage(1); }}>
                 <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs sm:text-sm">
                   <SelectValue placeholder="Filter" />
@@ -260,7 +272,7 @@ export function AdminWidgetBookings() {
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-2">
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Letzte 7 Tage:</span>
+              <span className="hidden sm:inline">Letzte {weeksRange * 7} Tage:</span>
             </span>
             <span className="text-green-600 font-medium">{stats.probetraining} Probe</span>
             <span className="text-[#d6242b] font-medium">{stats.drop_in} Drop-In</span>
