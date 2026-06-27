@@ -1,70 +1,25 @@
-## Ziel
+## 1. Check-ins der letzten 12 Monate (fehlende letzten Monate)
 
-WhatsApp-Funktionalität app-weit temporär deaktivieren, aber so, dass sie mit einem einzigen Schalter wieder aktiviert werden kann, sobald das Business-Cloud-Problem gefixt ist.
+**Ursache:** `MonthlyRegistrationsChart.tsx` lädt `leaderboard_entries` per `select(...).range(0, 4999)` ohne `order`. PostgREST liefert ohne Sortierung implizit die ältesten Zeilen zuerst und ist serverseitig auf 1000 Rows gedeckelt — die jüngsten Monate (Mai/Juni 2026) fallen weg, daher die Nullwerte am rechten Rand. In der DB sind die Werte vorhanden (Juni 26: 633 Check-ins, Mai 26: 852).
 
-## Ansatz: zentraler Feature-Flag
+**Fix:** Aggregation in die Datenbank verlagern, statt alle Einzelzeilen ins Frontend zu laden.
 
-Neue Datei `src/config/features.ts` (und Spiegel `supabase/functions/_shared/features.ts`):
+- Neue SQL-Funktion `public.get_monthly_checkins_chart(months_back int default 12)` als `SECURITY DEFINER`, die pro Monat × Mitgliedschaftstyp die Summe von `training_count` zurückgibt (joined mit `profiles.membership_type`, „Trainer" wird zu „Open Gym" gemappt). Rückgabe: `year, month, basic, premium, wellpass, ten_card, open_gym, total` — max. 12 Zeilen.
+- `EXECUTE`-Recht für `authenticated` (Adminzugriff sowieso über bestehende RLS auf Frontend-Ebene).
+- Komponente ruft nur noch `supabase.rpc('get_monthly_checkins_chart')` auf, baut die Monatsreihe daraus (mit Nullwerten für fehlende Monate) und entfernt die alten zwei großen `.select()`-Calls.
 
-```ts
-export const WHATSAPP_ENABLED = false;
-```
+Damit verschwindet der Row-Limit-Bug komplett und der Chart ist auch schneller.
 
-Wenn das Problem gefixt ist → einfach auf `true` setzen, fertig.
+## 2. „Amando" mit 10er Karte
 
-## Frontend-Änderungen
+Es existiert kein Mitglied namens Amando. In der 08:30-Uhr-Stunde am 12.06.2026 war jedoch **Hannes Epting** angemeldet — sein **Nickname** ist „Amano" (mit einem D weniger), Mitgliedschaftstyp 10er Karte. Daher die Verwechslung.
 
-**Widgets (Telefon-Eingabe entfernen, wenn Flag aus):**
-- `src/pages/EmbedKursplan.tsx` (Zeilen 328–355 und 622–650): Telefon-Block in `{WHATSAPP_ENABLED && (...)}` einwickeln. Beim Submit `phoneNumber: null` senden, wenn Flag aus.
-- `src/pages/EmbedWellpass.tsx` (Zeilen 187–215): gleich.
+- Profil: `Hannes Epting` (Nickname: Amano), `user_id: 9036e8f6-63ae-43b2-a3ac-28355c82572f`
+- 10er-Karte: 0 von 10 Credits übrig, zuletzt aufgeladen am 29.04.2026.
 
-**App-UI (Eingabe/Toggle ausblenden, wenn Flag aus):**
-- `src/components/PhoneNumberDialog.tsx`: Dialog rendert `null`, wenn Flag aus (kein Onboarding-Prompt mehr).
-- `src/components/UserProfile.tsx`: WhatsApp-Toggle + Telefon-Felder ausblenden, wenn Flag aus. Bestehende gespeicherte Nummern bleiben in der DB unverändert.
-- `src/components/FirstLoginDialog.tsx` / Onboarding-Flow: Phone-Prompt-Schritt überspringen, wenn Flag aus.
+In der Mitglieder- und 10er-Karten-Übersicht erscheint er unter „Hannes Epting" (nicht unter „Amano/Amando"), weil die Suche/Sortierung dort über `display_name` / `first_name` / `last_name` läuft. Kein Code-Change nötig — nur Info.
 
-Hinweis: Wir löschen keine bestehenden Nummern in der DB – nur UI verstecken und keine neuen Sends auslösen.
+## Geänderte Dateien
 
-## Backend-Änderungen (Edge Functions)
-
-In allen Webhook-sendenden Functions: `notification_method` darf nie `whatsapp` oder `both` enthalten, `phone` immer `null`, solange Flag aus. Effektiv wird `wantsWhatsApp` hart auf `false` gezwungen.
-
-Betroffen:
-- `supabase/functions/notify-no-show/index.ts`
-- `supabase/functions/notify-waitlist-promotion/index.ts`
-- `supabase/functions/notify-course-invitation/index.ts`
-- `supabase/functions/process-waitlists/index.ts`
-- `supabase/functions/dispatch-waitlist-webhooks/index.ts`
-- `supabase/functions/check-course-attendance/index.ts`
-- `supabase/functions/book-guest-training/index.ts` (Gast-Buchung Webhook)
-- `supabase/functions/register-wellpass/index.ts`
-- `supabase/functions/send-news-email/index.ts`
-- `supabase/functions/create-member/index.ts`
-
-Zentraler Helper `supabase/functions/_shared/features.ts` mit `WHATSAPP_ENABLED = false` + Helper `resolveNotificationMethod(profile)` der nur noch `'email'` oder `'none'` zurückgibt, wenn Flag aus. Jede Function importiert diesen Helper statt eigener Logik.
-
-Wenn ein User **nur** WhatsApp aktiviert hatte (Email aus, WhatsApp an) → fallback auf `email`, damit er nicht komplett ohne Benachrichtigung dasteht (sonst würden viele User aktuell gar nichts mehr bekommen).
-
-## Admin-Hinweis (optional, klein)
-
-In `AdminWebhookTester.tsx` einen kleinen Hinweis „WhatsApp aktuell deaktiviert" anzeigen, wenn Flag aus, damit Admin nicht verwirrt ist.
-
-## Re-Aktivierung später
-
-Sobald Business Cloud wieder läuft:
-1. `WHATSAPP_ENABLED = true` in `src/config/features.ts` **und** `supabase/functions/_shared/features.ts`
-2. Edge Functions werden automatisch deployed.
-
-Keine DB-Migration, keine Datenverluste, alle bestehenden Telefonnummern & Präferenzen bleiben erhalten.
-
-## Dateien
-
-**Neu:**
-- `src/config/features.ts`
-- `supabase/functions/_shared/features.ts`
-
-**Geändert:**
-- `src/pages/EmbedKursplan.tsx`, `src/pages/EmbedWellpass.tsx`
-- `src/components/PhoneNumberDialog.tsx`, `src/components/UserProfile.tsx`, `src/components/FirstLoginDialog.tsx`
-- `src/components/AdminWebhookTester.tsx` (Hinweis)
-- 10 Edge Functions (siehe Liste oben)
+- Neue Migration: SQL-Funktion `get_monthly_checkins_chart`.
+- `src/components/MonthlyRegistrationsChart.tsx` — Daten-Loading auf RPC umstellen.

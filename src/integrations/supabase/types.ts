@@ -1617,6 +1617,19 @@ export type Database = {
           was_ever_active: boolean
         }[]
       }
+      get_monthly_checkins_chart: {
+        Args: { months_back?: number }
+        Returns: {
+          basic_count: number
+          month: number
+          open_gym_count: number
+          premium_count: number
+          ten_card_count: number
+          total: number
+          wellpass_count: number
+          year: number
+        }[]
+      }
       get_user_reliability_score: {
         Args: { p_user_id: string }
         Returns: {
