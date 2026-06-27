@@ -26,86 +26,40 @@ export const MonthlyRegistrationsChart = () => {
   const loadMonthlyRegistrations = async () => {
     try {
       setLoading(true)
-      
-      // Get current date in Berlin timezone
+
       const now = timezone.nowInBerlin()
-      
-      // Get check-ins from leaderboard_entries for the last 12 months
-      const { data: leaderboardData, error } = await supabase
-        .from('leaderboard_entries')
-        .select('user_id, year, month, training_count')
-        .gte('year', now.getFullYear() - 1)
-        .range(0, 4999)
-      
+
+      // Aggregierte Monatsdaten aus der DB holen (umgeht das 1000-Row-Limit von PostgREST)
+      const { data: rpcData, error } = await supabase.rpc('get_monthly_checkins_chart', { months_back: 12 })
+
       if (error) throw error
-      
-      // Get all user profiles to map membership types (deduplicated)
-      const uniqueUserIds = [...new Set(leaderboardData?.map(entry => entry.user_id) || [])]
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, membership_type')
-        .in('user_id', uniqueUserIds)
-        .range(0, 4999)
-      
-      // Create membership map
-      const membershipMap = new Map(
-        profiles?.map(p => [p.user_id, p.membership_type]) || []
-      )
-      
-      // Create array of last 12 months (oldest to newest, so current month is on the right)
+
+      // Map (year-month) -> Daten
+      const map = new Map<string, any>()
+      ;(rpcData || []).forEach((row: any) => {
+        map.set(`${row.year}-${row.month}`, row)
+      })
+
+      // Letzte 12 Monate aufbauen (ältester links, aktueller rechts)
       const months: MonthlyData[] = []
       for (let i = 11; i >= 0; i--) {
-        // Get first day of the target month
         const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
         const year = monthStart.getFullYear()
         const month = monthStart.getMonth() + 1
-        
-        // Get all entries for this month
-        const monthEntries = leaderboardData?.filter(entry => 
-          entry.year === year && entry.month === month
-        ) || []
-        
-        // Count by membership type
-        const basicCount = monthEntries
-          .filter(e => membershipMap.get(e.user_id) === 'Basic Member')
-          .reduce((sum, e) => sum + e.training_count, 0)
-        
-        const premiumCount = monthEntries
-          .filter(e => membershipMap.get(e.user_id) === 'Premium Member')
-          .reduce((sum, e) => sum + e.training_count, 0)
-        
-        const wellpassCount = monthEntries
-          .filter(e => membershipMap.get(e.user_id) === 'Wellpass')
-          .reduce((sum, e) => sum + e.training_count, 0)
-        
-        const tenCardCount = monthEntries
-          .filter(e => membershipMap.get(e.user_id) === '10er Karte')
-          .reduce((sum, e) => sum + e.training_count, 0)
-        
-        const openGymCount = monthEntries
-          .filter(e => {
-            const type = membershipMap.get(e.user_id)
-            return type === 'Open Gym' || type === 'Trainer'
-          })
-          .reduce((sum, e) => sum + e.training_count, 0)
-        
-        // Total is sum of all training_count for this month
-        const total = monthEntries.reduce((sum, e) => sum + e.training_count, 0)
-        
-        // Format month name (e.g., "Okt '25")
+        const row = map.get(`${year}-${month}`)
         const monthName = monthStart.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
-        
+
         months.push({
           month: monthName,
-          total,
-          'Basic Member': basicCount,
-          'Premium Member': premiumCount,
-          'Wellpass': wellpassCount,
-          '10er Karte': tenCardCount,
-          'Open Gym': openGymCount
+          total: Number(row?.total ?? 0),
+          'Basic Member': Number(row?.basic_count ?? 0),
+          'Premium Member': Number(row?.premium_count ?? 0),
+          'Wellpass': Number(row?.wellpass_count ?? 0),
+          '10er Karte': Number(row?.ten_card_count ?? 0),
+          'Open Gym': Number(row?.open_gym_count ?? 0),
         })
       }
-      
+
       setData(months)
     } catch (error) {
       console.error('Error loading monthly registrations:', error)
