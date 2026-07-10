@@ -9,15 +9,16 @@ interface CalendarEvent {
   location?: string;
 }
 
+const TIMEZONE = "Europe/Berlin";
+
 /**
  * Generates a Google Calendar URL with pre-filled event data
  */
 export function generateGoogleCalendarUrl(event: CalendarEvent): string {
   const { title, startDate, startTime, endTime, trainer, location = "Rise Gym" } = event;
 
-  // Format dates for Google Calendar: YYYYMMDDTHHmmss
-  const startDateTime = formatDateTimeForGoogle(startDate, startTime);
-  const endDateTime = formatDateTimeForGoogle(startDate, endTime);
+  const startDateTime = formatDateTimeLocal(startDate, startTime);
+  const endDateTime = formatDateTimeLocal(startDate, endTime);
 
   const description = trainer ? `Trainer: ${trainer}` : "";
 
@@ -25,6 +26,7 @@ export function generateGoogleCalendarUrl(event: CalendarEvent): string {
     action: "TEMPLATE",
     text: title,
     dates: `${startDateTime}/${endDateTime}`,
+    ctz: TIMEZONE,
     location: location,
     details: description,
   });
@@ -38,27 +40,44 @@ export function generateGoogleCalendarUrl(event: CalendarEvent): string {
 export function downloadICSFile(event: CalendarEvent): void {
   const { title, startDate, startTime, endTime, trainer, location = "Rise Gym" } = event;
 
-  const startDateTime = formatDateTimeForICS(startDate, startTime);
-  const endDateTime = formatDateTimeForICS(startDate, endTime);
-  const now = formatDateTimeForICS(
-    format(new Date(), "yyyy-MM-dd"),
-    format(new Date(), "HH:mm:ss")
-  );
+  const startDateTime = formatDateTimeLocal(startDate, startTime);
+  const endDateTime = formatDateTimeLocal(startDate, endTime);
+  const now = formatUTCStamp(new Date());
 
   const description = trainer ? `Trainer: ${trainer}` : "";
   const uid = `${startDate}-${startTime.replace(/:/g, "")}-${crypto.randomUUID()}@rise-gym`;
 
+  // VTIMEZONE block for Europe/Berlin so iOS/Apple Calendar interprets the
+  // local times correctly instead of treating them as UTC.
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Rise Gym//Course Booking//DE",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
+    "BEGIN:VTIMEZONE",
+    `TZID:${TIMEZONE}`,
+    "X-LIC-LOCATION:Europe/Berlin",
+    "BEGIN:DAYLIGHT",
+    "TZOFFSETFROM:+0100",
+    "TZOFFSETTO:+0200",
+    "TZNAME:CEST",
+    "DTSTART:19700329T020000",
+    "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU",
+    "END:DAYLIGHT",
+    "BEGIN:STANDARD",
+    "TZOFFSETFROM:+0200",
+    "TZOFFSETTO:+0100",
+    "TZNAME:CET",
+    "DTSTART:19701025T030000",
+    "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU",
+    "END:STANDARD",
+    "END:VTIMEZONE",
     "BEGIN:VEVENT",
     `UID:${uid}`,
     `DTSTAMP:${now}`,
-    `DTSTART:${startDateTime}`,
-    `DTEND:${endDateTime}`,
+    `DTSTART;TZID=${TIMEZONE}:${startDateTime}`,
+    `DTEND;TZID=${TIMEZONE}:${endDateTime}`,
     `SUMMARY:${escapeICSText(title)}`,
     `LOCATION:${escapeICSText(location)}`,
     `DESCRIPTION:${escapeICSText(description)}`,
@@ -66,7 +85,6 @@ export function downloadICSFile(event: CalendarEvent): void {
     "END:VCALENDAR",
   ].join("\r\n");
 
-  // Create and download the file
   const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -79,21 +97,24 @@ export function downloadICSFile(event: CalendarEvent): void {
 }
 
 /**
- * Format date and time for Google Calendar URL (YYYYMMDDTHHmmss)
+ * Format date and time as local time string (YYYYMMDDTHHmmss).
+ * Used with TZID/ctz to anchor the value to Europe/Berlin.
  */
-function formatDateTimeForGoogle(date: string, time: string): string {
+function formatDateTimeLocal(date: string, time: string): string {
   const cleanDate = date.replace(/-/g, "");
   const cleanTime = time.slice(0, 5).replace(/:/g, "") + "00";
   return `${cleanDate}T${cleanTime}`;
 }
 
 /**
- * Format date and time for ICS file (YYYYMMDDTHHmmss)
+ * Format a Date as UTC timestamp (YYYYMMDDTHHmmssZ) for DTSTAMP.
  */
-function formatDateTimeForICS(date: string, time: string): string {
-  const cleanDate = date.replace(/-/g, "");
-  const cleanTime = time.slice(0, 5).replace(/:/g, "") + "00";
-  return `${cleanDate}T${cleanTime}`;
+function formatUTCStamp(d: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return (
+    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}` +
+    `T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`
+  );
 }
 
 /**
