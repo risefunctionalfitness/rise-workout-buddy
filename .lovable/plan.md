@@ -1,25 +1,33 @@
-## 1. Check-ins der letzten 12 Monate (fehlende letzten Monate)
+## Problem
 
-**Ursache:** `MonthlyRegistrationsChart.tsx` lädt `leaderboard_entries` per `select(...).range(0, 4999)` ohne `order`. PostgREST liefert ohne Sortierung implizit die ältesten Zeilen zuerst und ist serverseitig auf 1000 Rows gedeckelt — die jüngsten Monate (Mai/Juni 2026) fallen weg, daher die Nullwerte am rechten Rand. In der DB sind die Werte vorhanden (Juni 26: 633 Check-ins, Mai 26: 852).
+iOS-Kalender zeigt gebuchte Trainings 2 Stunden zu spät an (z. B. 10:30 statt 08:30 im Sommer, bzw. 1h im Winter). Ursache: In `src/lib/calendarUtils.ts` werden Datum/Uhrzeit als „naked" Local-Time-Strings (`DTSTART:20260612T083000`) in die ICS-Datei geschrieben — ohne `TZID` und ohne `VTIMEZONE`-Block. Nach RFC 5545 ist das zwar „floating time", iOS/Apple Calendar interpretiert solche Werte in vielen Fällen jedoch als **UTC** und rechnet sie in die Gerätezeitzone um → +2 h in Berliner Sommerzeit, +1 h im Winter.
 
-**Fix:** Aggregation in die Datenbank verlagern, statt alle Einzelzeilen ins Frontend zu laden.
+Der Google-Calendar-Link (`generateGoogleCalendarUrl`) hat dasselbe Problem: Ohne `ctz`-Parameter interpretiert Google die Zeit je nach Google-Konto-Zeitzone, was ebenfalls Verschiebungen erzeugt.
 
-- Neue SQL-Funktion `public.get_monthly_checkins_chart(months_back int default 12)` als `SECURITY DEFINER`, die pro Monat × Mitgliedschaftstyp die Summe von `training_count` zurückgibt (joined mit `profiles.membership_type`, „Trainer" wird zu „Open Gym" gemappt). Rückgabe: `year, month, basic, premium, wellpass, ten_card, open_gym, total` — max. 12 Zeilen.
-- `EXECUTE`-Recht für `authenticated` (Adminzugriff sowieso über bestehende RLS auf Frontend-Ebene).
-- Komponente ruft nur noch `supabase.rpc('get_monthly_checkins_chart')` auf, baut die Monatsreihe daraus (mit Nullwerten für fehlende Monate) und entfernt die alten zwei großen `.select()`-Calls.
+## Fix
 
-Damit verschwindet der Row-Limit-Bug komplett und der Chart ist auch schneller.
+Beide Kalenderausgaben in `src/lib/calendarUtils.ts` explizit an die Zeitzone `Europe/Berlin` binden.
 
-## 2. „Amando" mit 10er Karte
+### 1. ICS-Datei (Apple/Outlook)
+- `VTIMEZONE`-Block für `Europe/Berlin` mit Standard- (`STANDARD`, UTC+1) und Sommerzeit-Regel (`DAYLIGHT`, UTC+2) inkl. `RRULE` einfügen.
+- `DTSTART` / `DTEND` mit `TZID=Europe/Berlin` versehen:
+  ```
+  DTSTART;TZID=Europe/Berlin:20260612T083000
+  DTEND;TZID=Europe/Berlin:20260612T093000
+  ```
+- `DTSTAMP` bleibt in UTC (`...Z`), wie vom Standard gefordert.
 
-Es existiert kein Mitglied namens Amando. In der 08:30-Uhr-Stunde am 12.06.2026 war jedoch **Hannes Epting** angemeldet — sein **Nickname** ist „Amano" (mit einem D weniger), Mitgliedschaftstyp 10er Karte. Daher die Verwechslung.
+### 2. Google Calendar URL
+- Parameter `ctz=Europe/Berlin` an die URL anhängen, damit Google die Zeit als Berliner Ortszeit interpretiert.
 
-- Profil: `Hannes Epting` (Nickname: Amano), `user_id: 9036e8f6-63ae-43b2-a3ac-28355c82572f`
-- 10er-Karte: 0 von 10 Credits übrig, zuletzt aufgeladen am 29.04.2026.
+### 3. Keine Änderungen an
+- `AddToCalendarButton.tsx` (übergibt bereits korrekt `startDate`/`startTime`/`endTime` als lokale Berliner Zeit aus der DB).
+- Buchungs-/Datenlogik.
 
-In der Mitglieder- und 10er-Karten-Übersicht erscheint er unter „Hannes Epting" (nicht unter „Amano/Amando"), weil die Suche/Sortierung dort über `display_name` / `first_name` / `last_name` läuft. Kein Code-Change nötig — nur Info.
+## Betroffene Datei
+- `src/lib/calendarUtils.ts`
 
-## Geänderte Dateien
-
-- Neue Migration: SQL-Funktion `get_monthly_checkins_chart`.
-- `src/components/MonthlyRegistrationsChart.tsx` — Daten-Loading auf RPC umstellen.
+## Verifikation
+- ICS-Datei manuell öffnen und prüfen, dass `TZID=Europe/Berlin` und der `VTIMEZONE`-Block enthalten sind.
+- Auf iOS testen: Kurs um 08:30 Berliner Zeit → erscheint auch im iOS-Kalender um 08:30 (Sommer- wie Winterzeit).
+- Google-Calendar-Link öffnen und prüfen, dass die Startzeit unabhängig von der Konto-Zeitzone auf 08:30 Berliner Zeit fällt.
