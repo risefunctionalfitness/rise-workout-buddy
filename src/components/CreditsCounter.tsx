@@ -29,7 +29,7 @@ export const CreditsCounter = ({ user }: CreditsCounterProps) => {
     try {
       const { data, error } = await supabase
         .from('membership_credits')
-        .select('credits_remaining')
+        .select('credits_remaining, valid_until')
         .eq('user_id', user.id)
         .maybeSingle()
 
@@ -38,7 +38,9 @@ export const CreditsCounter = ({ user }: CreditsCounterProps) => {
         return
       }
 
-      setCredits(data?.credits_remaining || 0)
+      // Expired 10er Karte: always show 0 credits to the member
+      const isExpired = !!data?.valid_until && new Date(data.valid_until) < new Date()
+      setCredits(isExpired ? 0 : (data?.credits_remaining || 0))
     } catch (error) {
       console.error('Error loading credits:', error)
     } finally {
