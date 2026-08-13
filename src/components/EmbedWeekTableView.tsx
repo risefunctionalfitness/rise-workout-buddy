@@ -16,6 +16,8 @@ interface Course {
   duration_minutes: number;
   color?: string;
   registered_count: number;
+  is_event?: boolean;
+  event_price?: number | null;
 }
 
 interface EmbedWeekTableViewProps {
@@ -150,6 +152,11 @@ export default function EmbedWeekTableView({
                               <div className="font-semibold truncate">
                                 {course.title}
                               </div>
+                              {course.is_event && (
+                                <Badge className="text-[10px] px-1 py-0 bg-[#d6242b] text-white mt-0.5">
+                                  Event
+                                </Badge>
+                              )}
                               <div className="text-gray-400">
                                 {course.start_time.slice(0, 5)}-
                                 {course.end_time.slice(0, 5)}

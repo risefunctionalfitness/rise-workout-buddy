@@ -38,6 +38,9 @@ interface Course {
   is_waitlisted: boolean
   color?: string
   cancelled_due_to_low_attendance?: boolean
+  is_event?: boolean
+  event_price?: number | null
+  hide_participants?: boolean
 }
 
 interface DayCourseDialogProps {
@@ -79,6 +82,11 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   // Tracks the timestamp of recent registrations per course (for "accidental cancel" detection)
   const recentRegistrationsRef = useRef<Map<string, number>>(new Map())
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
+
+  // Event courses can hide WHO is registered from members (only the count
+  // stays visible). Admins always see the full list.
+  const areParticipantsHidden = (course: Course | null) =>
+    !!course?.is_event && !!course?.hide_participants && !isAdmin
 
   useEffect(() => {
     if (open) {
@@ -258,7 +266,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         profiles: {
           display_name: guest.guest_name,
           nickname: null,
-          membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+          membership_type: guest.booking_type === 'event' ? 'Event-Gast' : guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
           avatar_url: null
         },
         isGuest: true
@@ -662,7 +670,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
 
 
               {/* Minimum participants warning */}
-              {participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
+              {!selectedCourse.is_event && participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
                 <p className="text-xs text-muted-foreground">
                   Min. 3 Teilnehmer erforderlich
                 </p>
@@ -686,6 +694,15 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     />
                   </div>
                 </div>
+                {areParticipantsHidden(selectedCourse) ? (
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Die Teilnehmerliste ist bei diesem Event nicht öffentlich sichtbar.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
                 <div className="max-h-64 overflow-y-auto">
                   {participants.filter(p => p.status === 'registered').length === 0 ? (
                     <Card>
@@ -745,8 +762,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                     </div>
                   )}
                 </div>
-                
-                {participants.filter(p => p.status === 'waitlist').length > 0 && (
+                )}
+
+                {!areParticipantsHidden(selectedCourse) && participants.filter(p => p.status === 'waitlist').length > 0 && (
                   <div className="space-y-3">
                     <h5 className="font-medium text-sm text-muted-foreground">
                       Warteliste ({selectedCourse.waitlist_count})

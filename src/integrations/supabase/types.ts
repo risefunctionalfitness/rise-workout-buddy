@@ -170,7 +170,10 @@ export type Database = {
           color: string | null
           created_at: string
           duration_minutes: number
+          event_price: number | null
+          hide_participants: boolean
           id: string
+          is_event: boolean
           max_participants: number
           registration_deadline_minutes: number
           strength_exercise: string | null
@@ -184,7 +187,10 @@ export type Database = {
           color?: string | null
           created_at?: string
           duration_minutes: number
+          event_price?: number | null
+          hide_participants?: boolean
           id?: string
+          is_event?: boolean
           max_participants: number
           registration_deadline_minutes?: number
           strength_exercise?: string | null
@@ -198,7 +204,10 @@ export type Database = {
           color?: string | null
           created_at?: string
           duration_minutes?: number
+          event_price?: number | null
+          hide_participants?: boolean
           id?: string
+          is_event?: boolean
           max_participants?: number
           registration_deadline_minutes?: number
           strength_exercise?: string | null
@@ -226,8 +235,11 @@ export type Database = {
           created_at: string
           duration_minutes: number
           end_time: string
+          event_price: number | null
+          hide_participants: boolean
           id: string
           is_cancelled: boolean
+          is_event: boolean
           max_participants: number
           registration_deadline_minutes: number
           start_time: string
@@ -246,8 +258,11 @@ export type Database = {
           created_at?: string
           duration_minutes: number
           end_time: string
+          event_price?: number | null
+          hide_participants?: boolean
           id?: string
           is_cancelled?: boolean
+          is_event?: boolean
           max_participants: number
           registration_deadline_minutes: number
           start_time: string
@@ -266,8 +281,11 @@ export type Database = {
           created_at?: string
           duration_minutes?: number
           end_time?: string
+          event_price?: number | null
+          hide_participants?: boolean
           id?: string
           is_cancelled?: boolean
+          is_event?: boolean
           max_participants?: number
           registration_deadline_minutes?: number
           start_time?: string
@@ -638,31 +656,46 @@ export type Database = {
       }
       membership_credits: {
         Row: {
+          card_type: string
           created_at: string
           credits_remaining: number
           credits_total: number
           id: string
           last_recharged_at: string | null
+          prevention_course_1: boolean
+          prevention_course_2: boolean
           updated_at: string
           user_id: string
+          valid_until: string | null
+          validity_start: string | null
         }
         Insert: {
+          card_type?: string
           created_at?: string
           credits_remaining?: number
           credits_total?: number
           id?: string
           last_recharged_at?: string | null
+          prevention_course_1?: boolean
+          prevention_course_2?: boolean
           updated_at?: string
           user_id: string
+          valid_until?: string | null
+          validity_start?: string | null
         }
         Update: {
+          card_type?: string
           created_at?: string
           credits_remaining?: number
           credits_total?: number
           id?: string
           last_recharged_at?: string | null
+          prevention_course_1?: boolean
+          prevention_course_2?: boolean
           updated_at?: string
           user_id?: string
+          valid_until?: string | null
+          validity_start?: string | null
         }
         Relationships: []
       }

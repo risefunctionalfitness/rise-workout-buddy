@@ -185,7 +185,7 @@ export const UpcomingClassReservation = ({
         profiles: {
           display_name: guest.guest_name,
           nickname: null,
-          membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+          membership_type: guest.booking_type === 'event' ? 'Event-Gast' : guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
           avatar_url: null
         },
         isGuest: true
@@ -297,6 +297,10 @@ export const UpcomingClassReservation = ({
   const registeredCount = participants.filter(p => p.status === 'registered').length;
   const waitlistCount = participants.filter(p => p.status === 'waitlist').length;
 
+  // Event courses can hide WHO is registered from members (only the count
+  // stays visible). Admins always see the full list.
+  const participantsHidden = !!selectedCourse?.is_event && !!selectedCourse?.hide_participants && !isAdmin;
+
   return (
     <>
       <Carousel setApi={setCarouselApi} className="w-full">
@@ -383,8 +387,8 @@ export const UpcomingClassReservation = ({
                 )}
               </div>
 
-              {/* Minimum participants warning */}
-              {registeredCount < 3 && (
+              {/* Minimum participants warning (not relevant for events) */}
+              {!selectedCourse.is_event && registeredCount < 3 && (
                 <p className="text-xs text-muted-foreground">
                   Min. 3 Teilnehmer erforderlich
                 </p>
@@ -408,6 +412,15 @@ export const UpcomingClassReservation = ({
                     />
                   </div>
                 </div>
+                {participantsHidden ? (
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Die Teilnehmerliste ist bei diesem Event nicht öffentlich sichtbar.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
                 <div className="max-h-64 overflow-y-auto">
                   {participants.filter(p => p.status === 'registered').length === 0 ? (
                     <Card>
@@ -461,7 +474,8 @@ export const UpcomingClassReservation = ({
                     </div>
                   )}
                 </div>
-                
+                )}
+
                 {waitlistCount > 0 && (
                   <div className="space-y-3">
                     <h5 className="font-medium text-sm text-muted-foreground">

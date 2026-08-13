@@ -31,7 +31,7 @@ interface Participant {
   avatar_url?: string
   nickname?: string
   isGuest?: boolean
-  bookingType?: 'drop_in' | 'probetraining'
+  bookingType?: 'drop_in' | 'probetraining' | 'event'
   attendance_status?: string | null
 }
 
@@ -114,9 +114,9 @@ export const CourseParticipantsList: React.FC<CourseParticipantsListProps> = ({
         status: 'registered',
         registered_at: guest.created_at,
         display_name: guest.guest_name,
-        membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+        membership_type: guest.booking_type === 'event' ? 'Event-Gast' : guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
         isGuest: true,
-        bookingType: guest.booking_type as 'drop_in' | 'probetraining'
+        bookingType: guest.booking_type as 'drop_in' | 'probetraining' | 'event'
       })) || []) : []
 
       setParticipants([...regularParticipants, ...guestParticipants])

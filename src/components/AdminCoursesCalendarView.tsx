@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Clock, PartyPopper, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { de } from "date-fns/locale";
@@ -20,7 +21,13 @@ interface Course {
   waitlisted_count: number;
   waitlist_count: number;
   color?: string;
+  is_event?: boolean;
+  event_price?: number | null;
 }
+
+// Public base URL of the app - shareable event links open the Kursplan
+// directly at the event with the registration form ready
+const APP_BASE_URL = "https://rise-ff.lovable.app";
 
 interface AdminCoursesCalendarViewProps {
   onCourseClick: (course: Course) => void;
@@ -97,6 +104,17 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
     }
   };
 
+  const copyEventLink = async (e: React.MouseEvent, courseId: string) => {
+    e.stopPropagation();
+    const link = `${APP_BASE_URL}/embed/kursplan?event=${courseId}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Anmeldelink kopiert! Externe landen damit direkt beim Event.");
+    } catch {
+      window.prompt("Link zum Kopieren:", link);
+    }
+  };
+
   const coursesForSelectedDate = useMemo(() => {
     return courses.filter(
       (course) => course.course_date === format(selectedDate, "yyyy-MM-dd")
@@ -143,8 +161,16 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{course.title}</CardTitle>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">{course.title}</CardTitle>
+                      {course.is_event && (
+                        <Badge className="bg-primary text-primary-foreground">
+                          <PartyPopper className="h-3 w-3 mr-1" />
+                          Event
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-center">
                       <Badge variant="outline" className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         {course.registered_count}/{course.max_participants}
@@ -153,6 +179,16 @@ export const AdminCoursesCalendarView = ({ onCourseClick }: AdminCoursesCalendar
                         <Badge variant="secondary">
                           Warteliste: {course.waitlist_count}
                         </Badge>
+                      )}
+                      {course.is_event && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          title="Anmeldelink für Externe kopieren"
+                          onClick={(e) => copyEventLink(e, course.id)}
+                        >
+                          <LinkIcon className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>

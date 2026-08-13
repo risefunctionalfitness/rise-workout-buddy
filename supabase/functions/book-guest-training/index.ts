@@ -11,10 +11,18 @@ interface BookingRequest {
   courseId: string;
   guestName: string;
   guestEmail: string;
-  bookingType: 'drop_in' | 'probetraining';
+  bookingType: 'drop_in' | 'probetraining' | 'event';
   phoneCountryCode?: string;
   phoneNumber?: string;
 }
+
+// Format an event price like "22" or "22.5" as "22€" / "22,50€"
+const formatEventPrice = (price: number): string => {
+  const isWhole = Number.isInteger(price);
+  return isWhole
+    ? `${price}€`
+    : `${price.toFixed(2).replace('.', ',')}€`;
+};
 
 // Helper function to format phone number for webhook
 const formatPhoneNumber = (countryCode: string, phone: string): string => {
@@ -69,6 +77,47 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const isEventCourse = course.is_event === true;
+
+    // Event bookings are only allowed for event courses (and vice versa:
+    // event courses can only be booked by guests via the event flow)
+    if (bookingType === 'event' && !isEventCourse) {
+      return new Response(
+        JSON.stringify({ error: 'Dieser Kurs ist kein Event' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (isEventCourse && bookingType !== 'event') {
+      return new Response(
+        JSON.stringify({ error: 'Für dieses Event bitte die Event-Anmeldung im Kursplan nutzen' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (bookingType === 'event') {
+      // No bookings for cancelled events
+      if (course.is_cancelled) {
+        return new Response(
+          JSON.stringify({ error: 'Dieses Event wurde leider abgesagt' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // No bookings after the event has started (Europe/Berlin)
+      const berlinNow = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'Europe/Berlin',
+        dateStyle: 'short',
+        timeStyle: 'medium'
+      }).format(new Date()); // e.g. "2026-08-11 18:32:10"
+      const eventStart = `${course.course_date} ${course.start_time}`;
+      if (eventStart <= berlinNow) {
+        return new Response(
+          JSON.stringify({ error: 'Dieses Event hat bereits stattgefunden' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Check if course is full (including guest registrations)
     const { count: regularCount } = await supabaseClient
       .from('course_registrations')
@@ -119,7 +168,9 @@ const handler = async (req: Request): Promise<Response> => {
         guest_email: guestEmail,
         booking_type: bookingType,
         ticket_id: ticketId,
-        payment_status: bookingType === 'drop_in' ? 'pending' : 'paid',
+        payment_status: bookingType === 'event'
+          ? (course.event_price != null ? 'pending' : 'paid')
+          : (bookingType === 'drop_in' ? 'pending' : 'paid'),
         phone_country_code: phoneCountryCode || '+49',
         phone_number: phoneNumber || null
       })
@@ -149,8 +200,11 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Guest registration created:', registration);
 
     // Send webhook to Make.com with flat structure matching tester format
-    const webhookUrl = Deno.env.get('MAKE_GUEST_TICKET_WEBHOOK_URL');
-    
+    // (skipped for event bookings: no confirmation email, success screen only)
+    const webhookUrl = bookingType === 'event'
+      ? null
+      : Deno.env.get('MAKE_GUEST_TICKET_WEBHOOK_URL');
+
     if (webhookUrl) {
       try {
         // Determine notification method
@@ -194,7 +248,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.error('Error sending webhook:', webhookError);
         // Don't fail the whole request if webhook fails
       }
-    } else {
+    } else if (bookingType !== 'event') {
       console.warn('MAKE_GUEST_TICKET_WEBHOOK_URL not configured');
     }
 
@@ -216,7 +270,9 @@ const handler = async (req: Request): Promise<Response> => {
       courseDate: formattedDate,
       courseTime: `${course.start_time.substring(0, 5)} - ${course.end_time.substring(0, 5)}`,
       trainer: course.trainer,
-      paymentNote: bookingType === 'drop_in' ? 'Zahlung vor Ort: 22€' : null,
+      paymentNote: bookingType === 'event'
+        ? (course.event_price != null ? `Zahlung vor Ort: ${formatEventPrice(Number(course.event_price))}` : null)
+        : (bookingType === 'drop_in' ? 'Zahlung vor Ort: 22€' : null),
       whatsappNumber: '+49 157 30440756',
       whatsappMessage: 'Bei Absage bitte per WhatsApp melden'
     };
@@ -225,9 +281,11 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({
         success: true,
         ticket: ticketData,
-        message: bookingType === 'drop_in' 
-          ? 'Drop-In erfolgreich gebucht! Du erhältst eine E-Mail mit deinem Ticket.'
-          : 'Probetraining erfolgreich gebucht! Du erhältst eine E-Mail mit deinem Ticket.'
+        message: bookingType === 'event'
+          ? 'Deine Anmeldung war erfolgreich!'
+          : bookingType === 'drop_in'
+            ? 'Drop-In erfolgreich gebucht! Du erhältst eine E-Mail mit deinem Ticket.'
+            : 'Probetraining erfolgreich gebucht! Du erhältst eine E-Mail mit deinem Ticket.'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -15,7 +16,7 @@ import { toast } from "sonner"
 import { format, addDays, startOfWeek } from "date-fns"
 import { de } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import { CalendarDays, CalendarIcon, Clock, Users, Trash2, Edit, Plus } from "lucide-react"
+import { CalendarDays, CalendarIcon, Clock, Users, Trash2, Edit, Plus, PartyPopper, Link as LinkIcon } from "lucide-react"
 
 interface CourseTemplate {
   id: string
@@ -29,6 +30,9 @@ interface CourseTemplate {
   duration_minutes: number
   created_at: string
   color?: string
+  is_event?: boolean
+  event_price?: number | null
+  hide_participants?: boolean
 }
 
 interface Trainer {
@@ -53,12 +57,24 @@ interface Course {
   registered_count: number
   waitlist_count: number
   color?: string
+  is_event?: boolean
+  event_price?: number | null
+  hide_participants?: boolean
 }
 
 interface ScheduleEntry {
   day: number // 0 = Monday, 6 = Sunday
   time: string
 }
+
+// Format an event price like 15 or 12.5 as "15€" / "12,50€"
+const formatEventPrice = (price: number): string =>
+  Number.isInteger(price) ? `${price}€` : `${price.toFixed(2).replace('.', ',')}€`
+
+// Public base URL of the app - shareable event links open the Kursplan
+// directly at the event with the registration form ready
+const APP_BASE_URL = 'https://rise-ff.lovable.app'
+const buildEventLink = (courseId: string) => `${APP_BASE_URL}/embed/kursplan?event=${courseId}`
 
 export const CourseTemplateManager = () => {
   const [templates, setTemplates] = useState<CourseTemplate[]>([])
@@ -78,7 +94,20 @@ export const CourseTemplateManager = () => {
     registration_deadline_minutes: 30,
     cancellation_deadline_minutes: 60,
     duration_minutes: 60,
-    color: '#f3f4f6'
+    color: '#f3f4f6',
+    is_event: false,
+    event_price: '' as string,
+    hide_participants: false
+  })
+
+  // Build the DB payload from the template form (event_price: string -> number | null)
+  const buildTemplatePayload = () => ({
+    ...templateForm,
+    is_event: templateForm.is_event,
+    event_price: templateForm.is_event && templateForm.event_price !== ''
+      ? parseFloat(templateForm.event_price.replace(',', '.'))
+      : null,
+    hide_participants: templateForm.is_event ? templateForm.hide_participants : false
   })
 
   // Schedule form state
@@ -99,6 +128,9 @@ export const CourseTemplateManager = () => {
   const [editingCourseTrainerId, setEditingCourseTrainerId] = useState<string | null>(null)
   const [editingCourseTrainerName, setEditingCourseTrainerName] = useState<string>('')
   const [editingCourseUseCustom, setEditingCourseUseCustom] = useState(false)
+  const [editingCourseIsEvent, setEditingCourseIsEvent] = useState(false)
+  const [editingCourseEventPrice, setEditingCourseEventPrice] = useState<string>('')
+  const [editingCourseHideParticipants, setEditingCourseHideParticipants] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<CourseTemplate | null>(null)
 
   useEffect(() => {
@@ -182,7 +214,7 @@ export const CourseTemplateManager = () => {
     try {
       const { error } = await supabase
         .from('course_templates')
-        .insert(templateForm)
+        .insert(buildTemplatePayload())
 
       if (error) throw error
 
@@ -196,7 +228,10 @@ export const CourseTemplateManager = () => {
         registration_deadline_minutes: 30,
         cancellation_deadline_minutes: 60,
         duration_minutes: 60,
-        color: '#f3f4f6'
+        color: '#f3f4f6',
+        is_event: false,
+        event_price: '',
+        hide_participants: false
       })
       setUseCustomTrainer(false)
       await loadTemplates()
@@ -281,7 +316,10 @@ export const CourseTemplateManager = () => {
               duration_minutes: template.duration_minutes,
               course_date: format(courseDate, 'yyyy-MM-dd'),
               start_time: startTime,
-              end_time: endTime
+              end_time: endTime,
+              is_event: template.is_event || false,
+              event_price: template.is_event ? (template.event_price ?? null) : null,
+              hide_participants: template.is_event ? (template.hide_participants || false) : false
             })
           }
         })
@@ -317,6 +355,9 @@ export const CourseTemplateManager = () => {
     setEditingCourseTrainerId(course.trainer_user_id || null)
     setEditingCourseTrainerName(course.trainer)
     setEditingCourseUseCustom(!course.trainer_user_id && !!course.trainer)
+    setEditingCourseIsEvent(course.is_event || false)
+    setEditingCourseEventPrice(course.event_price != null ? String(course.event_price) : '')
+    setEditingCourseHideParticipants(course.hide_participants || false)
   }
 
   const handleUpdateCourse = async (e: React.FormEvent) => {
@@ -343,7 +384,12 @@ export const CourseTemplateManager = () => {
         cancellation_deadline_minutes: parseInt(formData.get('cancellation_deadline_minutes') as string),
         start_time: startTime,
         end_time: endTime,
-        duration_minutes: durationMinutes
+        duration_minutes: durationMinutes,
+        is_event: editingCourseIsEvent,
+        event_price: editingCourseIsEvent && editingCourseEventPrice !== ''
+          ? parseFloat(editingCourseEventPrice.replace(',', '.'))
+          : null,
+        hide_participants: editingCourseIsEvent ? editingCourseHideParticipants : false
       }
 
       const { error } = await supabase
@@ -358,6 +404,9 @@ export const CourseTemplateManager = () => {
       setEditingCourseTrainerId(null)
       setEditingCourseTrainerName('')
       setEditingCourseUseCustom(false)
+      setEditingCourseIsEvent(false)
+      setEditingCourseEventPrice('')
+      setEditingCourseHideParticipants(false)
       await loadCourses()
     } catch (error) {
       console.error('Error updating course:', error)
@@ -376,7 +425,10 @@ export const CourseTemplateManager = () => {
       registration_deadline_minutes: template.registration_deadline_minutes,
       cancellation_deadline_minutes: template.cancellation_deadline_minutes,
       duration_minutes: template.duration_minutes,
-      color: template.color || '#f3f4f6'
+      color: template.color || '#f3f4f6',
+      is_event: template.is_event || false,
+      event_price: template.event_price != null ? String(template.event_price) : '',
+      hide_participants: template.hide_participants || false
     })
     // If trainer_user_id is null but trainer is set, it's a custom trainer
     setUseCustomTrainer(!template.trainer_user_id && !!template.trainer)
@@ -389,7 +441,7 @@ export const CourseTemplateManager = () => {
     try {
       const { error } = await supabase
         .from('course_templates')
-        .update(templateForm)
+        .update(buildTemplatePayload())
         .eq('id', editingTemplate.id)
 
       if (error) throw error
@@ -405,7 +457,10 @@ export const CourseTemplateManager = () => {
         registration_deadline_minutes: 30,
         cancellation_deadline_minutes: 60,
         duration_minutes: 60,
-        color: '#f3f4f6'
+        color: '#f3f4f6',
+        is_event: false,
+        event_price: '',
+        hide_participants: false
       })
       setUseCustomTrainer(false)
       await loadTemplates()
@@ -450,6 +505,17 @@ export const CourseTemplateManager = () => {
     } catch (error) {
       console.error('Error deleting course:', error)
       toast.error('Fehler beim Löschen des Kurses')
+    }
+  }
+
+  const copyEventLink = async (courseId: string) => {
+    const link = buildEventLink(courseId)
+    try {
+      await navigator.clipboard.writeText(link)
+      toast.success('Anmeldelink kopiert! Externe landen damit direkt beim Event.')
+    } catch {
+      // Clipboard not available (e.g. older webview) - show the link instead
+      window.prompt('Link zum Kopieren:', link)
     }
   }
 
@@ -635,6 +701,59 @@ export const CourseTemplateManager = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Event course settings */}
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="is_event" className="flex items-center gap-2">
+                        <PartyPopper className="h-4 w-4 text-primary" />
+                        Event-Kurs (offen für alle)
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Alle Mitglieder buchen ohne Wochenlimit/Credit-Abzug. Externe können sich über den Kursplan auf der Website anmelden.
+                      </p>
+                    </div>
+                    <Switch
+                      id="is_event"
+                      checked={templateForm.is_event}
+                      onCheckedChange={(checked) => setTemplateForm(prev => ({ ...prev, is_event: checked }))}
+                    />
+                  </div>
+                  {templateForm.is_event && (
+                    <div>
+                      <Label htmlFor="event_price">Preis für Externe in € (leer = kostenlos)</Label>
+                      <Input
+                        id="event_price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={templateForm.event_price}
+                        onChange={(e) => setTemplateForm(prev => ({ ...prev, event_price: e.target.value }))}
+                        placeholder="z.B. 15"
+                        className="max-w-[160px]"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Bei gesetztem Preis wird Externen "Zahlung vor Ort" angezeigt.
+                      </p>
+                    </div>
+                  )}
+                  {templateForm.is_event && (
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="hide_participants">Teilnehmerliste verbergen</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Mitglieder sehen nur die Belegung (z.B. 8/16), aber keine Namen. Nur Admins sehen die Teilnehmer.
+                        </p>
+                      </div>
+                      <Switch
+                        id="hide_participants"
+                        checked={templateForm.hide_participants}
+                        onCheckedChange={(checked) => setTemplateForm(prev => ({ ...prev, hide_participants: checked }))}
+                      />
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1">
                     {editingTemplate ? 'Vorlage aktualisieren' : 'Vorlage erstellen'}
@@ -654,7 +773,10 @@ export const CourseTemplateManager = () => {
                           registration_deadline_minutes: 30,
                           cancellation_deadline_minutes: 60,
                           duration_minutes: 60,
-                          color: '#f3f4f6'
+                          color: '#f3f4f6',
+                          is_event: false,
+                          event_price: '',
+                          hide_participants: false
                         })
                         setUseCustomTrainer(false)
                       }}
@@ -688,11 +810,17 @@ export const CourseTemplateManager = () => {
                     <TableRow key={template.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div 
-                            className="w-1 h-8 rounded" 
+                          <div
+                            className="w-1 h-8 rounded"
                             style={{ backgroundColor: template.color || '#f3f4f6' }}
                           />
                           {template.title}
+                          {template.is_event && (
+                            <Badge className="bg-primary text-primary-foreground">
+                              <PartyPopper className="h-3 w-3 mr-1" />
+                              Event{template.event_price != null ? ` · ${formatEventPrice(Number(template.event_price))}` : ' · kostenlos'}
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{template.trainer}</TableCell>
@@ -861,6 +989,12 @@ export const CourseTemplateManager = () => {
                       </TableCell>
                       <TableCell className="font-medium">
                         {course.title}
+                        {course.is_event && (
+                          <Badge className="ml-2 bg-primary text-primary-foreground">
+                            <PartyPopper className="h-3 w-3 mr-1" />
+                            Event
+                          </Badge>
+                        )}
                         {course.strength_exercise && (
                           <Badge variant="outline" className="ml-2">
                             {course.strength_exercise}
@@ -878,6 +1012,16 @@ export const CourseTemplateManager = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
+                          {course.is_event && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="Anmeldelink für Externe kopieren"
+                              onClick={() => copyEventLink(course.id)}
+                            >
+                              <LinkIcon className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
@@ -980,6 +1124,54 @@ export const CourseTemplateManager = () => {
               <div>
                 <Label htmlFor="duration_minutes">Dauer (Minuten)</Label>
                 <Input name="duration_minutes" type="number" min="30" defaultValue={editingCourse.duration_minutes} required />
+              </div>
+              <div className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="edit_is_event" className="flex items-center gap-2">
+                      <PartyPopper className="h-4 w-4 text-primary" />
+                      Event-Kurs (offen für alle)
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Ohne Wochenlimit/Credit-Abzug, Externe per Link
+                    </p>
+                  </div>
+                  <Switch
+                    id="edit_is_event"
+                    checked={editingCourseIsEvent}
+                    onCheckedChange={setEditingCourseIsEvent}
+                  />
+                </div>
+                {editingCourseIsEvent && (
+                  <div>
+                    <Label htmlFor="edit_event_price">Preis für Externe in € (leer = kostenlos)</Label>
+                    <Input
+                      id="edit_event_price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editingCourseEventPrice}
+                      onChange={(e) => setEditingCourseEventPrice(e.target.value)}
+                      placeholder="z.B. 15"
+                      className="max-w-[160px]"
+                    />
+                  </div>
+                )}
+                {editingCourseIsEvent && (
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="edit_hide_participants">Teilnehmerliste verbergen</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Mitglieder sehen nur die Belegung, keine Namen
+                      </p>
+                    </div>
+                    <Switch
+                      id="edit_hide_participants"
+                      checked={editingCourseHideParticipants}
+                      onCheckedChange={setEditingCourseHideParticipants}
+                    />
+                  </div>
+                )}
               </div>
               <Button type="submit" className="w-full">
                 Kurs aktualisieren

@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { CreditCard, Plus, RefreshCw, User, Minus } from "lucide-react"
+import { CreditCard, Plus, RefreshCw, User, Minus, CalendarClock } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface UserCredit {
   user_id: string
@@ -18,12 +19,21 @@ interface UserCredit {
   credits_remaining: number
   credits_total: number
   last_recharged_at: string
+  card_type: 'year' | 'ten_weeks'
+  validity_start: string | null
+  valid_until: string | null
+  prevention_course_1: boolean
+  prevention_course_2: boolean
 }
+
+const formatDate = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString('de-DE') : null
 
 export const AdminCreditRecharge = () => {
   const [selectedUser, setSelectedUser] = useState<string>("")
   const [creditsToAdd, setCreditsToAdd] = useState<string>("10")
   const [isSubtracting, setIsSubtracting] = useState(false)
+  const [cardType, setCardType] = useState<'year' | 'ten_weeks'>('year')
   const [users, setUsers] = useState<UserCredit[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -49,7 +59,7 @@ export const AdminCreditRecharge = () => {
       const userIds = profilesData?.map(p => p.user_id) || []
       const { data: creditsData, error: creditsError } = await supabase
         .from('membership_credits')
-        .select('user_id, credits_remaining, credits_total, last_recharged_at')
+        .select('user_id, credits_remaining, credits_total, last_recharged_at, card_type, validity_start, valid_until, prevention_course_1, prevention_course_2')
         .in('user_id', userIds)
 
       if (creditsError) throw creditsError
@@ -65,6 +75,11 @@ export const AdminCreditRecharge = () => {
           credits_remaining: credits?.credits_remaining || 0,
           credits_total: credits?.credits_total || 0,
           last_recharged_at: credits?.last_recharged_at || '',
+          card_type: (credits?.card_type as 'year' | 'ten_weeks') || 'year',
+          validity_start: credits?.validity_start || null,
+          valid_until: credits?.valid_until || null,
+          prevention_course_1: credits?.prevention_course_1 || false,
+          prevention_course_2: credits?.prevention_course_2 || false,
         };
       }) || []
 
@@ -107,7 +122,8 @@ export const AdminCreditRecharge = () => {
       const { error } = await supabase.functions.invoke('manage-credits', {
         body: {
           user_id: selectedUser,
-          credits_to_add: creditsToProcess
+          credits_to_add: creditsToProcess,
+          card_type: isSubtracting ? undefined : cardType
         }
       })
 
@@ -130,6 +146,36 @@ export const AdminCreditRecharge = () => {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePreventionToggle = async (
+    member: UserCredit,
+    field: 'prevention_course_1' | 'prevention_course_2',
+    checked: boolean
+  ) => {
+    try {
+      // Update the member's credits row; create it if it doesn't exist yet
+      // (race-safe thanks to the UNIQUE constraint on user_id)
+      const { error } = await supabase
+        .from('membership_credits')
+        .upsert(
+          { user_id: member.user_id, [field]: checked },
+          { onConflict: 'user_id' }
+        )
+
+      if (error) throw error
+
+      setUsers(prev => prev.map(u =>
+        u.user_id === member.user_id ? { ...u, [field]: checked } : u
+      ))
+    } catch (error) {
+      console.error('Error updating prevention flag:', error)
+      toast({
+        title: "Fehler",
+        description: "Präventionskurs-Status konnte nicht gespeichert werden.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -161,6 +207,29 @@ export const AdminCreditRecharge = () => {
                 </div>
               </RadioGroup>
             </div>
+
+            {!isSubtracting && (
+              <div className="space-y-2">
+                <Label>Art der 10er Karte</Label>
+                <RadioGroup
+                  value={cardType}
+                  onValueChange={(value) => setCardType(value as 'year' | 'ten_weeks')}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="year" id="card-year" />
+                    <Label htmlFor="card-year">1 Jahr gültig</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="ten_weeks" id="card-ten-weeks" />
+                    <Label htmlFor="card-ten-weeks">10 Wochen gültig</Label>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  Die Gültigkeit startet mit der ersten Kursbuchung nach dem Aufladen.
+                </p>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -175,7 +244,7 @@ export const AdminCreditRecharge = () => {
                       <div className="flex items-center justify-between w-full">
                         <span>{user.first_name} {user.last_name}</span>
                         <Badge variant="outline" className="ml-2">
-                          {user.credits_remaining} Credits
+                          {user.valid_until && new Date(user.valid_until) < new Date() ? 0 : user.credits_remaining} Credits
                         </Badge>
                       </div>
                     </SelectItem>
@@ -231,23 +300,63 @@ export const AdminCreditRecharge = () => {
                 {loadingUsers ? "Lade Mitglieder..." : "Keine 10er Karte Mitglieder gefunden"}
               </p>
             ) : (
-              users.map(user => (
-                <div key={user.user_id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{user.first_name} {user.last_name}</p>
-                    {user.last_recharged_at && (
-                      <p className="text-sm text-muted-foreground">
-                        Zuletzt aufgeladen: {new Date(user.last_recharged_at).toLocaleDateString('de-DE')}
+              users.map(user => {
+                const isExpired = !!user.valid_until && new Date(user.valid_until) < new Date()
+                return (
+                <div key={user.user_id} className="p-3 border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{user.first_name} {user.last_name}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {user.card_type === 'ten_weeks' ? '10 Wochen' : '1 Jahr'}
+                        </Badge>
+                      </div>
+                      {user.last_recharged_at && (
+                        <p className="text-sm text-muted-foreground">
+                          Zuletzt aufgeladen: {formatDate(user.last_recharged_at)}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <CalendarClock className="h-3.5 w-3.5" />
+                        Beginn Gültigkeit: {formatDate(user.validity_start) || 'startet mit erster Buchung'}
                       </p>
-                    )}
+                      <p className={`text-sm flex items-center gap-1 ${isExpired ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                        <CalendarClock className="h-3.5 w-3.5" />
+                        Gültig bis: {formatDate(user.valid_until) || '–'}{isExpired ? ' (abgelaufen)' : ''}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={user.credits_remaining > 0 && !isExpired ? "default" : "destructive"}>
+                        {isExpired ? 0 : user.credits_remaining} / {user.credits_total} Credits
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <Badge variant={user.credits_remaining > 0 ? "default" : "destructive"}>
-                      {user.credits_remaining} / {user.credits_total} Credits
-                    </Badge>
+                  <div className="flex items-center gap-6 pt-1 border-t">
+                    <div className="flex items-center gap-2 pt-2">
+                      <Checkbox
+                        id={`prev1-${user.user_id}`}
+                        checked={user.prevention_course_1}
+                        onCheckedChange={(checked) => handlePreventionToggle(user, 'prevention_course_1', checked === true)}
+                      />
+                      <Label htmlFor={`prev1-${user.user_id}`} className="text-sm cursor-pointer">
+                        Präventionskurs 1
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Checkbox
+                        id={`prev2-${user.user_id}`}
+                        checked={user.prevention_course_2}
+                        onCheckedChange={(checked) => handlePreventionToggle(user, 'prevention_course_2', checked === true)}
+                      />
+                      <Label htmlFor={`prev2-${user.user_id}`} className="text-sm cursor-pointer">
+                        Präventionskurs 2
+                      </Label>
+                    </div>
                   </div>
                 </div>
-              ))
+                )
+              })
             )}
           </div>
         </CardContent>

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, User as UserIcon, AlertTriangle, UserX, ArrowRightLeft } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, User as UserIcon, AlertTriangle, UserX, ArrowRightLeft, PartyPopper } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { MembershipBadge } from "@/components/MembershipBadge"
 import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
@@ -43,6 +43,9 @@ interface Course {
   is_waitlisted: boolean
   color?: string
   cancelled_due_to_low_attendance?: boolean
+  is_event?: boolean
+  event_price?: number | null
+  hide_participants?: boolean
 }
 
 interface CourseBookingProps {
@@ -72,6 +75,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   // Tracks the timestamp of recent registrations per course (for "accidental cancel" detection)
   const recentRegistrationsRef = useRef<Map<string, number>>(new Map())
   const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
+
+  // Event courses can hide WHO is registered from members (only the count
+  // stays visible). Admins always see the full list.
+  const areParticipantsHidden = (course: Course | null) =>
+    !!course?.is_event && !!course?.hide_participants && !isAdmin
 
   useEffect(() => {
     let mounted = true
@@ -272,7 +280,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         profiles: {
           display_name: guest.guest_name,
           nickname: null,
-          membership_type: guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+          membership_type: guest.booking_type === 'event'
+            ? 'Event-Gast'
+            : guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
           avatar_url: null
         },
         isGuest: true
@@ -336,7 +346,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         if (userMembershipType === 'Basic Member') {
           toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
         } else if (userMembershipType === '10er Karte') {
-          toast.error("Du hast keine Credits mehr. Bitte lade deine 10er Karte am Empfang auf")
+          toast.error("Keine Buchung möglich: Deine 10er Karte ist abgelaufen oder du hast keine Credits mehr. Bitte melde dich am Empfang.")
         } else {
           toast.error("Anmeldung nicht möglich")
         }
@@ -711,6 +721,12 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
                               <h4 className="font-medium truncate">{course.title}</h4>
+                              {course.is_event && (
+                                <Badge className="text-xs flex items-center gap-1 bg-primary text-primary-foreground">
+                                  <PartyPopper className="h-3 w-3" />
+                                  Event
+                                </Badge>
+                              )}
                               {course.cancelled_due_to_low_attendance && (
                                 <Badge variant="destructive" className="text-xs flex items-center gap-1">
                                   <AlertTriangle className="h-3 w-3" />
@@ -807,9 +823,21 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                 )}
               </div>
 
+              {/* Event course info */}
+              {selectedCourse.is_event && (
+                <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 text-sm space-y-1">
+                  <p className="font-medium flex items-center gap-1">
+                    <PartyPopper className="h-4 w-4 text-primary" />
+                    Event – offen für alle
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    Zählt nicht als reguläres Training: kein Wochenlimit, kein Credit-Abzug.
+                  </p>
+                </div>
+              )}
 
-              {/* Minimum participants warning */}
-              {participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
+              {/* Minimum participants warning (not relevant for events) */}
+              {!selectedCourse.is_event && participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
                 <p className="text-xs text-muted-foreground">
                   Min. 3 Teilnehmer erforderlich
                 </p>
@@ -833,6 +861,15 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                     />
                   </div>
                 </div>
+                {areParticipantsHidden(selectedCourse) ? (
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Die Teilnehmerliste ist bei diesem Event nicht öffentlich sichtbar.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
                 <div className="max-h-64 overflow-y-auto">
                   {participants.filter(p => p.status === 'registered').length === 0 ? (
                     <Card>
@@ -929,8 +966,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                     </div>
                   )}
                 </div>
-                
-                {participants.filter(p => p.status === 'waitlist').length > 0 && (
+                )}
+
+                {!areParticipantsHidden(selectedCourse) && participants.filter(p => p.status === 'waitlist').length > 0 && (
                   <div className="space-y-3">
                     <h5 className="font-medium text-sm text-muted-foreground">
                       Warteliste ({selectedCourse.waitlist_count})

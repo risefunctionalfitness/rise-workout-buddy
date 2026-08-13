@@ -28,13 +28,13 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-type BookingType = 'probetraining' | 'drop_in' | 'wellpass';
+type BookingType = 'probetraining' | 'drop_in' | 'event' | 'wellpass';
 
 interface GuestBooking {
   id: string;
   guest_name: string;
   guest_email: string;
-  booking_type: 'probetraining' | 'drop_in';
+  booking_type: 'probetraining' | 'drop_in' | 'event';
   created_at: string;
   status: string;
   courses: {
@@ -196,6 +196,8 @@ export function AdminWidgetBookings() {
         return <Badge className="bg-green-600 hover:bg-green-700 text-white text-xs">Probe</Badge>;
       case 'drop_in':
         return <Badge className="bg-[#d6242b] hover:bg-[#b91c22] text-white text-xs">Drop-In</Badge>;
+      case 'event':
+        return <Badge className="bg-purple-600 hover:bg-purple-700 text-white text-xs">Event</Badge>;
       case 'wellpass':
         return <Badge className="bg-[#12a6b0] hover:bg-[#0e8a92] text-white text-xs">Wellpass</Badge>;
     }
@@ -223,6 +225,7 @@ export function AdminWidgetBookings() {
   const stats = {
     probetraining: bookings.filter(b => b.type === 'probetraining').length,
     drop_in: bookings.filter(b => b.type === 'drop_in').length,
+    event: bookings.filter(b => b.type === 'event').length,
     wellpass: bookings.filter(b => b.type === 'wellpass').length,
   };
 
@@ -260,6 +263,7 @@ export function AdminWidgetBookings() {
                   <SelectItem value="all">Alle</SelectItem>
                   <SelectItem value="probetraining">Probe</SelectItem>
                   <SelectItem value="drop_in">Drop-In</SelectItem>
+                  <SelectItem value="event">Event</SelectItem>
                   <SelectItem value="wellpass">Wellpass</SelectItem>
                 </SelectContent>
               </Select>
@@ -276,6 +280,7 @@ export function AdminWidgetBookings() {
             </span>
             <span className="text-green-600 font-medium">{stats.probetraining} Probe</span>
             <span className="text-[#d6242b] font-medium">{stats.drop_in} Drop-In</span>
+            <span className="text-purple-600 font-medium">{stats.event} Event</span>
             <span className="text-[#12a6b0] font-medium">{stats.wellpass} Wellpass</span>
           </div>
         </CardHeader>

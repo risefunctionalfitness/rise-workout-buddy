@@ -3,7 +3,7 @@ import { User } from "@supabase/supabase-js"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, MapPin, AlertTriangle } from "lucide-react"
+import { Clock, MapPin, AlertTriangle, PartyPopper } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { format, parseISO, isSameDay } from "date-fns"
 import { de } from "date-fns/locale"
@@ -28,6 +28,8 @@ interface Course {
   is_waitlisted: boolean
   color?: string
   cancelled_due_to_low_attendance?: boolean
+  is_event?: boolean
+  event_price?: number | null
 }
 
 interface CoursesCalendarViewProps {
@@ -235,6 +237,12 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
                           <h4 className="font-medium truncate">{course.title}</h4>
+                          {course.is_event && (
+                            <Badge className="text-xs flex items-center gap-1 bg-primary text-primary-foreground">
+                              <PartyPopper className="h-3 w-3" />
+                              Event
+                            </Badge>
+                          )}
                           {course.cancelled_due_to_low_attendance && (
                             <Badge variant="destructive" className="text-xs flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3" />

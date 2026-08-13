@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, PartyPopper } from "lucide-react";
 import { format, addDays, startOfDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { toast } from "sonner";
@@ -34,7 +34,13 @@ interface Course {
   duration_minutes: number;
   color?: string;
   registered_count: number;
+  is_event?: boolean;
+  event_price?: number | null;
 }
+
+// Format an event price like 15 or 12.5 as "15€" / "12,50€"
+const formatEventPrice = (price: number): string =>
+  Number.isInteger(price) ? `${price}€` : `${price.toFixed(2).replace('.', ',')}€`;
 
 
 export default function EmbedKursplan() {
@@ -45,7 +51,7 @@ export default function EmbedKursplan() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [bookingType, setBookingType] = useState<'drop_in' | 'probetraining' | null>(null);
+  const [bookingType, setBookingType] = useState<'drop_in' | 'probetraining' | 'event' | null>(null);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -53,7 +59,7 @@ export default function EmbedKursplan() {
   const [guestPhone, setGuestPhone] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingInfo, setBookingInfo] = useState<{ email: string; isDropIn: boolean } | null>(null);
+  const [bookingInfo, setBookingInfo] = useState<{ email: string; isDropIn: boolean; isEvent?: boolean; paymentNote?: string | null } | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekStart, setWeekStart] = useState<Date>(startOfDay(new Date()));
@@ -61,6 +67,71 @@ export default function EmbedKursplan() {
   useEffect(() => {
     loadCourses();
   }, [weekStart]);
+
+  // Deep link: /embed/kursplan?event=<courseId> jumps directly to the event
+  // and opens the registration form (name + email) - no searching needed.
+  const eventIdParam = searchParams.get('event');
+  const [deepLinkHandled, setDeepLinkHandled] = useState(false);
+
+  useEffect(() => {
+    if (eventIdParam && !deepLinkHandled) {
+      setDeepLinkHandled(true);
+      openEventFromLink(eventIdParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventIdParam, deepLinkHandled]);
+
+  const openEventFromLink = async (courseId: string) => {
+    try {
+      const { data: course, error } = await supabase
+        .from('courses')
+        .select(`
+          id, title, trainer, course_date, start_time, end_time,
+          max_participants, duration_minutes, color, is_event, event_price, is_cancelled
+        `)
+        .eq('id', courseId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!course || !course.is_event || course.is_cancelled) {
+        toast.error('Dieses Event wurde nicht gefunden oder ist nicht mehr verfügbar');
+        return;
+      }
+
+      const eventStart = new Date(`${course.course_date}T${course.start_time}`);
+      if (eventStart <= new Date()) {
+        toast.error('Dieses Event hat bereits stattgefunden');
+        return;
+      }
+
+      // Get current registration count (members + guests)
+      const { data: stats } = await supabase.rpc('get_course_stats', {
+        course_id_param: course.id,
+      });
+      const registered = stats && stats[0] ? Number(stats[0].registered_count) || 0 : 0;
+
+      // Jump the plan to the event's week and day
+      const eventDate = startOfDay(new Date(course.course_date));
+      setWeekStart(eventDate);
+      setSelectedDate(eventDate);
+
+      const courseWithCount: Course = { ...course, registered_count: registered };
+      setSelectedCourse(courseWithCount);
+
+      if (registered >= course.max_participants) {
+        toast.error('Das Event ist leider bereits ausgebucht');
+        return;
+      }
+
+      // Open the registration form directly (name + email + confirmation)
+      setBookingType('event');
+      setBookingDialogOpen(true);
+    } catch (err) {
+      console.error('Error opening event link:', err);
+      toast.error('Das Event konnte nicht geladen werden');
+    }
+  };
 
   const loadCourses = async () => {
     try {
@@ -76,8 +147,8 @@ export default function EmbedKursplan() {
       const { data: coursesData, error } = await supabase
         .from('courses')
         .select(`
-          id, title, trainer, course_date, start_time, end_time, 
-          max_participants, duration_minutes, color
+          id, title, trainer, course_date, start_time, end_time,
+          max_participants, duration_minutes, color, is_event, event_price
         `)
         .eq('is_cancelled', false)
         .gte('course_date', startDate)
@@ -136,7 +207,7 @@ export default function EmbedKursplan() {
     setDialogOpen(true);
   };
 
-  const handleBookingTypeSelect = (type: 'drop_in' | 'probetraining') => {
+  const handleBookingTypeSelect = (type: 'drop_in' | 'probetraining' | 'event') => {
     setBookingType(type);
     setDialogOpen(false);
     setBookingDialogOpen(true);
@@ -159,15 +230,20 @@ export default function EmbedKursplan() {
           guestName,
           guestEmail,
           bookingType,
-          phoneCountryCode: WHATSAPP_ENABLED ? guestPhoneCountryCode : null,
-          phoneNumber: WHATSAPP_ENABLED ? (guestPhone || null) : null
+          phoneCountryCode: WHATSAPP_ENABLED && bookingType !== 'event' ? guestPhoneCountryCode : null,
+          phoneNumber: WHATSAPP_ENABLED && bookingType !== 'event' ? (guestPhone || null) : null
         }
       });
 
       if (error) throw error;
 
       if (data.success) {
-        setBookingInfo({ email: guestEmail, isDropIn: bookingType === 'drop_in' });
+        setBookingInfo({
+          email: guestEmail,
+          isDropIn: bookingType === 'drop_in',
+          isEvent: bookingType === 'event',
+          paymentNote: data.ticket?.paymentNote ?? null
+        });
         setBookingDialogOpen(false);
         setSuccessDialogOpen(true);
         setGuestName("");
@@ -180,7 +256,20 @@ export default function EmbedKursplan() {
       }
     } catch (error: any) {
       console.error('Booking error:', error);
-      toast.error(error.message || 'Fehler bei der Buchung');
+      // Edge function errors (e.g. "ausgebucht") come back as non-2xx
+      // responses; extract the German message from the response body.
+      let message = 'Fehler bei der Buchung';
+      try {
+        if (error?.context && typeof error.context.json === 'function') {
+          const body = await error.context.json();
+          if (body?.error) message = body.error;
+        } else if (error?.message && !String(error.message).includes('non-2xx')) {
+          message = error.message;
+        }
+      } catch {
+        /* keep default message */
+      }
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -270,23 +359,45 @@ export default function EmbedKursplan() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    className="h-auto py-4 flex flex-col"
-                    onClick={() => handleBookingTypeSelect('probetraining')}
-                  >
-                    <span className="font-semibold">Probetraining</span>
-                    <span className="text-xs text-muted-foreground">Kostenlos</span>
-                  </Button>
-                  <Button
-                    className="h-auto py-4 flex flex-col bg-primary"
-                    onClick={() => handleBookingTypeSelect('drop_in')}
-                  >
-                    <span className="font-semibold">Drop-In</span>
-                    <span className="text-xs">22€ vor Ort</span>
-                  </Button>
-                </div>
+                {selectedCourse.is_event ? (
+                  <div className="space-y-3 pt-4">
+                    <div className="p-3 bg-muted rounded-lg text-sm">
+                      {selectedCourse.event_price != null ? (
+                        <p className="font-medium">💰 Teilnahme: {formatEventPrice(Number(selectedCourse.event_price))} – Zahlung vor Ort</p>
+                      ) : (
+                        <p className="font-medium">✨ Teilnahme kostenlos</p>
+                      )}
+                      <p className="text-muted-foreground mt-1">Dieses Event ist offen für alle – auch ohne Mitgliedschaft.</p>
+                    </div>
+                    <Button
+                      className="w-full h-auto py-4 bg-primary"
+                      onClick={() => handleBookingTypeSelect('event')}
+                    >
+                      <span className="font-semibold flex items-center gap-2">
+                        <PartyPopper className="h-4 w-4" />
+                        Zum Event anmelden
+                      </span>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      className="h-auto py-4 flex flex-col"
+                      onClick={() => handleBookingTypeSelect('probetraining')}
+                    >
+                      <span className="font-semibold">Probetraining</span>
+                      <span className="text-xs text-muted-foreground">Kostenlos</span>
+                    </Button>
+                    <Button
+                      className="h-auto py-4 flex flex-col bg-primary"
+                      onClick={() => handleBookingTypeSelect('drop_in')}
+                    >
+                      <span className="font-semibold">Drop-In</span>
+                      <span className="text-xs">22€ vor Ort</span>
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
@@ -296,7 +407,7 @@ export default function EmbedKursplan() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {bookingType === 'drop_in' ? 'Drop-In buchen' : 'Probetraining buchen'}
+                {bookingType === 'event' ? 'Event-Anmeldung' : bookingType === 'drop_in' ? 'Drop-In buchen' : 'Probetraining buchen'}
               </DialogTitle>
               <DialogDescription>
                 {selectedCourse?.title} am {selectedCourse && format(new Date(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
@@ -325,7 +436,7 @@ export default function EmbedKursplan() {
                 />
               </div>
 
-              {WHATSAPP_ENABLED && (
+              {WHATSAPP_ENABLED && bookingType !== 'event' && (
                 <div className="space-y-2">
                   <Label>Telefon (für WhatsApp-Bestätigung)</Label>
                   <div className="flex gap-2">
@@ -364,15 +475,22 @@ export default function EmbedKursplan() {
                 </div>
               )}
 
+              {bookingType === 'event' && selectedCourse?.event_price != null && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                  <p className="font-medium text-yellow-800">💰 Zahlung vor Ort: {formatEventPrice(Number(selectedCourse.event_price))}</p>
+                  <p className="text-yellow-700 mt-1">Die Zahlung erfolgt direkt im Gym.</p>
+                </div>
+              )}
+
               <div className="flex items-start gap-3">
-                <Checkbox 
+                <Checkbox
                   id="terms-week"
-                  checked={termsAccepted} 
+                  checked={termsAccepted}
                   onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                   className="mt-0.5"
                 />
                 <Label htmlFor="terms-week" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                  Ich akzeptiere die{' '}
+                  {bookingType === 'event' ? 'Ich möchte mich verbindlich für das Event anmelden und akzeptiere die' : 'Ich akzeptiere die'}{' '}
                   <a href="https://rise-ff.lovable.app/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                     AGB
                   </a>{' '}
@@ -394,7 +512,7 @@ export default function EmbedKursplan() {
                   Abbrechen
                 </Button>
                 <Button type="submit" className="flex-1" disabled={isSubmitting || !termsAccepted}>
-                  {isSubmitting ? 'Wird gebucht...' : 'Jetzt buchen'}
+                  {isSubmitting ? 'Wird gebucht...' : bookingType === 'event' ? 'Anmeldung bestätigen' : 'Jetzt buchen'}
                 </Button>
               </div>
             </form>
@@ -419,10 +537,15 @@ export default function EmbedKursplan() {
                   {bookingInfo.isDropIn && (
                     <p className="text-yellow-700 font-medium">💰 Zahlung vor Ort: 22€</p>
                   )}
+                  {bookingInfo.isEvent && bookingInfo.paymentNote && (
+                    <p className="text-yellow-700 font-medium">💰 {bookingInfo.paymentNote}</p>
+                  )}
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  Du erhältst eine Bestätigung per E-Mail an {bookingInfo.email}
+                  {bookingInfo.isEvent
+                    ? 'Deine Anmeldung ist bestätigt. Bitte merke dir Datum und Uhrzeit – du erhältst keine separate Bestätigungs-E-Mail.'
+                    : `Du erhältst eine Bestätigung per E-Mail an ${bookingInfo.email}`}
                 </p>
 
                 <Button
@@ -511,7 +634,15 @@ export default function EmbedKursplan() {
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">{course.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-white">{course.title}</h3>
+                        {course.is_event && (
+                          <Badge className="bg-[#d6242b] text-white text-xs">
+                            <PartyPopper className="h-3 w-3 mr-1" />
+                            Event
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-400">{course.trainer}</p>
                     </div>
                   </div>
@@ -565,23 +696,45 @@ export default function EmbedKursplan() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  className="h-auto py-4 flex flex-col"
-                  onClick={() => handleBookingTypeSelect('probetraining')}
-                >
-                  <span className="font-semibold">Probetraining</span>
-                  <span className="text-xs text-muted-foreground">Kostenlos</span>
-                </Button>
-                <Button
-                  className="h-auto py-4 flex flex-col bg-primary"
-                  onClick={() => handleBookingTypeSelect('drop_in')}
-                >
-                  <span className="font-semibold">Drop-In</span>
-                  <span className="text-xs">22€ vor Ort</span>
-                </Button>
-              </div>
+              {selectedCourse.is_event ? (
+                <div className="space-y-3 pt-4">
+                  <div className="p-3 bg-muted rounded-lg text-sm">
+                    {selectedCourse.event_price != null ? (
+                      <p className="font-medium">💰 Teilnahme: {formatEventPrice(Number(selectedCourse.event_price))} – Zahlung vor Ort</p>
+                    ) : (
+                      <p className="font-medium">✨ Teilnahme kostenlos</p>
+                    )}
+                    <p className="text-muted-foreground mt-1">Dieses Event ist offen für alle – auch ohne Mitgliedschaft.</p>
+                  </div>
+                  <Button
+                    className="w-full h-auto py-4 bg-primary"
+                    onClick={() => handleBookingTypeSelect('event')}
+                  >
+                    <span className="font-semibold flex items-center gap-2">
+                      <PartyPopper className="h-4 w-4" />
+                      Zum Event anmelden
+                    </span>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    className="h-auto py-4 flex flex-col"
+                    onClick={() => handleBookingTypeSelect('probetraining')}
+                  >
+                    <span className="font-semibold">Probetraining</span>
+                    <span className="text-xs text-muted-foreground">Kostenlos</span>
+                  </Button>
+                  <Button
+                    className="h-auto py-4 flex flex-col bg-primary"
+                    onClick={() => handleBookingTypeSelect('drop_in')}
+                  >
+                    <span className="font-semibold">Drop-In</span>
+                    <span className="text-xs">22€ vor Ort</span>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -592,7 +745,7 @@ export default function EmbedKursplan() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {bookingType === 'drop_in' ? 'Drop-In buchen' : 'Probetraining buchen'}
+              {bookingType === 'event' ? 'Event-Anmeldung' : bookingType === 'drop_in' ? 'Drop-In buchen' : 'Probetraining buchen'}
             </DialogTitle>
             <DialogDescription>
               {selectedCourse?.title} am {selectedCourse && format(new Date(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
@@ -621,7 +774,7 @@ export default function EmbedKursplan() {
               />
             </div>
 
-            {WHATSAPP_ENABLED && (
+            {WHATSAPP_ENABLED && bookingType !== 'event' && (
               <div className="space-y-2">
                 <Label>Telefon (für WhatsApp-Bestätigung)</Label>
                 <div className="flex gap-2">
@@ -660,15 +813,22 @@ export default function EmbedKursplan() {
               </div>
             )}
 
+            {bookingType === 'event' && selectedCourse?.event_price != null && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                <p className="font-medium text-yellow-800">💰 Zahlung vor Ort: {formatEventPrice(Number(selectedCourse.event_price))}</p>
+                <p className="text-yellow-700 mt-1">Die Zahlung erfolgt direkt im Gym.</p>
+              </div>
+            )}
+
             <div className="flex items-start gap-3">
-              <Checkbox 
+              <Checkbox
                 id="terms-list"
-                checked={termsAccepted} 
+                checked={termsAccepted}
                 onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                 className="mt-0.5"
               />
               <Label htmlFor="terms-list" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                Ich akzeptiere die{' '}
+                {bookingType === 'event' ? 'Ich möchte mich verbindlich für das Event anmelden und akzeptiere die' : 'Ich akzeptiere die'}{' '}
                 <a href="https://rise-ff.lovable.app/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   AGB
                 </a>{' '}
@@ -690,7 +850,7 @@ export default function EmbedKursplan() {
                 Abbrechen
               </Button>
               <Button type="submit" className="flex-1" disabled={isSubmitting || !termsAccepted}>
-                {isSubmitting ? 'Wird gebucht...' : 'Jetzt buchen'}
+                {isSubmitting ? 'Wird gebucht...' : bookingType === 'event' ? 'Anmeldung bestätigen' : 'Jetzt buchen'}
               </Button>
             </div>
           </form>
@@ -716,10 +876,15 @@ export default function EmbedKursplan() {
                 {bookingInfo.isDropIn && (
                   <p className="text-yellow-700 font-medium">💰 Zahlung vor Ort: 22€</p>
                 )}
+                {bookingInfo.isEvent && bookingInfo.paymentNote && (
+                  <p className="text-yellow-700 font-medium">💰 {bookingInfo.paymentNote}</p>
+                )}
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Du erhältst eine Bestätigung per E-Mail an {bookingInfo.email}
+                {bookingInfo.isEvent
+                  ? 'Deine Anmeldung ist bestätigt. Bitte merke dir Datum und Uhrzeit – du erhältst keine separate Bestätigungs-E-Mail.'
+                  : `Du erhältst eine Bestätigung per E-Mail an ${bookingInfo.email}`}
               </p>
 
               <Button

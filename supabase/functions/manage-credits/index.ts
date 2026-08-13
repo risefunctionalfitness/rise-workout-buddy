@@ -10,6 +10,9 @@ interface ManageCreditsRequest {
   user_id: string;
   credits_to_add: number;
   description?: string;
+  // Card type for recharges: 'year' = 1 Jahr gültig, 'ten_weeks' = 10 Wochen gültig.
+  // The validity period starts with the member's first booking after the recharge.
+  card_type?: 'year' | 'ten_weeks';
 }
 
 serve(async (req) => {
@@ -58,10 +61,17 @@ serve(async (req) => {
       });
     }
 
-    const { user_id, credits_to_add, description }: ManageCreditsRequest = await req.json();
+    const { user_id, credits_to_add, description, card_type }: ManageCreditsRequest = await req.json();
 
     if (!user_id || typeof credits_to_add !== 'number' || credits_to_add === 0) {
       return new Response(JSON.stringify({ error: 'Invalid parameters' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
+    if (card_type && !['year', 'ten_weeks'].includes(card_type)) {
+      return new Response(JSON.stringify({ error: 'Invalid card_type' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       });
@@ -84,7 +94,7 @@ serve(async (req) => {
     // Update or insert credits
     const { data: existingCredits } = await supabase
       .from('membership_credits')
-      .select('credits_remaining, credits_total')
+      .select('credits_remaining, credits_total, valid_until')
       .eq('user_id', user_id)
       .single();
 
@@ -92,10 +102,28 @@ serve(async (req) => {
     let newCreditsTotal: number;
 
     if (existingCredits) {
+      // Leftover credits on an EXPIRED card are forfeited - they must not
+      // come back to life through a recharge. (The expiry wipe normally
+      // happens lazily on a booking attempt, so it may not have run yet.)
+      const cardExpired = !!existingCredits.valid_until &&
+        new Date(existingCredits.valid_until) < new Date();
+      const effectiveRemaining = cardExpired ? 0 : existingCredits.credits_remaining;
+
+      if (cardExpired && existingCredits.credits_remaining > 0) {
+        await supabase.from('credit_transactions').insert({
+          user_id,
+          amount: -existingCredits.credits_remaining,
+          transaction_type: 'expired',
+          description: '10er Karte abgelaufen - Restcredits verfallen',
+          balance_after: 0,
+          created_by: user.id,
+        });
+      }
+
       // Check if deducting credits would result in negative balance
-      if (credits_to_add < 0 && existingCredits.credits_remaining + credits_to_add < 0) {
-        return new Response(JSON.stringify({ 
-          error: `Nicht genügend Credits vorhanden. Aktuell: ${existingCredits.credits_remaining}, versucht abzuziehen: ${Math.abs(credits_to_add)}` 
+      if (credits_to_add < 0 && effectiveRemaining + credits_to_add < 0) {
+        return new Response(JSON.stringify({
+          error: `Nicht genügend Credits vorhanden. Aktuell: ${effectiveRemaining}, versucht abzuziehen: ${Math.abs(credits_to_add)}`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
@@ -103,17 +131,27 @@ serve(async (req) => {
       }
 
       // Calculate new credits
-      newCreditsRemaining = existingCredits.credits_remaining + credits_to_add;
+      newCreditsRemaining = effectiveRemaining + credits_to_add;
       newCreditsTotal = credits_to_add > 0 ? existingCredits.credits_total + credits_to_add : existingCredits.credits_total;
 
-      // Update existing credits
+      // Update existing credits.
+      // A recharge (positive amount) starts a fresh card: card type is set
+      // and the validity window is reset -- it will start again with the
+      // member's next booking.
+      const updatePayload: Record<string, unknown> = {
+        credits_remaining: newCreditsRemaining,
+        credits_total: newCreditsTotal,
+        last_recharged_at: new Date().toISOString(),
+      };
+      if (credits_to_add > 0) {
+        updatePayload.card_type = card_type || 'year';
+        updatePayload.validity_start = null;
+        updatePayload.valid_until = null;
+      }
+
       const { error } = await supabase
         .from('membership_credits')
-        .update({
-          credits_remaining: newCreditsRemaining,
-          credits_total: newCreditsTotal,
-          last_recharged_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('user_id', user_id);
 
       if (error) throw error;
@@ -139,6 +177,9 @@ serve(async (req) => {
           credits_remaining: credits_to_add,
           credits_total: credits_to_add,
           last_recharged_at: new Date().toISOString(),
+          card_type: card_type || 'year',
+          validity_start: null,
+          valid_until: null,
         });
 
       if (error) throw error;
@@ -146,9 +187,10 @@ serve(async (req) => {
 
     // Log the transaction
     const transactionType = credits_to_add > 0 ? 'admin_recharge' : 'admin_deduction';
-    const transactionDescription = description || 
-      (credits_to_add > 0 
-        ? `Admin-Aufladung: ${credits_to_add} Credits` 
+    const cardTypeLabel = card_type === 'ten_weeks' ? '10 Wochen' : '1 Jahr';
+    const transactionDescription = description ||
+      (credits_to_add > 0
+        ? `Admin-Aufladung: ${credits_to_add} Credits (${cardTypeLabel} gültig ab erster Buchung)`
         : `Admin-Abzug: ${Math.abs(credits_to_add)} Credits`);
 
     const { error: transactionError } = await supabase

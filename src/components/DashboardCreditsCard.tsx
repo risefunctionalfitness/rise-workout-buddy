@@ -14,6 +14,8 @@ interface DashboardCreditsCardProps {
 export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
   const [membershipType, setMembershipType] = useState<string | null>(null);
   const [credits, setCredits] = useState<number>(0);
+  const [cardType, setCardType] = useState<'year' | 'ten_weeks'>('year');
+  const [validUntil, setValidUntil] = useState<string | null>(null);
   const [gymCode, setGymCode] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,12 +40,14 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
       if (profileData.membership_type === "10er Karte") {
         const { data: creditsData, error: creditsError } = await supabase
           .from("membership_credits")
-          .select("credits_remaining")
+          .select("credits_remaining, card_type, valid_until")
           .eq("user_id", userId)
           .maybeSingle();
 
         if (creditsError) throw creditsError;
         setCredits(creditsData?.credits_remaining || 0);
+        setCardType((creditsData?.card_type as 'year' | 'ten_weeks') || 'year');
+        setValidUntil(creditsData?.valid_until || null);
       } else {
         // Otherwise, get gym code
         const { data: codeData, error: codeError } = await supabase
@@ -104,10 +108,16 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
     }
 
     if (membershipType === "10er Karte") {
+      const isExpired = !!validUntil && new Date(validUntil) < new Date();
       return (
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-1">Credits</p>
-          <p className="text-2xl font-bold text-primary">{credits}</p>
+          <p className="text-2xl font-bold text-primary">{isExpired ? 0 : credits}</p>
+          {validUntil && (
+            <p className={`text-[10px] ${isExpired ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {isExpired ? 'abgelaufen' : `bis ${new Date(validUntil).toLocaleDateString('de-DE')}`}
+            </p>
+          )}
         </div>
       );
     }
@@ -117,17 +127,28 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
 
   const popoverContent = () => {
     if (membershipType === "10er Karte") {
+      const isExpired = !!validUntil && new Date(validUntil) < new Date();
       return (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">Mitgliedschaftsdetails</h3>
           <div className="space-y-2">
             <div>
               <p className="text-sm text-muted-foreground">Plan</p>
-              <p className="font-medium">10er Karte</p>
+              <p className="font-medium">10er Karte ({cardType === 'ten_weeks' ? '10 Wochen' : '1 Jahr'})</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Verbleibende Credits</p>
-              <p className="font-medium text-2xl text-primary">{credits}</p>
+              <p className="font-medium text-2xl text-primary">{isExpired ? 0 : credits}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Gültigkeit</p>
+              <p className={`font-medium ${isExpired ? 'text-destructive' : ''}`}>
+                {validUntil
+                  ? isExpired
+                    ? `Abgelaufen am ${new Date(validUntil).toLocaleDateString('de-DE')}`
+                    : `Gültig bis ${new Date(validUntil).toLocaleDateString('de-DE')}`
+                  : 'Startet mit deiner ersten Buchung'}
+              </p>
             </div>
             <p className="text-xs text-muted-foreground">
               Credits werden bei Kursanmeldungen verwendet

@@ -50,10 +50,15 @@ serve(async (req) => {
         registration_deadline_minutes,
         max_participants,
         is_cancelled,
-        cancelled_due_to_low_attendance
+        cancelled_due_to_low_attendance,
+        is_event
       `)
       .eq('is_cancelled', false)
       .eq('cancelled_due_to_low_attendance', false)
+      // Event courses are never auto-cancelled for low attendance:
+      // external guests are not in course_registrations and would get
+      // no cancellation notification.
+      .eq('is_event', false)
       .gte('course_date', nowDate)
       .order('course_date', { ascending: true })
       .order('start_time', { ascending: true })

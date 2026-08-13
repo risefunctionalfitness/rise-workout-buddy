@@ -12,6 +12,9 @@ interface MembershipLimitDisplayProps {
 export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLimitDisplayProps) => {
   const [weeklyCount, setWeeklyCount] = useState<number>(0)
   const [credits, setCredits] = useState<number>(0)
+  const [cardType, setCardType] = useState<'year' | 'ten_weeks'>('year')
+  const [validityStart, setValidityStart] = useState<string | null>(null)
+  const [validUntil, setValidUntil] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -25,15 +28,18 @@ export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLim
           setWeeklyCount(data)
         }
       } else if (membershipType === '10er Karte') {
-        // Fetch remaining credits
+        // Fetch remaining credits incl. card type and validity window
         const { data, error } = await supabase
           .from('membership_credits')
-          .select('credits_remaining')
+          .select('credits_remaining, card_type, validity_start, valid_until')
           .eq('user_id', userId)
           .single()
-        
+
         if (!error && data) {
           setCredits(data.credits_remaining)
+          setCardType((data.card_type as 'year' | 'ten_weeks') || 'year')
+          setValidityStart(data.validity_start)
+          setValidUntil(data.valid_until)
         }
       }
       setLoading(false)
@@ -89,6 +95,13 @@ export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLim
   }
 
   if (membershipType === '10er Karte') {
+    const isExpired = !!validUntil && new Date(validUntil) < new Date()
+    const displayCredits = isExpired ? 0 : credits
+    const cardTypeLabel = cardType === 'ten_weeks' ? '10 Wochen' : '1 Jahr'
+    const remainingDays = validUntil
+      ? Math.max(0, Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : null
+
     return (
       <Card className="w-full">
         <CardContent className="p-4">
@@ -97,23 +110,35 @@ export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLim
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Verfügbare Credits</span>
-                <Badge variant={credits > 0 ? "default" : "destructive"}>
-                  {credits} Credits
+                <Badge variant={displayCredits > 0 ? "default" : "destructive"}>
+                  {displayCredits} Credits
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                {credits > 0 
-                  ? `Du kannst dich noch ${credits}x für Kurse anmelden`
-                  : "Keine Credits verfügbar - bitte wende dich an das Team"
+                {isExpired
+                  ? `Deine 10er Karte ist am ${new Date(validUntil!).toLocaleDateString('de-DE')} abgelaufen`
+                  : displayCredits > 0
+                    ? `Du kannst dich noch ${displayCredits}x für Kurse anmelden`
+                    : "Keine Credits verfügbar - bitte wende dich an das Team"
                 }
               </p>
+              {!isExpired && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {validUntil
+                    ? `Gültig bis ${new Date(validUntil).toLocaleDateString('de-DE')}${remainingDays !== null ? ` (noch ${remainingDays} Tage)` : ''}`
+                    : `Gültigkeit (${cardTypeLabel}) startet mit deiner ersten Buchung`}
+                </p>
+              )}
             </div>
           </div>
-          {credits === 0 && (
+          {(displayCredits === 0 || isExpired) && (
             <div className="mt-3 p-2 bg-destructive/10 rounded-md flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
               <span className="text-sm text-destructive">
-                Keine Credits - Aufladen am Empfang möglich
+                {isExpired
+                  ? "10er Karte abgelaufen - neue Karte am Empfang erhältlich"
+                  : "Keine Credits - Aufladen am Empfang möglich"}
               </span>
             </div>
           )}
