@@ -717,31 +717,31 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                       onClick={() => handleCourseClick(course)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
-                              <h4 className="font-medium truncate">{course.title}</h4>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-2 mb-1 min-w-0">
+                              <h4 className="font-medium line-clamp-2 break-words">{course.title}</h4>
                               {course.is_event && (
-                                <Badge className="text-xs flex items-center gap-1 bg-primary text-primary-foreground">
-                                  <PartyPopper className="h-3 w-3" />
+                                <Badge className="text-xs flex items-center gap-1 shrink-0 bg-primary text-primary-foreground">
+                                  <PartyPopper className="h-3 w-3 shrink-0" />
                                   Event
                                 </Badge>
                               )}
                               {course.cancelled_due_to_low_attendance && (
-                                <Badge variant="destructive" className="text-xs flex items-center gap-1">
-                                  <AlertTriangle className="h-3 w-3" />
+                                <Badge variant="destructive" className="text-xs flex items-center gap-1 shrink-0">
+                                  <AlertTriangle className="h-3 w-3 shrink-0" />
                                   Abgesagt
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
+                                <Clock className="h-3 w-3 shrink-0" />
                                 {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
                               </div>
-                              <div className="flex items-center gap-1">
-                                <UserIcon className="h-3 w-3" />
-                                {course.trainer}
+                              <div className="flex items-center gap-1 min-w-0">
+                                <UserIcon className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{course.trainer}</span>
                               </div>
                             </div>
                             {course.strength_exercise && (
@@ -750,7 +750,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                               </Badge>
                             )}
                           </div>
-                          <div className="flex flex-col items-end gap-1">
+                          <div className="flex flex-col items-end gap-1 shrink-0">
                             {(() => {
                               const percentage = (course.registered_count / course.max_participants) * 100;
                               let badgeColor = "bg-green-500";
@@ -795,7 +795,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
       {/* Course Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-md max-h-[90vh] flex flex-col overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{selectedCourse?.title}</DialogTitle>
           </DialogHeader>
@@ -827,10 +827,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               {selectedCourse.is_event && (
                 <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 text-sm space-y-1">
                   <p className="font-medium flex items-center gap-1">
-                    <PartyPopper className="h-4 w-4 text-primary" />
-                    Event – offen für alle
+                    <PartyPopper className="h-4 w-4 shrink-0 text-primary" />
+                    <span>Event – offen für alle</span>
                   </p>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-xs break-words">
                     Zählt nicht als reguläres Training: kein Wochenlimit, kein Credit-Abzug.
                   </p>
                 </div>
@@ -845,11 +845,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
               {/* Participants */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-sm text-muted-foreground">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="font-medium text-sm text-muted-foreground min-w-0 truncate">
                     Teilnehmer ({participants.filter(p => p.status === 'registered').length}/{selectedCourse.max_participants})
                   </h4>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     {reliabilityScore && !isAdmin && (
                       <ReliabilityScoreBadge score={reliabilityScore} />
                     )}

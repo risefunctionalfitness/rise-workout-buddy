@@ -233,31 +233,31 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                   onClick={() => onCourseClick(course)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 whitespace-nowrap overflow-hidden">
-                          <h4 className="font-medium truncate">{course.title}</h4>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2 mb-1 min-w-0">
+                          <h4 className="font-medium line-clamp-2 break-words">{course.title}</h4>
                           {course.is_event && (
-                            <Badge className="text-xs flex items-center gap-1 bg-primary text-primary-foreground">
-                              <PartyPopper className="h-3 w-3" />
+                            <Badge className="text-xs flex items-center gap-1 shrink-0 bg-primary text-primary-foreground">
+                              <PartyPopper className="h-3 w-3 shrink-0" />
                               Event
                             </Badge>
                           )}
                           {course.cancelled_due_to_low_attendance && (
-                            <Badge variant="destructive" className="text-xs flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
+                            <Badge variant="destructive" className="text-xs flex items-center gap-1 shrink-0">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
                               Abgesagt
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                            <Clock className="h-3 w-3 shrink-0" />
                             {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {course.trainer}
+                          <div className="flex items-center gap-1 min-w-0">
+                            <MapPin className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{course.trainer}</span>
                           </div>
                         </div>
                         {course.strength_exercise && (
@@ -266,7 +266,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                           </Badge>
                         )}
                       </div>
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex flex-col items-end gap-1 shrink-0">
                         {(() => {
                           const percentage = (course.registered_count / course.max_participants) * 100;
                           let badgeColor = "bg-green-500";
