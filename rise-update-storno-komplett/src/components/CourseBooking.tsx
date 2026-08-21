@@ -1,0 +1,1225 @@
+import { useState, useEffect, useRef } from "react"
+import { User } from "@supabase/supabase-js"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Calendar, ChevronLeft, ChevronRight, Clock, Users, User as UserIcon, AlertTriangle, UserX, ArrowRightLeft, PartyPopper } from "lucide-react"
+import { supabase } from "@/integrations/supabase/client"
+import { MembershipBadge } from "@/components/MembershipBadge"
+import { MembershipLimitDisplay } from "@/components/MembershipLimitDisplay"
+import { ProfileImageViewer } from "@/components/ProfileImageViewer"
+import { CoursesCalendarView } from "@/components/CoursesCalendarView"
+import { CourseInvitationButton } from "@/components/CourseInvitationButton"
+import { AddToCalendarButton } from "@/components/AddToCalendarButton"
+import { ReliabilityScoreBadge } from "@/components/ReliabilityScoreBadge"
+import { FairnessInfoDialog } from "@/components/FairnessInfoDialog"
+import { ReliabilityScoreScale } from "@/components/ReliabilityScoreScale"
+import { FairnessCheckDialog } from "@/components/FairnessCheckDialog"
+import { DayCourseDialog } from "@/components/DayCourseDialog"
+import { useReliabilityScore } from "@/hooks/useReliabilityScore"
+import { timezone } from "@/lib/timezone"
+import { toast } from "sonner"
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
+import { de } from "date-fns/locale"
+
+interface Course {
+  id: string
+  title: string
+  trainer: string
+  trainer_user_id?: string | null
+  strength_exercise?: string
+  max_participants: number
+  course_date: string
+  start_time: string
+  end_time: string
+  duration_minutes: number
+  registration_deadline_minutes: number
+  cancellation_deadline_minutes: number
+  registered_count: number
+  waitlist_count: number
+  is_registered: boolean
+  is_waitlisted: boolean
+  color?: string
+  cancelled_due_to_low_attendance?: boolean
+  is_event?: boolean
+  event_price?: number | null
+  hide_participants?: boolean
+}
+
+interface CourseBookingProps {
+  user: User
+}
+
+export const CourseBooking = ({ user }: CourseBookingProps) => {
+  const [currentWeek, setCurrentWeek] = useState(new Date())
+  const [courses, setCourses] = useState<Course[]>([])
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [participants, setParticipants] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [isTrainer, setIsTrainer] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [userMembershipType, setUserMembershipType] = useState<string>('')
+  const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
+  const [activeTab, setActiveTab] = useState<string>("liste")
+  const scrollPositionRef = useRef<number>(0)
+  const [fairnessCheckOpen, setFairnessCheckOpen] = useState(false)
+  const [pendingCancellationId, setPendingCancellationId] = useState<string | null>(null)
+  const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false)
+  const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null)
+  const [rebookDate, setRebookDate] = useState<string | null>(null)
+  const [rebookDialogOpen, setRebookDialogOpen] = useState(false)
+  const [rebookCourseId, setRebookCourseId] = useState<string | null>(null)
+  // Tracks the timestamp of recent registrations per course (for "accidental cancel" detection)
+  const recentRegistrationsRef = useRef<Map<string, number>>(new Map())
+  const { data: reliabilityScore, refetch: refetchScore } = useReliabilityScore(user.id)
+
+  // Event courses can hide WHO is registered from members (only the count
+  // stays visible). Admins always see the full list.
+  const areParticipantsHidden = (course: Course | null) =>
+    !!course?.is_event && !!course?.hide_participants && !isAdmin
+
+  // Kurs vorbei? (bleibt bis Mitternacht in der Liste stehen)
+  const hasCourseEnded = (course: Course) =>
+    new Date(`${course.course_date}T${course.end_time}`) < new Date()
+
+  useEffect(() => {
+    let mounted = true
+    
+    const loadData = async () => {
+      if (!mounted) return
+      await Promise.all([loadCourses(), checkUserRoles()])
+    }
+    
+    loadData()
+    
+    return () => {
+      mounted = false
+    }
+  }, [currentWeek])
+
+  const checkUserRoles = async () => {
+    try {
+      const [rolesResult, profileResult] = await Promise.all([
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id),
+        supabase
+          .from('profiles')
+          .select('membership_type')
+          .eq('user_id', user.id)
+          .single()
+      ])
+      
+      if (rolesResult.data) {
+        const roles = rolesResult.data.map(r => r.role)
+        setIsTrainer(roles.includes('trainer'))
+        setIsAdmin(roles.includes('admin'))
+      }
+      
+      if (profileResult.data) {
+        setUserMembershipType(profileResult.data.membership_type || '')
+      }
+    } catch (error) {
+      setIsTrainer(false)
+      setIsAdmin(false)
+    }
+  }
+
+  const loadCourses = async () => {
+    try {
+      setLoading(true)
+
+      // Ensure valid session before querying (prevents iOS auth token issues)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        const { error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          console.warn('Session refresh failed:', refreshError.message)
+        }
+      }
+
+      // Get upcoming courses and limit to next 10 unique course days
+      const now = new Date()
+      // Lokales Datum des Geraets (nicht UTC), damit der Tageswechsel um
+      // Mitternacht Ortszeit passiert und nicht schon um 02:00
+      const nowDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+      const [coursesResult, userRegistrationsResult] = await Promise.all([
+        supabase
+          .from('courses')
+          .select(`
+            *,
+            color,
+            cancelled_due_to_low_attendance,
+            course_registrations(status)
+          `)
+          .eq('is_cancelled', false)
+          // Show cancelled_due_to_low_attendance courses too (with badge)
+          // Kurse des heutigen Tages bleiben den ganzen Tag sichtbar, auch wenn
+          // sie schon vorbei sind - so kann man nachher noch sehen, wer da war.
+          .gte('course_date', nowDate)
+          .order('course_date', { ascending: true })
+          .order('start_time', { ascending: true }),
+        supabase
+          .from('course_registrations')
+          .select('course_id, status')
+          .eq('user_id', user.id)
+          .in('status', ['registered', 'waitlist'])
+      ])
+
+      if (coursesResult.error) throw coursesResult.error
+      if (userRegistrationsResult.error) throw userRegistrationsResult.error
+
+      // Get course IDs to fetch guest registrations
+      const courseIds = (coursesResult.data || []).map(c => c.id)
+      
+      // Fetch guest registrations for all courses (guard against empty array)
+      let guestRegistrations: { course_id: string; status: string }[] = []
+      if (courseIds.length > 0) {
+        const { data } = await supabase
+          .from('guest_registrations')
+          .select('course_id, status')
+          .in('course_id', courseIds)
+          .eq('status', 'registered')
+        guestRegistrations = data || []
+      }
+
+      // Process courses data including guest counts
+      const processedCourses = (coursesResult.data || []).map(course => {
+        const registrations = course.course_registrations || []
+        const regularRegisteredCount = registrations.filter(r => r.status === 'registered').length
+        const waitlist_count = registrations.filter(r => r.status === 'waitlist').length
+        
+        // Add guest count to registered count
+        const guestCount = guestRegistrations.filter(g => g.course_id === course.id).length
+        const registered_count = regularRegisteredCount + guestCount
+        
+        const userReg = userRegistrationsResult.data?.find(r => r.course_id === course.id)
+        const is_registered = userReg?.status === 'registered'
+        const is_waitlisted = userReg?.status === 'waitlist'
+
+        return {
+          ...course,
+          registered_count,
+          waitlist_count,
+          is_registered,
+          is_waitlisted
+        }
+      })
+
+      // Get only the next 10 unique course days
+      const uniqueDates = new Set<string>()
+      const filteredCourses = processedCourses.filter(course => {
+        if (uniqueDates.size >= 10) return false
+        if (!uniqueDates.has(course.course_date)) {
+          uniqueDates.add(course.course_date)
+          return true
+        }
+        return uniqueDates.has(course.course_date)
+      })
+
+      setCourses(filteredCourses)
+    } catch (error) {
+      console.error('Error loading courses:', error)
+      toast.error('Fehler beim Laden der Kurse')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadParticipants = async (courseId: string) => {
+    try {
+      console.log('Loading participants for course:', courseId)
+      
+      // First get the registrations (cast to include attendance_status)
+      const { data: registrations, error: regError } = await supabase
+        .from('course_registrations')
+        .select('id, status, user_id, registered_at')
+        .eq('course_id', courseId)
+        .order('registered_at', { ascending: true }) as { data: Array<{ id: string; status: string; user_id: string; registered_at: string; attendance_status?: string | null }> | null; error: any }
+
+      if (regError) {
+        console.error('Error loading registrations:', regError)
+        throw regError
+      }
+
+      // Then get the profiles for these users
+      const userIds = registrations?.map(r => r.user_id) || []
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, nickname, first_name, membership_type, avatar_url')
+        .in('user_id', userIds)
+
+      if (profileError) {
+        console.error('Error loading profiles:', profileError)
+        throw profileError
+      }
+
+      // Combine the data
+      const participantsWithNames = registrations?.map(reg => ({
+        ...reg,
+        profiles: profiles?.find(p => p.user_id === reg.user_id) || { display_name: 'Unbekannt' },
+        isGuest: false
+      })) || []
+
+      // Load guest registrations (Drop-Ins and Probetrainings)
+      const { data: guestRegistrations, error: guestError } = await supabase
+        .from('guest_registrations')
+        .select('id, guest_name, booking_type, created_at')
+        .eq('course_id', courseId)
+        .eq('status', 'registered')
+        .order('created_at', { ascending: true })
+
+      if (guestError) {
+        console.error('Error loading guest registrations:', guestError)
+      }
+
+      // Convert guest registrations to participant format
+      const guestParticipants = (guestRegistrations || []).map(guest => ({
+        id: guest.id,
+        user_id: guest.id,
+        status: 'registered',
+        registered_at: guest.created_at,
+        profiles: {
+          display_name: guest.guest_name,
+          nickname: null,
+          membership_type: guest.booking_type === 'event'
+            ? 'Event-Gast'
+            : guest.booking_type === 'drop_in' ? 'Drop-In' : 'Probetraining',
+          avatar_url: null
+        },
+        isGuest: true
+      }))
+
+      // Combine regular participants and guests
+      const allParticipants = [...participantsWithNames, ...guestParticipants]
+      console.log('Loaded participants including guests:', allParticipants)
+      setParticipants(allParticipants)
+    } catch (error) {
+      console.error('Error loading participants:', error)
+      toast.error('Fehler beim Laden der Teilnehmer')
+      setParticipants([]) // Set empty array on error
+    }
+  }
+
+  const handleCourseClick = async (course: Course) => {
+    // Save scroll position before opening dialog
+    scrollPositionRef.current = window.scrollY
+    setSelectedCourse(course)
+    await loadParticipants(course.id)
+    setDialogOpen(true)
+  }
+
+  // Restore scroll position after dialog closes
+  useEffect(() => {
+    if (!dialogOpen && scrollPositionRef.current > 0) {
+      setTimeout(() => {
+        window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' })
+      }, 50)
+    }
+  }, [dialogOpen])
+
+  const handleRegistration = async (courseId: string, skipDuplicateCheck = false) => {
+    try {
+      const course = courses.find(c => c.id === courseId)
+      if (!course) return
+
+      // Check for same-day registration (warning, not blocking)
+      if (!skipDuplicateCheck) {
+        const existingRegistration = courses.find(c => 
+          c.course_date === course.course_date && 
+          c.id !== courseId && 
+          (c.is_registered || c.is_waitlisted) &&
+          // bereits beendete Kurse des Tages nicht mitzaehlen
+          !hasCourseEnded(c)
+        )
+        if (existingRegistration) {
+          setPendingRegistrationId(courseId)
+          setDuplicateWarningOpen(true)
+          return
+        }
+      }
+
+      // Anmeldefrist zuerst pruefen - sonst kommt unten die falsche Meldung
+      // ("Limit erreicht"), obwohl nur die Frist abgelaufen ist
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('registration_deadline_minutes, course_date, start_time')
+        .eq('id', courseId)
+        .single()
+
+      if (courseError) throw courseError
+
+      // Kursbeginn in deutscher Zeit, damit App und Server dieselbe Frist sehen
+      const courseStart = timezone.fromBerlinTime(
+        new Date(`${courseData.course_date}T${courseData.start_time}`)
+      )
+      const deadlineTime = new Date(courseStart.getTime() - (courseData.registration_deadline_minutes * 60 * 1000))
+
+      if (new Date() >= deadlineTime) {
+        toast.error(`Die Anmeldefrist ist bereits ${courseData.registration_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+        return
+      }
+
+      // Check if user can register (limits and credits)
+      const { data: canRegister, error: checkError } = await supabase
+        .rpc('can_user_register_for_course', {
+          user_id_param: user.id,
+          course_id_param: courseId
+        })
+
+      if (checkError || !canRegister) {
+        if (userMembershipType === 'Basic Member') {
+          toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
+        } else if (userMembershipType === '10er Karte') {
+          toast.error("Keine Buchung möglich: Deine 10er Karte ist abgelaufen oder du hast keine Credits mehr. Bitte melde dich am Empfang.")
+        } else {
+          toast.error("Anmeldung nicht möglich")
+        }
+        return
+      }
+
+      // Server-side atomic registration (handles capacity check + insert/update)
+      const { data: result, error: rpcError } = await supabase
+        .rpc('register_for_course', {
+          p_user_id: user.id,
+          p_course_id: courseId
+        })
+
+      if (rpcError) throw rpcError
+
+      const newStatus = (result as any)?.status as string
+      const isWaitlist = newStatus === 'waitlist'
+
+      // Immediately update local state
+      setCourses(prev => prev.map(c => 
+        c.id === courseId 
+          ? { 
+              ...c, 
+              is_registered: newStatus === 'registered',
+              is_waitlisted: newStatus === 'waitlist',
+              registered_count: newStatus === 'registered' ? c.registered_count + 1 : c.registered_count,
+              waitlist_count: newStatus === 'waitlist' ? c.waitlist_count + 1 : c.waitlist_count
+            }
+          : c
+      ))
+
+      // Update selected course state
+      if (selectedCourse?.id === courseId) {
+        setSelectedCourse(prev => prev ? {
+          ...prev,
+          is_registered: newStatus === 'registered',
+          is_waitlisted: newStatus === 'waitlist',
+          registered_count: newStatus === 'registered' ? prev.registered_count + 1 : prev.registered_count,
+          waitlist_count: newStatus === 'waitlist' ? prev.waitlist_count + 1 : prev.waitlist_count
+        } : null)
+      }
+
+      // Remember registration time for accidental-cancel detection
+      recentRegistrationsRef.current.set(courseId, Date.now())
+
+      toast.success(isWaitlist ? 'Du wurdest auf die Warteliste gesetzt' : 'Für Kurs angemeldet')
+      
+      // Dispatch event to update other components
+      window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+      
+      await loadCourses()
+      if (selectedCourse?.id === courseId) {
+        await loadParticipants(courseId)
+      }
+    } catch (error) {
+      console.error('Error registering for course:', error)
+      toast.error('Fehler bei der Anmeldung')
+    }
+  }
+
+  const canCancelCourse = (course: Course) => {
+    const now = new Date()
+    const courseDateTime = new Date(`${course.course_date}T${course.start_time}`)
+    const cancellationDeadline = new Date(courseDateTime.getTime() - (course.cancellation_deadline_minutes * 60 * 1000))
+    return now < cancellationDeadline
+  }
+
+  const inititateCancellation = (courseId: string, course?: Course) => {
+    const targetCourse = course || selectedCourse
+    if (!targetCourse) return
+
+    if (!canCancelCourse(targetCourse)) {
+      toast.error(`Die Abmeldefrist ist bereits ${targetCourse.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+      return
+    }
+
+    // Skip fairness check for waitlist cancellations
+    if (targetCourse.is_waitlisted) {
+      handleCancellation(courseId, course)
+      return
+    }
+
+    // Skip fairness warning for accidental cancellations.
+    // 25 s statt 30 s: die Datenbank misst ab dem Schreibzeitpunkt, der Client
+    // erst ab der Antwort - so ist das Fenster hier nie groesser als dort.
+    const registeredAt = recentRegistrationsRef.current.get(courseId)
+    if (registeredAt && Date.now() - registeredAt < 25000) {
+      handleCancellation(courseId, course)
+      return
+    }
+
+    if (reliabilityScore && !isAdmin) {
+      setPendingCancellationId(courseId)
+      setFairnessCheckOpen(true)
+      return
+    }
+
+    handleCancellation(courseId, course)
+  }
+
+  const handleCancellation = async (courseId: string, course?: Course) => {
+    const targetCourse = course || selectedCourse
+    if (!targetCourse) return
+
+    if (!canCancelCourse(targetCourse)) {
+      toast.error(`Die Abmeldefrist ist bereits ${targetCourse.cancellation_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+      return
+    }
+
+    try {
+      // Use waitlist_cancelled for waitlist cancellations (doesn't affect reliability score)
+      const newStatus = targetCourse.is_waitlisted ? 'waitlist_cancelled' : 'cancelled'
+      
+      const { error } = await supabase
+        .from('course_registrations')
+        .update({ status: newStatus })
+        .eq('course_id', courseId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      // Immediately update local state
+      setCourses(prev => prev.map(c => 
+        c.id === courseId 
+          ? { 
+              ...c, 
+              is_registered: false,
+              is_waitlisted: false,
+              registered_count: c.is_registered ? Math.max(0, c.registered_count - 1) : c.registered_count,
+              waitlist_count: c.is_waitlisted ? Math.max(0, c.waitlist_count - 1) : c.waitlist_count
+            }
+          : c
+      ))
+
+      // Update selected course state
+      if (selectedCourse?.id === courseId) {
+        setSelectedCourse(prev => prev ? {
+          ...prev,
+          is_registered: false,
+          is_waitlisted: false,
+          registered_count: prev.is_registered ? Math.max(0, prev.registered_count - 1) : prev.registered_count,
+          waitlist_count: prev.is_waitlisted ? Math.max(0, prev.waitlist_count - 1) : prev.waitlist_count
+        } : null)
+      }
+
+      toast.success('Anmeldung erfolgreich storniert')
+      
+      // Refresh reliability score after cancellation
+      refetchScore()
+      
+      // Dispatch event to update other components  
+      window.dispatchEvent(new CustomEvent('courseRegistrationChanged'))
+      
+      await loadCourses()
+      if (selectedCourse?.id === courseId) {
+        await loadParticipants(courseId)
+      }
+    } catch (error) {
+      console.error('Error cancelling registration:', error)
+      toast.error('Fehler bei der Stornierung')
+    }
+  }
+
+  // Check if attendance can be marked (only for courses today)
+  const canMarkAttendance = (courseDate: string) => {
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    return courseDate === today
+  }
+
+  const markNoShow = async (participant: any) => {
+    try {
+      // Update attendance status in database
+      const { error: updateError } = await supabase
+        .from('course_registrations')
+        .update({ 
+          attendance_status: 'no_show',
+          attendance_marked_at: new Date().toISOString(),
+          attendance_marked_by: user.id
+        } as any)
+        .eq('id', participant.id)
+
+      if (updateError) {
+        console.error('Error updating attendance:', updateError)
+        throw updateError
+      }
+
+      // Trigger no-show notification via Edge Function
+      try {
+        const { error: notifyError } = await supabase.functions.invoke('notify-no-show', {
+          body: { 
+            registration_id: participant.id,
+            course_id: selectedCourse?.id,
+            user_id: participant.user_id
+          }
+        })
+        if (notifyError) {
+          console.error('Notify no-show error:', notifyError)
+          toast.warning('Anwesenheit gespeichert, aber Email konnte nicht gesendet werden')
+        }
+      } catch (notifyErr) {
+        console.error('Notify no-show exception:', notifyErr)
+        toast.warning('Anwesenheit gespeichert, aber Email konnte nicht gesendet werden')
+      }
+
+      toast.success(`${participant.profiles?.display_name || 'Teilnehmer'} als nicht erschienen markiert`)
+      if (selectedCourse) {
+        await loadParticipants(selectedCourse.id)
+      }
+    } catch (error) {
+      console.error('Error marking no-show:', error)
+      toast.error('Fehler beim Speichern der Anwesenheit')
+    }
+  }
+
+  const undoNoShow = async (participant: any) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('course_registrations')
+        .update({ 
+          attendance_status: null,
+          attendance_marked_at: null,
+          attendance_marked_by: null
+        } as any)
+        .eq('id', participant.id)
+
+      if (updateError) {
+        console.error('Error undoing no-show:', updateError)
+        throw updateError
+      }
+
+      toast.success(`${participant.profiles?.display_name || 'Teilnehmer'} wieder als anwesend markiert`)
+      if (selectedCourse) {
+        await loadParticipants(selectedCourse.id)
+      }
+    } catch (error) {
+      console.error('Error undoing no-show:', error)
+      toast.error('Fehler beim Zurücksetzen der Anwesenheit')
+    }
+  }
+
+  // Remove week navigation - we only show next 10 courses
+
+  // Group courses by date for display
+  const groupedCourses = courses.reduce((acc, course) => {
+    const date = course.course_date
+    if (!acc[date]) {
+      acc[date] = []
+    }
+    acc[date].push(course)
+    return acc
+  }, {} as Record<string, Course[]>)
+
+  const isPastDate = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const courseDate = new Date(date)
+    courseDate.setHours(0, 0, 0, 0)
+    return courseDate < today
+  }
+
+  const getStatusColor = (course: Course) => {
+    if (course.is_registered) return "bg-green-500"
+    if (course.is_waitlisted) return "bg-yellow-500"
+    if (course.registered_count >= course.max_participants) return "bg-red-500"
+    return "bg-blue-500"
+  }
+
+  const getStatusText = (course: Course) => {
+    if (course.is_registered) return "Angemeldet"
+    if (course.is_waitlisted) return "Warteliste"
+    if (course.registered_count >= course.max_participants) return "Ausgebucht"
+    return "Verfügbar"
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4 space-y-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Lade Kurse...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-4 space-y-4">
+      <FairnessInfoDialog userId={user.id} />
+      {/* Membership limits display for Basic Member and 10er Karte */}
+      {(userMembershipType === 'Basic Member' || userMembershipType === '10er Karte') && (
+        <MembershipLimitDisplay 
+          userId={user.id} 
+          membershipType={userMembershipType} 
+        />
+      )}
+      
+      {/* Header */}
+      <div className="flex items-center justify-center relative">
+        <h2 className="text-xl font-semibold mb-4">Kurse</h2>
+        {reliabilityScore && !isAdmin && (
+          <div className="absolute right-0 top-1">
+            <ReliabilityScoreBadge score={reliabilityScore} variant="detailed" userId={user.id} />
+          </div>
+        )}
+      </div>
+      
+      {/* Tab Navigation */}
+      <div className="flex justify-center items-center gap-8 mb-6">
+        <button
+          onClick={() => setActiveTab("liste")}
+          className={`text-base font-medium pb-1 transition-colors ${
+            activeTab === "liste"
+              ? "text-primary border-b-2 border-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Liste
+        </button>
+        <button
+          onClick={() => setActiveTab("kalender")}
+          className={`text-base font-medium pb-1 transition-colors ${
+            activeTab === "kalender"
+              ? "text-primary border-b-2 border-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Kalender
+        </button>
+      </div>
+      
+      {activeTab === "liste" ? (
+        <div className="space-y-4 animate-in fade-in-50 slide-in-from-left-5 duration-300">
+          {/* Courses List */}
+          <div className="grid grid-cols-1 gap-4 pb-24">
+            {Object.entries(groupedCourses).map(([date, dayCourses]) => (
+              <div key={date} className="space-y-2">
+                <h3 className="font-medium text-sm text-muted-foreground">
+                  {format(parseISO(date), 'EEEE, dd.MM.yyyy', { locale: de })}
+                </h3>
+                <div className="space-y-2">
+                  {dayCourses.map(course => (
+                    <Card 
+                      key={course.id} 
+                      className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+                        course.is_registered 
+                          ? 'border-green-500 border-2' 
+                          : ''
+                      } ${course.cancelled_due_to_low_attendance || hasCourseEnded(course) ? 'opacity-60' : ''}`}
+                      style={{
+                        borderLeft: `8px solid ${course.color || '#f3f4f6'}`
+                      }}
+                      onClick={() => handleCourseClick(course)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-2 mb-1 min-w-0">
+                              <h4 className="font-medium line-clamp-2 break-words">{course.title}</h4>
+                              {course.is_event && (
+                                <Badge className="text-xs flex items-center gap-1 shrink-0 bg-primary text-primary-foreground">
+                                  <PartyPopper className="h-3 w-3 shrink-0" />
+                                  Event
+                                </Badge>
+                              )}
+                              {course.cancelled_due_to_low_attendance && (
+                                <Badge variant="destructive" className="text-xs flex items-center gap-1 shrink-0">
+                                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                                  Abgesagt
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3 shrink-0" />
+                                {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+                              </div>
+                              <div className="flex items-center gap-1 min-w-0">
+                                <UserIcon className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{course.trainer}</span>
+                              </div>
+                            </div>
+                            {course.strength_exercise && (
+                              <Badge variant="outline" className="text-xs mt-1 w-fit">
+                                {course.strength_exercise}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            {(() => {
+                              const percentage = (course.registered_count / course.max_participants) * 100;
+                              let badgeColor = "bg-green-500";
+                              if (course.cancelled_due_to_low_attendance) badgeColor = "bg-muted-foreground";
+                              else if (percentage >= 100) badgeColor = "bg-red-500";
+                              else if (percentage >= 75) badgeColor = "bg-[#edb408]";
+                              
+                              return (
+                                <Badge className={`text-white ${badgeColor}`}>
+                                  {course.registered_count}/{course.max_participants}
+                                </Badge>
+                              );
+                            })()}
+                            {course.waitlist_count > 0 && !course.cancelled_due_to_low_attendance && (
+                              <Badge style={{ backgroundColor: '#ff914d' }} className="text-white">
+                                WL {course.waitlist_count}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {courses.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                Keine kommenden Kurse verfügbar
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="animate-in fade-in-50 slide-in-from-right-5 duration-300">
+          <CoursesCalendarView 
+            user={user} 
+            onCourseClick={handleCourseClick}
+          />
+        </div>
+      )}
+
+      {/* Course Detail Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-md max-h-[90vh] flex flex-col overflow-x-hidden">
+          <DialogHeader>
+            <DialogTitle>{selectedCourse?.title}</DialogTitle>
+          </DialogHeader>
+          {selectedCourse && (
+            <div className="space-y-4 overflow-y-auto">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4" />
+                  {format(parseISO(selectedCourse.course_date), 'EEEE, dd.MM.yyyy', { locale: de })}
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4" />
+                  {selectedCourse.start_time.slice(0, 5)} - {selectedCourse.end_time.slice(0, 5)}
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <UserIcon className="h-4 w-4" />
+                  Trainer: {selectedCourse.trainer}
+                </div>
+                {selectedCourse.strength_exercise && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Badge variant="outline">
+                      Kraftteil: {selectedCourse.strength_exercise}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Event course info */}
+              {selectedCourse.is_event && (
+                <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 text-sm space-y-1">
+                  <p className="font-medium flex items-center gap-1">
+                    <PartyPopper className="h-4 w-4 shrink-0 text-primary" />
+                    <span>Event – offen für alle</span>
+                  </p>
+                  <p className="text-muted-foreground text-xs break-words">
+                    Zählt nicht als reguläres Training: kein Wochenlimit, kein Credit-Abzug.
+                  </p>
+                </div>
+              )}
+
+              {/* Minimum participants warning (not relevant for events) */}
+              {!selectedCourse.is_event && participants.filter(p => p.status === 'registered').length < 3 && !selectedCourse.cancelled_due_to_low_attendance && (
+                <p className="text-xs text-muted-foreground">
+                  Min. 3 Teilnehmer erforderlich
+                </p>
+              )}
+
+              {/* Participants */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="font-medium text-sm text-muted-foreground min-w-0 truncate">
+                    Teilnehmer ({participants.filter(p => p.status === 'registered').length}/{selectedCourse.max_participants})
+                  </h4>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {reliabilityScore && !isAdmin && (
+                      <ReliabilityScoreBadge score={reliabilityScore} />
+                    )}
+                    <CourseInvitationButton
+                      courseId={selectedCourse.id}
+                      courseName={selectedCourse.title}
+                      courseDate={format(parseISO(selectedCourse.course_date), 'dd.MM.yyyy', { locale: de })}
+                      courseTime={`${selectedCourse.start_time.slice(0, 5)} - ${selectedCourse.end_time.slice(0, 5)}`}
+                    />
+                  </div>
+                </div>
+                {areParticipantsHidden(selectedCourse) ? (
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Die Teilnehmerliste ist bei diesem Event nicht öffentlich sichtbar.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                <div className="max-h-64 overflow-y-auto">
+                  {participants.filter(p => p.status === 'registered').length === 0 ? (
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <p className="text-muted-foreground">Keine Anmeldungen</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-3">
+                      {participants
+                        .filter(p => p.status === 'registered')
+                        .map((participant, index) => {
+                          const position = index + 1
+                           return (
+                             <div 
+                               key={participant.id || index} 
+                               className={`flex items-center justify-between p-3 rounded-lg ${
+                                 participant.attendance_status === 'no_show' 
+                                   ? 'bg-destructive/10 border border-destructive/30' 
+                                   : 'bg-muted/30'
+                               }`}
+                             >
+                               <div className="flex items-center gap-3 flex-wrap">
+                                  <div 
+                                    className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
+                                      imageUrl: participant.profiles.avatar_url, 
+                                      displayName: participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt' 
+                                    })}
+                                  >
+                                    {participant.profiles?.avatar_url ? (
+                                      <img 
+                                        src={participant.profiles.avatar_url} 
+                                        alt="Avatar" 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="text-xs font-medium">
+                                        {(participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || '?').charAt(0)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className={`font-medium ${participant.attendance_status === 'no_show' ? 'line-through text-muted-foreground' : ''}`}>
+                                    {participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt'}
+                                  </span>
+                                  {participant.isGuest ? (
+                                    <Badge 
+                                      variant={participant.profiles?.membership_type === 'Drop-In' ? 'destructive' : 'default'}
+                                      className={participant.profiles?.membership_type === 'Probetraining' ? 'bg-green-500 text-white' : ''}
+                                    >
+                                      {participant.profiles?.membership_type}
+                                    </Badge>
+                                  ) : participant.attendance_status === 'no_show' ? (
+                                    <Badge variant="destructive" className="text-xs">
+                                      Nicht erschienen
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">
+                                      Angemeldet
+                                    </span>
+                                  )}
+                               </div>
+                               <div className="flex items-center gap-2">
+                                 {/* Attendance buttons - for admins or trainers assigned to this course, for today and future courses - not for guests */}
+                                 {!participant.isGuest && (isAdmin || (isTrainer && selectedCourse.trainer_user_id === user.id)) && canMarkAttendance(selectedCourse.course_date) && (
+                                   participant.attendance_status === 'no_show' ? (
+                                     <Button
+                                       variant="outline"
+                                       size="sm"
+                                       onClick={() => undoNoShow(participant)}
+                                       className="text-xs"
+                                     >
+                                       Zurücksetzen
+                                     </Button>
+                                   ) : (
+                                     <Button
+                                       variant="ghost"
+                                       size="icon"
+                                       onClick={() => markNoShow(participant)}
+                                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                       title="Als nicht erschienen markieren"
+                                     >
+                                       <UserX className="h-5 w-5" />
+                                     </Button>
+                                   )
+                                 )}
+                                 {isAdmin && !participant.isGuest && (
+                                   <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
+                                 )}
+                               </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  )}
+                </div>
+                )}
+
+                {!areParticipantsHidden(selectedCourse) && participants.filter(p => p.status === 'waitlist').length > 0 && (
+                  <div className="space-y-3">
+                    <h5 className="font-medium text-sm text-muted-foreground">
+                      Warteliste ({selectedCourse.waitlist_count})
+                    </h5>
+                    <div className="space-y-3">
+                      {participants
+                        .filter(p => p.status === 'waitlist')
+                        .map((participant, index) => {
+                          const position = index + 1
+                          return (
+                            <div key={index} className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: '#ff914d20', borderColor: '#ff914d40' }}>
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => participant.profiles?.avatar_url && setSelectedProfile({ 
+                                    imageUrl: participant.profiles.avatar_url, 
+                                    displayName: participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt' 
+                                  })}
+                                >
+                                  {participant.profiles?.avatar_url ? (
+                                    <img 
+                                      src={participant.profiles.avatar_url} 
+                                      alt="Avatar" 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-xs font-medium">
+                                      {(participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || '?').charAt(0)}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="font-medium">
+                                  {participant.profiles?.nickname || participant.profiles?.first_name || participant.profiles?.display_name || 'Unbekannt'}
+                                </span>
+                                <span className="text-xs text-yellow-700">
+                                  Warteliste #{position}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {isAdmin && (
+                                  <MembershipBadge type={participant.profiles?.membership_type || 'Member'} />
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2">
+                {selectedCourse.cancelled_due_to_low_attendance ? (
+                  <Button
+                    disabled
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    Kurs wurde abgesagt
+                  </Button>
+                ) : hasCourseEnded(selectedCourse) ? (
+                  <Button
+                    disabled
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    {selectedCourse.is_registered ? 'Kurs beendet - du warst angemeldet' : 'Kurs beendet'}
+                  </Button>
+                ) : selectedCourse.is_registered ? (
+                  <>
+                    <Button 
+                      variant="destructive" 
+                       onClick={() => inititateCancellation(selectedCourse.id)}
+                      disabled={!canCancelCourse(selectedCourse)}
+                      className="w-full"
+                    >
+                      {canCancelCourse(selectedCourse) ? 'Abmelden' : 'Abmeldefrist abgelaufen'}
+                    </Button>
+                    {canCancelCourse(selectedCourse) && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+                        onClick={() => {
+                          setDialogOpen(false)
+                          setRebookCourseId(selectedCourse.id)
+                          setRebookDate(selectedCourse.course_date)
+                          setRebookDialogOpen(true)
+                        }}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Umbuchen
+                      </Button>
+                    )}
+                    <AddToCalendarButton
+                      title={selectedCourse.title}
+                      startDate={selectedCourse.course_date}
+                      startTime={selectedCourse.start_time}
+                      endTime={selectedCourse.end_time}
+                      trainer={selectedCourse.trainer}
+                      variant="outline"
+                      size="default"
+                      className="w-full"
+                    />
+                  </>
+                ) : selectedCourse.is_waitlisted ? (
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => inititateCancellation(selectedCourse.id)}
+                    disabled={!canCancelCourse(selectedCourse)}
+                    className="w-full"
+                  >
+                    {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
+                  </Button>
+                ) : (() => {
+                  // Booking window restriction
+                  const isOutsideWindow = reliabilityScore && !isAdmin && (() => {
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')
+                    const maxDate = new Date(today)
+                    maxDate.setDate(maxDate.getDate() + reliabilityScore.bookingWindowDays)
+                    return courseDate > maxDate
+                  })()
+
+                  if (isOutsideWindow && reliabilityScore) {
+                    const availableFrom = new Date()
+                    const courseDate = new Date(selectedCourse.course_date + 'T00:00:00')
+                    const daysUntilCourse = Math.ceil((courseDate.getTime() - availableFrom.getTime()) / (1000 * 60 * 60 * 24))
+                    const availableDate = new Date(courseDate)
+                    availableDate.setDate(availableDate.getDate() - reliabilityScore.bookingWindowDays)
+                    return (
+                      <Button disabled className="w-full" variant="outline">
+                        Ab {format(availableDate, 'dd.MM.', { locale: de })} buchbar
+                      </Button>
+                    )
+                  }
+
+                  return (
+                    <Button 
+                      onClick={() => handleRegistration(selectedCourse.id)}
+                      className="w-full"
+                    >
+                      {selectedCourse.registered_count >= selectedCourse.max_participants 
+                        ? 'Auf Warteliste' 
+                        : 'Anmelden'
+                      }
+                    </Button>
+                  )
+                })()}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      <ProfileImageViewer
+        isOpen={!!selectedProfile}
+        onClose={() => setSelectedProfile(null)}
+        imageUrl={selectedProfile?.imageUrl || null}
+        displayName={selectedProfile?.displayName || ''}
+      />
+
+      {reliabilityScore && pendingCancellationId && (
+        <FairnessCheckDialog
+          open={fairnessCheckOpen}
+          onOpenChange={(open) => {
+            setFairnessCheckOpen(open)
+            if (!open) setPendingCancellationId(null)
+          }}
+          currentScore={reliabilityScore}
+          onConfirmCancel={() => {
+            if (pendingCancellationId) {
+              handleCancellation(pendingCancellationId)
+              setPendingCancellationId(null)
+            }
+          }}
+          onRebook={() => {
+            if (pendingCancellationId) {
+              const course = courses.find(c => c.id === pendingCancellationId)
+              if (!course) return
+              setDialogOpen(false)
+              setRebookCourseId(pendingCancellationId)
+              setRebookDate(course.course_date)
+              setRebookDialogOpen(true)
+              setPendingCancellationId(null)
+            }
+          }}
+        />
+      )}
+
+      {rebookDate && (
+        <DayCourseDialog
+          open={rebookDialogOpen}
+          onOpenChange={(open) => {
+            setRebookDialogOpen(open)
+            if (!open) {
+              setRebookDate(null)
+              setRebookCourseId(null)
+            }
+          }}
+          date={rebookDate}
+          user={user}
+          rebookFromCourseId={rebookCourseId || undefined}
+          onRebookComplete={() => {
+            refetchScore()
+            loadCourses()
+          }}
+        />
+      )}
+
+      <AlertDialog open={duplicateWarningOpen} onOpenChange={setDuplicateWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bereits angemeldet</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du bist bereits für einen anderen Kurs an diesem Tag angemeldet. Bist du sicher, dass du dich trotzdem anmelden möchtest?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setDuplicateWarningOpen(false); setPendingRegistrationId(null) }}>
+              Abbrechen
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setDuplicateWarningOpen(false)
+              if (pendingRegistrationId) {
+                handleRegistration(pendingRegistrationId, true)
+                setPendingRegistrationId(null)
+              }
+            }}>
+              Trotzdem anmelden
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
