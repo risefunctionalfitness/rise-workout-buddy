@@ -38,10 +38,11 @@ export const CourseParticipants = () => {
     try {
       setLoading(true)
       
-      // Get current date and time to filter out past courses
+      // Kurse ab heute; die heutigen bleiben den ganzen Tag sichtbar, damit
+      // Trainer nach dem Kurs noch die Anwesenheit pflegen koennen.
+      // Lokales Datum, damit der Tageswechsel um Mitternacht passiert.
       const now = new Date()
-      const nowDate = now.toISOString().split('T')[0]
-      const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+      const nowDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
       const { data, error } = await supabase
         .from('courses')
@@ -57,7 +58,7 @@ export const CourseParticipants = () => {
           course_registrations(status)
         `)
         .eq('is_cancelled', false)
-        .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
+        .gte('course_date', nowDate)
         .order('course_date', { ascending: true })
         .order('start_time', { ascending: true })
 

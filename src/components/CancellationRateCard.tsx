@@ -27,8 +27,12 @@ export const CancellationRateCard = () => {
 
       const { data: registrations, error } = await supabase
         .from('course_registrations')
-        .select('status, registered_at')
-        .gte('registered_at', thirtyDaysAgo.toISOString());
+        .select('status, registered_at, is_accidental_cancel')
+        .gte('registered_at', thirtyDaysAgo.toISOString())
+        // Versehentliche Anmeldungen (Storno innerhalb von 30 s) zaehlen nicht
+        .eq('is_accidental_cancel', false)
+        // Vom Studio abgesagte Kurse sind kein Storno des Mitglieds
+        .neq('status', 'course_cancelled');
 
       if (error) throw error;
 

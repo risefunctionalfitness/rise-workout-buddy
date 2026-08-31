@@ -12,6 +12,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { User } from "@supabase/supabase-js";
 import { timezone } from "@/lib/timezone";
+import { isFloCourse } from "@/lib/trainers";
 import { cn } from "@/lib/utils";
 
 interface Invitation {
@@ -26,6 +27,9 @@ interface Invitation {
     start_time: string;
     end_time: string;
     trainer: string;
+    trainer_user_id: string | null;
+    is_event: boolean | null;
+    registration_deadline_minutes: number | null;
   };
   sender_profile: {
     nickname: string | null;
@@ -68,9 +72,23 @@ const isCourseInPast = (courseDate: string, endTime: string): boolean => {
   const nowInBerlin = timezone.nowInBerlin();
   const todayStr = format(nowInBerlin, 'yyyy-MM-dd');
   const nowTime = format(nowInBerlin, 'HH:mm:ss');
-  
-  return courseDate < todayStr || 
+
+  return courseDate < todayStr ||
          (courseDate === todayStr && endTime <= nowTime);
+};
+
+// Anmeldeschluss vorbei? Gilt fuer Einladungen genauso wie fuer die normale
+// Buchung - sonst kaeme man ueber eine Einladung noch in einen Kurs, fuer den
+// man sich regulaer nicht mehr anmelden koennte.
+const isRegistrationClosed = (
+  courseDate: string,
+  startTime: string,
+  deadlineMinutes: number | null | undefined
+): boolean => {
+  // Kursbeginn in deutscher Zeit, damit App und Server dieselbe Frist sehen
+  const courseStart = timezone.fromBerlinTime(new Date(`${courseDate}T${startTime}`));
+  const deadline = new Date(courseStart.getTime() - (deadlineMinutes ?? 0) * 60 * 1000);
+  return new Date() >= deadline;
 };
 
 export const CourseInvitationsPanel = ({
@@ -84,9 +102,15 @@ export const CourseInvitationsPanel = ({
   const [sentInvitations, setSentInvitations] = useState<SentInvitation[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"received" | "sent">("received");
+  // 10-Wochen-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
+  const [floOnly, setFloOnly] = useState(false);
+
+  const isBlockedByFloRule = (invitation: Invitation) =>
+    floOnly && !invitation.courses.is_event && !isFloCourse(invitation.courses);
 
   useEffect(() => {
     if (open && user?.id) {
+      loadFloOnly();
       if (activeTab === "received") {
         loadReceivedInvitations();
       } else {
@@ -94,6 +118,18 @@ export const CourseInvitationsPanel = ({
       }
     }
   }, [open, user?.id, activeTab]);
+
+  const loadFloOnly = async () => {
+    const [profileResult, creditsResult] = await Promise.all([
+      supabase.from("profiles").select("membership_type").eq("user_id", user.id).maybeSingle(),
+      supabase.from("membership_credits").select("flo_only").eq("user_id", user.id).maybeSingle()
+    ]);
+
+    setFloOnly(
+      profileResult.data?.membership_type === "10er Karte" &&
+      creditsResult.data?.flo_only === true
+    );
+  };
 
   const loadReceivedInvitations = async () => {
     setLoading(true);
@@ -115,7 +151,10 @@ export const CourseInvitationsPanel = ({
             course_date,
             start_time,
             end_time,
-            trainer
+            trainer,
+            trainer_user_id,
+            is_event,
+            registration_deadline_minutes
           )
         `)
         .eq("recipient_id", user.id)
@@ -259,6 +298,33 @@ export const CourseInvitationsPanel = ({
 
   const handleAccept = async (invitation: Invitation) => {
     try {
+      // Anmeldeschluss zuerst pruefen - eine Einladung hebelt ihn nicht aus
+      if (isCourseInPast(invitation.courses.course_date, invitation.courses.end_time)) {
+        toast.error("Dieser Kurs ist bereits vorbei");
+        loadReceivedInvitations();
+        return;
+      }
+
+      if (isRegistrationClosed(
+        invitation.courses.course_date,
+        invitation.courses.start_time,
+        invitation.courses.registration_deadline_minutes
+      )) {
+        const minutes = invitation.courses.registration_deadline_minutes ?? 0;
+        toast.error(
+          minutes > 0
+            ? `Die Anmeldefrist ist bereits ${minutes} Minuten vor Kursbeginn abgelaufen.`
+            : "Die Anmeldefrist für diesen Kurs ist abgelaufen."
+        );
+        loadReceivedInvitations();
+        return;
+      }
+
+      if (isBlockedByFloRule(invitation)) {
+        toast.error("Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.");
+        return;
+      }
+
       // Check if user can register for this course (credits/limits)
       const { data: canRegister, error: checkError } = await supabase
         .rpc('can_user_register_for_course', {
@@ -373,9 +439,15 @@ export const CourseInvitationsPanel = ({
     const isAccepted = invitation.status === 'accepted';
     const isDeclined = invitation.status === 'declined';
     const isPending = invitation.status === 'pending';
+    // Kurs laeuft noch, aber der Anmeldeschluss ist schon durch
+    const isClosed = !isPast && isRegistrationClosed(
+      invitation.courses.course_date,
+      invitation.courses.start_time,
+      invitation.courses.registration_deadline_minutes
+    );
 
     return (
-      <Card key={invitation.id} className={cn("p-4 border-none", (isPast || isAccepted || isDeclined) && "opacity-60")}>
+      <Card key={invitation.id} className={cn("p-4 border-none", (isPast || isClosed || isAccepted || isDeclined) && "opacity-60")}>
         <div className="space-y-4">
           {/* Sender Info */}
           <div className="flex items-center justify-between">
@@ -390,9 +462,15 @@ export const CourseInvitationsPanel = ({
               </div>
             </div>
             {/* Status badge for non-pending invitations */}
-            {(isAccepted || isDeclined || (isPending && isPast)) && (
+            {(isAccepted || isDeclined || (isPending && (isPast || isClosed))) && (
               <div>
-                {getStatusBadge(invitation.status, isPending && isPast)}
+                {isPending && isClosed ? (
+                  <Badge variant="secondary" className="bg-gray-500 text-white">
+                    Anmeldeschluss vorbei
+                  </Badge>
+                ) : (
+                  getStatusBadge(invitation.status, isPending && isPast)
+                )}
               </div>
             )}
           </div>
@@ -419,8 +497,28 @@ export const CourseInvitationsPanel = ({
             </p>
           </div>
 
+          {/* Mit 10-Wochen-Karte nur Kurse bei Flo */}
+          {isPending && !isPast && !isClosed && isBlockedByFloRule(invitation) && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.
+              </p>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDecline(invitation.id);
+                }}
+                variant="outline"
+                className="w-full border-red-500 text-red-600 hover:bg-red-50"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Ablehnen
+              </Button>
+            </div>
+          )}
+
           {/* Action Buttons only for pending future invitations */}
-          {isPending && !isPast && (
+          {isPending && !isPast && !isClosed && !isBlockedByFloRule(invitation) && (
             <div className="flex gap-2">
               <Button
                 onClick={(e) => {
@@ -439,6 +537,26 @@ export const CourseInvitationsPanel = ({
                 }}
                 variant="outline"
                 className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Ablehnen
+              </Button>
+            </div>
+          )}
+
+          {/* Anmeldeschluss vorbei: nur noch ablehnen moeglich */}
+          {isPending && !isPast && isClosed && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Die Anmeldefrist für diesen Kurs ist abgelaufen.
+              </p>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDecline(invitation.id);
+                }}
+                variant="outline"
+                className="w-full border-red-500 text-red-600 hover:bg-red-50"
               >
                 <X className="h-4 w-4 mr-2" />
                 Ablehnen
@@ -528,13 +646,22 @@ export const CourseInvitationsPanel = ({
   };
 
   // Calculate counts for received invitations
+  // "Ausstehend" ist eine Einladung nur, solange man sie auch noch annehmen kann
+  const isStillAcceptable = (inv: Invitation) =>
+    !isCourseInPast(inv.courses.course_date, inv.courses.end_time) &&
+    !isRegistrationClosed(
+      inv.courses.course_date,
+      inv.courses.start_time,
+      inv.courses.registration_deadline_minutes
+    );
+
   const pendingFutureReceivedCount = receivedInvitations.filter(
-    inv => inv.status === 'pending' && !isCourseInPast(inv.courses.course_date, inv.courses.end_time)
+    inv => inv.status === 'pending' && isStillAcceptable(inv)
   ).length;
   const acceptedReceivedCount = receivedInvitations.filter(inv => inv.status === 'accepted').length;
   const declinedReceivedCount = receivedInvitations.filter(inv => inv.status === 'declined').length;
   const expiredReceivedCount = receivedInvitations.filter(
-    inv => inv.status === 'pending' && isCourseInPast(inv.courses.course_date, inv.courses.end_time)
+    inv => inv.status === 'pending' && !isStillAcceptable(inv)
   ).length;
 
   // Calculate active and expired counts for sent invitations

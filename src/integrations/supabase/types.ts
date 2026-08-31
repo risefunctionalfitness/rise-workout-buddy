@@ -126,7 +126,9 @@ export type Database = {
           attendance_marked_by: string | null
           attendance_status: string | null
           course_id: string
+          had_real_cancel: boolean
           id: string
+          is_accidental_cancel: boolean
           registered_at: string
           status: string
           updated_at: string
@@ -660,6 +662,7 @@ export type Database = {
           created_at: string
           credits_remaining: number
           credits_total: number
+          flo_only: boolean
           id: string
           last_recharged_at: string | null
           prevention_course_1: boolean
@@ -674,6 +677,7 @@ export type Database = {
           created_at?: string
           credits_remaining?: number
           credits_total?: number
+          flo_only?: boolean
           id?: string
           last_recharged_at?: string | null
           prevention_course_1?: boolean
@@ -688,6 +692,7 @@ export type Database = {
           created_at?: string
           credits_remaining?: number
           credits_total?: number
+          flo_only?: boolean
           id?: string
           last_recharged_at?: string | null
           prevention_course_1?: boolean

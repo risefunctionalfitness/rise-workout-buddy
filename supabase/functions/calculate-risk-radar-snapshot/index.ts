@@ -101,12 +101,13 @@ Deno.serve(async (req) => {
         .eq('user_id', profile.user_id)
         .eq('workout_type', 'free_training');
 
-      // Count cancellations
+      // Count cancellations (versehentliche Anmeldungen ausgenommen)
       const { count: cancellationsCount } = await supabase
         .from('course_registrations')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', profile.user_id)
-        .eq('status', 'cancelled');
+        .eq('status', 'cancelled')
+        .eq('is_accidental_cancel', false);
 
       memberActivities.push({
         user_id: profile.user_id,

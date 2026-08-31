@@ -94,7 +94,8 @@ export const AdminParticipantManager: React.FC<AdminParticipantManagerProps> = (
         .from('course_registrations')
         .select('user_id')
         .eq('course_id', courseId)
-        .neq('status', 'cancelled')
+        // Nur wer wirklich (noch) drin ist - alle Storno-Varianten raus
+        .in('status', ['registered', 'waitlisted', 'waitlist'])
 
       if (error) throw error
       setRegisteredUserIds(data?.map(r => r.user_id) || [])

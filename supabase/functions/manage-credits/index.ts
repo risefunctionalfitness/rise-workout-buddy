@@ -94,7 +94,7 @@ serve(async (req) => {
     // Update or insert credits
     const { data: existingCredits } = await supabase
       .from('membership_credits')
-      .select('credits_remaining, credits_total, valid_until')
+      .select('credits_remaining, credits_total, valid_until, card_type')
       .eq('user_id', user_id)
       .single();
 
@@ -144,9 +144,14 @@ serve(async (req) => {
         last_recharged_at: new Date().toISOString(),
       };
       if (credits_to_add > 0) {
-        updatePayload.card_type = card_type || 'year';
+        // Ohne ausdrueckliche Angabe bleibt der bisherige Kartentyp bestehen
+        const nextCardType = card_type || existingCredits.card_type || 'year';
+        updatePayload.card_type = nextCardType;
         updatePayload.validity_start = null;
         updatePayload.valid_until = null;
+        // 10-Wochen-Karten sind an Flo gebunden, Jahreskarten nicht.
+        // Damit gilt die Regel automatisch ab der naechsten Aufladung.
+        updatePayload.flo_only = nextCardType === 'ten_weeks';
       }
 
       const { error } = await supabase
@@ -180,6 +185,7 @@ serve(async (req) => {
           card_type: card_type || 'year',
           validity_start: null,
           valid_until: null,
+          flo_only: card_type === 'ten_weeks',
         });
 
       if (error) throw error;

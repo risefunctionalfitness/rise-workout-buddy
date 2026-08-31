@@ -356,15 +356,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
     const todayStr = format(nowInBerlin, 'yyyy-MM-dd')
     const nowTime = format(nowInBerlin, 'HH:mm:ss')
     
-    const { count, error, data } = await supabase
+    const { error, data } = await supabase
       .from("course_invitations")
-      .select("*, courses!inner(course_date, end_time)", { count: 'exact' })
+      .select("*, courses!inner(course_date, start_time, end_time, registration_deadline_minutes)")
       .eq("recipient_id", user.id)
       .eq("status", "pending")
       .or(`course_date.gt.${todayStr},and(course_date.eq.${todayStr},end_time.gt.${nowTime})`, { foreignTable: 'courses' })
 
     console.log("Raw invitation data:", data)
-    console.log("Invitation count:", count)
     console.log("Error:", error)
 
     if (error) {
@@ -377,8 +376,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       return
     }
 
-    console.log("Setting invitation count to:", count || 0)
-    setInvitationCount(count || 0)
+    // Einladungen, deren Anmeldeschluss schon durch ist, kann man nicht mehr
+    // annehmen - die zaehlen deshalb auch nicht mehr im Badge
+    type InvitationCourse = {
+      course_date: string
+      start_time: string
+      registration_deadline_minutes: number | null
+    }
+
+    const openInvitations = (data || []).filter((invitation: { courses?: InvitationCourse | null }) => {
+      const course = invitation.courses
+      if (!course) return false
+      // Kursbeginn in deutscher Zeit, damit App und Server dieselbe Frist sehen
+      const courseStart = timezone.fromBerlinTime(
+        new Date(`${course.course_date}T${course.start_time}`)
+      )
+      const deadline = new Date(
+        courseStart.getTime() - (course.registration_deadline_minutes ?? 0) * 60 * 1000
+      )
+      return new Date() < deadline
+    }).length
+
+    console.log("Setting invitation count to:", openInvitations)
+    setInvitationCount(openInvitations)
   }
 
   const handleAcceptInvitation = (courseId: string, courseDate: string) => {

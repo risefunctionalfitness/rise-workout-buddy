@@ -9,11 +9,13 @@ import { format, parseISO, isSameDay } from "date-fns"
 import { de } from "date-fns/locale"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { isFloCourse } from "@/lib/trainers"
 
 interface Course {
   id: string
   title: string
   trainer: string
+  trainer_user_id?: string | null
   strength_exercise?: string
   max_participants: number
   course_date: string
@@ -35,9 +37,11 @@ interface Course {
 interface CoursesCalendarViewProps {
   user: User
   onCourseClick: (course: Course) => void
+  /** 10-Wochen-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar */
+  floOnly?: boolean
 }
 
-export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarViewProps) => {
+export const CoursesCalendarView = ({ user, onCourseClick, floOnly = false }: CoursesCalendarViewProps) => {
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [loading, setLoading] = useState(true)
@@ -73,8 +77,9 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
       const threeMonthsLater = new Date()
       threeMonthsLater.setMonth(now.getMonth() + 3)
       
-      const nowDate = now.toISOString().split('T')[0]
-      const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+      // Lokales Datum des Geraets (nicht UTC), damit der Tageswechsel um
+      // Mitternacht Ortszeit passiert und nicht schon um 02:00
+      const nowDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
       const endDate = threeMonthsLater.toISOString().split('T')[0]
 
       const [coursesResult, userRegistrationsResult, guestRegistrationsResult] = await Promise.all([
@@ -88,7 +93,8 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
           `)
           .eq('is_cancelled', false)
           // Show cancelled_due_to_low_attendance courses too (with badge)
-          .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
+          // Kurse des heutigen Tages bleiben den ganzen Tag sichtbar
+          .gte('course_date', nowDate)
           .lte('course_date', endDate)
           .order('course_date', { ascending: true })
           .order('start_time', { ascending: true }),
@@ -152,6 +158,23 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
       setLoading(false)
     }
   }
+
+  // 10-Wochen-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
+  // Events bleiben fuer alle offen.
+  const isBlockedByFloRule = (course: Course) =>
+    floOnly && !course.is_event && !isFloCourse(course)
+
+  // Kurs vorbei? (bleibt bis Mitternacht in der Liste stehen)
+  const hasCourseEnded = (course: Course) =>
+    new Date(`${course.course_date}T${course.end_time}`) < new Date()
+
+  // Hinweis "nur bei Flo" nur dort zeigen, wo er noch etwas aendert:
+  // nicht bei eigenen Anmeldungen und nicht bei bereits beendeten Kursen
+  const showFloHint = (course: Course) =>
+    isBlockedByFloRule(course) &&
+    !course.is_registered &&
+    !course.is_waitlisted &&
+    !hasCourseEnded(course)
 
   // Get courses for selected date
   const coursesForSelectedDate = useMemo(() => {
@@ -226,7 +249,7 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                     course.is_registered 
                       ? 'ring-2 ring-green-500' 
                       : ''
-                  } ${course.cancelled_due_to_low_attendance ? 'opacity-60' : ''}`}
+                  } ${course.cancelled_due_to_low_attendance || hasCourseEnded(course) || showFloHint(course) ? 'opacity-60' : ''}`}
                   style={{
                     borderLeftColor: course.color || '#f3f4f6'
                   }}
@@ -247,6 +270,11 @@ export const CoursesCalendarView = ({ user, onCourseClick }: CoursesCalendarView
                             <Badge variant="destructive" className="text-xs flex items-center gap-1 shrink-0">
                               <AlertTriangle className="h-3 w-3 shrink-0" />
                               Abgesagt
+                            </Badge>
+                          )}
+                          {showFloHint(course) && (
+                            <Badge variant="secondary" className="text-xs shrink-0">
+                              Nur bei Flo buchbar
                             </Badge>
                           )}
                         </div>

@@ -72,7 +72,9 @@ export const MemberStatsDialog = ({ userId, displayName, firstName, lastName, to
         .from('course_registrations')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('status', 'cancelled');
+        .eq('status', 'cancelled')
+        // Versehentliche Anmeldungen (Storno innerhalb von 30 s) zaehlen nicht
+        .eq('is_accidental_cancel', false);
       
       if (cancellationsError) throw cancellationsError;
 

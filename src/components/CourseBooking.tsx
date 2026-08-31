@@ -20,6 +20,8 @@ import { ReliabilityScoreScale } from "@/components/ReliabilityScoreScale"
 import { FairnessCheckDialog } from "@/components/FairnessCheckDialog"
 import { DayCourseDialog } from "@/components/DayCourseDialog"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
+import { timezone } from "@/lib/timezone"
+import { isFloCourse } from "@/lib/trainers"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -62,6 +64,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [isTrainer, setIsTrainer] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [userMembershipType, setUserMembershipType] = useState<string>('')
+  // 10-Wochen-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
+  const [floOnly, setFloOnly] = useState(false)
+  // 10-Wochen-Karte: von der Storno-Rate ausgenommen
+  const [fairnessExempt, setFairnessExempt] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const [activeTab, setActiveTab] = useState<string>("liste")
   const scrollPositionRef = useRef<number>(0)
@@ -81,6 +87,23 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const areParticipantsHidden = (course: Course | null) =>
     !!course?.is_event && !!course?.hide_participants && !isAdmin
 
+  // 10-Wochen-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
+  // Events bleiben fuer alle offen.
+  const isBlockedByFloRule = (course: Course | null) =>
+    !!course && floOnly && !course.is_event && !isFloCourse(course)
+
+  // Kurs vorbei? (bleibt bis Mitternacht in der Liste stehen)
+  const hasCourseEnded = (course: Course) =>
+    new Date(`${course.course_date}T${course.end_time}`) < new Date()
+
+  // Hinweis "nur bei Flo" nur dort zeigen, wo er noch etwas aendert:
+  // nicht bei eigenen Anmeldungen und nicht bei bereits beendeten Kursen
+  const showFloHint = (course: Course) =>
+    isBlockedByFloRule(course) &&
+    !course.is_registered &&
+    !course.is_waitlisted &&
+    !hasCourseEnded(course)
+
   useEffect(() => {
     let mounted = true
     
@@ -98,7 +121,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   const checkUserRoles = async () => {
     try {
-      const [rolesResult, profileResult] = await Promise.all([
+      const [rolesResult, profileResult, creditsResult] = await Promise.all([
         supabase
           .from('user_roles')
           .select('role')
@@ -107,18 +130,38 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           .from('profiles')
           .select('membership_type')
           .eq('user_id', user.id)
-          .single()
+          .single(),
+        supabase
+          .from('membership_credits')
+          .select('flo_only, card_type')
+          .eq('user_id', user.id)
+          .maybeSingle()
       ])
-      
+
+      const roles = rolesResult.data?.map(r => r.role) || []
       if (rolesResult.data) {
-        const roles = rolesResult.data.map(r => r.role)
         setIsTrainer(roles.includes('trainer'))
         setIsAdmin(roles.includes('admin'))
       }
-      
+
       if (profileResult.data) {
         setUserMembershipType(profileResult.data.membership_type || '')
       }
+
+      // 10-Wochen-Karte: nur Kurse bei Flo buchbar (Admins/Trainer ausgenommen,
+      // die duerfen serverseitig ohnehin alles buchen)
+      setFloOnly(
+        !roles.includes('admin') &&
+        !roles.includes('trainer') &&
+        profileResult.data?.membership_type === '10er Karte' &&
+        creditsResult.data?.flo_only === true
+      )
+
+      // 10-Wochen-Karten werden von der Storno-Rate nicht eingeschraenkt
+      setFairnessExempt(
+        profileResult.data?.membership_type === '10er Karte' &&
+        creditsResult.data?.card_type === 'ten_weeks'
+      )
     } catch (error) {
       setIsTrainer(false)
       setIsAdmin(false)
@@ -140,8 +183,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
       // Get upcoming courses and limit to next 10 unique course days
       const now = new Date()
-      const nowDate = now.toISOString().split('T')[0]
-      const nowTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+      // Lokales Datum des Geraets (nicht UTC), damit der Tageswechsel um
+      // Mitternacht Ortszeit passiert und nicht schon um 02:00
+      const nowDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
       const [coursesResult, userRegistrationsResult] = await Promise.all([
         supabase
@@ -154,7 +198,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
           `)
           .eq('is_cancelled', false)
           // Show cancelled_due_to_low_attendance courses too (with badge)
-          .or(`course_date.gt.${nowDate},and(course_date.eq.${nowDate},end_time.gt.${nowTime})`)
+          // Kurse des heutigen Tages bleiben den ganzen Tag sichtbar, auch wenn
+          // sie schon vorbei sind - so kann man nachher noch sehen, wer da war.
+          .gte('course_date', nowDate)
           .order('course_date', { ascending: true })
           .order('start_time', { ascending: true }),
         supabase
@@ -318,21 +364,53 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   const handleRegistration = async (courseId: string, skipDuplicateCheck = false) => {
     try {
+      // Aus der Kalender-Ansicht kann ein Kurs kommen, der nicht in der
+      // Wochenliste steht - dann den ausgewaehlten Kurs verwenden, sonst
+      // passiert beim Klick auf "Anmelden" gar nichts
       const course = courses.find(c => c.id === courseId)
+        || (selectedCourse?.id === courseId ? selectedCourse : null)
       if (!course) return
+
+      if (isBlockedByFloRule(course)) {
+        toast.error('Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.')
+        return
+      }
 
       // Check for same-day registration (warning, not blocking)
       if (!skipDuplicateCheck) {
         const existingRegistration = courses.find(c => 
           c.course_date === course.course_date && 
           c.id !== courseId && 
-          (c.is_registered || c.is_waitlisted)
+          (c.is_registered || c.is_waitlisted) &&
+          // bereits beendete Kurse des Tages nicht mitzaehlen
+          !hasCourseEnded(c)
         )
         if (existingRegistration) {
           setPendingRegistrationId(courseId)
           setDuplicateWarningOpen(true)
           return
         }
+      }
+
+      // Anmeldefrist zuerst pruefen - sonst kommt unten die falsche Meldung
+      // ("Limit erreicht"), obwohl nur die Frist abgelaufen ist
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('registration_deadline_minutes, course_date, start_time, trainer, trainer_user_id, is_event')
+        .eq('id', courseId)
+        .single()
+
+      if (courseError) throw courseError
+
+      // Kursbeginn in deutscher Zeit, damit App und Server dieselbe Frist sehen
+      const courseStart = timezone.fromBerlinTime(
+        new Date(`${courseData.course_date}T${courseData.start_time}`)
+      )
+      const deadlineTime = new Date(courseStart.getTime() - (courseData.registration_deadline_minutes * 60 * 1000))
+
+      if (new Date() >= deadlineTime) {
+        toast.error(`Die Anmeldefrist ist bereits ${courseData.registration_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
+        return
       }
 
       // Check if user can register (limits and credits)
@@ -343,31 +421,16 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         })
 
       if (checkError || !canRegister) {
-        if (userMembershipType === 'Basic Member') {
+        if (floOnly && !courseData.is_event && !isFloCourse(courseData)) {
+          // Kann passieren, wenn der Coach nach dem Laden gewechselt wurde
+          toast.error('Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.')
+        } else if (userMembershipType === 'Basic Member') {
           toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
         } else if (userMembershipType === '10er Karte') {
           toast.error("Keine Buchung möglich: Deine 10er Karte ist abgelaufen oder du hast keine Credits mehr. Bitte melde dich am Empfang.")
         } else {
           toast.error("Anmeldung nicht möglich")
         }
-        return
-      }
-
-      // Check registration deadline before registering
-      const { data: courseData, error: courseError } = await supabase
-        .from('courses')
-        .select('registration_deadline_minutes, course_date, start_time')
-        .eq('id', courseId)
-        .single()
-
-      if (courseError) throw courseError
-
-      const now = new Date()
-      const courseStart = new Date(`${courseData.course_date}T${courseData.start_time}`)
-      const deadlineTime = new Date(courseStart.getTime() - (courseData.registration_deadline_minutes * 60 * 1000))
-
-      if (now > deadlineTime) {
-        toast.error(`Die Anmeldefrist ist bereits ${courseData.registration_deadline_minutes} Minuten vor Kursbeginn abgelaufen.`)
         return
       }
 
@@ -447,14 +510,18 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       return
     }
 
-    // Skip fairness warning for accidental cancellations (within 5s of registering)
+    // Skip fairness warning for accidental cancellations.
+    // 25 s statt 30 s: die Datenbank misst ab dem Schreibzeitpunkt, der Client
+    // erst ab der Antwort - so ist das Fenster hier nie groesser als dort.
     const registeredAt = recentRegistrationsRef.current.get(courseId)
-    if (registeredAt && Date.now() - registeredAt < 5000) {
+    if (registeredAt && Date.now() - registeredAt < 25000) {
       handleCancellation(courseId, course)
       return
     }
 
-    if (reliabilityScore && !isAdmin) {
+    // 10-Wochen-Karten sind von der Storno-Rate ausgenommen - dann ist auch
+    // die Warnung vor dem Abmelden gegenstandslos
+    if (reliabilityScore && !isAdmin && !fairnessExempt) {
       setPendingCancellationId(courseId)
       setFairnessCheckOpen(true)
       return
@@ -528,7 +595,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
 
   // Check if attendance can be marked (only for courses today)
   const canMarkAttendance = (courseDate: string) => {
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     return courseDate === today
   }
 
@@ -710,7 +778,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                         course.is_registered 
                           ? 'border-green-500 border-2' 
                           : ''
-                      } ${course.cancelled_due_to_low_attendance ? 'opacity-60' : ''}`}
+                      } ${course.cancelled_due_to_low_attendance || hasCourseEnded(course) || showFloHint(course) ? 'opacity-60' : ''}`}
                       style={{
                         borderLeft: `8px solid ${course.color || '#f3f4f6'}`
                       }}
@@ -731,6 +799,11 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                                 <Badge variant="destructive" className="text-xs flex items-center gap-1 shrink-0">
                                   <AlertTriangle className="h-3 w-3 shrink-0" />
                                   Abgesagt
+                                </Badge>
+                              )}
+                              {showFloHint(course) && (
+                                <Badge variant="secondary" className="text-xs shrink-0">
+                                  Nur bei Flo buchbar
                                 </Badge>
                               )}
                             </div>
@@ -786,7 +859,8 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         </div>
       ) : (
         <div className="animate-in fade-in-50 slide-in-from-right-5 duration-300">
-          <CoursesCalendarView 
+          <CoursesCalendarView
+            floOnly={floOnly}
             user={user} 
             onCourseClick={handleCourseClick}
           />
@@ -1023,12 +1097,20 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
               {/* Action Buttons */}
               <div className="space-y-2">
                 {selectedCourse.cancelled_due_to_low_attendance ? (
-                  <Button 
+                  <Button
                     disabled
                     variant="secondary"
                     className="w-full"
                   >
                     Kurs wurde abgesagt
+                  </Button>
+                ) : hasCourseEnded(selectedCourse) ? (
+                  <Button
+                    disabled
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    {selectedCourse.is_registered ? 'Kurs beendet - du warst angemeldet' : 'Kurs beendet'}
                   </Button>
                 ) : selectedCourse.is_registered ? (
                   <>
@@ -1067,14 +1149,23 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                     />
                   </>
                 ) : selectedCourse.is_waitlisted ? (
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     onClick={() => inititateCancellation(selectedCourse.id)}
                     disabled={!canCancelCourse(selectedCourse)}
                     className="w-full"
                   >
                     {canCancelCourse(selectedCourse) ? 'Von Warteliste entfernen' : 'Abmeldefrist abgelaufen'}
                   </Button>
+                ) : isBlockedByFloRule(selectedCourse) ? (
+                  <div className="space-y-2">
+                    <Button disabled variant="secondary" className="w-full">
+                      Nur Kurse bei Flo buchbar
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Deine 10-Wochen-Karte gilt für Kurse bei Flo.
+                    </p>
+                  </div>
                 ) : (() => {
                   // Booking window restriction
                   const isOutsideWindow = reliabilityScore && !isAdmin && (() => {

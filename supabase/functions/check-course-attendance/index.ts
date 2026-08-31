@@ -190,10 +190,12 @@ serve(async (req) => {
 
         console.log(`Marked course ${course.id} as cancelled due to low attendance`)
 
-        // NOW cancel all registrations for this course
+        // NOW cancel all registrations for this course.
+        // Eigener Status: der Kurs wurde abgesagt, nicht das Mitglied hat
+        // storniert. Zaehlt deshalb nicht in die Storno-Rate.
         const { error: cancelRegError } = await supabase
           .from('course_registrations')
-          .update({ status: 'cancelled' })
+          .update({ status: 'course_cancelled' })
           .eq('course_id', course.id)
           .in('status', ['registered', 'waitlist'])
 

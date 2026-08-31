@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { CreditCard, Plus, RefreshCw, User, Minus, CalendarClock } from "lucide-react"
+import { CreditCard, Plus, RefreshCw, User, Minus, CalendarClock, History } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
+import { CreditTransactionHistory } from "./CreditTransactionHistory"
 
 interface UserCredit {
   user_id: string
@@ -24,6 +25,7 @@ interface UserCredit {
   valid_until: string | null
   prevention_course_1: boolean
   prevention_course_2: boolean
+  flo_only: boolean
 }
 
 const formatDate = (iso: string | null) =>
@@ -34,6 +36,7 @@ export const AdminCreditRecharge = () => {
   const [creditsToAdd, setCreditsToAdd] = useState<string>("10")
   const [isSubtracting, setIsSubtracting] = useState(false)
   const [cardType, setCardType] = useState<'year' | 'ten_weeks'>('year')
+  const [viewingUser, setViewingUser] = useState<UserCredit | null>(null)
   const [users, setUsers] = useState<UserCredit[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -59,7 +62,7 @@ export const AdminCreditRecharge = () => {
       const userIds = profilesData?.map(p => p.user_id) || []
       const { data: creditsData, error: creditsError } = await supabase
         .from('membership_credits')
-        .select('user_id, credits_remaining, credits_total, last_recharged_at, card_type, validity_start, valid_until, prevention_course_1, prevention_course_2')
+        .select('user_id, credits_remaining, credits_total, last_recharged_at, card_type, validity_start, valid_until, prevention_course_1, prevention_course_2, flo_only')
         .in('user_id', userIds)
 
       if (creditsError) throw creditsError
@@ -80,6 +83,7 @@ export const AdminCreditRecharge = () => {
           valid_until: credits?.valid_until || null,
           prevention_course_1: credits?.prevention_course_1 || false,
           prevention_course_2: credits?.prevention_course_2 || false,
+          flo_only: credits?.flo_only || false,
         };
       }) || []
 
@@ -136,6 +140,9 @@ export const AdminCreditRecharge = () => {
       
       setSelectedUser("")
       setCreditsToAdd("10")
+      // Kartentyp zuruecksetzen, damit die naechste Aufladung nicht
+      // versehentlich wieder auf "10 Wochen" laeuft
+      setCardType('year')
       loadTenCardUsers() // Refresh the list
     } catch (error) {
       console.error('Error recharging credits:', error)
@@ -151,7 +158,7 @@ export const AdminCreditRecharge = () => {
 
   const handlePreventionToggle = async (
     member: UserCredit,
-    field: 'prevention_course_1' | 'prevention_course_2',
+    field: 'prevention_course_1' | 'prevention_course_2' | 'flo_only',
     checked: boolean
   ) => {
     try {
@@ -170,13 +177,29 @@ export const AdminCreditRecharge = () => {
         u.user_id === member.user_id ? { ...u, [field]: checked } : u
       ))
     } catch (error) {
-      console.error('Error updating prevention flag:', error)
+      console.error('Error updating member flag:', error)
       toast({
         title: "Fehler",
-        description: "Präventionskurs-Status konnte nicht gespeichert werden.",
+        description: field === 'flo_only'
+          ? "Einstellung konnte nicht gespeichert werden."
+          : "Präventionskurs-Status konnte nicht gespeichert werden.",
         variant: "destructive"
       })
     }
+  }
+
+  // Show the full credit history (incl. expiry entries) for one member
+  if (viewingUser) {
+    return (
+      <CreditTransactionHistory
+        userId={viewingUser.user_id}
+        userName={`${viewingUser.first_name} ${viewingUser.last_name}`.trim() || viewingUser.display_name}
+        onBack={() => {
+          setViewingUser(null)
+          loadTenCardUsers()
+        }}
+      />
+    )
   }
 
   return (
@@ -326,10 +349,18 @@ export const AdminCreditRecharge = () => {
                         Gültig bis: {formatDate(user.valid_until) || '–'}{isExpired ? ' (abgelaufen)' : ''}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="flex items-center gap-2">
                       <Badge variant={user.credits_remaining > 0 && !isExpired ? "default" : "destructive"}>
                         {isExpired ? 0 : user.credits_remaining} / {user.credits_total} Credits
                       </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title="Credit-Verlauf anzeigen (inkl. Verfall)"
+                        onClick={() => setViewingUser(user)}
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                   <div className="flex items-center gap-6 pt-1 border-t">
@@ -353,6 +384,16 @@ export const AdminCreditRecharge = () => {
                         Präventionskurs 2
                       </Label>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Checkbox
+                      id={`floonly-${user.user_id}`}
+                      checked={user.flo_only}
+                      onCheckedChange={(checked) => handlePreventionToggle(user, 'flo_only', checked === true)}
+                    />
+                    <Label htmlFor={`floonly-${user.user_id}`} className="text-sm cursor-pointer">
+                      Nur Kurse bei Flo buchbar
+                    </Label>
                   </div>
                 </div>
                 )
