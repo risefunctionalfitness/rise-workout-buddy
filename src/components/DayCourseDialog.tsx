@@ -21,6 +21,7 @@ import { FairnessCheckDialog } from "./FairnessCheckDialog"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 import { timezone } from "@/lib/timezone"
 import { isFloCourse } from "@/lib/trainers"
+import { isPreventionCard } from "@/lib/creditCards"
 
 interface Course {
   id: string
@@ -73,9 +74,9 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [participants, setParticipants] = useState<any[]>([])
   const [userMembershipType, setUserMembershipType] = useState<string>('')
-  // 10-Wochen-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
+  // Praeventionskurs-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
   const [floOnly, setFloOnly] = useState(false)
-  // 10-Wochen-Karte: von der Storno-Rate ausgenommen
+  // Praeventionskurs-Karte: von der Storno-Rate ausgenommen
   const [fairnessExempt, setFairnessExempt] = useState(false)
   const [isTrainer, setIsTrainer] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -95,7 +96,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
   const areParticipantsHidden = (course: Course | null) =>
     !!course?.is_event && !!course?.hide_participants && !isAdmin
 
-  // 10-Wochen-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
+  // Praeventionskurs-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
   // Events bleiben fuer alle offen.
   const isBlockedByFloRule = (course: Course | null) =>
     !!course && floOnly && !course.is_event && !isFloCourse(course)
@@ -148,7 +149,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         setUserMembershipType(profileResult.data.membership_type || '')
       }
 
-      // 10-Wochen-Karte: nur Kurse bei Flo buchbar (Admins/Trainer ausgenommen,
+      // Praeventionskurs-Karte: nur Kurse bei Flo buchbar (Admins/Trainer ausgenommen,
       // die duerfen serverseitig ohnehin alles buchen)
       setFloOnly(
         !roles.includes('admin') &&
@@ -157,10 +158,10 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
         creditsResult.data?.flo_only === true
       )
 
-      // 10-Wochen-Karten werden von der Storno-Rate nicht eingeschraenkt
+      // Praeventionskurs-Karten werden von der Storno-Rate nicht eingeschraenkt
       setFairnessExempt(
         profileResult.data?.membership_type === '10er Karte' &&
-        creditsResult.data?.card_type === 'ten_weeks'
+        isPreventionCard(creditsResult.data?.card_type)
       )
     } catch (error) {
       console.error('Error loading user info:', error)
@@ -338,7 +339,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (!course) return
 
       if (isBlockedByFloRule(course)) {
-        toast.error('Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.')
+        toast.error('Mit deiner Präventionskurs-Karte kannst du nur Kurse bei Flo buchen.')
         return
       }
 
@@ -389,7 +390,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       if (checkError || !canRegister) {
         if (floOnly && !courseData.is_event && !isFloCourse(courseData)) {
           // Kann passieren, wenn der Coach nach dem Laden gewechselt wurde
-          toast.error('Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.')
+          toast.error('Mit deiner Präventionskurs-Karte kannst du nur Kurse bei Flo buchen.')
         } else if (userMembershipType === 'Basic Member') {
           toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
         } else if (userMembershipType === '10er Karte') {
@@ -481,7 +482,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
       return
     }
 
-    // 10-Wochen-Karten sind von der Storno-Rate ausgenommen - dann ist auch
+    // Praeventionskurs-Karten sind von der Storno-Rate ausgenommen - dann ist auch
     // die Warnung vor dem Abmelden gegenstandslos
     if (reliabilityScore && !isAdmin && !fairnessExempt) {
       setPendingCancellationId(courseId)
@@ -949,7 +950,7 @@ export const DayCourseDialog: React.FC<DayCourseDialogProps> = ({
                       Nur Kurse bei Flo buchbar
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
-                      Deine 10-Wochen-Karte gilt für Kurse bei Flo.
+                      Deine Präventionskurs-Karte gilt für Kurse bei Flo.
                     </p>
                   </div>
                 ) : (() => {

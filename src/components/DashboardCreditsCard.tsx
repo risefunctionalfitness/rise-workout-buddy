@@ -1,6 +1,7 @@
 import { Key, Dumbbell, Infinity, LockOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { CardType, cardTypeLabelLong } from "@/lib/creditCards";
 import {
   Popover,
   PopoverContent,
@@ -14,7 +15,7 @@ interface DashboardCreditsCardProps {
 export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
   const [membershipType, setMembershipType] = useState<string | null>(null);
   const [credits, setCredits] = useState<number>(0);
-  const [cardType, setCardType] = useState<'year' | 'ten_weeks'>('year');
+  const [cardType, setCardType] = useState<CardType>('year');
   const [validUntil, setValidUntil] = useState<string | null>(null);
   const [gymCode, setGymCode] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +47,7 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
 
         if (creditsError) throw creditsError;
         setCredits(creditsData?.credits_remaining || 0);
-        setCardType((creditsData?.card_type as 'year' | 'ten_weeks') || 'year');
+        setCardType((creditsData?.card_type as CardType) || 'year');
         setValidUntil(creditsData?.valid_until || null);
       } else {
         // Otherwise, get gym code
@@ -134,7 +135,7 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
           <div className="space-y-2">
             <div>
               <p className="text-sm text-muted-foreground">Plan</p>
-              <p className="font-medium">10er Karte ({cardType === 'ten_weeks' ? '10 Wochen' : '1 Jahr'})</p>
+              <p className="font-medium">10er Karte ({cardTypeLabelLong(cardType)})</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Verbleibende Credits</p>

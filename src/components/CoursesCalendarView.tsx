@@ -37,7 +37,7 @@ interface Course {
 interface CoursesCalendarViewProps {
   user: User
   onCourseClick: (course: Course) => void
-  /** 10-Wochen-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar */
+  /** Praeventionskurs-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar */
   floOnly?: boolean
 }
 
@@ -159,7 +159,7 @@ export const CoursesCalendarView = ({ user, onCourseClick, floOnly = false }: Co
     }
   }
 
-  // 10-Wochen-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
+  // Praeventionskurs-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
   // Events bleiben fuer alle offen.
   const isBlockedByFloRule = (course: Course) =>
     floOnly && !course.is_event && !isFloCourse(course)

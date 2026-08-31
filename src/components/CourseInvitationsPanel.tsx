@@ -102,7 +102,7 @@ export const CourseInvitationsPanel = ({
   const [sentInvitations, setSentInvitations] = useState<SentInvitation[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"received" | "sent">("received");
-  // 10-Wochen-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
+  // Praeventionskurs-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
   const [floOnly, setFloOnly] = useState(false);
 
   const isBlockedByFloRule = (invitation: Invitation) =>
@@ -321,7 +321,7 @@ export const CourseInvitationsPanel = ({
       }
 
       if (isBlockedByFloRule(invitation)) {
-        toast.error("Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.");
+        toast.error("Mit deiner Präventionskurs-Karte kannst du nur Kurse bei Flo buchen.");
         return;
       }
 
@@ -497,11 +497,11 @@ export const CourseInvitationsPanel = ({
             </p>
           </div>
 
-          {/* Mit 10-Wochen-Karte nur Kurse bei Flo */}
+          {/* Mit Praeventionskurs-Karte nur Kurse bei Flo */}
           {isPending && !isPast && !isClosed && isBlockedByFloRule(invitation) && (
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.
+                Mit deiner Präventionskurs-Karte kannst du nur Kurse bei Flo buchen.
               </p>
               <Button
                 onClick={(e) => {

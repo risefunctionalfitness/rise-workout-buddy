@@ -22,6 +22,7 @@ import { DayCourseDialog } from "@/components/DayCourseDialog"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 import { timezone } from "@/lib/timezone"
 import { isFloCourse } from "@/lib/trainers"
+import { isPreventionCard } from "@/lib/creditCards"
 import { toast } from "sonner"
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns"
 import { de } from "date-fns/locale"
@@ -64,9 +65,9 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const [isTrainer, setIsTrainer] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [userMembershipType, setUserMembershipType] = useState<string>('')
-  // 10-Wochen-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
+  // Praeventionskurs-Karte mit Flo-Bindung: nur Kurse bei Flo buchbar
   const [floOnly, setFloOnly] = useState(false)
-  // 10-Wochen-Karte: von der Storno-Rate ausgenommen
+  // Praeventionskurs-Karte: von der Storno-Rate ausgenommen
   const [fairnessExempt, setFairnessExempt] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<{ imageUrl: string | null; displayName: string } | null>(null)
   const [activeTab, setActiveTab] = useState<string>("liste")
@@ -87,7 +88,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   const areParticipantsHidden = (course: Course | null) =>
     !!course?.is_event && !!course?.hide_participants && !isAdmin
 
-  // 10-Wochen-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
+  // Praeventionskurs-Karte mit Flo-Bindung: alles ausser Kursen bei Flo ist gesperrt.
   // Events bleiben fuer alle offen.
   const isBlockedByFloRule = (course: Course | null) =>
     !!course && floOnly && !course.is_event && !isFloCourse(course)
@@ -148,7 +149,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         setUserMembershipType(profileResult.data.membership_type || '')
       }
 
-      // 10-Wochen-Karte: nur Kurse bei Flo buchbar (Admins/Trainer ausgenommen,
+      // Praeventionskurs-Karte: nur Kurse bei Flo buchbar (Admins/Trainer ausgenommen,
       // die duerfen serverseitig ohnehin alles buchen)
       setFloOnly(
         !roles.includes('admin') &&
@@ -157,10 +158,10 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
         creditsResult.data?.flo_only === true
       )
 
-      // 10-Wochen-Karten werden von der Storno-Rate nicht eingeschraenkt
+      // Praeventionskurs-Karten werden von der Storno-Rate nicht eingeschraenkt
       setFairnessExempt(
         profileResult.data?.membership_type === '10er Karte' &&
-        creditsResult.data?.card_type === 'ten_weeks'
+        isPreventionCard(creditsResult.data?.card_type)
       )
     } catch (error) {
       setIsTrainer(false)
@@ -372,7 +373,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       if (!course) return
 
       if (isBlockedByFloRule(course)) {
-        toast.error('Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.')
+        toast.error('Mit deiner Präventionskurs-Karte kannst du nur Kurse bei Flo buchen.')
         return
       }
 
@@ -423,7 +424,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       if (checkError || !canRegister) {
         if (floOnly && !courseData.is_event && !isFloCourse(courseData)) {
           // Kann passieren, wenn der Coach nach dem Laden gewechselt wurde
-          toast.error('Mit deiner 10-Wochen-Karte kannst du nur Kurse bei Flo buchen.')
+          toast.error('Mit deiner Präventionskurs-Karte kannst du nur Kurse bei Flo buchen.')
         } else if (userMembershipType === 'Basic Member') {
           toast.error("Du hast dein wöchentliches Limit von 2 Anmeldungen erreicht")
         } else if (userMembershipType === '10er Karte') {
@@ -519,7 +520,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
       return
     }
 
-    // 10-Wochen-Karten sind von der Storno-Rate ausgenommen - dann ist auch
+    // Praeventionskurs-Karten sind von der Storno-Rate ausgenommen - dann ist auch
     // die Warnung vor dem Abmelden gegenstandslos
     if (reliabilityScore && !isAdmin && !fairnessExempt) {
       setPendingCancellationId(courseId)
@@ -1163,7 +1164,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
                       Nur Kurse bei Flo buchbar
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
-                      Deine 10-Wochen-Karte gilt für Kurse bei Flo.
+                      Deine Präventionskurs-Karte gilt für Kurse bei Flo.
                     </p>
                   </div>
                 ) : (() => {

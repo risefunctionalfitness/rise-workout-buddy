@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
+import { CardType, cardTypeLabelLong } from "@/lib/creditCards"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, CreditCard, AlertCircle } from "lucide-react"
@@ -12,7 +13,7 @@ interface MembershipLimitDisplayProps {
 export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLimitDisplayProps) => {
   const [weeklyCount, setWeeklyCount] = useState<number>(0)
   const [credits, setCredits] = useState<number>(0)
-  const [cardType, setCardType] = useState<'year' | 'ten_weeks'>('year')
+  const [cardType, setCardType] = useState<CardType>('year')
   const [validityStart, setValidityStart] = useState<string | null>(null)
   const [validUntil, setValidUntil] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,7 +38,7 @@ export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLim
 
         if (!error && data) {
           setCredits(data.credits_remaining)
-          setCardType((data.card_type as 'year' | 'ten_weeks') || 'year')
+          setCardType((data.card_type as CardType) || 'year')
           setValidityStart(data.validity_start)
           setValidUntil(data.valid_until)
         }
@@ -97,7 +98,7 @@ export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLim
   if (membershipType === '10er Karte') {
     const isExpired = !!validUntil && new Date(validUntil) < new Date()
     const displayCredits = isExpired ? 0 : credits
-    const cardTypeLabel = cardType === 'ten_weeks' ? '10 Wochen' : '1 Jahr'
+    const cardLabel = cardTypeLabelLong(cardType)
     const remainingDays = validUntil
       ? Math.max(0, Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
       : null
@@ -127,7 +128,7 @@ export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLim
                   <Calendar className="h-3 w-3" />
                   {validUntil
                     ? `Gültig bis ${new Date(validUntil).toLocaleDateString('de-DE')}${remainingDays !== null ? ` (noch ${remainingDays} Tage)` : ''}`
-                    : `Gültigkeit (${cardTypeLabel}) startet mit deiner ersten Buchung`}
+                    : `Gültigkeit (${cardLabel}) startet mit deiner ersten Buchung`}
                 </p>
               )}
             </div>

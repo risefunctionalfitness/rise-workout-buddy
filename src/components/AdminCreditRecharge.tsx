@@ -11,6 +11,7 @@ import { CreditCard, Plus, RefreshCw, User, Minus, CalendarClock, History } from
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CreditTransactionHistory } from "./CreditTransactionHistory"
+import { CardType, cardTypeLabel } from "@/lib/creditCards"
 
 interface UserCredit {
   user_id: string
@@ -20,7 +21,7 @@ interface UserCredit {
   credits_remaining: number
   credits_total: number
   last_recharged_at: string
-  card_type: 'year' | 'ten_weeks'
+  card_type: CardType
   validity_start: string | null
   valid_until: string | null
   prevention_course_1: boolean
@@ -35,7 +36,7 @@ export const AdminCreditRecharge = () => {
   const [selectedUser, setSelectedUser] = useState<string>("")
   const [creditsToAdd, setCreditsToAdd] = useState<string>("10")
   const [isSubtracting, setIsSubtracting] = useState(false)
-  const [cardType, setCardType] = useState<'year' | 'ten_weeks'>('year')
+  const [cardType, setCardType] = useState<CardType>('year')
   const [viewingUser, setViewingUser] = useState<UserCredit | null>(null)
   const [users, setUsers] = useState<UserCredit[]>([])
   const [loading, setLoading] = useState(false)
@@ -78,7 +79,7 @@ export const AdminCreditRecharge = () => {
           credits_remaining: credits?.credits_remaining || 0,
           credits_total: credits?.credits_total || 0,
           last_recharged_at: credits?.last_recharged_at || '',
-          card_type: (credits?.card_type as 'year' | 'ten_weeks') || 'year',
+          card_type: (credits?.card_type as CardType) || 'year',
           validity_start: credits?.validity_start || null,
           valid_until: credits?.valid_until || null,
           prevention_course_1: credits?.prevention_course_1 || false,
@@ -141,7 +142,7 @@ export const AdminCreditRecharge = () => {
       setSelectedUser("")
       setCreditsToAdd("10")
       // Kartentyp zuruecksetzen, damit die naechste Aufladung nicht
-      // versehentlich wieder auf "10 Wochen" laeuft
+      // versehentlich wieder auf "Praeventionskurs" laeuft
       setCardType('year')
       loadTenCardUsers() // Refresh the list
     } catch (error) {
@@ -236,7 +237,7 @@ export const AdminCreditRecharge = () => {
                 <Label>Art der 10er Karte</Label>
                 <RadioGroup
                   value={cardType}
-                  onValueChange={(value) => setCardType(value as 'year' | 'ten_weeks')}
+                  onValueChange={(value) => setCardType(value as CardType)}
                   className="flex gap-4"
                 >
                   <div className="flex items-center space-x-2">
@@ -244,8 +245,8 @@ export const AdminCreditRecharge = () => {
                     <Label htmlFor="card-year">1 Jahr gültig</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="ten_weeks" id="card-ten-weeks" />
-                    <Label htmlFor="card-ten-weeks">10 Wochen gültig</Label>
+                    <RadioGroupItem value="prevention" id="card-prevention" />
+                    <Label htmlFor="card-prevention">Präventionskurs (8 Wochen)</Label>
                   </div>
                 </RadioGroup>
                 <p className="text-xs text-muted-foreground">
@@ -332,7 +333,7 @@ export const AdminCreditRecharge = () => {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{user.first_name} {user.last_name}</p>
                         <Badge variant="outline" className="text-xs">
-                          {user.card_type === 'ten_weeks' ? '10 Wochen' : '1 Jahr'}
+                          {cardTypeLabel(user.card_type)}
                         </Badge>
                       </div>
                       {user.last_recharged_at && (

@@ -10,10 +10,16 @@ interface ManageCreditsRequest {
   user_id: string;
   credits_to_add: number;
   description?: string;
-  // Card type for recharges: 'year' = 1 Jahr gültig, 'ten_weeks' = 10 Wochen gültig.
+  // Card type for recharges: 'year' = 1 Jahr gültig,
+  // 'prevention' = Präventionskurs 10er Karte, 8 Wochen gültig.
+  // 'ten_weeks' ist der alte Name der Präventionskarte (10 Wochen).
   // The validity period starts with the member's first booking after the recharge.
-  card_type?: 'year' | 'ten_weeks';
+  card_type?: 'year' | 'prevention' | 'ten_weeks';
 }
+
+// 'ten_weeks' ist der alte Name der Präventionskarte und wird weiterhin erkannt
+const isPreventionCard = (cardType?: string | null): boolean =>
+  cardType === 'prevention' || cardType === 'ten_weeks';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -70,7 +76,7 @@ serve(async (req) => {
       });
     }
 
-    if (card_type && !['year', 'ten_weeks'].includes(card_type)) {
+    if (card_type && !['year', 'prevention', 'ten_weeks'].includes(card_type)) {
       return new Response(JSON.stringify({ error: 'Invalid card_type' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -149,9 +155,9 @@ serve(async (req) => {
         updatePayload.card_type = nextCardType;
         updatePayload.validity_start = null;
         updatePayload.valid_until = null;
-        // 10-Wochen-Karten sind an Flo gebunden, Jahreskarten nicht.
+        // Praeventionskurs-Karten sind an Flo gebunden, Jahreskarten nicht.
         // Damit gilt die Regel automatisch ab der naechsten Aufladung.
-        updatePayload.flo_only = nextCardType === 'ten_weeks';
+        updatePayload.flo_only = isPreventionCard(nextCardType);
       }
 
       const { error } = await supabase
@@ -185,7 +191,7 @@ serve(async (req) => {
           card_type: card_type || 'year',
           validity_start: null,
           valid_until: null,
-          flo_only: card_type === 'ten_weeks',
+          flo_only: isPreventionCard(card_type),
         });
 
       if (error) throw error;
@@ -193,7 +199,7 @@ serve(async (req) => {
 
     // Log the transaction
     const transactionType = credits_to_add > 0 ? 'admin_recharge' : 'admin_deduction';
-    const cardTypeLabel = card_type === 'ten_weeks' ? '10 Wochen' : '1 Jahr';
+    const cardTypeLabel = isPreventionCard(card_type) ? 'Präventionskurs, 8 Wochen' : '1 Jahr';
     const transactionDescription = description ||
       (credits_to_add > 0
         ? `Admin-Aufladung: ${credits_to_add} Credits (${cardTypeLabel} gültig ab erster Buchung)`
