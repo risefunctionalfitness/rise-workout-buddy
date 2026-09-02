@@ -18,6 +18,13 @@ export const isPreventionCard = (cardType?: string | null): boolean =>
 export const cardTypeLabel = (cardType?: string | null): string =>
   isPreventionCard(cardType) ? 'Präventionskurs' : '1 Jahr'
 
+/** Nur die Laufzeit - fuer Saetze, die schon eine Klammer haben */
+export const cardDurationLabel = (cardType?: string | null): string => {
+  if (!isPreventionCard(cardType)) return '1 Jahr'
+  // Karten von vor der Umstellung laufen noch 10 Wochen
+  return cardType === 'ten_weeks' ? '10 Wochen' : `${PREVENTION_CARD_WEEKS} Wochen`
+}
+
 /** Ausführlich, mit Laufzeit */
 export const cardTypeLabelLong = (cardType?: string | null): string => {
   if (!isPreventionCard(cardType)) return '1 Jahr'

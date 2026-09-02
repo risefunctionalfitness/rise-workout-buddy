@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
-import { CardType, cardTypeLabelLong } from "@/lib/creditCards"
+import { CardType, cardDurationLabel } from "@/lib/creditCards"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, CreditCard, AlertCircle } from "lucide-react"
@@ -98,7 +98,7 @@ export const MembershipLimitDisplay = ({ userId, membershipType }: MembershipLim
   if (membershipType === '10er Karte') {
     const isExpired = !!validUntil && new Date(validUntil) < new Date()
     const displayCredits = isExpired ? 0 : credits
-    const cardLabel = cardTypeLabelLong(cardType)
+    const cardLabel = cardDurationLabel(cardType)
     const remainingDays = validUntil
       ? Math.max(0, Math.ceil((new Date(validUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
       : null

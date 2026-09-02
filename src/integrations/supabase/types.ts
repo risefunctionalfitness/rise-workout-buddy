@@ -976,6 +976,81 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      prevention_certificates: {
+        Row: {
+          cert_year: number
+          created_at: string
+          error: string | null
+          id: string
+          pdf_path: string | null
+          period_from: string
+          period_to: string
+          recipient_email: string | null
+          sent_at: string | null
+          signature_date: string
+          status: string
+          units: number
+          units_counted: number
+          user_id: string
+          validity_start: string
+        }
+        Insert: {
+          cert_year: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          pdf_path?: string | null
+          period_from: string
+          period_to: string
+          recipient_email?: string | null
+          sent_at?: string | null
+          signature_date: string
+          status?: string
+          units: number
+          units_counted: number
+          user_id: string
+          validity_start: string
+        }
+        Update: {
+          cert_year?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          pdf_path?: string | null
+          period_from?: string
+          period_to?: string
+          recipient_email?: string | null
+          sent_at?: string | null
+          signature_date?: string
+          status?: string
+          units?: number
+          units_counted?: number
+          user_id?: string
+          validity_start?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           access_code: string | null

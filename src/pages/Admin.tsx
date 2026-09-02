@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import CourseTemplateManager from "@/components/CourseTemplateManager";
 import NewsManager from "@/components/NewsManager";
 import { AdminCreditRecharge } from "@/components/AdminCreditRecharge";
+import { PreventionCertificatesList } from "@/components/PreventionCertificatesList";
 import { GymCodeManager } from "@/components/GymCodeManager";
 import { CourseParticipants } from "@/components/CourseParticipants";
 import { MembershipBadge } from "@/components/MembershipBadge";
@@ -1172,7 +1173,12 @@ export default function Admin() {
       case 'codes':
         return <GymCodeManager />;
       case 'credits':
-        return <AdminCreditRecharge />;
+        return (
+          <div className="space-y-6">
+            <AdminCreditRecharge />
+            <PreventionCertificatesList />
+          </div>
+        );
       case 'workouts':
         return <WorkoutManagement hideHeader />;
       case 'challenges':

@@ -1,7 +1,7 @@
 import { Key, Dumbbell, Infinity, LockOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CardType, cardTypeLabelLong } from "@/lib/creditCards";
+import { CardType, cardDurationLabel } from "@/lib/creditCards";
 import {
   Popover,
   PopoverContent,
@@ -135,7 +135,7 @@ export const DashboardCreditsCard = ({ userId }: DashboardCreditsCardProps) => {
           <div className="space-y-2">
             <div>
               <p className="text-sm text-muted-foreground">Plan</p>
-              <p className="font-medium">10er Karte ({cardTypeLabelLong(cardType)})</p>
+              <p className="font-medium">10er Karte ({cardDurationLabel(cardType)})</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Verbleibende Credits</p>

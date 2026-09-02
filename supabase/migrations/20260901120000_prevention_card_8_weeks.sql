@@ -22,10 +22,10 @@ ALTER TABLE public.membership_credits
 COMMENT ON COLUMN public.membership_credits.card_type IS
   'year = 1 Jahr gueltig, prevention = Praeventionskurs 10er Karte (8 Wochen). ten_weeks ist der alte Name der Praeventionskarte und wird weiterhin akzeptiert.';
 
--- Bestehende Karten umbenennen; ihre Gueltigkeit bleibt unveraendert
-UPDATE public.membership_credits
-SET card_type = 'prevention'
-WHERE card_type = 'ten_weeks';
+-- Bestehende 10-Wochen-Karten behalten bewusst ihren alten Namen 'ten_weeks':
+-- sie laufen normal aus, behalten ihre 10 Wochen und bekommen keine
+-- automatische Teilnahmebescheinigung. 'prevention' ist ausschliesslich die
+-- neue 8-Wochen-Karte.
 
 -- ---------------------------------------------------------------------------
 -- Gueltigkeit: 8 Wochen ab dem ersten Training
