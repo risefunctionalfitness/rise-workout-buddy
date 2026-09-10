@@ -9,8 +9,6 @@ import { NewsSection } from "@/components/NewsSection"
 import ChallengeDetail from "@/components/ChallengeDetail"
 import { HighlightsDialog } from "@/components/HighlightsDialog"
 import { FirstLoginDialog } from "@/components/FirstLoginDialog"
-import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog"
-import { recordTermsAcceptance } from "@/hooks/useCurrentTerms"
 import { PhoneNumberDialog } from "@/components/PhoneNumberDialog"
 import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 import { MonthlyProgressCircle } from "@/components/MonthlyProgressCircle"
@@ -82,7 +80,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
   const [currentChallenge, setCurrentChallenge] = useState<any>(null)
   const [wodStep, setWodStep] = useState(1)
   const [showFirstLoginDialog, setShowFirstLoginDialog] = useState(false)
-  const [showTermsDialog, setShowTermsDialog] = useState(false)
   const [showPhoneDialog, setShowPhoneDialog] = useState(false)
   const [showAdminNav, setShowAdminNav] = useState(false)
   const [showInvitations, setShowInvitations] = useState(false)
@@ -281,14 +278,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
       
       console.log('Welcome dialog check:', profile)
       
-      // Step 1: Check if terms have been accepted
-      if (!profile?.terms_accepted_at) {
-        setTimeout(() => {
-          setShowTermsDialog(true)
-        }, 2000)
-        return
-      }
-      
+      // AGB-Zustimmung laeuft ueber den freiwilligen Hinweis im Kursplan
+      // (TermsUpdateBanner). Hier wird nichts mehr blockiert.
+
       // Step 2: Check if phone prompt has been shown
       if (!profile?.phone_prompt_shown) {
         setTimeout(() => {
@@ -903,24 +895,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
 
             setSelectedChallenge({ challenge: currentChallenge, progress })
           }
-        }}
-      />
-
-      <TermsAcceptanceDialog 
-        open={showTermsDialog}
-        onAccept={async () => {
-          await supabase
-            .from('profiles')
-            .update({ terms_accepted_at: new Date().toISOString() })
-            .eq('user_id', user.id)
-
-          // Zusaetzlich die Fassung dokumentieren
-          await recordTermsAcceptance(user.id)
-          
-          
-          setShowTermsDialog(false)
-          // Show phone dialog after terms acceptance
-          setTimeout(() => setShowPhoneDialog(true), 500)
         }}
       />
 

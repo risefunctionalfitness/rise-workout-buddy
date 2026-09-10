@@ -2,29 +2,26 @@ import { useState } from "react"
 import { FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CurrentTermsDialog } from "@/components/CurrentTermsDialog"
-import { useCurrentTerms, getDeferCount, incrementDeferCount } from "@/hooks/useCurrentTerms"
-
-const SESSION_KEY = "terms_banner_dismissed"
+import { useCurrentTerms, isSnoozedToday, snoozeForToday } from "@/hooks/useCurrentTerms"
 
 /**
- * Schmaler Hinweis auf eine neue AGB-Fassung. Blockiert nichts.
- * Nach dem dritten "Später" erscheint der Banner nicht mehr — der Hinweis
- * bleibt dann nur im Profil erreichbar.
+ * Hinweis auf eine neue AGB-Fassung, oben im Kursplan.
+ *
+ * Der Hinweis bleibt dauerhaft stehen, bis zugestimmt wurde. „Später" blendet
+ * ihn nur für den laufenden Tag aus; am nächsten Tag ist er wieder da.
+ * Er blockiert nichts — Kurse lassen sich jederzeit buchen.
  */
 export const TermsUpdateBanner = () => {
-  const { terms, accept } = useCurrentTerms()
+  const { terms, accept, reload } = useCurrentTerms()
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [dismissed, setDismissed] = useState(
-    () => sessionStorage.getItem(SESSION_KEY) === "1"
-  )
+  const [snoozed, setSnoozed] = useState(() => isSnoozedToday())
 
   if (!terms || terms.accepted_by_me) return null
-  if (dismissed || getDeferCount() >= 3) return null
+  if (snoozed) return null
 
   const later = () => {
-    incrementDeferCount()
-    sessionStorage.setItem(SESSION_KEY, "1")
-    setDismissed(true)
+    snoozeForToday()
+    setSnoozed(true)
   }
 
   return (
@@ -34,7 +31,7 @@ export const TermsUpdateBanner = () => {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground">Neue AGB</p>
           <p className="text-xs text-muted-foreground">
-            Seit dem 9. September gelten neue AGB. Kurz durchlesen und bestätigen.
+            Seit dem 9. September gelten neue AGB. Bitte kurz durchlesen und bestätigen.
           </p>
           <div className="flex gap-2 mt-2">
             <Button size="sm" onClick={() => setDialogOpen(true)}>
@@ -49,9 +46,11 @@ export const TermsUpdateBanner = () => {
 
       <CurrentTermsDialog
         open={dialogOpen}
+        // Das blosse Schliessen des Dialogs zaehlt NICHT als "Später" — sonst
+        // verliert den Hinweis, wer nur in Ruhe lesen wollte.
         onOpenChange={(o) => {
           setDialogOpen(o)
-          if (!o && !terms.accepted_by_me) later()
+          if (!o) reload()
         }}
         terms={terms}
         onAccept={accept}

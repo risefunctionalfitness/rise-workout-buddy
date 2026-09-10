@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
 import type { CurrentTerms } from "@/hooks/useCurrentTerms"
 
@@ -71,27 +70,19 @@ export const CurrentTermsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-lg h-[85vh] max-h-[85vh] flex flex-col gap-3">
         <DialogHeader>
           <DialogTitle>Allgemeine Geschäftsbedingungen</DialogTitle>
           <DialogDescription>{terms.title || `Fassung ${terms.version}`}</DialogDescription>
         </DialogHeader>
 
-        {terms.summary_md && (
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-muted-foreground">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {terms.summary_md}
-            </ReactMarkdown>
-          </div>
-        )}
-
-        <ScrollArea className="flex-1 min-h-[30vh] max-h-[45vh] rounded-lg border p-3">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain rounded-lg border p-3">
           <div className="text-xs text-muted-foreground">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {terms.body_md || ""}
             </ReactMarkdown>
           </div>
-        </ScrollArea>
+        </div>
 
         <p className="text-xs text-muted-foreground">
           Unsere{" "}

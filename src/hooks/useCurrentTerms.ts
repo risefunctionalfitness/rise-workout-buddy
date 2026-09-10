@@ -9,18 +9,29 @@ export interface CurrentTerms {
   accepted_by_me: boolean
 }
 
-const DEFER_KEY = "terms_defer_count"
+/**
+ * „Später" blendet den Hinweis nur für den laufenden Kalendertag aus.
+ * Gespeichert wird das Datum, nicht ein Zähler — der Hinweis kommt am nächsten
+ * Tag von selbst wieder und verschwindet dauerhaft erst mit der Zustimmung.
+ */
+const SNOOZE_KEY = "terms_snoozed_until"
 
-export const getDeferCount = () => {
-  const raw = localStorage.getItem(DEFER_KEY)
-  const n = raw ? parseInt(raw, 10) : 0
-  return Number.isFinite(n) ? n : 0
+const today = () => new Date().toISOString().slice(0, 10)
+
+export const isSnoozedToday = () => {
+  try {
+    return localStorage.getItem(SNOOZE_KEY) === today()
+  } catch {
+    return false
+  }
 }
 
-export const incrementDeferCount = () => {
-  const next = getDeferCount() + 1
-  localStorage.setItem(DEFER_KEY, String(next))
-  return next
+export const snoozeForToday = () => {
+  try {
+    localStorage.setItem(SNOOZE_KEY, today())
+  } catch {
+    /* privater Modus o. Ä. — dann bleibt der Hinweis eben stehen */
+  }
 }
 
 /**
@@ -57,14 +68,21 @@ export const useCurrentTerms = () => {
       setTerms(current)
 
       if (current.accepted_by_me) {
-        const { data: acc } = await supabase
-          .from("terms_acceptances")
-          .select("accepted_at")
-          .eq("version", current.version)
-          .order("accepted_at", { ascending: true })
-          .limit(1)
-          .maybeSingle()
-        setAcceptedAt(acc?.accepted_at ?? null)
+        // Ausdrücklich nach der eigenen user_id filtern. Admins dürfen alle
+        // Zustimmungen lesen und bekämen sonst eine fremde angezeigt.
+        const { data: userData } = await supabase.auth.getUser()
+        const userId = userData.user?.id
+        if (userId) {
+          const { data: acc } = await supabase
+            .from("terms_acceptances")
+            .select("accepted_at")
+            .eq("version", current.version)
+            .eq("user_id", userId)
+            .maybeSingle()
+          setAcceptedAt(acc?.accepted_at ?? null)
+        } else {
+          setAcceptedAt(null)
+        }
       } else {
         setAcceptedAt(null)
       }
@@ -105,7 +123,13 @@ export const useCurrentTerms = () => {
   return { terms, acceptedAt, loading, accept, reload: load }
 }
 
-/** Schreibt eine Zustimmung fuer die aktuell veroeffentlichte Fassung (Registrierung). */
+/**
+ * Schreibt eine Zustimmung für die aktuell veröffentlichte Fassung.
+ *
+ * Nur dort aufrufen, wo dem Nutzer auch der Text aus `current_terms` gezeigt
+ * wurde. Sonst entsteht ein Nachweis, der etwas anderes behauptet als das,
+ * was auf dem Bildschirm stand.
+ */
 export const recordTermsAcceptance = async (userId: string) => {
   try {
     const { data } = await supabase
