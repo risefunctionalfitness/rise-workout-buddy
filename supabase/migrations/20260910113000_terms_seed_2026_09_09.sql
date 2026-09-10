@@ -81,7 +81,7 @@ Fassung vom 9. September 2026 · gültig für alle Nutzerinnen und Nutzer
 
 ## § 5 Pflichten der Nutzerinnen und Nutzer
 
-**5.1** Geräte und Einrichtungen dürfen nur bestimmungsgemäß und im Rahmen der erhaltenen Einweisung genutzt werden. In den Trainingsräumen sind saubere Sportschuhe zu tragen, die nicht auf der Straße getragen wurden.
+**5.1** Geräte und Einrichtungen dürfen nur bestimmungsgemäß und zweckmäßig genutzt werden. In den Trainingsräumen sind saubere Sportschuhe zu tragen, die nicht auf der Straße getragen wurden.
 
 **5.2** Geräte und Ablageflächen sind nach der Nutzung zu reinigen und Gewichte an ihren Platz zurückzuräumen.
 
