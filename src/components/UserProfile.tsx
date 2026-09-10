@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select"
 import { countryCodes, countryCodeFlags } from "@/components/CountryFlags"
 import { WHATSAPP_ENABLED } from "@/config/features"
+import { ProfileTermsSection } from "@/components/ProfileTermsSection"
 
 interface UserProfileProps {
   onClose: () => void
@@ -709,6 +710,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onClose }) => {
             </div>
           </CardContent>
         </Card>
+
+        <ProfileTermsSection />
 
         {/* Abmelde Button - am Ende der Seite */}
         <div className="mt-8 mb-4">

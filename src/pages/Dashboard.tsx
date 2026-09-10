@@ -10,6 +10,7 @@ import ChallengeDetail from "@/components/ChallengeDetail"
 import { HighlightsDialog } from "@/components/HighlightsDialog"
 import { FirstLoginDialog } from "@/components/FirstLoginDialog"
 import { TermsAcceptanceDialog } from "@/components/TermsAcceptanceDialog"
+import { recordTermsAcceptance } from "@/hooks/useCurrentTerms"
 import { PhoneNumberDialog } from "@/components/PhoneNumberDialog"
 import { MemberBottomNavigation } from "@/components/MemberBottomNavigation"
 import { MonthlyProgressCircle } from "@/components/MonthlyProgressCircle"
@@ -912,6 +913,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, userRole }) => {
             .from('profiles')
             .update({ terms_accepted_at: new Date().toISOString() })
             .eq('user_id', user.id)
+
+          // Zusaetzlich die Fassung dokumentieren
+          await recordTermsAcceptance(user.id)
+          
           
           setShowTermsDialog(false)
           // Show phone dialog after terms acceptance
