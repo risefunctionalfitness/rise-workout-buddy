@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       bodybuilding_workouts: {
         Row: {
           created_at: string | null
@@ -139,7 +160,9 @@ export type Database = {
           attendance_marked_by?: string | null
           attendance_status?: string | null
           course_id: string
+          had_real_cancel?: boolean
           id?: string
+          is_accidental_cancel?: boolean
           registered_at?: string
           status?: string
           updated_at?: string
@@ -150,7 +173,9 @@ export type Database = {
           attendance_marked_by?: string | null
           attendance_status?: string | null
           course_id?: string
+          had_real_cancel?: boolean
           id?: string
+          is_accidental_cancel?: boolean
           registered_at?: string
           status?: string
           updated_at?: string
@@ -976,27 +1001,6 @@ export type Database = {
         }
         Relationships: []
       }
-      app_settings: {
-        Row: {
-          description: string | null
-          key: string
-          updated_at: string
-          value: string
-        }
-        Insert: {
-          description?: string | null
-          key: string
-          updated_at?: string
-          value: string
-        }
-        Update: {
-          description?: string | null
-          key?: string
-          updated_at?: string
-          value?: string
-        }
-        Relationships: []
-      }
       prevention_certificates: {
         Row: {
           cert_year: number
@@ -1249,6 +1253,75 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weight_kg?: number
+        }
+        Relationships: []
+      }
+      terms_acceptances: {
+        Row: {
+          accepted_at: string
+          id: string
+          source: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string
+          id?: string
+          source?: string
+          user_id: string
+          version: string
+        }
+        Update: {
+          accepted_at?: string
+          id?: string
+          source?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terms_acceptances_version_fkey"
+            columns: ["version"]
+            isOneToOne: false
+            referencedRelation: "current_terms"
+            referencedColumns: ["version"]
+          },
+          {
+            foreignKeyName: "terms_acceptances_version_fkey"
+            columns: ["version"]
+            isOneToOne: false
+            referencedRelation: "terms_documents"
+            referencedColumns: ["version"]
+          },
+        ]
+      }
+      terms_documents: {
+        Row: {
+          body_md: string
+          created_at: string
+          id: string
+          published_at: string | null
+          summary_md: string | null
+          title: string
+          version: string
+        }
+        Insert: {
+          body_md: string
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          summary_md?: string | null
+          title?: string
+          version: string
+        }
+        Update: {
+          body_md?: string
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          summary_md?: string | null
+          title?: string
+          version?: string
         }
         Relationships: []
       }
@@ -1673,7 +1746,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      current_terms: {
+        Row: {
+          accepted_by_me: boolean | null
+          body_md: string | null
+          published_at: string | null
+          summary_md: string | null
+          title: string | null
+          version: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_challenge_bonus: {
@@ -1715,6 +1798,22 @@ export type Database = {
           max_participants: number
           registered_count: number
           waitlist_count: number
+        }[]
+      }
+      get_due_prevention_certificates: {
+        Args: never
+        Returns: {
+          cert_year: number
+          first_name: string
+          full_name: string
+          last_name: string
+          period_from: string
+          period_to: string
+          signature_date: string
+          units: number
+          units_counted: number
+          user_id: string
+          validity_start: string
         }[]
       }
       get_inactive_members: {
@@ -1764,6 +1863,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_flo_course: { Args: { p_course_id: string }; Returns: boolean }
       match_workouts: {
         Args: {
           match_count?: number
@@ -1838,12 +1938,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1867,11 +1967,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1892,11 +1992,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1917,11 +2017,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1934,11 +2034,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
