@@ -19,6 +19,7 @@ import { FairnessInfoDialog } from "@/components/FairnessInfoDialog"
 import { ReliabilityScoreScale } from "@/components/ReliabilityScoreScale"
 import { FairnessCheckDialog } from "@/components/FairnessCheckDialog"
 import { DayCourseDialog } from "@/components/DayCourseDialog"
+import { TermsUpdateBanner } from "@/components/TermsUpdateBanner"
 import { useReliabilityScore } from "@/hooks/useReliabilityScore"
 import { timezone } from "@/lib/timezone"
 import { isFloCourse } from "@/lib/trainers"
@@ -720,6 +721,7 @@ export const CourseBooking = ({ user }: CourseBookingProps) => {
   return (
     <div className="p-4 space-y-4">
       <FairnessInfoDialog userId={user.id} />
+      <TermsUpdateBanner />
       {/* Membership limits display for Basic Member and 10er Karte */}
       {(userMembershipType === 'Basic Member' || userMembershipType === '10er Karte') && (
         <MembershipLimitDisplay 

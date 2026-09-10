@@ -149,6 +149,32 @@ const handler = async (req: Request): Promise<Response> => {
       // Don't fail completely, user is created
     }
 
+    // Zustimmung zur aktuell veroeffentlichten AGB-Fassung dokumentieren
+    try {
+      const { data: currentTerms } = await supabaseClient
+        .from('terms_documents')
+        .select('version')
+        .not('published_at', 'is', null)
+        .order('published_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (currentTerms?.version) {
+        const { error: acceptanceError } = await supabaseClient
+          .from('terms_acceptances')
+          .insert({
+            user_id: newUser.user!.id,
+            version: currentTerms.version,
+            source: 'app'
+          });
+        if (acceptanceError && acceptanceError.code !== '23505') {
+          console.error('Error recording terms acceptance:', acceptanceError);
+        }
+      }
+    } catch (termsErr) {
+      console.error('Error recording terms acceptance:', termsErr);
+    }
+
     console.log('Wellpass registration created successfully');
 
     // Send registration webhook to Make.com (same format as create-member)
