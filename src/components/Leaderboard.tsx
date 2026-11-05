@@ -164,7 +164,7 @@ export const Leaderboard: React.FC = () => {
       })
 
       // Combine leaderboard data with profile info and calculate total score
-    const leaderboardWithProfiles = aggregatedData
+    const leaderboardWithProfiles = leaderboardData
       .map(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
         // Nur Einträge behalten, für die ein Profil gefunden wurde
