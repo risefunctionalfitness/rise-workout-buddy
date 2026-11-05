@@ -105,30 +105,8 @@ export const Leaderboard: React.FC = () => {
         return
       }
 
-      // Aggregate by user_id if in year mode
-      let aggregatedData: typeof leaderboardData = leaderboardData
-      if (viewMode === 'year') {
-        const userAggregates = new Map<string, typeof leaderboardData[0]>()
-
-        leaderboardData.forEach(entry => {
-          const existing = userAggregates.get(entry.user_id)
-          if (existing) {
-            existing.training_count += entry.training_count || 0
-            existing.challenge_bonus_points += entry.challenge_bonus_points || 0
-          } else {
-            userAggregates.set(entry.user_id, {
-              ...entry,
-              training_count: entry.training_count || 0,
-              challenge_bonus_points: entry.challenge_bonus_points || 0
-            })
-          }
-        })
-
-        aggregatedData = Array.from(userAggregates.values())
-      }
-
       // Get all user IDs from leaderboard
-      const userIds = aggregatedData.map(entry => entry.user_id)
+      const userIds = leaderboardData.map(entry => entry.user_id)
 
       // Get user profiles for display names and avatars (only those who should be shown)
       const { data: profiles, error: profilesError } = await supabase
