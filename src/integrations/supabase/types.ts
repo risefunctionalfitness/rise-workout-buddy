@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "12.2.12"
   }
   public: {
     Tables: {
@@ -1055,6 +1055,36 @@ export type Database = {
         }
         Relationships: []
       }
+      prevention_cycles: {
+        Row: {
+          closed_at: string
+          created_at: string
+          id: string
+          reason: string | null
+          user_id: string
+          valid_until: string
+          validity_start: string
+        }
+        Insert: {
+          closed_at?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id: string
+          valid_until: string
+          validity_start: string
+        }
+        Update: {
+          closed_at?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+          valid_until?: string
+          validity_start?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           access_code: string | null
@@ -1754,6 +1784,24 @@ export type Database = {
           summary_md: string | null
           title: string | null
           version: string | null
+        }
+        Relationships: []
+      }
+      leaderboard_yearly: {
+        Row: {
+          avatar_url: string | null
+          bonus_points: number | null
+          display_name: string | null
+          membership_type: string | null
+          months_counted: number | null
+          nickname: string | null
+          points: number | null
+          rank_overall: number | null
+          rank_visible: number | null
+          show_in_leaderboard: boolean | null
+          trainings: number | null
+          user_id: string | null
+          year: number | null
         }
         Relationships: []
       }

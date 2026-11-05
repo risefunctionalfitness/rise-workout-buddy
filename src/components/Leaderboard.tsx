@@ -50,15 +50,47 @@ export const Leaderboard: React.FC = () => {
       const currentYear = currentDate.getFullYear()
       const currentMonth = currentDate.getMonth() + 1
 
+      // Jahresansicht: fertige Aggregation aus der View leaderboard_yearly
+      if (viewMode === 'year') {
+        const { data, error: yearlyError } = await supabase
+          .from('leaderboard_yearly')
+          .select('user_id, display_name, nickname, avatar_url, points, trainings, bonus_points, rank_visible, show_in_leaderboard')
+          .eq('year', currentYear)
+          .eq('show_in_leaderboard', true)
+          .order('points', { ascending: false, nullsFirst: false })
+          .limit(30)
+
+        if (yearlyError) {
+          console.error('Error loading yearly leaderboard:', yearlyError)
+          setLeaderboard([])
+          return
+        }
+
+        const yearlyEntries: LeaderboardEntry[] = (data || []).map(entry => ({
+          id: entry.user_id,
+          user_id: entry.user_id,
+          training_count: entry.trainings ?? 0,
+          challenge_bonus_points: entry.bonus_points ?? 0,
+          display_name: entry.nickname || entry.display_name || 'Unbekannt',
+          avatar_url: entry.avatar_url || null,
+          year: currentYear,
+          month: currentMonth,
+          total_score: entry.points ?? 0,
+          hasCompletedChallenge: false,
+          most_recent_training: ''
+        }))
+
+        setLeaderboard(yearlyEntries)
+        return
+      }
+
       // Get leaderboard entries based on view mode
       let query = supabase
         .from('leaderboard_entries')
         .select('*')
         .eq('year', currentYear)
-      
-      if (viewMode === 'month') {
-        query = query.eq('month', currentMonth)
-      }
+
+      query = query.eq('month', currentMonth)
 
       const { data: leaderboardData, error: leaderboardError } = await query
 
@@ -73,30 +105,8 @@ export const Leaderboard: React.FC = () => {
         return
       }
 
-      // Aggregate by user_id if in year mode
-      let aggregatedData: typeof leaderboardData = leaderboardData
-      if (viewMode === 'year') {
-        const userAggregates = new Map<string, typeof leaderboardData[0]>()
-
-        leaderboardData.forEach(entry => {
-          const existing = userAggregates.get(entry.user_id)
-          if (existing) {
-            existing.training_count += entry.training_count || 0
-            existing.challenge_bonus_points += entry.challenge_bonus_points || 0
-          } else {
-            userAggregates.set(entry.user_id, {
-              ...entry,
-              training_count: entry.training_count || 0,
-              challenge_bonus_points: entry.challenge_bonus_points || 0
-            })
-          }
-        })
-
-        aggregatedData = Array.from(userAggregates.values())
-      }
-
       // Get all user IDs from leaderboard
-      const userIds = aggregatedData.map(entry => entry.user_id)
+      const userIds = leaderboardData.map(entry => entry.user_id)
 
       // Get user profiles for display names and avatars (only those who should be shown)
       const { data: profiles, error: profilesError } = await supabase
@@ -154,7 +164,7 @@ export const Leaderboard: React.FC = () => {
       })
 
       // Combine leaderboard data with profile info and calculate total score
-    const leaderboardWithProfiles = aggregatedData
+    const leaderboardWithProfiles = leaderboardData
       .map(entry => {
         const profile = profiles?.find(p => p.user_id === entry.user_id)
         // Nur Einträge behalten, für die ein Profil gefunden wurde
